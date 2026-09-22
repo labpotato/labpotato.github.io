@@ -325,6 +325,18 @@ function initReveal() {
   items.forEach((el) => observer.observe(el));
 }
 
+// Returns a picker that never repeats the immediately-previous item.
+function makeNoRepeatPicker(arr) {
+  let last = -1;
+  return function pick() {
+    if (arr.length === 1) return arr[0];
+    let i;
+    do { i = Math.floor(Math.random() * arr.length); } while (i === last);
+    last = i;
+    return arr[i];
+  };
+}
+
 function initMascot() {
   const mascot = document.getElementById("mascot");
   const speech = document.getElementById("speech");
@@ -365,36 +377,35 @@ function initMascot() {
     "Slides made at 3am, presented at 9am.",
     "Three years in. Still can't read a full paper.",
     "The freezer that broke had my only stock.",
-    "Autoclaved my only competent cells.",
-    "Forgot the stir bar. Again.",
-    "Left the incubator door open overnight.",
-    "Made the buffer without the buffer.",
-    "Forgot to add the enzyme. Whole day, gone.",
-    "Vortexed the tube with the cap off.",
-    "Wrote the wrong date on every tube this week.",
-    "Pipetted into the wrong row. All of it.",
-    "The positive control was negative. So was I.",
-    "Genotyped the wrong mouse.",
-    "Left my only sample on the bench. Overnight. Unlabeled.",
-    "Mixed up 37°C and room temp for the whole incubation.",
-    "The pH meter said 7. I did not believe the pH meter.",
-    "Forgot to vortex. Everything's a gradient now.",
-    "The 'quick wash' took forty minutes.",
-    "Diluted the standard curve wrong. All of it. Again.",
+
+    // more at the bench
+    "Autoclaved the competent cells. Again.",
+    "Genotyped the wrong mouse. Found out at imaging.",
+    "The incubator's been in Fahrenheit since March.",
+    "Forgot which flask was the wild-type. All of them, technically.",
+    "Left the water bath running over the long weekend.",
+    "Mixed up the primer tubes and sequenced my own contamination.",
+    "That 'temporary' fix is now cited in the methods section.",
+    "The centrifuge was unbalanced. So, briefly, was I.",
+    "Bleached the wrong bench. It needed it more, honestly.",
+    "Named the file 'FINAL_v2_ACTUALLYFINAL_useThisOne'.",
   ];
 
-  // True random each time, just never the exact same line twice in a row.
-  let lastLine = -1;
-  function pickLine() {
-    let i = Math.floor(Math.random() * lines.length);
-    if (lines.length > 1) {
-      while (i === lastLine) i = Math.floor(Math.random() * lines.length);
-    }
-    lastLine = i;
-    return lines[i];
-  }
+  const IDLE_LINES = [
+    "Still there?",
+    "I'll just talk to myself, then.",
+    "This silence is very reproducible.",
+    "No pressure. I'll just be here. Idle. Like the incubator.",
+    "Nobody's clicking. Very on brand for this lab.",
+    "I have goggles and nowhere to be.",
+  ];
+  const IDLE_DELAY = 18000;
+  const MAX_IDLE_NAGS = 3;
+  const pickIdleLine = makeNoRepeatPicker(IDLE_LINES);
 
   let hideTimer;
+  let idleTimer;
+  let idleNagCount = 0;
 
   // The goggles are worn correctly at all times, except when they aren't.
   const goggles = document.getElementById("goggles");
@@ -421,7 +432,9 @@ function initMascot() {
   const JOKES_BEFORE_INSPECTION = 5;
   let jokesSinceThrow = 0;
 
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const pickLine = makeNoRepeatPicker(lines);
+  const pickCoastClear = makeNoRepeatPicker(COAST_CLEAR);
+  const pickInspection = makeNoRepeatPicker(INSPECTION);
 
   function say(text, ms) {
     speech.textContent = text;
@@ -429,6 +442,18 @@ function initMascot() {
     clearTimeout(hideTimer);
     hideTimer = setTimeout(() => speech.classList.remove("show"), ms);
   }
+  // The mascot nags after a stretch of inactivity, up to MAX_IDLE_NAGS
+  // times, then goes quiet again until the next click resets it.
+  function scheduleIdleNag() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (idleNagCount >= MAX_IDLE_NAGS) return;
+      idleNagCount++;
+      say(pickIdleLine(), 3600);
+      scheduleIdleNag();
+    }, IDLE_DELAY);
+  }
+  scheduleIdleNag();
 
   function hop() {
     mascot.classList.remove("hop");
@@ -457,6 +482,8 @@ function initMascot() {
 
   mascot.addEventListener("click", () => {
     hop();
+    idleNagCount = 0;
+    scheduleIdleNag();
 
     // Any real interaction resets the "are you still there" clock.
     idleCount = 0;
@@ -468,7 +495,7 @@ function initMascot() {
       jokesSinceThrow = 0;
       goggles.classList.remove("snap");
       goggles.classList.add("thrown");
-      say(pick(COAST_CLEAR), 3600);
+      say(pickCoastClear(), 3600);
       return;
     }
 
@@ -478,7 +505,7 @@ function initMascot() {
       goggles.classList.remove("thrown");
       void goggles.getBoundingClientRect(); // restart the animation
       goggles.classList.add("snap");
-      say(pick(INSPECTION), 2800);
+      say(pickInspection(), 2800);
       return;
     }
 
@@ -493,6 +520,60 @@ function initMascot() {
   scheduleIdleNag();
 }
 
+function initEasterEggs() {
+  const SPEC_ASIDES = [
+    "Legal reviewed this page. Legal does not exist.",
+    "This spec sheet has been audited by nobody, on purpose.",
+    "I wrote 'None' twice and I stand by both.",
+    "Compliance officer: also me, also unqualified.",
+    "We considered ISO 27001. We considered a nap instead.",
+    "Every number on this table is emotionally accurate.",
+    "This row was added at 2am to pad the section.",
+    "Ctrl+Z is, legally speaking, our entire QA department.",
+    "If you're reading this closely, you should be sleeping.",
+    "The SLA is 'eventually,' and I mean that sincerely.",
+  ];
+  const TRUST_ASIDES = [
+    "The bench next to mine has since filed a complaint.",
+    "My PI found out. This joke is now retired. Slowly.",
+    "The lab in Singapore is, in fact, this one.",
+    "Four people in Korea and I have never met them.",
+    "The postdoc still hasn't replied. It's been a year.",
+    "None of these logos are real. All of the gratitude is.",
+    "I asked in the corridor. Nobody remembers agreeing to this.",
+    "This strip exists because empty space felt worse.",
+  ];
+  const pickSpecAside = makeNoRepeatPicker(SPEC_ASIDES);
+  const pickTrustAside = makeNoRepeatPicker(TRUST_ASIDES);
+
+  const aside = document.createElement("div");
+  aside.className = "egg-aside";
+  aside.setAttribute("role", "status");
+  document.body.appendChild(aside);
+  let hideTimer;
+
+  function showAside(anchor, text) {
+    const rect = anchor.getBoundingClientRect();
+    aside.textContent = text;
+    aside.style.left = `${Math.min(Math.max(rect.left, 12), window.innerWidth - 252)}px`;
+    aside.style.top = `${Math.max(rect.top - 46, 8)}px`;
+    aside.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => aside.classList.remove("show"), 2600);
+  }
+
+  document.addEventListener("click", (e) => {
+    const specRow = e.target.closest(".spec-row");
+    if (specRow) {
+      showAside(specRow, pickSpecAside());
+      return;
+    }
+
+    const trustItem = e.target.closest(".trust-logos li");
+    if (trustItem) showAside(trustItem, pickTrustAside());
+  });
+}
+
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -503,6 +584,4 @@ renderSpecs();
 renderSupport();
 initReveal();
 initMascot();
-initTrustStrip();
-initFooterPotato();
-initSecretPotato();
+initEasterEggs();

@@ -1,6 +1,6 @@
 # How to update Lab Potato
 
-The site lives at **https://bdongmin10.github.io/**. After any push, GitHub
+The site lives at **https://labpotato.github.io/**. After any push, GitHub
 rebuilds it automatically — usually live within a minute. There is no build
 step, no npm, no deploy command.
 
@@ -158,7 +158,7 @@ the `known` list at the top of `assets/app.js`. Then use `icon: "pipette"` in
 
 If you'd rather not use the command line:
 
-1. Go to https://github.com/bdongmin10/bdongmin10.github.io
+1. Go to https://github.com/labpotato/labpotato.github.io
 2. **Add a file → Upload files**, then drag your HTML in. To put it in a new
    folder, click **Add file → Create new file** and type
    `tools/dilution-calculator/dilution-calculator-v1.html` as the name — typing
@@ -174,7 +174,7 @@ Every "Leave feedback" button opens a pre-filled GitHub issue tagged with the
 tool name, using the template in `.github/ISSUE_TEMPLATE/feedback.md`.
 All incoming feedback shows up at:
 
-https://github.com/bdongmin10/bdongmin10.github.io/issues
+https://github.com/labpotato/labpotato.github.io/issues
 
 Each issue has its own comment thread, so you can reply, ask for a screenshot,
 and close it when fixed.

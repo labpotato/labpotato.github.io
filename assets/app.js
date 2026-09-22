@@ -4,7 +4,7 @@
    Edit assets/tools.js instead.
    ============================================================ */
 
-const REPO = "https://github.com/bdongmin10/bdongmin10.github.io";
+const REPO = "https://github.com/labpotato/labpotato.github.io";
 
 // SUPPORT_URL / SUPPORT_LABEL are defined at the top of tools.js
 

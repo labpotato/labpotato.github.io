@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lab Potato — Research Software Infrastructure</title>
+<meta name="description" content="Enterprise-grade browser tooling for molecular biology workflows. Zero-install architecture. Zero-server topology. Zero funding." />
+<meta name="author" content="Dongmin Byun" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='20 44 212 148'%3E%3Cpath d='M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z' fill='%23cd9050'/%3E%3Cellipse cx='96' cy='114' rx='11' ry='13' fill='%232a2018'/%3E%3Cellipse cx='152' cy='111' rx='11' ry='13' fill='%232a2018'/%3E%3Cpath d='M110 143Q126 157 142 140' stroke='%232a2018' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+<!-- ============ icon sprite (add new tool icons here) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="icon-colony" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"></circle>
+      <circle cx="8" cy="9.5" r="1.5" fill="currentColor" stroke="none"></circle>
+      <circle cx="13" cy="7.5" r="1.1" fill="currentColor" stroke="none"></circle>
+      <circle cx="16" cy="11" r="1.7" fill="currentColor" stroke="none"></circle>
+      <circle cx="9.5" cy="14.5" r="1.3" fill="currentColor" stroke="none"></circle>
+      <circle cx="14.5" cy="15.5" r="1" fill="currentColor" stroke="none"></circle>
+    </symbol>
+    <symbol id="icon-gel" viewBox="0 0 24 24">
+      <rect x="4" y="6" width="6" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+      <rect x="13" y="6" width="7" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+      <rect x="4" y="10.9" width="9" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+      <rect x="15" y="10.9" width="5" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+      <rect x="4" y="15.8" width="5" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+      <rect x="11" y="15.8" width="9" height="2.2" rx="1.1" fill="currentColor" stroke="none"></rect>
+    </symbol>
+    <symbol id="icon-gibson" viewBox="0 0 24 24">
+      <path d="M20 12a8 8 0 1 1-3-6.2" stroke="currentColor" fill="none"></path>
+      <path d="M20 3v5.5h-5.5" stroke="currentColor" fill="none"></path>
+    </symbol>
+    <symbol id="icon-microscopy" viewBox="0 0 24 24">
+      <circle cx="9.5" cy="12" r="6" stroke="currentColor" fill="none"></circle>
+      <circle cx="15" cy="12" r="6" stroke="currentColor" fill="none"></circle>
+    </symbol>
+    <symbol id="icon-protein" viewBox="0 0 24 24">
+      <line x1="4" y1="20" x2="20" y2="20" stroke="currentColor"></line>
+      <rect x="6" y="13" width="3" height="7" fill="currentColor" stroke="none"></rect>
+      <rect x="11" y="9" width="3" height="11" fill="currentColor" stroke="none"></rect>
+      <rect x="16" y="5" width="3" height="15" fill="currentColor" stroke="none"></rect>
+    </symbol>
+    <symbol id="icon-flask" viewBox="0 0 24 24">
+      <path d="M9 2v6.5L4.5 17a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L15 8.5V2" stroke="currentColor" fill="none"></path>
+      <path d="M9 2h6M7.5 14h9" stroke="currentColor" fill="none"></path>
+    </symbol>
+    <symbol id="icon-dna" viewBox="0 0 24 24">
+      <path d="M7 3c0 5 10 5 10 10S7 18 7 21" stroke="currentColor" fill="none"></path>
+      <path d="M17 3c0 5-10 5-10 10s10 5 10 8" stroke="currentColor" fill="none"></path>
+      <path d="M8.5 7h7M8.5 17h7" stroke="currentColor" fill="none"></path>
+    </symbol>
+    <symbol id="icon-chart" viewBox="0 0 24 24">
+      <path d="M4 19V5M4 19h16" stroke="currentColor" fill="none"></path>
+      <path d="M7 15l4-5 3 3 4-6" stroke="currentColor" fill="none"></path>
+    </symbol>
+    <symbol id="icon-calculator" viewBox="0 0 24 24">
+      <rect x="5" y="3" width="14" height="18" rx="3" stroke="currentColor" fill="none"></rect>
+      <path d="M8.5 8h7" stroke="currentColor" fill="none"></path>
+      <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"></circle>
+      <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"></circle>
+      <circle cx="9" cy="17" r="1" fill="currentColor" stroke="none"></circle>
+      <circle cx="15" cy="17" r="1" fill="currentColor" stroke="none"></circle>
+    </symbol>
+
+  </defs>
+</svg>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Lab Potato home">
+      <svg class="brand-mark" viewBox="22 46 208 144" aria-hidden="true">
+        <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+        <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+        <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+        <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+      </svg>
+      <span class="brand-word">Lab&nbsp;Potato</span>
+    </a>
+    <nav class="main-nav">
+      <a href="#tools">Platform</a>
+      <a href="#reviews">Customers</a>
+      <a href="#specs">Compliance</a>
+      <a href="#feedback">Support</a>
+    </nav>
+    <a class="icon-link" href="https://github.com/bdongmin10/bdongmin10.github.io" target="_blank" rel="noopener" aria-label="View source on GitHub">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.58 2 12.19c0 4.49 2.87 8.3 6.84 9.65.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.21-3.37-1.21-.46-1.19-1.11-1.51-1.11-1.51-.91-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.72 0 0 .84-.27 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.19C22 6.58 17.52 2 12 2Z"/>
+      </svg>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="hero-mesh" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+
+      <figure class="mascot-figure">
+        <div class="speech-slot">
+          <div class="speech" id="speech" aria-live="polite"></div>
+        </div>
+
+        <button class="mascot" id="mascot" type="button" aria-label="Interact with the mascot">
+          <svg viewBox="0 0 240 262" aria-hidden="true">
+            <defs>
+              <linearGradient id="skin" x1="0.2" y1="0" x2="0.5" y2="1">
+                <stop offset="0%" stop-color="#d09760"></stop>
+                <stop offset="100%" stop-color="#bc8148"></stop>
+              </linearGradient>
+            </defs>
+
+            <ellipse class="m-shadow" cx="126" cy="246" rx="76" ry="8"></ellipse>
+
+            <g class="m-float">
+              <!-- body -->
+              <path class="m-body" d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z"></path>
+              <ellipse class="m-dimple" cx="52" cy="128" rx="6.5" ry="3.8" transform="rotate(-18 52 128)"></ellipse>
+              <ellipse class="m-dimple" cx="198" cy="126" rx="6" ry="3.4" transform="rotate(18 198 126)"></ellipse>
+
+              <!-- lab coat -->
+              <path class="m-coat" d="M84 156C62 161 40 166 32 180C22 197 20 212 21 228C68 236 188 236 235 228C236 212 234 197 224 180C216 166 194 161 172 155L127 196Z"></path>
+              <path class="m-lapel" d="M84 156L127 196M172 155L127 196"></path>
+              <rect class="m-pocket" x="50" y="188" width="35" height="25" rx="3"></rect>
+              <path class="m-pen" d="M62 182v13"></path>
+              <circle class="m-button" cx="127" cy="208" r="3"></circle>
+              <circle class="m-button" cx="127" cy="221" r="3"></circle>
+
+              <!-- face: deadpan, with the eye bags of a man three years in -->
+              <ellipse class="m-eye" cx="96" cy="116" rx="8" ry="10"></ellipse>
+              <ellipse class="m-eye" cx="152" cy="113" rx="8" ry="10"></ellipse>
+              <path class="m-eyebag" d="M88 131Q96 136 104 130M144 128Q152 133 160 127"></path>
+              <path class="m-mouth" d="M113 150h24"></path>
+
+              <!-- regulation eye protection: single wrap visor, head strap, side vents -->
+              <g class="m-goggles" id="goggles">
+                <path class="m-strap" d="M60 117L28 123M188 112L220 107"></path>
+                <rect class="m-goggle-frame" x="62" y="86" width="124" height="56" rx="27"></rect>
+                <rect class="m-lens" x="71" y="94" width="106" height="40" rx="19"></rect>
+                <ellipse class="m-vent" cx="67" cy="114" rx="3.6" ry="7"></ellipse>
+                <ellipse class="m-vent" cx="181" cy="114" rx="3.6" ry="7"></ellipse>
+              </g>
+            </g>
+          </svg>
+        </button>
+
+        <figcaption class="mascot-caption">
+          <span class="fig-label">Fig. 1</span>
+          I have skin. Potatoes have skin. Therefore, I am a potato.
+        </figcaption>
+      </figure>
+
+      <p class="eyebrow">Research software infrastructure</p>
+      <h1>Infrastructure for the other<br>half of research.</h1>
+      <p class="hero-lede">
+        Purpose-built tooling for the operational overhead of wet-lab research:
+        construct design, figure preparation, quantification and counting.
+        Everything runs in your browser — nothing to install, nothing to configure,
+        and not one byte of your data leaves your machine.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#tools">Explore the platform</a>
+        <a class="btn btn-ghost" href="#specs">Read the compliance brief</a>
+      </div>
+
+      <p class="hero-foot">No account. No trial period. No feature that disappears behind a plan.</p>
+    </div>
+  </section>
+
+
+  <!-- ===================== TOOLS ===================== -->
+  <section id="tools" class="section">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">Platform</span>
+        <h2>A modular suite of single-file solutions</h2>
+        <p>Each module is independently deployable, infinitely portable, and approximately one double-click from production.</p>
+      </div>
+      <div class="tools-grid" id="tools-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== TRUST STRIP ===================== -->
+  <section class="trust-strip">
+    <div class="wrap">
+      <p class="trust-label">Deployed across leading research environments</p>
+      <ul class="trust-logos">
+        <li>The Bench Next To Mine</li>
+        <li>My PI <span>(unaware)</span></li>
+        <li>One Lab In Singapore, Apparently</li>
+        <li>Four People in Korea</li>
+        <li>A Postdoc Who Never Replied</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== REVIEWS ===================== -->
+  <section id="reviews" class="section section-tint">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">Customer stories</span>
+        <h2>Trusted by researchers who had no other options</h2>
+        <p>Verified testimonials, collected by asking people in the corridor.</p>
+      </div>
+      <div class="quote-grid" id="quote-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== SPECS ===================== -->
+  <section id="specs" class="section">
+    <div class="wrap specs-wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">Compliance &amp; reliability</span>
+        <h2>Enterprise-grade, allegedly</h2>
+        <p>Full transparency on our infrastructure posture, security model, and organisational maturity.</p>
+      </div>
+      <dl class="spec-table reveal" id="spec-table"></dl>
+      <p class="spec-note reveal">
+        This document is not legally binding, has not been audited, and was written at 1:40&nbsp;am.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== FEEDBACK ===================== -->
+  <section id="feedback" class="section section-tint">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">Support</span>
+        <h2>Enterprise support channel</h2>
+        <p>Route your incident to the appropriate module below. Tickets are triaged by how much they personally annoy me.</p>
+      </div>
+      <div class="feedback-grid" id="feedback-grid"></div>
+      <p class="feedback-general reveal">
+        Requesting a capability that does not yet exist?
+        <a href="https://github.com/bdongmin10/bdongmin10.github.io/issues/new?template=feedback.md" target="_blank" rel="noopener">File a general ticket</a>
+        — our product team (one person, tired) reviews every submission.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about" class="section">
+    <div class="wrap about-wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">Architecture</span>
+        <h2>One file. That is the entire stack.</h2>
+      </div>
+      <div class="about-cards">
+        <div class="about-card reveal" style="--card:#0f9d76">
+          <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div>
+          <h3>Zero-install deployment</h3>
+          <p>A self-contained HTML file. Double-click to deploy. No container orchestration, no dependency hell, no conda environment that dies quietly in March.</p>
+        </div>
+        <div class="about-card reveal" style="--card:#2f6fed">
+          <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>Airtight data governance</h3>
+          <p>Your data never leaves the browser, because there is nowhere for it to go. We achieved perfect privacy compliance by never building a backend.</p>
+        </div>
+        <div class="about-card reveal" style="--card:#dd4f75">
+          <div class="about-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.65 12 21 12 21z"/></svg></div>
+          <h3>Grievance-driven development</h3>
+          <p>Every module originates from a task that consumed an entire afternoon and had no business doing so. Our roadmap is just a list of things that annoyed me.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-id">
+      <svg class="footer-mark" viewBox="22 46 208 144" aria-hidden="true">
+        <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+        <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+        <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+        <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+      </svg>
+      <div>
+        <h3>Dongmin Byun</h3>
+        <p class="footer-role">Labsolutely tired researcher @ National University of Singapore</p>
+        <p class="footer-blurb">
+          Founder, CEO, CTO, sole engineer, and entire support department.
+          Working on something similar, spotted a bug, or want to build a tool together?
+          Email me — collaborations and feedback always welcome.
+        </p>
+        <div class="footer-links">
+          <a class="footer-mail" href="mailto:bdongmin10@gmail.com">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>
+            </svg>
+            bdongmin10@gmail.com
+          </a>
+          <span id="support-slot"></span>
+          <a class="footer-gh" href="https://github.com/bdongmin10/bdongmin10.github.io" target="_blank" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.58 2 12.19c0 4.49 2.87 8.3 6.84 9.65.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.21-3.37-1.21-.46-1.19-1.11-1.51-1.11-1.51-.91-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.72 0 0 .84-.27 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.19C22 6.58 17.52 2 12 2Z"/>
+            </svg>
+            Source
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap footer-base">
+    <span>© <span id="year"></span> Lab Potato. Not a real company. Genuinely useful software.</span>
+    <span class="footer-wink">Powered by caffeine, spite, and an approaching thesis deadline.</span>
+  </div>
+</footer>
+
+<script src="assets/tools.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

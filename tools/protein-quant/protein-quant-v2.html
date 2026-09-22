@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProteinQuant</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#f4f7fa; --card:#fff; --ink:#25323e; --ink-2:#5a6a79; --ink-3:#8a97a4;
+    --line:#e3e9ef; --line-2:#c8d4de;
+    --blue:#2f7fa8; --blue-d:#215d7e; --blue-l:#e8f2f8;
+    --green:#4f9c6e; --green-l:#e7f4ec; --green-d:#357351;
+    --amber:#c5883f; --amber-l:#f9f0de; --amber-d:#8f5f1d;
+    --red:#c15f42; --red-l:#f9e8e2; --red-d:#98452f;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --sh:0 1px 2px rgba(30,55,80,.04),0 4px 14px rgba(30,55,80,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:hidden}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 18px 70px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---------- header with compact critter ---------- */
+  .apphead{display:flex;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}
+  .apphead .titles{flex:1;min-width:200px}
+  .apphead h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .apphead .sub{font-size:12.5px;color:var(--ink-3)}
+
+  /* ---------- floating dock of culture dishes ---------- */
+  .dock{position:fixed;top:18px;right:18px;z-index:60;width:212px;
+    background:rgba(255,255,255,.9);backdrop-filter:blur(6px);
+    border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px rgba(30,55,80,.14);
+    display:flex;flex-direction:column;max-height:calc(100vh - 36px)}
+  .dock-head{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-bottom:1px solid var(--line);flex:0 0 auto}
+  .dock-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+  .dock-toggle{margin-left:auto;font:inherit;font-size:13px;line-height:1;color:var(--ink-3);background:none;
+    border:none;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .dock-toggle:hover{background:var(--paper);color:var(--ink)}
+  .dock-body{padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:0}
+  .dock.collapsed .dock-body{display:none}
+  .dock.collapsed{width:auto}
+
+  .dish-wrap{flex:0 0 auto}
+  .dish-name{font-size:10.5px;font-weight:600;color:var(--ink-2);margin-bottom:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+  .dish-swatch{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .critter-stage{position:relative;width:192px;height:132px;border-radius:14px;overflow:hidden;
+    background:radial-gradient(120% 110% at 50% 100%,#eaf6f0 0%,#dbeee6 60%,#cde7dd 100%);
+    border:2px solid #fff;box-shadow:var(--sh);transition:background .5s ease}
+  .critter-stage.earth-mode{background:radial-gradient(120% 120% at 50% 45%,#17223c 0%,#0b1425 60%,#060b16 100%)}
+  .critter-stage.galaxy-mode{background:radial-gradient(120% 120% at 50% 50%,#1c1131 0%,#120a22 55%,#06030d 100%)}
+  .critter-bug{position:absolute;bottom:9px;left:50%;width:82px;transform:translateX(-50%);
+    animation:rock 4.4s ease-in-out infinite;transform-origin:50% 90%;z-index:3}
+  .critter-bug.centred{bottom:auto;top:50%;width:46px;transform:translate(-50%,-50%);z-index:5;
+    animation:rockC 3.4s ease-in-out infinite}
+  @keyframes rock{0%,100%{transform:translateX(-50%) rotate(-5deg)}50%{transform:translateX(-50%) rotate(5deg) translateY(-2px)}}
+  @keyframes rockC{0%,100%{transform:translate(-50%,-50%) rotate(-6deg)}50%{transform:translate(-50%,-50%) rotate(6deg)}}
+  .critter-bug svg{width:100%;height:auto;display:block;filter:drop-shadow(0 2px 3px rgba(30,55,80,.18))}
+  .cpart{position:absolute;left:0;top:0;pointer-events:none;will-change:transform;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .sh-circle{border-radius:50%}
+  .sh-blob{border-radius:62% 38% 33% 67% / 60% 32% 68% 40%}
+  .sh-hex{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)}
+  .sh-tri{clip-path:polygon(50% 4%,4% 96%,96% 96%)}
+  .sh-dia{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+  .cstar{position:absolute;border-radius:50%;background:#fff;pointer-events:none}
+  .cearth{position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 32% 30%,#6fd6c9 0,#3fa8d9 38%,#1f6fae 68%,#12507f 100%);
+    box-shadow:0 0 26px 4px rgba(90,180,220,.4)}
+  .ccont{position:absolute;background:#4f9c6e;opacity:.8;border-radius:58% 42% 40% 60%/55% 35% 65% 45%}
+  .cgal{position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,240,200,.95) 0,rgba(220,160,255,.5) 18%,rgba(120,90,220,.22) 45%,transparent 72%);
+    animation:spin 24s linear infinite}
+  @keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .carm{position:absolute;left:50%;top:50%;width:100%;height:26%;margin-top:-13%;transform-origin:0 50%;border-radius:50%;
+    background:radial-gradient(ellipse at 0 50%,rgba(190,150,255,.45) 0,rgba(120,180,255,.2) 42%,transparent 78%)}
+  .ccap{position:absolute;left:5px;right:5px;bottom:3px;text-align:center;font-size:9px;line-height:1.25;
+    color:var(--ink-3);font-style:italic;pointer-events:none}
+  .earth-mode .ccap,.galaxy-mode .ccap{color:#a8bbdd}
+
+  /* Give the page room so the fixed dock never covers content on wide screens,
+     and get out of the way entirely on narrow ones. */
+  @media (min-width:1290px){ .wrap{margin-right:auto;padding-right:18px} }
+  @media (max-width:1289px){
+    .dock{top:auto;bottom:14px;right:14px;width:176px}
+    .critter-stage{width:156px;height:108px}
+    .critter-bug{width:66px}
+    .dock-body{max-height:46vh}
+  }
+  @media (max-width:640px){
+    .dock{width:auto}
+    .dock.collapsed .dock-head{padding:6px 10px}
+  }
+
+  /* ---------- generic cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);margin-bottom:14px}
+  .card-pad{padding:16px 18px}
+  h2.sect{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:10px}
+
+  /* ---------- scenario / explainer ---------- */
+  .scenario{background:linear-gradient(135deg,#eef5fb,#eaf3f7);border:1px solid #d8e6f0}
+  .scenario h2{font-size:14px;font-weight:700;margin-bottom:8px}
+  .scenario p{font-size:13px;color:var(--ink-2);margin-bottom:8px;max-width:74ch}
+  .scenario .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+  .stepbox{background:rgba(255,255,255,.75);border:1px solid #dbe8f1;border-radius:9px;padding:10px 12px}
+  .stepbox .n{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.05em}
+  .stepbox .t{font-size:12.5px;font-weight:600;margin:2px 0 3px}
+  .stepbox .d{font-size:11.5px;color:var(--ink-3);line-height:1.45}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);background:var(--card);
+    border:1.5px solid var(--line-2);border-radius:999px;padding:8px 16px;cursor:pointer}
+  .tabs button[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+  .pane[hidden]{display:none}
+
+  /* ---------- inputs ---------- */
+  label.f{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
+  label.f .q{color:var(--ink-3);font-weight:500}
+  input[type=text],input[type=number],select,textarea{width:100%;font-family:var(--mono);font-size:13px;color:var(--ink);
+    background:#fbfcfd;border:1px solid var(--line-2);border-radius:7px;padding:7px 9px}
+  select{font-family:var(--sans);appearance:none;padding-right:26px;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a97a4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 9px center}
+  input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+  input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--blue-d);outline-offset:1px}
+  .pair{display:flex;gap:6px}
+  .pair select{flex:0 0 74px}
+  .hint{font-size:10.5px;color:var(--ink-3);line-height:1.45;margin-top:4px}
+
+  /* ---------- protein card ---------- */
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+  .pcard-head{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--blue-l);border-bottom:1px solid #d5e6f1;flex-wrap:wrap}
+  .pcard-head .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .d-ok{background:var(--green)} .d-warn{background:var(--amber)} .d-err{background:var(--red)} .d-idle{background:var(--line-2)}
+  .pcard-head input{flex:1;min-width:130px;max-width:280px;background:#fff;font-family:var(--sans);font-weight:600}
+  .pcard-head .rm{margin-left:auto;font:inherit;font-size:15px;color:var(--ink-3);background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:6px}
+  .pcard-head .rm:hover{background:var(--red-l);color:var(--red-d)}
+  .pcard-body{padding:14px 16px}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .fgrid.wide{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+
+  .subhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);
+    margin:16px 0 9px;padding-top:13px;border-top:1px solid var(--line);display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+  .subhead .opt{font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-3);font-style:italic}
+  .pcard-body > .subhead:first-child{margin-top:0;padding-top:0;border-top:none}
+
+  /* ---------- results ---------- */
+  .resbar{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .resbox{flex:1 1 160px;min-width:0;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--blue);
+    border-radius:8px;padding:9px 12px}
+  .resbox.g{border-left-color:var(--green)}
+  .resbox .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+  .resbox .v{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--blue-d);line-height:1.25;
+    overflow-wrap:anywhere}
+  .resbox.g .v{color:var(--green-d)}
+  .resbox .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:2px;overflow-wrap:anywhere}
+  .resbox .tier{font-size:11px;font-weight:700;margin-top:4px}
+  .resbox .tiernote{font-size:10.5px;color:var(--ink-3);line-height:1.4;margin-top:1px}
+  .empty{font-size:12px;color:var(--ink-3);font-style:italic}
+
+  .flag{font-size:11.5px;padding:7px 10px;border-radius:7px;border:1px solid;margin-top:9px;line-height:1.45}
+  .fl-err{border-color:var(--red);background:var(--red-l);color:var(--red-d)}
+  .fl-warn{border-color:var(--amber);background:var(--amber-l);color:var(--amber-d)}
+
+  /* ---------- buttons ---------- */
+  .btn{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--blue);border:none;border-radius:8px;padding:9px 16px;cursor:pointer}
+  .btn:hover{background:var(--blue-d)}
+  .btn.sec{background:var(--card);color:var(--blue-d);border:1.5px solid var(--line-2)}
+  .btn.sec:hover{border-color:var(--blue)}
+  .btn.sm{padding:7px 13px;font-size:12.5px}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .addbtn{font:inherit;font-size:13px;font-weight:600;color:var(--blue-d);background:none;border:1.5px dashed var(--line-2);
+    border-radius:9px;padding:9px 16px;cursor:pointer;width:100%}
+  .addbtn:hover{border-color:var(--blue);background:var(--blue-l)}
+
+  /* ---------- standard curve ---------- */
+  .stdrow{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:9px;align-items:end;margin-bottom:9px}
+  @media(max-width:620px){.stdrow{grid-template-columns:1fr 1fr;}.stdrow .rm{grid-column:2;justify-self:end}}
+  .fitgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:12px}
+  .chartwrap{margin-top:14px}
+  .chartwrap svg{width:100%;height:auto;max-width:420px;display:block}
+
+  /* ---------- export ---------- */
+  .colcfg{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;max-width:520px}
+  .colcfg input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}
+  .ordb{font:inherit;font-size:11px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line-2);
+    border-radius:5px;width:22px;height:22px;cursor:pointer;line-height:1}
+  .ordb:disabled{opacity:.3;cursor:default}
+  .prev{margin-top:12px;font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);
+    border-radius:7px;padding:10px;max-height:140px;overflow:auto;white-space:pre}
+
+  details.help{font-size:12px;color:var(--ink-3);margin-top:6px}
+  details.help>summary{cursor:pointer;font-weight:600;color:var(--blue-d);list-style:none;padding:7px 0}
+  details.help>summary::-webkit-details-marker{display:none}
+  details.help>summary::before{content:"\25B8  "}
+  details.help[open]>summary::before{content:"\25BE  "}
+  .helpbody{color:var(--ink-2);line-height:1.7;padding-bottom:6px}
+  .helpbody p{margin-bottom:9px}
+  .helpbody h4{font-size:12px;color:var(--ink);margin:12px 0 4px}
+  .helpbody code{font-family:var(--mono);background:var(--paper);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+  .helpbody a{color:var(--blue-d)}
+  .helpbody ul{list-style:none;display:grid;gap:4px;margin-top:8px}
+  .wm{margin-top:16px;font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- hidden master copy of the bacterium drawing, cloned into each dish -->
+<svg id="bugTemplate" style="display:none" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="68" cy="65" rx="44" ry="5" fill="#000" opacity=".08"/>
+  <rect x="14" y="18" width="112" height="40" rx="20" class="bugbody" fill="#8fd3c7" stroke="#2f7fa8" stroke-width="3"/>
+  <path d="M22 30q6-6 14 0" stroke="#2f7fa8" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
+  <path d="M20 46q7 6 15 0" stroke="#2f7fa8" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
+  <circle cx="95" cy="33" r="4.2" fill="#25323e"/><circle cx="110" cy="33" r="4.2" fill="#25323e"/>
+  <circle cx="96.3" cy="31.6" r="1.3" fill="#fff"/><circle cx="111.3" cy="31.6" r="1.3" fill="#fff"/>
+  <circle cx="88" cy="40" r="3.6" fill="#c15f42" opacity=".26"/><circle cx="116" cy="40" r="3.6" fill="#c15f42" opacity=".26"/>
+  <path d="M96 45q6 5 12 0" stroke="#25323e" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+</svg>
+
+<aside class="dock" id="dock" aria-hidden="true">
+  <div class="dock-head">
+    <span class="dock-title">Live culture</span>
+    <button class="dock-toggle" id="dockToggle" type="button" title="Hide / show">&#9662;</button>
+  </div>
+  <div class="dock-body" id="dockBody"></div>
+</aside>
+
+  <div class="apphead">
+    <div class="titles">
+      <h1>ProteinQuant</h1>
+      <div class="sub">Protein concentration and expression yield, from A280 or a standard curve</div>
+    </div>
+  </div>
+
+  <section class="card scenario card-pad">
+    <h2>What this is for</h2>
+    <p>You grew a culture, purified your protein, and read its absorbance at 280&nbsp;nm. This works out <b>how concentrated it is</b> and <b>how much your culture actually produced</b> &mdash; then tells you whether that is a normal number for <i>E. coli</i>.</p>
+    <div class="steps">
+      <div class="stepbox"><div class="n">STEP 1</div><div class="t">Describe the protein</div><div class="d">Its molecular weight and extinction coefficient. Both come from the sequence, e.g. Benchling or ProtParam.</div></div>
+      <div class="stepbox"><div class="n">STEP 2</div><div class="t">Enter your A280 reading</div><div class="d">Type all your replicate readings; they get averaged for you. You get concentration straight away.</div></div>
+      <div class="stepbox"><div class="n">STEP 3</div><div class="t">Add the two volumes</div><div class="d">How much purified protein you ended up with, and how big the culture was. That gives yield in mg per litre.</div></div>
+    </div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn sm" id="btnExample" type="button">Fill in a worked example</button>
+      <button class="btn sec sm" id="btnClear" type="button">Clear everything</button>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button id="tabA" role="tab" aria-pressed="true" type="button">From A280</button>
+    <button id="tabC" role="tab" aria-pressed="false" type="button">From a standard curve</button>
+  </div>
+
+  <!-- ================= PANE A: A280 ================= -->
+  <section class="pane" id="paneA">
+    <div class="card card-pad" style="padding-top:13px;padding-bottom:13px">
+      <div class="fgrid wide">
+        <div>
+          <label class="f" for="gPath">Your A280 reading is <span class="q">&mdash; leave as-is for NanoDrop</span></label>
+          <select id="gPath">
+            <option value="10" selected>Already 1&nbsp;cm-equivalent (NanoDrop, most software)</option>
+            <option value="5">Raw reading, 5&nbsp;mm cuvette</option>
+            <option value="2">Raw reading, 2&nbsp;mm cuvette</option>
+            <option value="1">Raw reading, 1&nbsp;mm cuvette</option>
+          </select>
+        </div>
+        <div>
+          <label class="f" for="gUnit">Show concentration in</label>
+          <select id="gUnit">
+            <option value="uM" selected>&micro;M</option><option value="mM">mM</option><option value="M">M</option>
+            <option value="nM">nM</option><option value="mgml">mg/mL</option><option value="ugml">&micro;g/mL</option>
+            <option value="pct">% (w/v)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="proteinList"></div>
+    <button class="addbtn" id="btnAdd" type="button">+ Add another protein</button>
+
+    <div class="card card-pad" style="margin-top:14px">
+      <div class="btnrow">
+        <button class="btn sm" id="btnExpA" type="button">Export table</button>
+        <span style="font-size:12px;color:var(--ink-3)">Pick and rename columns before downloading.</span>
+      </div>
+      <div id="expPanelA" hidden style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+        <h2 class="sect">Columns</h2>
+        <div class="colcfg" id="colcfgA"></div>
+        <div class="btnrow" style="margin-top:12px">
+          <button class="btn sm" id="btnCsvA" type="button">Download CSV</button>
+          <button class="btn sec sm" id="btnTsvA" type="button">Copy as TSV</button>
+        </div>
+        <div class="prev" id="prevA"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PANE C: standard curve ================= -->
+  <section class="pane" id="paneC" hidden>
+    <div class="card card-pad">
+      <h2 class="sect">Standards</h2>
+      <p style="font-size:12.5px;color:var(--ink-2);margin-bottom:12px;max-width:70ch">Read a dilution series of a known protein (usually BSA) with your colour reagent, then enter each concentration next to the absorbance you measured. A straight line is fitted through them, and your unknowns are read off it.</p>
+      <div style="max-width:200px;margin-bottom:12px">
+        <label class="f" for="curveUnit">Standards are in</label>
+        <select id="curveUnit"><option value="ugml" selected>&micro;g/mL</option><option value="mgml">mg/mL</option></select>
+      </div>
+      <div id="stdList"></div>
+      <button class="addbtn" id="btnAddStd" type="button" style="margin-top:4px">+ Add a standard</button>
+      <div id="fitOut"></div>
+    </div>
+
+    <div class="card card-pad">
+      <h2 class="sect">Your unknown samples</h2>
+      <div id="sampList"></div>
+      <button class="addbtn" id="btnAddSamp" type="button" style="margin-top:4px">+ Add a sample</button>
+    </div>
+
+    <div class="card card-pad">
+      <div class="btnrow">
+        <button class="btn sm" id="btnExpC" type="button">Export table</button>
+        <span style="font-size:12px;color:var(--ink-3)">Pick and rename columns before downloading.</span>
+      </div>
+      <div id="expPanelC" hidden style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+        <h2 class="sect">Columns</h2>
+        <div class="colcfg" id="colcfgC"></div>
+        <div class="btnrow" style="margin-top:12px">
+          <button class="btn sm" id="btnCsvC" type="button">Download CSV</button>
+          <button class="btn sec sm" id="btnTsvC" type="button">Copy as TSV</button>
+        </div>
+        <div class="prev" id="prevC"></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="help">
+    <summary>How every number here is worked out</summary>
+    <div class="helpbody">
+      <h4>Concentration from A280</h4>
+      <p>Beer&ndash;Lambert. The extinction coefficient can be given three ways, and they are <b>not</b> interchangeable:</p>
+      <p><b>A 0.1%</b> &mdash; absorbance of a 1&nbsp;mg/mL (1&nbsp;g/L) solution in a 1&nbsp;cm cuvette. This is what Benchling and ProtParam report, and the default here. <code>c (mg/mL) = A / A<sup>0.1%</sup></code>. No MW needed.</p>
+      <p><b>E 1%</b> &mdash; absorbance of a 10&nbsp;mg/mL (1% w/v) solution. Exactly ten times A&nbsp;0.1%, so mixing them up gives a 10-fold error. <code>c (mg/mL) = 10 &times; A / E<sup>1%</sup></code>.</p>
+      <p><b>Molar &epsilon;</b> (M&#8315;&sup1;cm&#8315;&sup1;) &mdash; <code>c (M) = A / &epsilon;</code>, then <code>c (mg/mL) = c (M) &times; MW</code>. MW required.</p>
+      <p>Replicate readings are averaged (SD shown for n&nbsp;&ge;&nbsp;2). Dilution factor multiplies the result. Path length: NanoDrop's Protein A280 mode already reports a 10&nbsp;mm-equivalent number, so no correction is applied by default.</p>
+
+      <h4>Yield</h4>
+      <p>Two steps. <code>total (mg) = concentration (mg/mL) &times; volume of your prep (mL)</code>. Then <code>yield (mg/L) = total (mg) &divide; culture volume (L)</code>, assuming the whole culture went into that one purification. Eluting into a bigger volume does not change how much protein you have &mdash; it is the same material spread thinner, so multiplying back out gives the same total.</p>
+      <p>Benchmarks for recombinant protein in <i>E. coli</i>:</p>
+      <p style="font-family:var(--mono);font-size:11.5px;line-height:1.9">
+        &lt;&nbsp;10&nbsp;mg/L &mdash; low<br>
+        10&ndash;100&nbsp;mg/L &mdash; typical shake flask<br>
+        100&ndash;500&nbsp;mg/L &mdash; high, optimised shake flask<br>
+        0.5&ndash;10&nbsp;g/L &mdash; very high, fed-batch bioreactor<br>
+        &gt;&nbsp;10&nbsp;g/L &mdash; at or beyond the best published titres<br>
+        &gt;&nbsp;100&nbsp;g/L &mdash; not physically possible
+      </p>
+      <p>That ceiling is real: even a fed-batch reaching &gt;100&nbsp;g dry cell weight per litre only holds about 55&nbsp;g/L of total cellular protein, since <i>E. coli</i> is roughly 52&ndash;55% protein by dry weight. More than that of a single product means a unit or volume mistake.</p>
+
+      <h4>Standard curve</h4>
+      <p>Ordinary least squares through your standards: <code>A = slope &times; C + intercept</code>, inverted as <code>C = (A &minus; intercept) / slope</code>. R&sup2; below 0.99 is flagged, and a sample landing outside the concentration range you actually tested is flagged as an extrapolation.</p>
+
+      <ul>
+        <li>&middot; <a href="https://doi.org/10.1002/0471140864.ps0301s33" target="_blank" rel="noopener">Grimsley &amp; Pace, Curr Protoc Protein Sci 2003 &mdash; spectrophotometric determination</a></li>
+        <li>&middot; <a href="https://documents.thermofisher.com/TFS-Assets/CAD/manuals/NanoDrop-2000-User-Manual-EN.pdf" target="_blank" rel="noopener">NanoDrop 2000/2000c manual &mdash; path-length normalisation</a></li>
+        <li>&middot; <a href="https://doi.org/10.1016/0003-2697(76)90527-3" target="_blank" rel="noopener">Bradford 1976 &mdash; Coomassie dye-binding assay</a></li>
+        <li>&middot; <a href="https://doi.org/10.1016/0003-2697(85)90442-7" target="_blank" rel="noopener">Smith et al. 1985 &mdash; BCA assay</a></li>
+        <li>&middot; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10014274/" target="_blank" rel="noopener">Reilly et al. &mdash; per-litre soluble yields</a>; <a href="https://www.osti.gov/pages/servlets/purl/1771987" target="_blank" rel="noopener">fed-batch titres to 8.1 g/L</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/1809196/" target="_blank" rel="noopener">Riesenberg et al. &mdash; &gt;100 gDCW/L</a></li>
+        <li>&middot; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10764063/" target="_blank" rel="noopener">R&sup2; &gt; 0.99 linearity benchmark</a></li>
+      </ul>
+    </div>
+  </details>
+  <p class="wm">Designed and generated by Dongmin Byun &middot; bdongmin10@gmail.com &middot; Claude was utilized in the generation.</p>
+
+</div>
+
+<script>
+"use strict";
+/* ==================== PURE CORE START ==================== */
+function sig(x, n){
+  if (x === null || x === undefined || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  n = Math.max(1, Math.min(12, n|0));
+  var mag = Math.floor(Math.log10(Math.abs(x)));
+  var dec = n - 1 - mag;
+  if (dec > 0) return x.toFixed(Math.min(dec, 15));
+  var f = Math.pow(10, -dec);
+  return String(Math.round(x / f) * f);
+}
+function toOneCm(a, lMM){ return a / (lMM / 10); }
+function molarFromAbs(a1cm, eps, dilution){ return (a1cm * dilution) / eps; }
+function mgmlFromMolar(molar, mw){ return molar * mw; }
+
+function parseReadings(raw){
+  var toks = String(raw || "").split(/[,;\s]+/).filter(function(t){ return t !== ""; });
+  var values = [], invalid = [];
+  toks.forEach(function(t){
+    var v = parseFloat(t);
+    if (isFinite(v) && /^-?[0-9.eE+-]+$/.test(t)) values.push(v); else invalid.push(t);
+  });
+  return { values: values, invalid: invalid };
+}
+function mean(arr){ if (!arr.length) return null; var s=0; for(var i=0;i<arr.length;i++) s+=arr[i]; return s/arr.length; }
+function sampleSD(arr){
+  if (arr.length < 2) return null;
+  var m = mean(arr), s = 0;
+  for (var i=0;i<arr.length;i++) s += (arr[i]-m)*(arr[i]-m);
+  return Math.sqrt(s/(arr.length-1));
+}
+
+function molarToUnit(molar, unit, mw){
+  switch(unit){
+    case "M": return molar; case "mM": return molar*1e3; case "uM": return molar*1e6; case "nM": return molar*1e9;
+    case "mgml": return (mw>0) ? molar*mw : null;
+    case "ugml": return (mw>0) ? molar*mw*1000 : null;
+    case "pct":  return (mw>0) ? (molar*mw)/10 : null;
+    default: return null;
+  }
+}
+function unitToMolar(v, unit, mw){
+  switch(unit){
+    case "M": return v; case "mM": return v/1e3; case "uM": return v/1e6; case "nM": return v/1e9;
+    case "mgml": return (mw>0) ? v/mw : null;
+    case "ugml": return (mw>0) ? (v/1000)/mw : null;
+    case "pct":  return (mw>0) ? (v*10)/mw : null;
+    default: return null;
+  }
+}
+function massToMgPerMl(v, unit){
+  switch(unit){ case "mgml": return v; case "ugml": return v/1000; case "pct": return v*10; default: return null; }
+}
+function volToL(v, unit){ return unit==="L" ? v : (unit==="mL" ? v/1e3 : v/1e6); }
+function LtoUnit(L, unit){ return unit==="L" ? L : (unit==="mL" ? L*1e3 : L*1e6); }
+var UNIT_LABEL = { M:"M", mM:"mM", uM:"µM", nM:"nM", mgml:"mg/mL", ugml:"µg/mL", pct:"% (w/v)" };
+
+function stockVolumeL(cStockM, cTargetM, vTargetL){
+  var out = { ok:false, flags:[] };
+  if (!(cStockM > 0))  out.flags.push({t:"err", m:"Stock concentration must be greater than zero."});
+  if (!(cTargetM >= 0)) out.flags.push({t:"err", m:"Target concentration cannot be negative."});
+  if (!(vTargetL >= 0)) out.flags.push({t:"err", m:"Final volume cannot be negative."});
+  if (out.flags.length) return out;
+  if (cTargetM > cStockM){ out.flags.push({t:"err", m:"Target concentration is higher than the stock. Dilution cannot raise a concentration."}); return out; }
+  var v1 = (cTargetM * vTargetL) / cStockM;
+  out.ok = true; out.v1L = v1; out.remainderL = vTargetL - v1;
+  if (v1 > 0 && v1 < 1e-9) out.flags.push({t:"warn", m:"Required stock volume is below 1 nL and cannot be pipetted; prepare an intermediate dilution first."});
+  return out;
+}
+
+function computeRow(row, pathMM){
+  var out = { ok:false, flags:[] };
+  var epsType = (row.epsType === "molar" || row.epsType === "e1pct") ? row.epsType : "mass01";
+  var eps = row.eps, mw = row.mw;
+  var dil = (row.dil===undefined||row.dil===null||row.dil==="") ? 1 : row.dil;
+  var parsed = parseReadings(row.a280raw);
+
+  if (!(eps > 0)) out.flags.push({t:"err", m:"Extinction coefficient must be a positive number."});
+  if (epsType === "molar" && !(mw > 0)) out.flags.push({t:"err", m:"MW is required when ε is entered as a molar extinction coefficient (M⁻¹cm⁻¹)."});
+  if (mw !== null && mw !== undefined && !(mw > 0)) out.flags.push({t:"err", m:"MW must be a positive number if entered."});
+  if (!(dil > 0)) out.flags.push({t:"err", m:"Dilution must be a positive number."});
+  if (!(pathMM > 0)) out.flags.push({t:"err", m:"Path length must be a positive number."});
+  if (!parsed.values.length) out.flags.push({t:"err", m:"Enter at least one A280 reading."});
+  if (parsed.invalid.length) out.flags.push({t:"warn", m:"Ignored unreadable token(s): " + parsed.invalid.join(", ")});
+  if (out.flags.some(function(f){return f.t==="err";})) { out.parsed = parsed; return out; }
+
+  var m = mean(parsed.values);
+  var sd = sampleSD(parsed.values);
+  var a1cm = toOneCm(m, pathMM);
+  if (a1cm < 0) out.flags.push({t:"err", m:"Mean A280 is negative."});
+  if (out.flags.some(function(f){return f.t==="err";})) { out.parsed = parsed; return out; }
+
+  if (m < 0.02) out.flags.push({t:"warn", m:"Mean A280 as read is " + sig(m,2) + ", below 0.02: weak signal, noise-dominated."});
+  if (m > 1.5)  out.flags.push({t:"warn", m:"Mean A280 as read is " + sig(m,2) + ", above 1.5: likely outside instrument linearity."});
+
+  var molar, mgml;
+  if (epsType === "molar"){
+    molar = molarFromAbs(a1cm, eps, dil);
+    mgml = mgmlFromMolar(molar, mw);
+  } else if (epsType === "mass01"){
+    /* eps is A(0.1%): the absorbance of a 1 mg/mL (1 g/L) solution at 1 cm.
+       c(mg/mL) = A1cm x dilution / A(0.1%). MW is only needed to also report molar units. */
+    mgml = (a1cm * dil) / eps;
+    molar = (mw > 0) ? mgml / mw : null;
+    if (mw === null || mw === undefined) out.flags.push({t:"info", m:"No MW entered: mass-based units (mg/mL, µg/mL, % w/v) are available; molar units are not."});
+  } else {
+    /* eps is E(1%): the absorbance of a 1% w/v (10 mg/mL) solution at 1 cm.
+       E(1%) = 10 x A(0.1%), so c(mg/mL) = 10 x A1cm x dilution / E(1%). */
+    mgml = 10 * (a1cm * dil) / eps;
+    molar = (mw > 0) ? mgml / mw : null;
+    if (mw === null || mw === undefined) out.flags.push({t:"info", m:"No MW entered: mass-based units (mg/mL, µg/mL, % w/v) are available; molar units are not."});
+  }
+
+  out.ok = true;
+  out.n = parsed.values.length; out.meanA280 = m; out.sdA280 = sd; out.a1cm = a1cm;
+  out.molar = molar; out.mgml = mgml; out.epsType = epsType;
+  out.parsed = parsed;
+  return out;
+}
+
+function linreg(points){
+  var out = { ok:false, flags:[] };
+  var pts = (points || []).filter(function(p){ return isFinite(p.x) && isFinite(p.y); });
+  if (pts.length < 2){ out.flags.push({t:"err", m:"At least two standard points with a readable concentration and absorbance are needed."}); return out; }
+  var n = pts.length, sumX=0,sumY=0,sumXY=0,sumXX=0;
+  pts.forEach(function(p){ sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumXX+=p.x*p.x; });
+  var denom = n*sumXX - sumX*sumX;
+  if (Math.abs(denom) < 1e-12){ out.flags.push({t:"err", m:"Standard concentrations must not all be identical."}); return out; }
+  var slope = (n*sumXY - sumX*sumY) / denom;
+  var intercept = (sumY - slope*sumX) / n;
+  var meanY = sumY / n, ssTot=0, ssRes=0;
+  pts.forEach(function(p){ var yhat = slope*p.x + intercept; ssTot += (p.y-meanY)*(p.y-meanY); ssRes += (p.y-yhat)*(p.y-yhat); });
+  var r2 = ssTot > 0 ? (1 - ssRes/ssTot) : 1;
+  out.ok = true; out.slope = slope; out.intercept = intercept; out.r2 = r2; out.n = n;
+  out.xMin = Math.min.apply(null, pts.map(function(p){return p.x;}));
+  out.xMax = Math.max.apply(null, pts.map(function(p){return p.x;}));
+  out.points = pts;
+  if (Math.abs(slope) < 1e-12){ out.ok = false; out.flags.push({t:"err", m:"Fitted slope is zero; cannot invert the curve to compute concentration."}); return out; }
+  if (r2 < 0.99) out.flags.push({t:"warn", m:"R² is " + sig(r2,4) + ", below the 0.99 linearity benchmark used in published assay-validation work."});
+  return out;
+}
+
+function concFromCurve(fit, aMean, dil){
+  var out = { ok:false, flags:[] };
+  if (!fit || !fit.ok){ out.flags.push({t:"err", m:"Standard curve is not valid yet."}); return out; }
+  var d = (dil===undefined||dil===null||dil==="") ? 1 : dil;
+  if (!(d > 0)) { out.flags.push({t:"err", m:"Dilution must be a positive number."}); return out; }
+  var c = (aMean - fit.intercept) / fit.slope;
+  var cActual = c * d;
+  out.ok = true; out.cMeasured = c; out.cActual = cActual;
+  if (c < fit.xMin || c > fit.xMax) out.flags.push({t:"warn", m:"Concentration " + sig(c,4) + " falls outside the standard range (" + sig(fit.xMin,3) + "–" + sig(fit.xMax,3) + "): this is an extrapolation."});
+  if (c < 0) out.flags.push({t:"warn", m:"Computed concentration (before dilution) is negative: the sample's absorbance is below the lowest standard."});
+  return out;
+}
+/* -------- Yield: total amount from concentration x volume, optional % recovery -------- */
+function computeYield(mgPerMl, molarM, volumeL){
+  var out = { ok:false, flags:[] };
+  if (!(volumeL > 0)) { out.flags.push({t:"err", m:"Total volume must be greater than zero."}); return out; }
+  if (mgPerMl === null && molarM === null) { out.flags.push({t:"err", m:"Selected stock has no usable concentration."}); return out; }
+  out.ok = true;
+  out.massMg = (mgPerMl !== null) ? mgPerMl * LtoUnit(volumeL,"mL") : null;
+  out.molarMol = (molarM !== null) ? molarM * volumeL : null;
+  return out;
+}
+function recoveryPercent(yieldMassMg, yieldMolarMol, startVal, startUnit){
+  var out = { ok:false, flags:[] };
+  if (!(startVal > 0)) { out.flags.push({t:"err", m:"Starting amount must be greater than zero."}); return out; }
+  var pct;
+  if (startUnit === "mg" || startUnit === "ug"){
+    if (yieldMassMg === null) { out.flags.push({t:"err", m:"Mass-based recovery needs a mass yield for this stock."}); return out; }
+    var startMg = (startUnit === "ug") ? startVal/1000 : startVal;
+    pct = (yieldMassMg / startMg) * 100;
+  } else {
+    if (yieldMolarMol === null) { out.flags.push({t:"err", m:"Molar recovery needs a molecular weight for this stock."}); return out; }
+    var startMol = (startUnit === "nmol") ? startVal*1e-9 : startVal*1e-6;
+    pct = (yieldMolarMol / startMol) * 100;
+  }
+  out.ok = true; out.pct = pct;
+  if (pct > 100) out.flags.push({t:"warn", m:"Recovery is over 100% (" + sig(pct,3) + "%): check the starting amount and units, since purification cannot increase total protein."});
+  return out;
+}
+/* Normalise a total yield against a reference volume (e.g. starting culture volume), giving a
+   production rate like "mg protein per L culture" rather than just a total amount. refVolumeL and
+   the total amount must already be in compatible bases (mass in mg, or moles in mol); the division
+   is dimension-preserving, so the result is amount per litre of the *reference* volume, not per litre
+   of the sample itself. */
+function yieldPerVolume(totalMass, totalMolar, refVolumeL){
+  var out = { ok:false, flags:[] };
+  if (!(refVolumeL > 0)) { out.flags.push({t:"err", m:"Reference volume must be greater than zero."}); return out; }
+  if (totalMass === null && totalMolar === null) { out.flags.push({t:"err", m:"No yield available to normalise."}); return out; }
+  out.ok = true;
+  out.massMgPerL = (totalMass !== null) ? totalMass / refVolumeL : null;
+  out.molarMolPerL = (totalMolar !== null) ? totalMolar / refVolumeL : null;
+  return out;
+}
+/* Classify an expression yield (mg protein per L of culture) against published E. coli benchmarks.
+   Sources (see Help panel):
+     - shake flask, soluble cytoplasmic: ~10-100 mg/L; optimized shake flask: 200-500 mg/L
+     - instrumented fed-batch: ~1-10 g/L (8.1 g/L reported at ~30 gCDW/L)
+     - hard ceiling: even at >100 gDCW/L, E. coli is only ~52-55% protein by dry weight,
+       so total cellular protein caps out near 55 g/L. A single recombinant product above
+       ~100 g/L is not physically possible. */
+function classifyYield(mgPerL){
+  if (mgPerL === null || mgPerL === undefined || !isFinite(mgPerL) || mgPerL < 0) return null;
+  if (mgPerL < 10)     return { tier:"low",        label:"Low",         note:"Below the usual shake-flask range (10-100 mg/L)." };
+  if (mgPerL < 100)    return { tier:"typical",    label:"Typical",     note:"Normal shake-flask range for a soluble cytoplasmic protein." };
+  if (mgPerL < 500)    return { tier:"high",       label:"High",        note:"Optimized shake-flask territory (200-500 mg/L)." };
+  if (mgPerL < 10000)  return { tier:"veryhigh",   label:"Very high",   note:"Fed-batch bioreactor range (0.5-10 g/L)." };
+  if (mgPerL < 100000) return { tier:"impressive", label:"Impressive",  note:"Above 10 g/L: at or beyond the best reported fed-batch titres." };
+  return { tier:"impossible", label:"Not physically possible", note:"Above ~100 g/L exceeds total E. coli cellular protein (~55 g/L even at 100 gDCW/L, ~55% protein by dry weight). Check the units and volumes." };
+}
+/* ==================== PURE CORE END ==================== */
+
+/* ==================== UI ==================== */
+var $ = function(id){ return document.getElementById(id); };
+function num(v){ var f = parseFloat(v); return isFinite(f) ? f : null; }
+function esc(v){ return String(v===undefined||v===null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+var MOLAR_FAMILY = ["M","mM","uM","nM"];
+
+/* ---------- tabs ---------- */
+$("tabA").addEventListener("click", function(){ showPane("A"); });
+$("tabC").addEventListener("click", function(){ showPane("C"); });
+function showPane(which){
+  $("tabA").setAttribute("aria-pressed", which==="A"?"true":"false");
+  $("tabC").setAttribute("aria-pressed", which==="C"?"true":"false");
+  $("paneA").hidden = which!=="A";
+  $("paneC").hidden = which!=="C";
+}
+
+/* ================= PROTEINS (A280) ================= */
+var proteins = [], pidSeq = 0;
+function newProtein(seed){
+  pidSeq++;
+  var p = { id:pidSeq, name:"", mw:"", eps:"", epsType:"mass01", a280:"", dil:"1",
+            prepVol:"", prepVolU:"mL", cultVol:"", cultVolU:"mL" };
+  if (seed) for (var k in seed) if (Object.prototype.hasOwnProperty.call(seed,k)) p[k]=seed[k];
+  proteins.push(p);
+  return p;
+}
+function pathMM(){ return num($("gPath").value) || 10; }
+function unit(){ return $("gUnit").value; }
+
+function evalProtein(p){
+  return computeRow({ mw:num(p.mw), eps:num(p.eps), epsType:p.epsType, a280raw:p.a280, dil:p.dil }, pathMM());
+}
+function concDisplay(res, u){
+  if (MOLAR_FAMILY.indexOf(u) > -1) return res.molar===null ? null : molarToUnit(res.molar,u,null);
+  if (res.mgml===null || res.mgml===undefined) return null;
+  if (u==="mgml") return res.mgml;
+  if (u==="ugml") return res.mgml*1000;
+  if (u==="pct")  return res.mgml/10;
+  return null;
+}
+/* Yield for one protein. Returns null when the volumes aren't filled in yet. */
+function proteinYield(p, res){
+  if (!res.ok || res.mgml===null) return null;
+  var pv = num(p.prepVol);
+  if (pv===null) return null;
+  var prepL = volToL(pv, p.prepVolU);
+  var y = computeYield(res.mgml, res.molar, prepL);
+  if (!y.ok) return { error: y.flags.map(function(f){return f.m;}).join(" ") };
+  var out = { totalMg:y.massMg, totalMol:y.molarMol, prepMl:LtoUnit(prepL,"mL") };
+  var cv = num(p.cultVol);
+  if (cv !== null){
+    var cultL = volToL(cv, p.cultVolU);
+    var yv = yieldPerVolume(y.massMg, y.molarMol, cultL);
+    if (yv.ok){ out.mgPerL = yv.massMgPerL; out.cultMl = LtoUnit(cultL,"mL"); out.tier = classifyYield(yv.massMgPerL); }
+    else out.volError = yv.flags.map(function(f){return f.m;}).join(" ");
+  }
+  return out;
+}
+
+function renderProteins(){
+  var host = $("proteinList");
+  host.innerHTML = "";
+  proteins.forEach(function(p){
+    var res = evalProtein(p);
+    var touched = (p.mw!=="" || p.eps!=="" || p.a280.trim()!=="");
+    var dot = !touched ? "d-idle" : (res.ok ? (res.flags.length?"d-warn":"d-ok") : "d-err");
+
+    var card = document.createElement("div");
+    card.className = "pcard"; card.dataset.pid = p.id;
+
+    var mwOptional = (p.epsType==="mass01" || p.epsType==="e1pct");
+    var y = proteinYield(p, res);
+
+    card.innerHTML =
+      '<div class="pcard-head">'+
+        '<span class="dot '+dot+'" title="'+esc(res.flags.map(function(f){return f.m;}).join(" ")||"Ready")+'"></span>'+
+        '<input type="text" data-f="name" value="'+esc(p.name)+'" placeholder="Protein '+p.id+'" aria-label="Protein name">'+
+        (proteins.length>1 ? '<button class="rm" data-act="del" title="Remove this protein" aria-label="Remove">&#10005;</button>' : '')+
+      '</div>'+
+      '<div class="pcard-body">'+
+
+        '<div class="subhead">Step 1 &middot; the protein</div>'+
+        '<div class="fgrid">'+
+          '<div>'+
+            '<label class="f">Extinction coefficient</label>'+
+            '<input type="number" step="any" data-f="eps" value="'+esc(p.eps)+'" placeholder="1.035">'+
+          '</div>'+
+          '<div>'+
+            '<label class="f">&hellip; given as</label>'+
+            '<select data-f="epsType">'+
+              '<option value="mass01"'+(p.epsType==="mass01"?" selected":"")+'>A 0.1% (1 g/L, 1 cm)</option>'+
+              '<option value="e1pct"'+(p.epsType==="e1pct"?" selected":"")+'>E 1% (10 g/L, 1 cm)</option>'+
+              '<option value="molar"'+(p.epsType==="molar"?" selected":"")+'>Molar, M&#8315;&sup1;cm&#8315;&sup1;</option>'+
+            '</select>'+
+          '</div>'+
+          '<div>'+
+            '<label class="f">Molecular weight <span class="q">'+(mwOptional?"&mdash; optional":"&mdash; required")+'</span></label>'+
+            '<input type="number" step="any" data-f="mw" value="'+esc(p.mw)+'" placeholder="94010">'+
+            (mwOptional ? '<div class="hint">Only needed to show &micro;M. mg/mL works without it.</div>' : '')+
+          '</div>'+
+        '</div>'+
+
+        '<div class="subhead">Step 2 &middot; your reading</div>'+
+        '<div class="fgrid">'+
+          '<div style="grid-column:span 2;min-width:0">'+
+            '<label class="f">A280 <span class="q">&mdash; separate replicates with commas</span></label>'+
+            '<input type="text" data-f="a280" value="'+esc(p.a280)+'" placeholder="0.1283, 0.1322, 0.1406">'+
+            (res.ok ? '<div class="hint">mean '+sig(res.meanA280,4)+(res.n>1?' &plusmn; '+sig(res.sdA280,3)+' (n='+res.n+')':'')+'</div>' : '')+
+          '</div>'+
+          '<div>'+
+            '<label class="f">Dilution factor</label>'+
+            '<input type="number" step="any" min="0" data-f="dil" value="'+esc(p.dil)+'">'+
+            '<div class="hint">1 if you read it neat.</div>'+
+          '</div>'+
+        '</div>'+
+
+        resultBlock(res, p) +
+
+        '<div class="subhead">Step 3 &middot; how much did the culture give you? <span class="opt">optional</span></div>'+
+        '<div class="fgrid">'+
+          '<div>'+
+            '<label class="f">Volume of your purified prep</label>'+
+            '<div class="pair">'+
+              '<input type="number" step="any" min="0" data-f="prepVol" value="'+esc(p.prepVol)+'" placeholder="2">'+
+              '<select data-f="prepVolU">'+
+                '<option value="mL"'+(p.prepVolU==="mL"?" selected":"")+'>mL</option>'+
+                '<option value="uL"'+(p.prepVolU==="uL"?" selected":"")+'>&micro;L</option>'+
+                '<option value="L"'+(p.prepVolU==="L"?" selected":"")+'>L</option>'+
+              '</select>'+
+            '</div>'+
+          '</div>'+
+          '<div>'+
+            '<label class="f">Culture you started from</label>'+
+            '<div class="pair">'+
+              '<input type="number" step="any" min="0" data-f="cultVol" value="'+esc(p.cultVol)+'" placeholder="500">'+
+              '<select data-f="cultVolU">'+
+                '<option value="mL"'+(p.cultVolU==="mL"?" selected":"")+'>mL</option>'+
+                '<option value="L"'+(p.cultVolU==="L"?" selected":"")+'>L</option>'+
+              '</select>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        yieldBlock(y) +
+      '</div>';
+    host.appendChild(card);
+  });
+  wireProteinEvents();
+  refreshExportA();
+  if (typeof refreshCritter === "function") refreshCritter();
+}
+
+function resultBlock(res, p){
+  if (!res.ok){
+    var errs = res.flags.filter(function(f){return f.t==="err";});
+    if (!errs.length) return '<div class="resbar"><div class="empty">Fill in the fields above to see a concentration.</div></div>';
+    return '<div class="resbar"><div style="flex:1"><div class="flag fl-err">'+esc(errs[0].m)+'</div></div></div>';
+  }
+  var u = unit();
+  var v = concDisplay(res, u);
+  var main = (v===null)
+    ? '<div class="v" style="font-size:14px;color:var(--ink-3)">add MW for '+UNIT_LABEL[u]+'</div>'
+    : '<div class="v">'+sig(v,3)+'</div><div class="m">'+UNIT_LABEL[u]+'</div>';
+  var alt = (res.mgml!==null) ? sig(res.mgml,3)+' mg/mL' : '';
+  if (u==="mgml") alt = (res.molar!==null) ? sig(res.molar*1e6,3)+' &micro;M' : '';
+  var warns = res.flags.filter(function(f){return f.t==="warn";});
+  return '<div class="resbar">'+
+    '<div class="resbox"><div class="k">Concentration</div>'+main+
+      (alt?'<div class="m">= '+alt+'</div>':'')+'</div>'+
+    '</div>'+
+    (warns.length ? '<div class="flag fl-warn">'+esc(warns[0].m)+'</div>' : '');
+}
+
+function yieldBlock(y){
+  if (y===null) return '<div class="hint" style="margin-top:9px">Add the volumes above and you will get total protein and yield per litre of culture.</div>';
+  if (y.error) return '<div class="flag fl-err">'+esc(y.error)+'</div>';
+  var massDisp = (y.totalMg < 1) ? sig(y.totalMg*1000,3)+' &micro;g' : sig(y.totalMg,3)+' mg';
+  var html = '<div class="resbar">'+
+    '<div class="resbox"><div class="k">Total protein you have</div>'+
+      '<div class="v">'+massDisp+'</div>'+
+      '<div class="m">'+sig(y.totalMg/y.prepMl,3)+' mg/mL &times; '+sig(y.prepMl,3)+' mL</div>'+
+      (y.totalMol!==null ? '<div class="m">= '+((y.totalMol<1e-6)?sig(y.totalMol*1e9,3)+' nmol':sig(y.totalMol*1e6,3)+' &micro;mol')+'</div>' : '')+
+    '</div>';
+  if (y.volError){
+    html += '<div style="flex:1"><div class="flag fl-err">'+esc(y.volError)+'</div></div>';
+  } else if (y.mgPerL !== undefined){
+    var tc = { low:"var(--amber-d)", typical:"var(--ink-2)", high:"var(--green-d)",
+               veryhigh:"var(--green-d)", impressive:"var(--blue-d)", impossible:"var(--red-d)" };
+    html += '<div class="resbox g"><div class="k">Expression yield</div>'+
+      '<div class="v">'+sig(y.mgPerL,3)+'</div><div class="m">mg per litre of culture</div>'+
+      (y.tier ? '<div class="tier" style="color:'+(tc[y.tier.tier]||"var(--ink-2)")+'">'+y.tier.label+'</div>'+
+                '<div class="tiernote">'+esc(y.tier.note)+'</div>' : '')+
+      '</div>';
+  } else {
+    html += '<div class="resbox g" style="border-left-color:var(--line-2)"><div class="k">Expression yield</div>'+
+      '<div class="v" style="font-size:13px;color:var(--ink-3);font-family:var(--sans)">add culture volume</div></div>';
+  }
+  return html + '</div>';
+}
+
+function wireProteinEvents(){
+  var host = $("proteinList");
+  host.querySelectorAll("input,select").forEach(function(el){
+    el.addEventListener("input", onProteinField);
+    el.addEventListener("change", onProteinField);
+  });
+  host.querySelectorAll('[data-act="del"]').forEach(function(b){
+    b.addEventListener("click", function(){
+      var id = parseInt(b.closest(".pcard").dataset.pid,10);
+      proteins = proteins.filter(function(p){ return p.id!==id; });
+      if (!proteins.length) newProtein();
+      renderProteins();
+    });
+  });
+}
+function onProteinField(e){
+  var card = e.target.closest(".pcard");
+  var id = parseInt(card.dataset.pid,10);
+  var p = proteins.find(function(x){ return x.id===id; });
+  if (!p) return;
+  var f = e.target.dataset.f;
+  p[f] = e.target.value;
+  // Full re-render only for changes that alter the card's structure/labels.
+  if (f==="epsType"){ renderProteins(); return; }
+  updateCardLive(card, p);
+}
+function updateCardLive(card, p){
+  var res = evalProtein(p);
+  var touched = (p.mw!=="" || p.eps!=="" || p.a280.trim()!=="");
+  var dot = card.querySelector(".dot");
+  dot.className = "dot " + (!touched ? "d-idle" : (res.ok ? (res.flags.length?"d-warn":"d-ok") : "d-err"));
+  dot.title = res.flags.map(function(f){return f.m;}).join(" ") || "Ready";
+
+  // A280 mean hint
+  var a280Input = card.querySelector('[data-f="a280"]');
+  var wrap = a280Input.parentNode;
+  var oldHint = wrap.querySelector(".hint");
+  if (oldHint) oldHint.remove();
+  if (res.ok){
+    var h = document.createElement("div"); h.className="hint";
+    h.innerHTML = "mean "+sig(res.meanA280,4)+(res.n>1?" &plusmn; "+sig(res.sdA280,3)+" (n="+res.n+")":"");
+    wrap.appendChild(h);
+  }
+  // result + yield blocks: replace the two resbar/hint regions
+  var body = card.querySelector(".pcard-body");
+  var subheads = body.querySelectorAll(".subhead");
+  var step3 = subheads[2];
+  // remove everything between the step-2 fgrid and the step-3 subhead (the result block)
+  var nodes = [], n = step3.previousSibling;
+  while (n && !(n.nodeType===1 && n.classList && n.classList.contains("fgrid"))){ nodes.push(n); n = n.previousSibling; }
+  nodes.forEach(function(x){ if (x.parentNode) x.parentNode.removeChild(x); });
+  var tmp = document.createElement("div");
+  tmp.innerHTML = resultBlock(res, p);
+  while (tmp.firstChild) body.insertBefore(tmp.firstChild, step3);
+  // yield block: everything after the last fgrid
+  var allF = body.querySelectorAll(".fgrid");
+  var lastF = allF[allF.length-1];
+  var after = [], m = lastF.nextSibling;
+  while (m){ after.push(m); m = m.nextSibling; }
+  after.forEach(function(x){ if (x.parentNode) x.parentNode.removeChild(x); });
+  var tmp2 = document.createElement("div");
+  tmp2.innerHTML = yieldBlock(proteinYield(p, res));
+  while (tmp2.firstChild) body.appendChild(tmp2.firstChild);
+
+  refreshExportA();
+  if (typeof refreshCritter === "function") refreshCritter();
+}
+$("btnAdd").addEventListener("click", function(){ newProtein(); renderProteins(); });
+$("gUnit").addEventListener("change", renderProteins);
+$("gPath").addEventListener("change", renderProteins);
+
+$("btnExample").addEventListener("click", function(){
+  proteins = []; pidSeq = 0;
+  newProtein({ name:"MBP fusion, elution 2", mw:"94010", eps:"1.035", epsType:"mass01",
+               a280:"0.1283, 0.1322, 0.1406", dil:"1",
+               prepVol:"2", prepVolU:"mL", cultVol:"50", cultVolU:"mL" });
+  renderProteins();
+  showPane("A");
+});
+$("btnClear").addEventListener("click", function(){
+  proteins = []; pidSeq = 0; newProtein(); renderProteins();
+  stdPoints = []; spSeq = 0; newStd(); newStd(); renderStd();
+  samples = []; smSeq = 0; newSamp(); renderSamples();
+});
+
+/* ================= STANDARD CURVE ================= */
+var stdPoints = [], spSeq = 0;
+var samples = [], smSeq = 0;
+function newStd(seed){ spSeq++; var s={id:spSeq,label:"Std "+spSeq,conc:"",abs:""};
+  if(seed) for(var k in seed) if(Object.prototype.hasOwnProperty.call(seed,k)) s[k]=seed[k];
+  stdPoints.push(s); return s; }
+function newSamp(seed){ smSeq++; var s={id:smSeq,name:"",abs:"",dil:"1"};
+  if(seed) for(var k in seed) if(Object.prototype.hasOwnProperty.call(seed,k)) s[k]=seed[k];
+  samples.push(s); return s; }
+function curveUnit(){ return $("curveUnit").value; }
+
+function computeFit(){
+  var pts = [];
+  stdPoints.forEach(function(s){
+    var x = num(s.conc), y = mean(parseReadings(s.abs).values);
+    if (x!==null && y!==null) pts.push({x:x,y:y});
+  });
+  return linreg(pts);
+}
+function renderStd(){
+  var host = $("stdList"); host.innerHTML = "";
+  stdPoints.forEach(function(s){
+    var row = document.createElement("div");
+    row.className = "stdrow"; row.dataset.sid = s.id;
+    var m = mean(parseReadings(s.abs).values);
+    row.innerHTML =
+      '<div><label class="f">Label</label><input type="text" data-f="label" value="'+esc(s.label)+'"></div>'+
+      '<div><label class="f">Concentration</label><input type="number" step="any" data-f="conc" value="'+esc(s.conc)+'" placeholder="0"></div>'+
+      '<div><label class="f">Absorbance <span class="q">&mdash; commas ok</span></label>'+
+        '<input type="text" data-f="abs" value="'+esc(s.abs)+'" placeholder="0.21, 0.20">'+
+        (m!==null?'<div class="hint">mean '+sig(m,4)+'</div>':'')+'</div>'+
+      '<button class="rm" data-act="delstd" title="Remove" aria-label="Remove" style="font:inherit;font-size:15px;color:var(--ink-3);background:none;border:none;cursor:pointer;padding:6px">&#10005;</button>';
+    host.appendChild(row);
+  });
+  host.querySelectorAll("input").forEach(function(el){
+    el.addEventListener("input", onStdField); el.addEventListener("change", onStdField);
+  });
+  host.querySelectorAll('[data-act="delstd"]').forEach(function(b){
+    b.addEventListener("click", function(){
+      var id = parseInt(b.closest(".stdrow").dataset.sid,10);
+      stdPoints = stdPoints.filter(function(s){return s.id!==id;});
+      renderStd(); renderSamples();
+    });
+  });
+  renderFit();
+}
+function onStdField(e){
+  var id = parseInt(e.target.closest(".stdrow").dataset.sid,10);
+  var s = stdPoints.find(function(x){return x.id===id;}); if(!s) return;
+  s[e.target.dataset.f] = e.target.value;
+  renderStd(); renderSamples();
+}
+$("btnAddStd").addEventListener("click", function(){ newStd(); renderStd(); });
+$("curveUnit").addEventListener("change", function(){ renderStd(); renderSamples(); });
+
+function renderFit(){
+  var fit = computeFit(), host = $("fitOut");
+  if (!fit.ok){
+    host.innerHTML = '<div class="hint" style="margin-top:12px">'+(fit.flags[0]?esc(fit.flags[0].m):"Add at least two standards.")+'</div>';
+    return;
+  }
+  var u = UNIT_LABEL[curveUnit()];
+  host.innerHTML =
+    '<div class="fitgrid">'+
+      '<div class="resbox"><div class="k">Slope</div><div class="v" style="font-size:15px">'+sig(fit.slope,4)+'</div></div>'+
+      '<div class="resbox"><div class="k">Intercept</div><div class="v" style="font-size:15px">'+sig(fit.intercept,4)+'</div></div>'+
+      '<div class="resbox '+(fit.r2>=0.99?"g":"")+'"><div class="k">R&sup2;</div><div class="v" style="font-size:15px">'+sig(fit.r2,4)+'</div></div>'+
+      '<div class="resbox"><div class="k">Points</div><div class="v" style="font-size:15px">'+fit.n+'</div></div>'+
+    '</div>'+
+    (fit.flags.length ? '<div class="flag fl-warn">'+esc(fit.flags[0].m)+'</div>' : '')+
+    '<div class="hint" style="margin-top:8px;font-family:var(--mono)">C ('+u+') = (A &minus; '+sig(fit.intercept,4)+') / '+sig(fit.slope,4)+'</div>'+
+    '<div class="chartwrap">'+curveSVG(fit)+'</div>';
+}
+function curveSVG(fit){
+  var W=420,H=210,padL=44,padR=12,padT=12,padB=30;
+  var xs=fit.points.map(function(p){return p.x;}), ys=fit.points.map(function(p){return p.y;});
+  var xMin=Math.min(0,Math.min.apply(null,xs)), xMax=Math.max.apply(null,xs)*1.08||1;
+  var yMin=Math.min(0,Math.min.apply(null,ys));
+  var yMax=Math.max(Math.max.apply(null,ys), fit.slope*xMax+fit.intercept)*1.12||1;
+  if(xMax===xMin) xMax=xMin+1; if(yMax===yMin) yMax=yMin+1;
+  function px(x){ return padL+(x-xMin)/(xMax-xMin)*(W-padL-padR); }
+  function py(y){ return H-padB-(y-yMin)/(yMax-yMin)*(H-padT-padB); }
+  var dots = fit.points.map(function(p){
+    return '<circle cx="'+px(p.x).toFixed(1)+'" cy="'+py(p.y).toFixed(1)+'" r="4" fill="#2f7fa8" stroke="#fff" stroke-width="1.2"/>';
+  }).join("");
+  var t=[];
+  for(var i=0;i<=4;i++){ var xv=xMin+(xMax-xMin)*i/4;
+    t.push('<text x="'+px(xv).toFixed(1)+'" y="'+(H-padB+15)+'" font-size="9" fill="#8a97a4" text-anchor="middle" font-family="monospace">'+sig(xv,2)+'</text>'); }
+  for(var j=0;j<=4;j++){ var yv=yMin+(yMax-yMin)*j/4;
+    t.push('<text x="'+(padL-7)+'" y="'+(py(yv)+3).toFixed(1)+'" font-size="9" fill="#8a97a4" text-anchor="end" font-family="monospace">'+sig(yv,2)+'</text>'); }
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
+    '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="#c8d4de"/>'+
+    '<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="#c8d4de"/>'+t.join("")+
+    '<line x1="'+px(xMin).toFixed(1)+'" y1="'+py(fit.slope*xMin+fit.intercept).toFixed(1)+
+      '" x2="'+px(xMax).toFixed(1)+'" y2="'+py(fit.slope*xMax+fit.intercept).toFixed(1)+'" stroke="#c15f42" stroke-width="1.6"/>'+
+    dots+'</svg>';
+}
+
+function renderSamples(){
+  var host=$("sampList"); host.innerHTML="";
+  var fit = computeFit();
+  samples.forEach(function(s){
+    var parsed = parseReadings(s.abs), m = mean(parsed.values);
+    var r = (m!==null) ? concFromCurve(fit, m, num(s.dil)) : {ok:false,flags:[]};
+    var row=document.createElement("div");
+    row.className="stdrow"; row.dataset.smid=s.id;
+    var resHtml = r.ok
+      ? '<div class="v" style="font-size:16px">'+sig(r.cActual,3)+'</div><div class="m">'+UNIT_LABEL[curveUnit()]+'</div>'
+      : '<div class="v" style="font-size:12px;color:var(--ink-3);font-family:var(--sans)">'+(fit.ok?"enter absorbance":"need a valid curve")+'</div>';
+    row.innerHTML =
+      '<div><label class="f">Sample</label><input type="text" data-f="name" value="'+esc(s.name)+'" placeholder="Sample '+s.id+'"></div>'+
+      '<div><label class="f">Dilution</label><input type="number" step="any" min="0" data-f="dil" value="'+esc(s.dil)+'"></div>'+
+      '<div><label class="f">Absorbance <span class="q">&mdash; commas ok</span></label>'+
+        '<input type="text" data-f="abs" value="'+esc(s.abs)+'" placeholder="0.34, 0.33">'+
+        (m!==null?'<div class="hint">mean '+sig(m,4)+'</div>':'')+
+        (r.ok&&r.flags.length?'<div class="flag fl-warn">'+esc(r.flags[0].m)+'</div>':'')+'</div>'+
+      '<div style="display:flex;align-items:flex-end;gap:6px">'+
+        '<div class="resbox" style="flex:1;border-left-color:var(--green);padding:6px 10px"><div class="k">Result</div>'+resHtml+'</div>'+
+        '<button class="rm" data-act="delsamp" title="Remove" aria-label="Remove" style="font:inherit;font-size:15px;color:var(--ink-3);background:none;border:none;cursor:pointer;padding:6px">&#10005;</button>'+
+      '</div>';
+    host.appendChild(row);
+  });
+  host.querySelectorAll("input").forEach(function(el){
+    el.addEventListener("input", onSampField); el.addEventListener("change", onSampField);
+  });
+  host.querySelectorAll('[data-act="delsamp"]').forEach(function(b){
+    b.addEventListener("click", function(){
+      var id=parseInt(b.closest(".stdrow").dataset.smid,10);
+      samples = samples.filter(function(s){return s.id!==id;});
+      renderSamples();
+    });
+  });
+  refreshExportC();
+}
+function onSampField(e){
+  var id=parseInt(e.target.closest(".stdrow").dataset.smid,10);
+  var s=samples.find(function(x){return x.id===id;}); if(!s) return;
+  s[e.target.dataset.f]=e.target.value;
+  renderSamples();
+}
+$("btnAddSamp").addEventListener("click", function(){ newSamp(); renderSamples(); });
+
+/* ================= EXPORT ================= */
+function renderColCfg(gridId, cols, onRefresh){
+  var g=$(gridId); g.innerHTML="";
+  cols.forEach(function(c,i){
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=c.on;
+    cb.addEventListener("change",function(){c.on=cb.checked;onRefresh();});
+    var tx=document.createElement("input"); tx.type="text"; tx.value=(c.header!==undefined?c.header:c.def);
+    tx.addEventListener("input",function(){c.header=tx.value;onRefresh();});
+    var up=document.createElement("button"); up.className="ordb"; up.type="button"; up.textContent="\u25B2"; up.disabled=(i===0);
+    up.addEventListener("click",function(){ if(i>0){var t=cols[i-1];cols[i-1]=cols[i];cols[i]=t;renderColCfg(gridId,cols,onRefresh);onRefresh();} });
+    var dn=document.createElement("button"); dn.className="ordb"; dn.type="button"; dn.textContent="\u25BC"; dn.disabled=(i===cols.length-1);
+    dn.addEventListener("click",function(){ if(i<cols.length-1){var t=cols[i+1];cols[i+1]=cols[i];cols[i]=t;renderColCfg(gridId,cols,onRefresh);onRefresh();} });
+    var pair=document.createElement("span"); pair.style.display="flex"; pair.style.gap="3px";
+    pair.appendChild(up); pair.appendChild(dn);
+    g.appendChild(cb); g.appendChild(tx); g.appendChild(pair);
+  });
+}
+var COLS_A=[
+  {key:"name",def:"Protein",on:true},{key:"mw",def:"MW_g_per_mol",on:true},
+  {key:"eps",def:"Extinction_coeff",on:true},{key:"epstype",def:"Coeff_type",on:true},
+  {key:"mean",def:"A280_mean",on:true},{key:"sd",def:"A280_SD",on:false},{key:"n",def:"A280_n",on:false},
+  {key:"dil",def:"Dilution",on:true},{key:"conc",def:"Concentration",on:true},
+  {key:"prep",def:"Prep_volume_mL",on:false},{key:"total",def:"Total_protein_mg",on:true},
+  {key:"cult",def:"Culture_volume_mL",on:false},{key:"yield",def:"Yield_mg_per_L",on:true},{key:"tier",def:"Yield_verdict",on:false}
+];
+function valA(key,p,res,y){
+  switch(key){
+    case "name": return p.name||("Protein "+p.id);
+    case "mw": return p.mw===""?"":String(num(p.mw));
+    case "eps": return p.eps===""?"":String(num(p.eps));
+    case "epstype": return p.epsType==="mass01"?"A0.1%":(p.epsType==="e1pct"?"E1%":"molar");
+    case "mean": return res.ok?sig(res.meanA280,6):"";
+    case "sd": return (res.ok&&res.n>1)?sig(res.sdA280,4):"";
+    case "n": return res.ok?String(res.n):"";
+    case "dil": return p.dil===""?"1":String(num(p.dil));
+    case "conc": { if(!res.ok) return ""; var v=concDisplay(res,unit()); return v===null?"":sig(v,4); }
+    case "prep": return (y&&y.prepMl!==undefined)?sig(y.prepMl,4):"";
+    case "total": return (y&&y.totalMg!==undefined)?sig(y.totalMg,4):"";
+    case "cult": return (y&&y.cultMl!==undefined)?sig(y.cultMl,4):"";
+    case "yield": return (y&&y.mgPerL!==undefined)?sig(y.mgPerL,4):"";
+    case "tier": return (y&&y.tier)?y.tier.label:"";
+    default: return "";
+  }
+}
+function buildA(delim){
+  var cols=COLS_A.filter(function(c){return c.on;}).map(function(c){
+    var h=(c.header!==undefined?c.header:c.def);
+    if(c.key==="conc") h=h+"_"+unit();
+    return {key:c.key,header:h};
+  });
+  var lines=[cols.map(function(c){return c.header;}).join(delim)];
+  proteins.forEach(function(p){
+    var res=evalProtein(p), y=proteinYield(p,res);
+    lines.push(cols.map(function(c){return valA(c.key,p,res,y);}).join(delim));
+  });
+  return lines.join("\n");
+}
+function refreshExportA(){ if(!$("expPanelA").hidden) $("prevA").textContent=buildA("\t"); }
+$("btnExpA").addEventListener("click",function(){
+  var p=$("expPanelA"); p.hidden=!p.hidden;
+  if(!p.hidden){ renderColCfg("colcfgA",COLS_A,refreshExportA); refreshExportA(); }
+});
+$("btnCsvA").addEventListener("click",function(){ dl(buildA(","),"proteinquant-a280"); });
+$("btnTsvA").addEventListener("click",function(){ cp(buildA("\t"),"btnTsvA","prevA"); });
+
+var COLS_C=[
+  {key:"name",def:"Sample",on:true},{key:"mean",def:"Absorbance_mean",on:true},
+  {key:"n",def:"Absorbance_n",on:false},{key:"dil",def:"Dilution",on:true},{key:"conc",def:"Concentration",on:true}
+];
+function buildC(delim){
+  var fit=computeFit();
+  var cols=COLS_C.filter(function(c){return c.on;}).map(function(c){
+    var h=(c.header!==undefined?c.header:c.def);
+    if(c.key==="conc") h=h+"_"+UNIT_LABEL[curveUnit()].replace("/","_per_");
+    return {key:c.key,header:h};
+  });
+  var lines=[cols.map(function(c){return c.header;}).join(delim)];
+  samples.forEach(function(s){
+    var parsed=parseReadings(s.abs), m=mean(parsed.values);
+    var r=(m!==null)?concFromCurve(fit,m,num(s.dil)):{ok:false};
+    lines.push(cols.map(function(c){
+      switch(c.key){
+        case "name": return s.name||("Sample "+s.id);
+        case "mean": return m===null?"":sig(m,6);
+        case "n": return m===null?"":String(parsed.values.length);
+        case "dil": return s.dil===""?"1":String(num(s.dil));
+        case "conc": return r.ok?sig(r.cActual,4):"";
+        default: return "";
+      }
+    }).join(delim));
+  });
+  return lines.join("\n");
+}
+function refreshExportC(){ if(!$("expPanelC").hidden) $("prevC").textContent=buildC("\t"); }
+$("btnExpC").addEventListener("click",function(){
+  var p=$("expPanelC"); p.hidden=!p.hidden;
+  if(!p.hidden){ renderColCfg("colcfgC",COLS_C,refreshExportC); refreshExportC(); }
+});
+$("btnCsvC").addEventListener("click",function(){ dl(buildC(","),"proteinquant-stdcurve"); });
+$("btnTsvC").addEventListener("click",function(){ cp(buildC("\t"),"btnTsvC","prevC"); });
+
+function dl(text,prefix){
+  var blob=new Blob([text],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=prefix+"-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function cp(text,btnId,prevId){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      var b=$(btnId),o=b.textContent; b.textContent="Copied";
+      setTimeout(function(){b.textContent=o;},1400);
+    }).catch(function(){ $(prevId).textContent=text; });
+  } else $(prevId).textContent=text;
+}
+
+/* ================= LIVE CULTURE (decorative) =================
+   One dish per protein that has complete Part-1 data. Each dish keeps its own
+   colour, its own particles and its own Earth/Galaxy state, driven only by that
+   protein's own numbers. Nothing here feeds back into any calculation. */
+(function(){
+  var W=192,H=132;                 // must match .critter-stage in the CSS
+  var Wn=156,Hn=108;               // narrow-screen size
+  var MW_MIN=5000,MW_MAX=300000,R_MIN=4,R_MAX=11;
+  var Y_MIN=1,Y_MAX=500,N_MIN=2,N_MAX=18;
+  var MS_SLOW=2200,MS_FAST=320;
+  var EARTH=10000, GALAXY=100000;
+  var N_EARTH=42,MS_EARTH=110,N_GAL=64,MS_GAL=60;
+  var C_MIN=0,C_MAX=40;
+  var MAX_DISHES=6;
+
+  var SHAPES=["sh-circle","sh-blob","sh-hex","sh-tri","sh-dia"];
+  var SHAPE=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  /* Distinct, fixed palette. Assigned in order the first time a protein becomes
+     valid, and never reassigned, so each protein keeps its own colour. */
+  var PALETTE=["#ff8a65","#4fd1c5","#ffcb6b","#b39ddb","#4fc3f7","#f48fb1","#aed581","#ff8fa3"];
+  var BUG_SVG="";
+  var dishes={};   // pid -> dish state
+  var assigned=0;
+
+  function dims(){
+    var narrow = (typeof window!=="undefined" && window.innerWidth && window.innerWidth<=1289);
+    return narrow ? {w:Wn,h:Hn} : {w:W,h:H};
+  }
+  function colorFor(p){ if(!p._col){ p._col=PALETTE[assigned%PALETTE.length]; assigned++; } return p._col; }
+  function lin(v,a,b,c,dd){ if(v===null||!isFinite(v)) return c; var t=Math.max(0,Math.min(1,(v-a)/(b-a))); return c+t*(dd-c); }
+  function lg(v,a,b,c,dd){ if(v===null||!isFinite(v)||v<=0) return c;
+    var t=(Math.log10(Math.max(v,a))-Math.log10(a))/(Math.log10(b)-Math.log10(a));
+    t=Math.max(0,Math.min(1,t)); return c+t*(dd-c); }
+
+  function bugNode(centred){
+    var d=document.createElement("div");
+    d.className="critter-bug"+(centred?" centred":"");
+    d.innerHTML=BUG_SVG;
+    return d;
+  }
+  function capNode(t){ var d=document.createElement("div"); d.className="ccap"; d.textContent=t||""; return d; }
+  function stars(stage,n){
+    for(var i=0;i<n;i++){ var s=document.createElement("div"); s.className="cstar";
+      var z=1+Math.random()*1.6; s.style.width=z+"px"; s.style.height=z+"px";
+      s.style.left=(Math.random()*100)+"%"; s.style.top=(Math.random()*100)+"%";
+      s.style.opacity=(0.35+Math.random()*0.6).toFixed(2); stage.appendChild(s); }
+  }
+  function buildStage(stage,m,dm){
+    stage.className="critter-stage"+(m==="earth"?" earth-mode":m==="galaxy"?" galaxy-mode":"");
+    stage.innerHTML="";
+    if(m==="earth"){
+      stars(stage,16);
+      var e=document.createElement("div"); e.className="cearth";
+      var sz=Math.round(dm.h*0.56);
+      e.style.width=sz+"px"; e.style.height=sz+"px";
+      e.style.left="50%"; e.style.top="50%"; e.style.transform="translate(-50%,-50%)";
+      [[27,27,29,20],[59,53,22,15],[37,69,18,12]].forEach(function(c){
+        var k=document.createElement("div"); k.className="ccont";
+        k.style.left=c[0]+"%"; k.style.top=c[1]+"%"; k.style.width=c[2]+"%"; k.style.height=c[3]+"%";
+        e.appendChild(k);
+      });
+      stage.appendChild(e); stage.appendChild(bugNode(true));
+      stage.appendChild(capNode("Over 10 g/L \u2014 out-producing the fermenter"));
+    } else if(m==="galaxy"){
+      stars(stage,34);
+      var g=document.createElement("div"); g.className="cgal";
+      var gs=Math.round(dm.w*0.7);
+      g.style.width=gs+"px"; g.style.height=gs+"px";
+      g.style.left="50%"; g.style.top="50%"; g.style.transform="translate(-50%,-50%)";
+      for(var i=0;i<3;i++){ var arm=document.createElement("div"); arm.className="carm";
+        arm.style.transform="rotate("+(i*120)+"deg)"; g.appendChild(arm); }
+      stage.appendChild(g); stage.appendChild(bugNode(true));
+      stage.appendChild(capNode("Above 100 g/L \u2014 check your units"));
+    } else if(m==="empty"){
+      stage.appendChild(bugNode(false));
+      stage.appendChild(capNode("waiting for a protein\u2026"));
+    } else {
+      stage.appendChild(bugNode(false));
+      stage.appendChild(capNode(""));
+    }
+  }
+
+  /* Rebuild the dock so there is exactly one dish per valid protein (or a single
+     idle dish when nothing is filled in yet). Existing dishes keep their state. */
+  function refreshCritter(){
+    var body=$("dockBody"); if(!body) return;
+    if(!BUG_SVG){
+      var tpl=$("bugTemplate");
+      if(tpl) BUG_SVG='<svg viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">'+tpl.innerHTML+'</svg>';
+    }
+    var dm=dims();
+
+    var valid=[];
+    for(var i=0;i<proteins.length && valid.length<MAX_DISHES;i++){
+      var res=evalProtein(proteins[i]);
+      if(res.ok) valid.push({p:proteins[i],res:res});
+    }
+
+    if(!valid.length){
+      // single idle dish
+      var keys=Object.keys(dishes);
+      if(keys.length!==1 || keys[0]!=="__idle"){
+        body.innerHTML=""; dishes={};
+        var wrap=document.createElement("div"); wrap.className="dish-wrap";
+        var st=document.createElement("div"); st.className="critter-stage";
+        wrap.appendChild(st); body.appendChild(wrap);
+        buildStage(st,"empty",dm);
+        dishes["__idle"]={stage:st,mode:"empty",parts:[],tgtN:0,tgtR:5,ms:MS_SLOW,last:0,color:"#8fd3c7"};
+      }
+      return;
+    }
+
+    var wantIds=valid.map(function(v){ return String(v.p.id); });
+    var haveIds=Object.keys(dishes);
+    var changed = (haveIds.length!==wantIds.length) || wantIds.some(function(id,ix){ return haveIds[ix]!==id; });
+
+    if(changed){
+      body.innerHTML="";
+      var kept={};
+      valid.forEach(function(v){
+        var id=String(v.p.id);
+        var wrap=document.createElement("div"); wrap.className="dish-wrap";
+        var nm=document.createElement("div"); nm.className="dish-name";
+        var sw=document.createElement("span"); sw.className="dish-swatch";
+        sw.style.background=colorFor(v.p);
+        nm.appendChild(sw);
+        nm.appendChild(document.createTextNode(v.p.name || ("Protein "+v.p.id)));
+        var st=document.createElement("div"); st.className="critter-stage";
+        wrap.appendChild(nm); wrap.appendChild(st); body.appendChild(wrap);
+        var prev=dishes[id];
+        kept[id]= prev ? { stage:st, mode:null, parts:[], tgtN:prev.tgtN, tgtR:prev.tgtR, ms:prev.ms, last:0, color:colorFor(v.p) }
+                       : { stage:st, mode:null, parts:[], tgtN:N_MIN, tgtR:5, ms:MS_SLOW, last:0, color:colorFor(v.p) };
+      });
+      dishes=kept;
+    } else {
+      // just refresh the visible names/swatches in place
+      valid.forEach(function(v){
+        var dsh=dishes[String(v.p.id)];
+        if(!dsh) return;
+        var nm=dsh.stage.parentNode.querySelector(".dish-name");
+        if(nm){
+          nm.lastChild.nodeValue = v.p.name || ("Protein "+v.p.id);
+          var sw=nm.querySelector(".dish-swatch"); if(sw) sw.style.background=colorFor(v.p);
+        }
+      });
+    }
+
+    // per-dish parameters from that protein's own numbers
+    valid.forEach(function(v){
+      var dsh=dishes[String(v.p.id)]; if(!dsh) return;
+      var p=v.p, res=v.res;
+      dsh.color=colorFor(p);
+      var mw=(p.mw!==""&&num(p.mw)>0)?num(p.mw):MW_MIN;
+      var y=proteinYield(p,res);
+      var mgL=(y&&y.mgPerL!==undefined)?y.mgPerL:null;
+
+      var nm2=(mgL!==null&&mgL>=GALAXY)?"galaxy":(mgL!==null&&mgL>=EARTH)?"earth":"normal";
+      if(nm2!==dsh.mode){ buildStage(dsh.stage,nm2,dm); dsh.mode=nm2; dsh.parts=[]; }
+
+      dsh.tgtR=lin(mw,MW_MIN,MW_MAX,R_MIN,R_MAX);
+      if(dsh.mode==="galaxy"){ dsh.tgtN=N_GAL; dsh.ms=MS_GAL; dsh.tgtR=Math.min(dsh.tgtR,6); }
+      else if(dsh.mode==="earth"){ dsh.tgtN=N_EARTH; dsh.ms=MS_EARTH; dsh.tgtR=Math.min(dsh.tgtR,7); }
+      else if(mgL!==null){ dsh.tgtN=Math.round(lg(mgL,Y_MIN,Y_MAX,N_MIN,N_MAX)); dsh.ms=lg(mgL,Y_MIN,Y_MAX,MS_SLOW,MS_FAST); }
+      else { dsh.tgtN=Math.round(lin(res.mgml,C_MIN,C_MAX,N_MIN,N_MAX)); dsh.ms=lin(res.mgml,C_MIN,C_MAX,MS_SLOW,MS_FAST); }
+
+      while(dsh.parts.length>dsh.tgtN){
+        var q=dsh.parts.pop();
+        if(q.el&&q.el.parentNode) q.el.parentNode.removeChild(q.el);
+      }
+    });
+  }
+
+  function spawn(dsh,dm){
+    if(!dsh.stage||dsh.mode==="empty"||dsh.mode===null||dsh.parts.length>=dsh.tgtN) return;
+    var e=(dsh.mode==="normal")?{x:dm.w/2-24,y:dm.h-16}:{x:dm.w/2,y:dm.h/2};
+    var r=dsh.tgtR*(0.82+Math.random()*0.36);
+    var el=document.createElement("div"); el.className="cpart "+SHAPE;
+    el.style.width=(r*2)+"px"; el.style.height=(r*2)+"px";
+    el.style.background=dsh.color;
+    el.style.boxShadow="0 0 "+(r*0.9)+"px "+(r*0.22)+"px "+dsh.color;
+    el.style.transform="translate("+(e.x-r)+"px,"+(e.y-r)+"px) scale(.15)";
+    dsh.stage.appendChild(el);
+    var ang=Math.random()*Math.PI*2;
+    var base=(dsh.mode==="galaxy")?0.42:(dsh.mode==="earth")?0.32:0.13;
+    var sp=base+Math.random()*0.22;
+    var q={el:el,x:e.x,y:e.y,r:r,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp};
+    dsh.parts.push(q);
+    if(typeof requestAnimationFrame==="function")
+      requestAnimationFrame(function(){ el.style.transform="translate("+(q.x-r)+"px,"+(q.y-r)+"px) scale(1)"; });
+  }
+
+  function tick(ts){
+    var dm=dims();
+    Object.keys(dishes).forEach(function(id){
+      var dsh=dishes[id];
+      if(!dsh.last) dsh.last=ts;
+      if(dsh.mode!=="empty"&&dsh.mode!==null&&ts-dsh.last>=dsh.ms){ spawn(dsh,dm); dsh.last=ts; }
+      var mx=(dsh.mode==="galaxy")?0.85:(dsh.mode==="earth")?0.68:0.38;
+      dsh.parts.forEach(function(q){
+        q.vx+=(Math.random()-0.5)*0.02; q.vy+=(Math.random()-0.5)*0.02;
+        q.vx=Math.max(-mx,Math.min(mx,q.vx)); q.vy=Math.max(-mx,Math.min(mx,q.vy));
+        q.x+=q.vx; q.y+=q.vy;
+        if(q.x-q.r<0){q.x=q.r;q.vx=Math.abs(q.vx);}
+        if(q.x+q.r>dm.w){q.x=dm.w-q.r;q.vx=-Math.abs(q.vx);}
+        if(q.y-q.r<0){q.y=q.r;q.vy=Math.abs(q.vy);}
+        if(q.y+q.r>dm.h){q.y=dm.h-q.r;q.vy=-Math.abs(q.vy);}
+        q.el.style.transform="translate("+(q.x-q.r)+"px,"+(q.y-q.r)+"px) scale(1)";
+      });
+    });
+    requestAnimationFrame(tick);
+  }
+
+  var dt=$("dockToggle");
+  if(dt) dt.addEventListener("click",function(){
+    var dk=$("dock"); dk.classList.toggle("collapsed");
+    dt.innerHTML = dk.classList.contains("collapsed") ? "&#9656;" : "&#9662;";
+  });
+
+  window.refreshCritter=refreshCritter;
+  window.__dishCount=function(){ return Object.keys(dishes).length; };
+  window.__dishMode=function(pid){ var d=dishes[String(pid)]; return d?d.mode:null; };
+  window.__dishColor=function(pid){ var d=dishes[String(pid)]; return d?d.color:null; };
+  window.__anyMode=function(){ var k=Object.keys(dishes); return k.length?dishes[k[0]].mode:null; };
+
+  refreshCritter();
+  if(typeof requestAnimationFrame==="function") requestAnimationFrame(tick);
+})();
+
+/* ================= init ================= */
+newProtein(); renderProteins();
+newStd(); newStd(); renderStd();
+newSamp(); renderSamples();
+</script>
+</body>
+</html>

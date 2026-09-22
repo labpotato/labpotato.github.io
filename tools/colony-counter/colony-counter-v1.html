@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colony Counter Pro</title>
+<style>
+  :root {
+    /* Okabe & Ito (2008) colourblind-safe palette, blue-anchored, softened contrast */
+    --oi-blue: #0072B2;
+    --oi-skyblue: #56B4E9;
+    --oi-green: #009E73;
+    --oi-orange: #E69F00;
+    --oi-yellow: #F0E442;
+    --oi-vermillion: #D55E00;
+    --oi-purple: #CC79A7;
+
+    --bg: #eef2f6;
+    --panel: #ffffff;
+    --panel-alt: #f5f8fb;
+    --border: #cdd7e1;
+    --text: #263241;
+    --text-muted: #5b6b7c;
+    --nav: #142033;
+
+    --sci-accent: var(--oi-blue);
+    --chrome-accent: var(--oi-purple);
+    --ok: var(--oi-green);
+    --warn: var(--oi-vermillion);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; display: flex; flex-direction: column; height: 100vh;
+    background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  /* ===== Chrome zone (header, mascot, controls, loading/empty/error copy) ===== */
+  header {
+    background: var(--nav); color: #eef2f6; padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+  header .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  header .brand svg { width: 30px; height: 30px; }
+  header .sub { font-size: 11.5px; color: #9fb3c8; font-weight: 400; }
+
+  .safety-banner {
+    background: #fdece1; border-bottom: 2px solid var(--oi-vermillion); color: #5a2c0a;
+    padding: 7px 18px; font-size: 12px; display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+  }
+  .safety-banner b { color: var(--oi-vermillion); }
+
+  button {
+    background: var(--panel); border: 1px solid var(--border); padding: 7px 11px; border-radius: 7px;
+    cursor: pointer; font-weight: 500; color: var(--text); font-size: 12.5px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  button:hover { background: var(--panel-alt); }
+  button.active { background: var(--sci-accent); color: white; border-color: var(--sci-accent); }
+  button.primary { background: var(--sci-accent); color: white; border: none; }
+  button.primary:hover { background: #005a8c; }
+  button.primary:disabled { background: #9fb8cc; cursor: not-allowed; }
+  button.ghost-warn { color: var(--oi-vermillion); border-color: #f0b493; }
+  button.ghost-warn:hover { background: #fdf1ea; }
+
+  input[type="number"], select {
+    width: 100%; padding: 6px 7px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 12.5px; margin-top: 3px; background: white; color: var(--text);
+  }
+  input[type="range"] { width: 100%; margin-top: 4px; accent-color: var(--sci-accent); }
+  label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+
+  /* LEFT: the two image stages, stacked, sharing the column height freely between them.
+     RIGHT: every control, one scrollable column, independent of the stages' height.
+     A grid is used at the top level so the divider between "selection" and "controls" can be
+     dragged to any position without either side needing to know the other's content height. */
+  .layout {
+    flex: 1; min-height: 0; overflow: hidden;
+    display: grid;
+    grid-template-columns: var(--lw, 1fr) 8px var(--rw, 1fr);
+  }
+  #leftCol {
+    grid-column: 1; min-width: 0; min-height: 0; overflow: hidden;
+    display: grid;
+    grid-template-rows: var(--th, 1fr) 8px var(--bh, 1fr);
+  }
+  #stageMain { grid-row: 1; }
+  .hsplit    { grid-row: 2; cursor: row-resize; background: var(--border); position: relative; }
+  #stageCrop { grid-row: 3; }
+  #leftCol.swap-order #stageMain { grid-row: 3; }
+  #leftCol.swap-order #stageCrop { grid-row: 1; }
+  #vsplit    { grid-column: 2; cursor: col-resize; background: var(--border); position: relative; }
+  #rightCol  { grid-column: 3; min-width: 0; min-height: 0; overflow-y: auto; background: var(--panel); }
+
+  #vsplit::after { content: ''; position: absolute; top: 50%; left: 2px; width: 4px; height: 44px; margin-top: -22px; background: var(--oi-blue); border-radius: 2px; opacity: .55; }
+  .hsplit::after { content: ''; position: absolute; left: 50%; top: 2px; height: 4px; width: 44px; margin-left: -22px; background: var(--oi-blue); border-radius: 2px; opacity: .55; }
+  #vsplit:hover::after, .hsplit:hover::after { opacity: 1; }
+  body.dragging-split { cursor: col-resize; user-select: none; }
+  body.dragging-hsplit { cursor: row-resize; user-select: none; }
+
+  .stage { display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; background: #dfe7ee; }
+  .stage-title { flex: none; display: flex; align-items: center; padding: 7px 14px; font-size: 12px; font-weight: 700;
+                 color: var(--text); background: #e7edf2; border-bottom: 1px solid var(--border); }
+  .stage .viewport, .stage .snap-viewport { flex: 1 1 auto; min-height: 0; }
+
+  /* Every control section on the right shares the same rhythm: one heading style, one padding,
+     one separator — this is what keeps the column feeling balanced regardless of what each
+     section contains. */
+  .ctrl-block { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .ctrl-block:last-child { border-bottom: none; }
+  .ctrl-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); margin-bottom: 10px; }
+  .roi-hint { margin-top: 9px; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .divider { width: 1px; height: 22px; background: var(--border); margin: 0 2px; }
+  .viewport { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+  .viewport.draw-mode { cursor: crosshair; }
+  canvas { position: absolute; transform-origin: 0 0; }
+  .hint { position: absolute; bottom: 13px; left: 13px; background: rgba(20,32,51,0.82); color: #eef2f6; padding: 5px 9px; border-radius: 5px; font-size: 11.5px; pointer-events: none; }
+
+  /* ===== Scientific content zone: bordered, distinct typography, formal ===== */
+  .sci-zone {
+    border-left: 4px solid var(--sci-accent);
+    background: var(--panel-alt);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .sci-zone .sci-label {
+    font-family: system-ui, sans-serif; text-transform: uppercase; letter-spacing: 0.05em;
+    font-size: 10px; color: var(--sci-accent); font-weight: 700; margin-bottom: 2px; display: block;
+  }
+  .ctrl-block .sci-zone { padding-left: 10px; }
+  .snap-controls.sci-zone { padding: 0; border: none; display: grid; grid-template-columns: 1fr 1fr; gap: 13px; align-items: end; }
+  .snap-toolbar { display: flex; gap: 9px; align-items: center; font-size: 11.5px; flex-wrap: wrap; }
+  .snap-viewport { flex: 1; background: #101a29; position: relative; overflow: hidden; cursor: crosshair; }
+
+  .data-section { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+  .data-controls.sci-zone { padding: 0; border: none; grid-template-columns: 1fr 1fr; display: grid; gap: 10px; align-items: end; }
+  .table-container { flex: 1; overflow-y: auto; padding: 10px 0 0 0; min-height: 160px; font-family: Georgia, "Times New Roman", serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 9px; }
+  th, td { text-align: left; padding: 7px; border-bottom: 1px solid var(--border); }
+  th { background: var(--panel-alt); position: sticky; top: 0; box-shadow: 0 1px 0 var(--border); z-index: 10; font-family: system-ui, sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
+  .flag-badge { font-family: system-ui, sans-serif; font-size: 9.5px; padding: 1px 5px; border-radius: 4px; background: #fdece1; color: var(--oi-vermillion); font-weight: 700; }
+
+  .summary-bar { background: #e6f5f0; padding: 11px 12px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .stat { display: flex; flex-direction: column; }
+  .stat-val { font-size: 17px; font-weight: 700; color: #0d6b4f; font-family: Georgia, serif; }
+
+  .table-actions { display: flex; gap: 7px; padding: 9px 0 0 0; }
+
+  /* ===== Notes / citations panel ===== */
+  .notes-panel { border-top: 1px solid var(--border); margin-top: 10px; padding: 10px 0 0 0; font-size: 10.8px; color: var(--text-muted); flex-shrink: 0; max-height: 130px; overflow-y: auto; }
+  .notes-panel b { color: var(--text); }
+  .notes-panel a { color: var(--sci-accent); }
+  .notes-panel .verified-tag { font-family: system-ui, sans-serif; font-size: 9.5px; background: #e1eef7; color: var(--sci-accent); padding: 1px 6px; border-radius: 4px; font-weight: 700; }
+
+  footer.watermark {
+    background: var(--nav); color: #7f93a8; font-size: 10px; padding: 4px 14px; text-align: center; flex-shrink: 0;
+  }
+
+  /* mascot / chrome copy */
+  .chrome-copy { font-family: system-ui, sans-serif; color: var(--text-muted); font-size: 12.5px; }
+  /* Empty/loading indicators are corner chips, not full-stage overlays — the canvas underneath must stay visible/unobstructed at all times. */
+  .empty-state { position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 8px; text-align: left; padding: 8px 12px; max-width: 260px; background: rgba(223,231,238,0.94); border: 1px solid var(--border); border-radius: 8px; pointer-events: none; }
+  .empty-state svg { width: 26px; height: 26px; flex: none; }
+  .empty-state .line1 { font-weight: 700; color: var(--text); font-size: 12px; }
+  .empty-state .line2 { color: var(--text-muted); font-size: 11px; }
+  .loading-state { position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(16,26,41,0.9); border: 1px solid #2c3e50; border-radius: 8px; color: #cbd5e1; pointer-events: none; }
+  .loading-state svg { width: 22px; height: 22px; flex: none; animation: spin 1.1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* image adjustment strip (chrome zone) */
+  .adjust-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 12px; background: #e7edf2; border-radius: 7px; font-size: 12px; }
+  .adjust-bar .grp { display: flex; align-items: center; gap: 6px; }
+  .adjust-bar label { font-weight: 500; color: var(--text); white-space: nowrap; }
+  .adjust-bar input[type=range] { width: 92px; margin: 0; }
+  .adjust-bar .val { font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 30px; }
+  .adjust-bar button { padding: 5px 10px; font-size: 12px; }
+  .train-panel { border: 1px solid var(--oi-blue); border-radius: 6px; padding: 8px 10px; margin-top: 6px; background: #f2f7fb; }
+  .train-panel.armed { border-color: var(--oi-vermillion); background: #fdf2ec; }
+  .train-panel .hdr { font-weight: 700; font-size: 12px; color: var(--text); margin-bottom: 4px; }
+  .train-panel .msg { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+  .learned-readout { font-family: Georgia, 'Times New Roman', serif; font-size: 11.5px; color: var(--text); margin-top: 5px; padding-left: 8px; border-left: 3px solid var(--oi-blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="#56B4E9" stroke-width="2.5" fill="#0e2237"/><circle cx="14" cy="16" r="2.6" fill="#F0E442"/><circle cx="25" cy="14" r="1.9" fill="#F0E442"/><circle cx="24" cy="24" r="2.3" fill="#F0E442"/><circle cx="15" cy="25" r="1.6" fill="#F0E442"/></svg>
+    <div>Colony Counter Pro <div class="sub">Upload → Select plate area → Auto-detect → Refine → Log to table</div></div>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div class="sub" style="text-align:right;">v3 · top-hat + hysteresis + persistence watershed<br>offline, single-user, in-browser only</div>
+    <button id="btnSwapPanels" title="Swap which stage is on top. Drag either divider for finer control." style="background:#12253a; border:1px solid #2c3e50; color:#dfe7ee; border-radius:6px; padding:8px 12px; font-size:12px; cursor:pointer; white-space:nowrap;">⇅ Swap stage order</button>
+  </div>
+</header>
+
+<div class="layout" id="layout">
+
+  <div class="left-col" id="leftCol">
+    <section class="stage" id="stageMain">
+      <div class="stage-title">Whole plate image</div>
+      <div class="viewport" id="mainViewport">
+      <canvas id="mainCanvas"></canvas>
+      <div class="empty-state chrome-copy" id="emptyMain">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="#dfe7ee" stroke="#0072B2" stroke-width="3"/><circle cx="38" cy="42" r="5" fill="#142033"/><circle cx="62" cy="42" r="5" fill="#142033"/><path d="M35 62 Q50 52 65 62" stroke="#142033" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+        <div class="line1">No plate loaded yet.</div>
+        <div class="line2">Dishy is waiting. Upload a photo of a plate — colour or greyscale, doesn't matter, it's not judging.</div>
+      </div>
+      <div class="hint" id="modeHint" style="display:none;">Scroll to zoom. Drag to pan.</div>
+      </div>
+    </section>
+
+    <div class="hsplit" id="hsplit" title="Drag to resize the two stages"></div>
+
+    <section class="stage" id="stageCrop">
+      <div class="stage-title">Cropped area <span class="count-badge" style="margin-left:8px;">Detected: <span id="colonyCount">0</span></span></div>
+      <div class="snap-viewport" id="snapViewport" title="Scroll to zoom. Right-click and drag to pan. Left-click to add/remove a colony.">
+        <canvas id="snapCanvas"></canvas>
+        <div class="empty-state" id="emptySnap" style="color:#9fb3c8;">
+          <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none" stroke="#56B4E9" stroke-width="3" stroke-dasharray="6 5"/></svg>
+          <div class="line1" style="color:#cbd5e1;">Nothing selected yet.</div>
+          <div class="line2" style="color:#8ea1b5;">Drag a rectangle or circle on the left to give Dishy something to count.</div>
+        </div>
+        <div class="loading-state" id="loadingSnap" style="display:none;">
+          <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#56B4E9" stroke-width="4" stroke-dasharray="90 60"/></svg>
+          <div id="loadingMsg" style="font-size:12px;">Counting dots, judging none.</div>
+        </div>
+        <div class="hint" style="bottom: 10px; left: 10px; font-size: 11px; display:none;" id="snapHint">
+          Left-click to add/remove. Right-click &amp; drag to pan.
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <div class="vsplit" id="vsplit" title="Drag to resize selection vs. controls"></div>
+
+  <div class="right-col" id="rightCol">
+
+    <div class="ctrl-block">
+      <div class="ctrl-title">1 · Load &amp; select area</div>
+    <div class="toolbar">
+      <input type="file" id="fileUpload" accept="image/*" style="display: none;">
+      <button class="primary" onclick="document.getElementById('fileUpload').click()">1. Upload plate image</button>
+      <div class="divider"></div>
+      <button id="modePan" class="active">🖐️ Pan &amp; Zoom</button>
+      <button id="modeDraw">⬚ Select area</button>
+      <div class="divider"></div>
+      <label style="font-weight:500; display:flex; align-items:center; gap:5px; color:var(--text);">
+        <input type="radio" name="roiShape" id="shapeRect" value="rect" checked style="width:auto; margin:0;"> Rectangle
+      </label>
+      <label style="font-weight:500; display:flex; align-items:center; gap:5px; color:var(--text);">
+        <input type="radio" name="roiShape" id="shapeCircle" value="circle" style="width:auto; margin:0;"> Circle (petri dish)
+      </label>
+      <div class="divider"></div>
+      <button id="btnWholeImg" style="color: var(--sci-accent); border-color: var(--sci-accent);">Analyze whole image (rect)</button>
+    </div>
+      <div class="roi-hint" id="roiHint">Draw a rectangle or circle on the image, then drag inside it to move, or drag a corner/edge handle to resize.</div>
+    </div>
+
+    <div class="ctrl-block">
+      <div class="ctrl-title">Image adjustment</div>
+    <div class="adjust-bar" id="adjustBar">
+      <div class="grp"><label for="adjBright">Brightness</label><input type="range" id="adjBright" min="-100" max="100" value="0"><span class="val" id="valBright">0</span></div>
+      <div class="grp"><label for="adjContrast">Contrast</label><input type="range" id="adjContrast" min="-100" max="100" value="0"><span class="val" id="valContrast">0</span></div>
+      <div class="grp"><label for="adjGamma">Gamma</label><input type="range" id="adjGamma" min="30" max="300" value="100"><span class="val" id="valGamma">1.00</span></div>
+      <div class="grp"><label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="adjClahe" style="width:auto; margin:0;"> Local contrast (CLAHE)</label><input type="range" id="adjClip" min="10" max="60" value="25" title="Clip limit"><span class="val" id="valClip">2.5</span></div>
+      <button id="btnAutoLevels" style="color:var(--sci-accent); border-color:var(--sci-accent);">Auto</button>
+      <button id="btnResetAdj">Reset</button>
+      <span class="val" id="adjStatus" style="min-width:0;"></span>
+    </div>
+
+    </div>
+
+    <div class="ctrl-block">
+      <div class="ctrl-title">2 · Detection settings</div>
+      <div class="snap-controls sci-zone">
+        <div>
+          <span class="sci-label">Appearance</span>
+          <label>Colony appearance</label>
+          <select id="colonyType">
+            <option value="auto" selected>Auto (decide from this image)</option>
+            <option value="white">White / cream colonies on darker agar</option>
+            <option value="dark">Dark or pigmented colonies on paler agar</option>
+            <option value="colour">Coloured colonies (chromogenic, any hue)</option>
+          </select>
+        </div>
+        <div>
+          <label>Sensitivity: <span id="sensVal">50</span></label>
+          <input type="range" id="sensitivity" min="5" max="95" value="50">
+        </div>
+        <div>
+          <label>Min. colony area (px&sup2;, blank = automatic)</label>
+          <input type="number" id="minArea" min="1" placeholder="auto">
+        </div>
+        <div>
+          <label style="display:flex; align-items:center; gap:5px; font-weight:600;">
+            <input type="checkbox" id="splitTouching" checked style="width:auto; margin:0;"> Separate touching colonies (watershed)
+          </label>
+          <label style="display:flex; align-items:center; gap:5px; font-weight:600; margin-top:4px;">
+            <input type="checkbox" id="rejectElongated" style="width:auto; margin:0;"> Reject elongated artefacts (scratches, marker lines)
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="ctrl-block">
+      <div class="train-panel" id="trainPanel">
+        <div class="hdr">Detection not matching the plate? Teach it from your own picks.</div>
+        <div class="msg" id="trainMsg">Click <b>Teach from my picks</b>, then click the centre of at least three representative colonies in the analysis view. Measured colony appearance, size and threshold are taken from those examples.</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; align-items:center;">
+          <button id="btnTrain">Teach from my picks</button>
+          <button id="btnTrainApply" disabled>Apply examples</button>
+          <button id="btnTrainClear" class="ghost-warn" disabled>Clear training</button>
+          <label style="display:flex; align-items:center; gap:5px; font-weight:500; font-size:11px;">
+            <input type="checkbox" id="lockThresholds" style="width:auto; margin:0;"> Lock learned thresholds (otherwise re-derived per image)
+          </label>
+        </div>
+        <div class="learned-readout" id="learnedReadout" style="display:none;"></div>
+      </div>
+
+    </div>
+
+    <div class="ctrl-block">
+      <div class="ctrl-title">Analysis view controls</div>
+      <div class="snap-toolbar">
+        <button id="sZoomOut" title="Zoom out">−</button>
+        <button id="sFit">Fit box</button>
+        <button id="sZoomIn" title="Zoom in">+</button>
+        <div class="divider"></div>
+        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: normal;">
+          <input type="checkbox" id="showNumbers" checked> Show numbers
+        </label>
+        <div style="flex: 1;"></div>
+        <span id="workerStatus" style="color:var(--text-muted);"></span>
+        <button id="btnClearArea" class="ghost-warn">Clear selection</button>
+      </div>
+
+    </div>
+
+    <div class="ctrl-block" style="flex: 1 1 auto; min-height: 260px; display: flex; flex-direction: column;">
+      <div class="ctrl-title">3 · Results</div>
+    <div class="data-section">
+      <div class="data-controls sci-zone">
+        <div>
+          <span class="sci-label">Formula input</span>
+          <label>Dilution (10⁻ˣ)</label>
+          <input type="number" id="dilution" value="4" min="0" step="1">
+        </div>
+        <div>
+          <label>Volume plated (µL)</label>
+          <input type="number" id="volume" value="100" min="1">
+        </div>
+        <div id="rangeFlagWrap" style="font-size:11px; color:var(--text-muted);"></div>
+        <button class="primary" id="btnSave" disabled style="padding: 9px 14px; font-size: 13px;">3. Add to table</button>
+      </div>
+
+      <div class="table-actions">
+        <button id="btnExportCsv">⬇ Export CSV</button>
+      </div>
+
+      <div class="table-container">
+        <table id="resultsTable">
+          <thead><tr><th>Use</th><th>#</th><th>Count</th><th>Dil.</th><th>Vol. (µL)</th><th>CFU/mL</th><th>Flag</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="summary-bar">
+        <div class="stat">
+          <label>Selected rows</label>
+          <span class="stat-val" style="color: var(--text-muted); font-size:15px;" id="selRows">0</span>
+        </div>
+        <div class="stat" style="text-align: right;">
+          <label>Average CFU/mL</label>
+          <span class="stat-val" id="avgCfuDisplay">—</span>
+        </div>
+      </div>
+
+      <div class="notes-panel">
+        <span class="verified-tag">Last verified 2026‑09‑13</span>
+        <div style="margin-top:5px;">
+          <b>CFU/mL formula:</b> count ÷ (dilution fraction × volume plated in mL), per
+          <a href="https://www.fda.gov/food/laboratory-methods-food/bam-chapter-3-aerobic-plate-count" target="_blank" rel="noopener">FDA Bacteriological Analytical Manual, Ch. 3</a>.
+          Countable range (25–250 CFU/plate) per the same source is flagged, not blocked — some workflows count outside this range intentionally.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Background suppression:</b> illumination is removed by a morphological top-hat transform, subtracting a
+          grayscale opening computed with a structuring element larger than the largest colony
+          (<a href="https://doi.org/10.1109/MC.1983.1654163" target="_blank" rel="noopener">Sternberg, 1983</a>),
+          implemented with the constant-time running min/max of
+          <a href="https://doi.org/10.1016/0167-8655(92)90069-C" target="_blank" rel="noopener">van Herk (1992)</a>.
+          This replaces the flat-field background reference used in v2, which assumed even illumination across the selection.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Thresholding:</b> automatic level by
+          <a href="https://doi.org/10.1109/TSMC.1979.4310076" target="_blank" rel="noopener">Otsu (1979)</a>,
+          applied as a dual (hysteresis) threshold after
+          <a href="https://doi.org/10.1109/TPAMI.1986.4767851" target="_blank" rel="noopener">Canny (1986)</a>:
+          strong colony cores seed the mask and faint peripheries are grown from them, while isolated faint pixels are rejected.
+          The low threshold is held above a median-plus-4-MAD noise estimate of the response map.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Touching colonies:</b> exact Euclidean distance transform
+          (<a href="https://theoryofcomputing.org/articles/v008a019/" target="_blank" rel="noopener">Felzenszwalb &amp; Huttenlocher, 2012</a>);
+          markers are selected by topological persistence (h-maxima criterion, Soille, <i>Morphological Image Analysis</i>, 2nd edn, 2004, §6.3)
+          so that plateau ties inside one round colony cannot seed a false split; separation by marker-controlled watershed
+          (<a href="https://doi.org/10.1109/34.87344" target="_blank" rel="noopener">Vincent &amp; Soille, 1991</a>).
+        </div>
+        <div style="margin-top:4px;">
+          <b>Image adjustment:</b> the local-contrast option is contrast-limited adaptive histogram equalisation
+          (<a href="https://doi.org/10.1016/S0734-189X(87)80186-X" target="_blank" rel="noopener">Pizer et al., 1987</a>),
+          8&times;8 tiles with bilinear interpolation between tile mappings. Adjustments are applied to the image that is
+          both displayed and measured. Note that heavy adjustment changes what the detector sees: for a defensible count,
+          record the settings used, or leave them at default, since the top-hat stage already corrects uneven illumination.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Learning from examples:</b> clicking example colonies estimates appearance class, median colony radius, area range
+          and response threshold from those colonies directly. This is parameter estimation from user examples, not a trained
+          classifier, and it is <i>[INFERENCE]</i> — a procedure assembled here rather than a published method.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Validation:</b> the pipeline was checked against ten synthetic plates with known colony counts (vignetted white-on-dark
+          with faint colonies, illumination-gradient dark-on-pale, chromogenic, an artefact plate carrying a scratch and a marker
+          stroke, and resolution series at 900/1600/2400 px). Counts were exact or within one colony on all but the deliberately
+          fused-triple plates. Two limitations are inherent: colonies overlapping by more than roughly half their radius cannot be
+          resolved by any distance-transform method, and a colony physically touching a scratch merges with it. No manufacturer kit
+          or third-party protocol is encoded here, so no community-modification toggle applies. The tool has not yet been benchmarked
+          against a manually counted reference plate.
+        </div>
+        <div style="margin-top:4px;">
+          <b>Validated on:</b> synthetic touching-colony test images (two- and three-colony fused blobs; isolated colonies; sub-pixel debris) — see build notes. Not yet benchmarked against a manually-counted reference plate; treat automatic counts as a first pass and confirm with manual add/remove before reporting.
+        </div>
+      </div>
+    </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="safety-banner">
+  <span>⚠</span>
+  <span><b>Biosafety reminder:</b> this tool only processes a photograph of a plate. It provides no containment. Handle and image live culture plates under your institution's standard biosafety practice (appropriate BSL containment, PPE, and disinfection of surfaces/imaging equipment) before and after use.</span>
+</div>
+
+<footer class="watermark">Designed and generated by Dongmin Byun · bdongmin10@gmail.com · Claude was utilized in the generation.</footer>
+
+<script id="workerSrc" type="javascript/worker">
+// ===================== DETECTION WORKER v3 =====================
+// ============ COLONY DETECTION CORE v3 ============
+// Sources:
+//  - van Herk (1992) Pattern Recogn. Lett. 13:517-521  -> O(1)/pixel 1D min/max filter
+//  - Sternberg (1983) IEEE Computer 16(1):22-34        -> top-hat / rolling-ball background suppression
+//  - Otsu (1979) IEEE Trans. SMC 9:62-66               -> automatic threshold
+//  - Canny (1986) IEEE TPAMI 8:679-698                 -> hysteresis (dual) thresholding
+//  - Felzenszwalb & Huttenlocher (2012) ToC 8:415-428  -> exact Euclidean distance transform
+//  - Vincent & Soille (1991) IEEE TPAMI 13:583-598     -> marker-controlled watershed
+
+// ---------- van Herk 1D min/max over a line, window = 2k+1 ----------
+function vanHerk1D(src, n, k, isMax) {
+  const win = 2 * k + 1;
+  const out = new Float32Array(n);
+  if (win >= n) { // window spans the whole line: brute force with edge replication (n is small here)
+    for (let i = 0; i < n; i++) {
+      let m = isMax ? -Infinity : Infinity;
+      for (let j = i - k; j <= i + k; j++) {
+        const jj = j < 0 ? 0 : (j >= n ? n - 1 : j);
+        m = isMax ? Math.max(m, src[jj]) : Math.min(m, src[jj]);
+      }
+      out[i] = m;
+    }
+    return out;
+  }
+  // pad to a multiple of win, replicate edges
+  const pad = k;
+  const N = n + 2 * pad;
+  const ext = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    let j = i - pad;
+    if (j < 0) j = 0; else if (j >= n) j = n - 1;
+    ext[i] = src[j];
+  }
+  const nSeg = Math.ceil(N / win) * win;
+  const g = new Float32Array(nSeg), hArr = new Float32Array(nSeg);
+  for (let i = 0; i < nSeg; i++) { const v = ext[Math.min(i, N - 1)]; g[i] = v; hArr[i] = v; }
+  // forward running extremum within each segment
+  for (let s = 0; s < nSeg; s += win) {
+    for (let i = s + 1; i < s + win; i++) g[i] = isMax ? Math.max(g[i - 1], g[i]) : Math.min(g[i - 1], g[i]);
+  }
+  // backward running extremum within each segment
+  for (let s = 0; s < nSeg; s += win) {
+    for (let i = s + win - 2; i >= s; i--) hArr[i] = isMax ? Math.max(hArr[i + 1], hArr[i]) : Math.min(hArr[i + 1], hArr[i]);
+  }
+  for (let i = 0; i < n; i++) {
+    const c = i + pad;              // centre in ext coords
+    const a = hArr[c - k];
+    const b = g[Math.min(c + k, nSeg - 1)];
+    out[i] = isMax ? Math.max(a, b) : Math.min(a, b);
+  }
+  return out;
+}
+
+function separableMorph(src, w, h, k, isMax) {
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  const row = new Float32Array(w), col = new Float32Array(h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) row[x] = src[y * w + x];
+    const r = vanHerk1D(row, w, k, isMax);
+    for (let x = 0; x < w; x++) tmp[y * w + x] = r[x];
+  }
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) col[y] = tmp[y * w + x];
+    const c = vanHerk1D(col, h, k, isMax);
+    for (let y = 0; y < h; y++) out[y * w + x] = c[y];
+  }
+  return out;
+}
+
+// grayscale opening = erosion then dilation ; closing = dilation then erosion (square SE, side 2k+1)
+function opening(src, w, h, k) { return separableMorph(separableMorph(src, w, h, k, false), w, h, k, true); }
+function closing(src, w, h, k) { return separableMorph(separableMorph(src, w, h, k, true), w, h, k, false); }
+
+// White top-hat: bright structures smaller than the SE. Black top-hat: dark structures smaller than SE.
+function whiteTopHat(src, w, h, k) {
+  const op = opening(src, w, h, k), out = new Float32Array(w * h);
+  for (let i = 0; i < out.length; i++) out[i] = Math.max(0, src[i] - op[i]);
+  return out;
+}
+function blackTopHat(src, w, h, k) {
+  const cl = closing(src, w, h, k), out = new Float32Array(w * h);
+  for (let i = 0; i < out.length; i++) out[i] = Math.max(0, cl[i] - src[i]);
+  return out;
+}
+
+// ---------- Otsu ----------
+function otsuThreshold(values, nBins) {
+  nBins = nBins || 256;
+  let min = Infinity, max = -Infinity;
+  for (let i = 0; i < values.length; i++) { const v = values[i]; if (v < min) min = v; if (v > max) max = v; }
+  if (!(max > min)) return { t: min, variance: 0, eta: 0 };
+  const hist = new Float64Array(nBins);
+  const scale = (nBins - 1) / (max - min);
+  for (let i = 0; i < values.length; i++) hist[Math.round((values[i] - min) * scale)]++;
+  const total = values.length;
+  let sum = 0; for (let i = 0; i < nBins; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, maxVar = 0, tb = 0;
+  for (let i = 0; i < nBins; i++) {
+    wB += hist[i]; if (wB === 0) continue;
+    const wF = total - wB; if (wF === 0) break;
+    sumB += i * hist[i];
+    const mB = sumB / wB, mF = (sum - sumB) / wF;
+    const v = wB * wF * (mB - mF) * (mB - mF);
+    if (v > maxVar) { maxVar = v; tb = i; }
+  }
+  // Otsu's separability measure eta = sigma_B^2 / sigma_T^2 (Otsu 1979, eq. 13): scale-free,
+  // so it can be compared across evidence maps with different numeric ranges.
+  let mu = 0; for (let i = 0; i < nBins; i++) mu += i * hist[i]; mu /= total;
+  let sigT = 0; for (let i = 0; i < nBins; i++) sigT += hist[i] * (i - mu) * (i - mu); sigT /= total;
+  const sigB = maxVar / (total * total);
+  return { t: min + tb / scale, variance: sigB, eta: sigT > 0 ? sigB / sigT : 0 };
+}
+
+// ---------- hysteresis threshold (Canny 1986) ----------
+// Seed at tHigh, then grow into any 8-connected pixel above tLow.
+function hysteresis(score, w, h, tHigh, tLow, validMask) {
+  const n = w * h;
+  const mask = new Uint8Array(n);
+  const stack = [];
+  for (let i = 0; i < n; i++) {
+    if (validMask && !validMask[i]) continue;
+    if (score[i] >= tHigh) { mask[i] = 1; stack.push(i); }
+  }
+  while (stack.length) {
+    const i = stack.pop();
+    const x = i % w, y = (i / w) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const j = ny * w + nx;
+      if (mask[j]) continue;
+      if (validMask && !validMask[j]) continue;
+      if (score[j] >= tLow) { mask[j] = 1; stack.push(j); }
+    }
+  }
+  return mask;
+}
+
+// ---------- connected components (8-connected) ----------
+function connectedComponents(mask, w, h) {
+  const n = w * h, labels = new Int32Array(n).fill(-1), comps = [];
+  const stack = [];
+  for (let s = 0; s < n; s++) {
+    if (!mask[s] || labels[s] !== -1) continue;
+    const id = comps.length, px = [];
+    labels[s] = id; stack.push(s);
+    while (stack.length) {
+      const i = stack.pop(); px.push(i);
+      const x = i % w, y = (i / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const j = ny * w + nx;
+        if (mask[j] && labels[j] === -1) { labels[j] = id; stack.push(j); }
+      }
+    }
+    comps.push({ id, pixels: px });
+  }
+  return comps;
+}
+
+// ---------- exact EDT ----------
+function dt1d(f, n) {
+  const d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1);
+  let k = 0; v[0] = 0; z[0] = -Infinity; z[1] = Infinity;
+  for (let q = 1; q < n; q++) {
+    let s;
+    while (true) {
+      s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      if (s <= z[k]) k--; else break;
+    }
+    k++; v[k] = q; z[k] = s; z[k + 1] = Infinity;
+  }
+  k = 0;
+  for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; const dq = q - v[k]; d[q] = dq * dq + f[v[k]]; }
+  return d;
+}
+function distanceTransform(mask, w, h) {
+  const INF = 1e20, g = new Float64Array(w * h), out = new Float64Array(w * h);
+  for (let x = 0; x < w; x++) {
+    const col = new Float64Array(h);
+    for (let y = 0; y < h; y++) col[y] = mask[y * w + x] ? INF : 0;
+    const d = dt1d(col, h);
+    for (let y = 0; y < h; y++) g[y * w + x] = d[y];
+  }
+  for (let y = 0; y < h; y++) {
+    const row = new Float64Array(w);
+    for (let x = 0; x < w; x++) row[x] = g[y * w + x];
+    const d = dt1d(row, w);
+    for (let x = 0; x < w; x++) out[y * w + x] = Math.sqrt(d[x]);
+  }
+  return out;
+}
+
+// ---------- local maxima markers with non-max suppression ----------
+// Markers must be genuine regional maxima of the distance transform, not merely any pixel above
+// minVal: inside one round blob the whole core exceeds minVal, and a greedy distance-only rule
+// will happily place a second "marker" on the far side of that core, splitting a single colony.
+// Requiring local maximality within a window of the separation scale removes that failure mode.
+function findLocalMaxima(dist, pixels, w, minSep, minVal) {
+  // The dominance window must cover the full separation distance. With a half-width window, two
+  // points on opposite sides of one blob's core can each dominate their own neighbourhood while
+  // lying further apart than minSep, so both survive suppression and a single round colony is
+  // split in two.
+  const m = Math.max(1, Math.round(minSep));
+  const inBlob = new Set(pixels);
+  const cands = [];
+  for (const i of pixels) {
+    const v = dist[i];
+    if (v < minVal) continue;
+    const x = i % w, y = (i / w) | 0;
+    let isMax = true;
+    for (let dy = -m; dy <= m && isMax; dy++) for (let dx = -m; dx <= m; dx++) {
+      if (!dx && !dy) continue;
+      const j = (y + dy) * w + (x + dx);
+      if (!inBlob.has(j)) continue;
+      if (dist[j] > v) { isMax = false; break; }
+    }
+    if (isMax) cands.push(i);
+  }
+  cands.sort((a, b) => dist[b] - dist[a]);
+  const picked = [];
+  for (const i of cands) {
+    const x = i % w, y = (i / w) | 0;
+    let ok = true;
+    for (const p of picked) { if (Math.hypot(x - p.x, y - p.y) < minSep) { ok = false; break; } }
+    if (ok) picked.push({ idx: i, x, y, v: dist[i] });
+  }
+  return picked;
+}
+
+// ---------- persistence-based marker selection ----------
+// Spurious markers come from plateaus and minor bumps in the distance transform. Persistence
+// (topological "dynamics" of a maximum: how far the surface must descend before that maximum is
+// absorbed into a deeper one) separates genuine colony lobes from plateau ties, which have zero
+// persistence by construction. Basins are built by flooding the distance transform downwards with
+// a union-find, recording the saddle level at which each basin merges into a deeper neighbour.
+// This is the h-maxima criterion of Soille, Morphological Image Analysis (2nd edn, 2004), sec. 6.3.
+function findMarkersByPersistence(dist, pixels, w, minPersistence, minVal) {
+  const order = pixels.filter(i => dist[i] >= minVal).sort((a, b) => dist[b] - dist[a]);
+  if (!order.length) return [];
+  const parent = new Map(), peakOf = new Map(), aliveAt = new Map();
+  const inOrder = new Set(order);
+  const processed = new Set();
+  function find(a) { while (parent.get(a) !== a) { parent.set(a, parent.get(parent.get(a))); a = parent.get(a); } return a; }
+  const persistence = new Map(); // root pixel -> persistence value
+  for (const i of order) {
+    const x = i % w, y = (i / w) | 0;
+    const roots = new Set();
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const j = (y + dy) * w + (x + dx);
+      if (!inOrder.has(j) || !processed.has(j)) continue;
+      roots.add(find(j));
+    }
+    if (roots.size === 0) {
+      parent.set(i, i); peakOf.set(i, dist[i]); aliveAt.set(i, dist[i]);
+    } else {
+      const arr = Array.from(roots);
+      let deepest = arr[0];
+      for (const r of arr) if (peakOf.get(r) > peakOf.get(deepest)) deepest = r;
+      parent.set(i, deepest);
+      for (const r of arr) {
+        if (r === deepest) continue;
+        persistence.set(r, peakOf.get(r) - dist[i]); // merged at this saddle level
+        parent.set(r, deepest);
+      }
+    }
+    processed.add(i);
+  }
+  // surviving roots never merged: they are the deepest basins
+  const out = [];
+  const seenRoot = new Set();
+  for (const i of order) {
+    if (parent.get(i) !== i) continue;
+    seenRoot.add(i);
+  }
+  for (const [root, peak] of peakOf) {
+    const p = persistence.has(root) ? persistence.get(root) : Infinity;
+    if (p >= minPersistence) out.push({ idx: root, x: root % w, y: (root / w) | 0, v: peak, persistence: p });
+  }
+  out.sort((a, b) => b.v - a.v);
+  return out;
+}
+
+// ---------- binary-heap priority queue ----------
+function Heap() { this.a = []; }
+Heap.prototype.push = function (item) {
+  const a = this.a; a.push(item); let i = a.length - 1;
+  while (i > 0) { const p = (i - 1) >> 1; if (a[p].pri <= a[i].pri) break; const t = a[p]; a[p] = a[i]; a[i] = t; i = p; }
+};
+Heap.prototype.pop = function () {
+  const a = this.a; if (!a.length) return null;
+  const top = a[0], last = a.pop();
+  if (a.length) { a[0] = last; let i = 0;
+    while (true) { const l = 2 * i + 1, r = l + 1; let m = i;
+      if (l < a.length && a[l].pri < a[m].pri) m = l;
+      if (r < a.length && a[r].pri < a[m].pri) m = r;
+      if (m === i) break; const t = a[m]; a[m] = a[i]; a[i] = t; i = m; } }
+  return top;
+};
+Heap.prototype.size = function () { return this.a.length; };
+
+// ---------- marker-controlled watershed (immersion) ----------
+function watershed(elevation, pixels, markers, w) {
+  const labels = new Int32Array(elevation.length);
+  const inSet = new Uint8Array(elevation.length);
+  for (const i of pixels) inSet[i] = 1;
+  const heap = new Heap();
+  markers.forEach((m, k) => { labels[m.idx] = k + 1; heap.push({ idx: m.idx, pri: elevation[m.idx] }); });
+  while (heap.size()) {
+    const cur = heap.pop();
+    const i = cur.idx, lab = labels[i];
+    const x = i % w, y = (i / w) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= w) continue;
+      const j = ny * w + nx;
+      if (j < 0 || j >= elevation.length) continue;
+      if (!inSet[j] || labels[j]) continue;
+      labels[j] = lab;
+      heap.push({ idx: j, pri: elevation[j] });
+    }
+  }
+  return labels;
+}
+
+// ---------- shape descriptors ----------
+function shapeOf(px, w) {
+  let sx = 0, sy = 0;
+  for (const i of px) { sx += i % w; sy += (i / w) | 0; }
+  const n = px.length, cx = sx / n, cy = sy / n;
+  let mxx = 0, myy = 0, mxy = 0;
+  for (const i of px) { const dx = (i % w) - cx, dy = ((i / w) | 0) - cy; mxx += dx * dx; myy += dy * dy; mxy += dx * dy; }
+  mxx /= n; myy /= n; mxy /= n;
+  const tr = mxx + myy, det = mxx * myy - mxy * mxy;
+  const disc = Math.max(0, tr * tr / 4 - det);
+  const l1 = tr / 2 + Math.sqrt(disc), l2 = tr / 2 - Math.sqrt(disc);
+  const axisRatio = l1 > 0 ? Math.sqrt(Math.max(0, l2) / l1) : 1; // 1 = circular, ->0 = line
+  return { x: cx, y: cy, area: n, axisRatio };
+}
+
+function median(arr) {
+  const a = Array.from(arr).sort((x, y) => x - y);
+  if (!a.length) return 0;
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
+
+
+
+// Build channel planes from RGBA buffer
+function planes(data, n) {
+  const r = new Float32Array(n), g = new Float32Array(n), b = new Float32Array(n), L = new Float32Array(n);
+  for (let i = 0, j = 0; j < n; i += 4, j++) {
+    r[j] = data[i]; g[j] = data[i + 1]; b[j] = data[i + 2];
+    L[j] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+  }
+  return { r, g, b, L };
+}
+
+// Auto-estimate colony scale. The structuring element must exceed the colonies (so that the
+// opening erases them and estimates the background) without approaching the field size (which
+// would drive the "background" towards the global extremum). Colony size in pixels depends on
+// magnification, not on image resolution, so the estimate is refined iteratively from a small
+// starting SE and run on a downsampled copy to keep cost independent of photo size.
+function downsampleLum(L, w, h, maxDim) {
+  const f = Math.max(1, Math.ceil(Math.max(w, h) / maxDim));
+  if (f === 1) return { d: L, w, h, f: 1 };
+  const dw = Math.max(1, Math.floor(w / f)), dh = Math.max(1, Math.floor(h / f));
+  const out = new Float32Array(dw * dh);
+  for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
+    let s = 0, c = 0;
+    for (let yy = y * f; yy < Math.min(h, (y + 1) * f); yy++)
+      for (let xx = x * f; xx < Math.min(w, (x + 1) * f); xx++) { s += L[yy * w + xx]; c++; }
+    out[y * dw + x] = s / c;
+  }
+  return { d: out, w: dw, h: dh, f };
+}
+
+function downsampleRGBA(data, w, h, maxDim) {
+  const f = Math.max(1, Math.ceil(Math.max(w, h) / maxDim));
+  if (f === 1) return { data, w, h, f: 1 };
+  const dw = Math.max(1, Math.floor(w / f)), dh = Math.max(1, Math.floor(h / f));
+  const out = new Uint8ClampedArray(dw * dh * 4);
+  for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
+    let r = 0, g = 0, b = 0, c = 0;
+    for (let yy = y * f; yy < Math.min(h, (y + 1) * f); yy++)
+      for (let xx = x * f; xx < Math.min(w, (x + 1) * f); xx++) {
+        const i = (yy * w + xx) * 4; r += data[i]; g += data[i + 1]; b += data[i + 2]; c++;
+      }
+    const o = (y * dw + x) * 4;
+    out[o] = r / c; out[o + 1] = g / c; out[o + 2] = b / c; out[o + 3] = 255;
+  }
+  return { data: out, w: dw, h: dh, f };
+}
+
+function medianBlobRadius(L, w, h, k, validMask, f) {
+  const wth = whiteTopHat(L, w, h, k), bth = blackTopHat(L, w, h, k);
+  const resp = new Float32Array(w * h);
+  for (let i = 0; i < resp.length; i++) resp[i] = Math.max(wth[i], bth[i]);
+  const vals = [];
+  for (let i = 0; i < resp.length; i++) if (!validMask || validMask[i * f]) vals.push(resp[i]);
+  // Floor the threshold: on an exactly flat background Otsu's optimum lands at 0, which would
+  // select the whole field and collapse the estimate into one image-sized blob.
+  const t = Math.max(otsuThreshold(vals, 256).t, 2);
+  const mask = new Uint8Array(w * h);
+  for (let i = 0; i < mask.length; i++) mask[i] = (resp[i] > t) ? 1 : 0;
+  const comps = connectedComponents(mask, w, h).filter(c => c.pixels.length >= 4);
+  if (!comps.length) return null;
+  return median(comps.map(c => Math.sqrt(c.pixels.length / Math.PI)));
+}
+
+function estimateScale(L, w, h, validMask) {
+  const ds = downsampleLum(L, w, h, 500);
+  const dw = ds.w, dh = ds.h, dL = ds.d;
+  const kCap = Math.max(4, Math.floor(Math.min(dw, dh) / 6));
+  let k = Math.min(12, kCap);
+  let prevR = null, chosenR = null;
+  for (let iter = 0; iter < 6; iter++) {
+    const r = medianBlobRadius(dL, dw, dh, k, null, ds.f);
+    if (r == null) { if (k >= kCap) break; k = Math.min(kCap, k * 2); continue; }
+    // Convergence guard: a larger SE can merge nearby colonies into one blob, which inflates the
+    // median radius and would otherwise feed back into growing the SE further without bound —
+    // a runaway that is most likely with few colonies in view (e.g. a small or tightly cropped
+    // selection), where the median has little averaging to protect it from one fused blob. Accept
+    // the smallest stable estimate rather than chasing a moving target.
+    if (prevR != null && r > prevR * 1.5) { chosenR = prevR; break; }
+    chosenR = r; prevR = r;
+    const need = Math.ceil(r * 3);
+    if (need > k * 1.15 && k < kCap) { k = Math.min(kCap, need); continue; }
+    break;
+  }
+  if (chosenR == null) chosenR = Math.max(2, k / 3);
+  const rFull = Math.max(2, chosenR * ds.f);
+  const kFull = Math.max(4, Math.min(Math.round(rFull * 3), Math.floor(Math.min(w, h) / 6)));
+  return { radius: rFull, k: kFull };
+}
+
+// Evidence map for a given appearance mode.
+// 'white' -> white top-hat on luminance; 'dark' -> black top-hat on luminance;
+// 'colour' -> per-channel top-hat magnitude combined as a Euclidean norm (hue-only signals survive).
+function evidenceMap(P, w, h, k, mode) {
+  if (mode === 'white') return whiteTopHat(P.L, w, h, k);
+  if (mode === 'dark') return blackTopHat(P.L, w, h, k);
+  const out = new Float32Array(w * h);
+  for (const ch of ['r', 'g', 'b']) {
+    const wt = whiteTopHat(P[ch], w, h, k), bt = blackTopHat(P[ch], w, h, k);
+    for (let i = 0; i < out.length; i++) { const v = Math.max(wt[i], bt[i]); out[i] += v * v; }
+  }
+  for (let i = 0; i < out.length; i++) out[i] = Math.sqrt(out[i]);
+  return out;
+}
+
+function detect(opts) {
+  const { data, w, h } = opts;
+  const n = w * h;
+  const sensitivity = opts.sensitivity != null ? opts.sensitivity : 50;
+  const splitTouching = opts.splitTouching !== false;
+  const rejectElongated = !!opts.rejectElongated;
+  const validMask = opts.validMask || null;
+  const P = planes(data, n);
+
+  // --- scale ---
+  let k = opts.seRadius, estR = opts.colonyRadius;
+  if (!k) { const est = estimateScale(P.L, w, h, validMask); k = est.k; estR = est.radius; }
+  k = Math.max(3, Math.min(k, Math.floor(Math.min(w, h) / 6)));
+  if (!estR) estR = Math.max(2, k / 3);
+
+  // --- appearance mode ---
+  // Auto-selection runs the complete pipeline on a downsampled copy under each candidate mode and
+  // keeps the one that yields the most colony-like object population: compact shapes (axis ratio)
+  // and a consistent size distribution (low coefficient of variation of area). Scoring on the
+  // finished objects rather than on the raw evidence histogram is what makes this reliable, since
+  // a wrong appearance mode typically still separates *something* but yields ragged, size-variable
+  // fragments. Downsampling keeps the cost independent of photo resolution.
+  let mode = opts.mode, ev = null; const modeScores = {};
+  if (!mode || mode === 'auto') {
+    const small = downsampleRGBA(data, w, h, 420);
+    let best = null;
+    for (const m of ['white', 'dark', 'colour']) {
+      let sc = -1;
+      try {
+        const r = detect({ data: small.data, w: small.w, h: small.h, mode: m, sensitivity,
+                           splitTouching, validMask: null });
+        const cs = r.colonies;
+        if (cs.length) {
+          const areas = cs.map(c => c.area);
+          const mean = areas.reduce((a, b) => a + b, 0) / areas.length;
+          const sd = Math.sqrt(areas.reduce((a, b) => a + (b - mean) * (b - mean), 0) / areas.length);
+          const cv = mean ? sd / mean : 9;
+          const roundFrac = cs.filter(c => c.axisRatio >= 0.6).length / cs.length;
+          sc = roundFrac / (1 + cv);
+        } else sc = 0;
+      } catch (err) { sc = -1; }
+      modeScores[m] = +sc.toFixed(4);
+      if (!best || sc > best.sc) best = { m, sc };
+    }
+    mode = best.m;
+  }
+  ev = evidenceMap(P, w, h, k, mode);
+
+  // --- dual threshold (Otsu high, hysteresis low), biased by sensitivity ---
+  const vals = []; for (let i = 0; i < n; i++) if (!validMask || validMask[i]) vals.push(ev[i]);
+  const otsu = otsuThreshold(vals, 256).t;
+  const bias = 1 - ((sensitivity - 50) / 100);      // 95 -> 0.55x, 5 -> 1.45x
+  // Background noise level of this evidence map (median + 4 MAD over a subsample). The hysteresis
+  // low threshold must sit above it: sensor noise and 1-unit quantisation steps in a smooth
+  // illumination gradient otherwise let the grow step leak out of colonies along the staircase,
+  // producing ragged blobs that the watershed then shreds.
+  const sub = [];
+  for (let i = 0; i < n; i += 7) if (!validMask || validMask[i]) sub.push(ev[i]);
+  const evMed = median(sub);
+  const evMad = median(sub.map(v => Math.abs(v - evMed)));
+  const noiseFloor = evMed + 4 * Math.max(evMad, 0.5);
+  let tHigh = opts.tHigh != null ? opts.tHigh : Math.max(2, otsu * bias);
+  let tLow = opts.tLow != null ? opts.tLow : Math.max(1, tHigh * 0.45, noiseFloor);
+  if (tLow > tHigh) tLow = tHigh;
+
+  const mask = hysteresis(ev, w, h, tHigh, tLow, validMask);
+  const comps = connectedComponents(mask, w, h);
+  const minArea = opts.minArea != null ? opts.minArea : Math.max(4, Math.round(Math.PI * Math.pow(Math.max(2, estR * 0.35), 2)));
+  const maxArea = opts.maxArea != null ? opts.maxArea : Infinity;
+  const filtered = comps.filter(c => c.pixels.length >= minArea);
+  const dist = distanceTransform(mask, w, h);
+
+  const colonies = []; let splitCount = 0, rejectedShape = 0, rejectedSize = 0;
+  for (const comp of filtered) {
+    let peak = 0; for (const i of comp.pixels) if (dist[i] > peak) peak = dist[i];
+    let parts = [comp.pixels];
+    if (splitTouching) {
+      // Marker spacing is floored by the estimated colony radius as well as scaled to this blob's
+      // own distance-transform peak: without the estR floor, a blob that is slightly inflated
+      // (e.g. by a background-estimation halo) can host many genuine but sub-colony-sized regional
+      // maxima and be shredded into fragments far smaller than any real colony.
+      // Markers are selected by topological persistence rather than by a distance-only local-max
+      // rule: plateau ties inside one round colony carry zero persistence and are discarded, while
+      // two genuinely touching colonies leave a saddle whose depth is the evidence for splitting.
+      const hF = opts.persistenceFactor != null ? opts.persistenceFactor : 0.12;
+      const hAbs = opts.persistenceFloor != null ? opts.persistenceFloor : 0.9;
+      const minPersistence = Math.max(hAbs, peak * hF);
+      const maxima = findMarkersByPersistence(dist, comp.pixels, w, minPersistence, 1.0);
+      if (maxima.length > 1) {
+        const elev = new Float64Array(n);
+        for (const i of comp.pixels) elev[i] = -dist[i];
+        const labels = watershed(elev, comp.pixels, maxima, w);
+        const byLabel = {};
+        for (const i of comp.pixels) { const l = labels[i]; if (!l) continue; (byLabel[l] = byLabel[l] || []).push(i); }
+        parts = Object.values(byLabel);
+        splitCount += maxima.length - 1;
+      }
+    }
+    for (const px of parts) {
+      if (px.length < minArea) { rejectedSize++; continue; }
+      if (px.length > maxArea) { rejectedSize++; continue; }
+      const s = shapeOf(px, w);
+      if (rejectElongated && parts.length === 1 && s.axisRatio < 0.35) { rejectedShape++; continue; }
+      let touchesBorder = false;
+      for (const i of px) {
+        const x = i % w, y = (i / w) | 0;
+        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { touchesBorder = true; break; }
+      }
+      colonies.push({ x: s.x, y: s.y, r: Math.max(2, Math.sqrt(s.area / Math.PI)), area: s.area, axisRatio: s.axisRatio, touchesBorder });
+    }
+  }
+  // Objects clipped by the crop boundary are not whole colonies and cannot be measured reliably;
+  // the corner of a rectangular crop is also where the background estimate is weakest, because the
+  // structuring element there is filled with replicated edge values rather than real image data.
+  // Reject only *small* border-touching fragments, so a genuine colony sitting at the plate edge
+  // is still counted.
+  let rejectedBorder = 0;
+  if (opts.keepBorderFragments !== true && colonies.length) {
+    const interior = colonies.filter(c => !c.touchesBorder);
+    const medA = median((interior.length ? interior : colonies).map(c => c.area));
+    const kept = colonies.filter(c => {
+      if (!c.touchesBorder) return true;
+      if (c.area >= medA * 0.5) return true;
+      rejectedBorder++; return false;
+    });
+    colonies.length = 0; Array.prototype.push.apply(colonies, kept);
+  }
+  for (const c of colonies) delete c.touchesBorder;
+  return { colonies, diag: { mode, modeScores, k, estR, otsu, tHigh, tLow, minArea, blobs: filtered.length, splitCount, rejectedShape, rejectedSize, rejectedBorder } };
+}
+
+// ---- Learn parameters from user-clicked example colonies ----
+// Each click: region-grow in the evidence map from the click point down to 35% of the local peak,
+// giving that colony's area, peak response and mean radius. Parameters are then set from the
+// medians of the examples. This is parameter estimation from user examples, not a trained classifier.
+function trainFromPicks(opts) {
+  const { data, w, h, picks } = opts;
+  const n = w * h;
+  const P = planes(data, n);
+  const validMask = opts.validMask || null;
+  // provisional scale from the click spacing/coarse estimate
+  const est = estimateScale(P.L, w, h, validMask);
+  let k = est.k;
+
+  // Pick the appearance mode in which the clicked points stand out most *relative to that map's
+  // own background scale*. A raw mean would always favour the colour map, whose 3-channel norm is
+  // numerically larger by construction; a robust z-score (median/MAD) is scale-free.
+  let bestMode = null;
+  for (const m of ['white', 'dark', 'colour']) {
+    const e = evidenceMap(P, w, h, k, m);
+    // Normalise by the map's own high percentile: a correct map puts the clicked colonies in its
+    // top percentile (ratio -> 1); a wrong map leaves them near background while its p99.5 is set
+    // by unrelated structure (ratio -> 0). Median/MAD alone fails here, because a map with a
+    // near-empty background has MAD ~ 0 and inflates any response at all.
+    const sample = [];
+    for (let i = 0; i < n; i += 7) if (!validMask || validMask[i]) sample.push(e[i]);
+    const sorted = Array.from(sample).sort((a, b) => a - b);
+    const med = sorted.length ? sorted[Math.floor(sorted.length * 0.5)] : 0;
+    const p995 = sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.995))] : 0;
+    const span = Math.max(p995 - med, 1e-6);
+    let s = 0;
+    for (const p of picks) {
+      const px = Math.round(p.x), py = Math.round(p.y);
+      let peak = 0;
+      const rr = Math.max(3, Math.round(est.radius));
+      for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
+        const x = px + dx, y = py + dy;
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+        const v = e[y * w + x]; if (v > peak) peak = v;
+      }
+      s += (peak - med) / span;
+    }
+    const z = s / picks.length;
+    if (!bestMode || z > bestMode.z) bestMode = { m, e, z };
+  }
+  const ev = bestMode.e;
+  // background level of the chosen map, used to bound region growth below
+  const bgSample = [];
+  for (let i = 0; i < n; i += 7) if (!validMask || validMask[i]) bgSample.push(ev[i]);
+  const bgMed = median(bgSample);
+  const bgMad = median(bgSample.map(v => Math.abs(v - bgMed))) || 1;
+
+  const peaks = [], areas = [];
+  for (const p of picks) {
+    const px0 = Math.round(p.x), py0 = Math.round(p.y);
+    // local peak within a small neighbourhood of the click (clicks are approximate)
+    let peak = 0, pi = py0 * w + px0;
+    const rad = Math.max(3, Math.round(est.radius));
+    for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
+      const x = px0 + dx, y = py0 + dy;
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const i = y * w + x;
+      if (ev[i] > peak) { peak = ev[i]; pi = i; }
+    }
+    if (peak <= 0) continue;
+    // Region-grow at 35% of this colony's own peak, but never below the map's own background
+    // level, and never further than a few colony radii from the click: without both bounds the
+    // grow floods the whole field whenever the background is not near zero.
+    const cut = Math.max(peak * 0.35, bgMed + 3 * bgMad);
+    const maxDist = Math.max(8, est.radius * 4);
+    const seen = new Uint8Array(n); const st = [pi]; seen[pi] = 1; let area = 0;
+    while (st.length) {
+      const i = st.pop(); area++;
+      const x = i % w, y = (i / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        if (Math.hypot(nx - px0, ny - py0) > maxDist) continue;
+        const j = ny * w + nx;
+        if (seen[j] || ev[j] < cut) continue;
+        if (validMask && !validMask[j]) continue;
+        seen[j] = 1; st.push(j);
+      }
+    }
+    if (area < 3) continue;
+    peaks.push(peak); areas.push(area);
+  }
+  if (!peaks.length) return null;
+  const medPeak = median(peaks), medArea = median(areas);
+  const medR = Math.sqrt(medArea / Math.PI);
+  return {
+    mode: bestMode.m,
+    seRadius: Math.max(5, Math.round(medR * 3)),
+    tHigh: Math.max(2, medPeak * 0.45),
+    tLow: Math.max(1, medPeak * 0.22),
+    minArea: Math.max(3, Math.round(medArea * 0.30)),
+    maxArea: Math.round(medArea * 12),
+    learned: { medPeak, medArea, medR, nPicks: peaks.length }
+  };
+}
+
+
+// ===================== WORKER MESSAGE INTERFACE =====================
+self.onmessage = function (e) {
+  const msg = e.data;
+  try {
+    if (msg.action === 'train') {
+      const learned = trainFromPicks({
+        data: msg.imgData, w: msg.w, h: msg.h, picks: msg.picks, validMask: buildMask(msg)
+      });
+      if (!learned) { self.postMessage({ action: 'train', error: 'no-signal' }); return; }
+      self.postMessage({ action: 'train', learned: learned });
+      return;
+    }
+    const validMask = buildMask(msg);
+    const o = {
+      data: msg.imgData, w: msg.w, h: msg.h,
+      sensitivity: msg.sensitivity,
+      mode: msg.mode,
+      splitTouching: msg.splitTouching,
+      rejectElongated: msg.rejectElongated,
+      validMask: validMask
+    };
+    if (msg.learned) {
+      // Learned settings constrain scale/appearance; thresholds stay automatic unless locked.
+      o.mode = msg.learned.mode;
+      o.seRadius = msg.learned.seRadius;
+      o.colonyRadius = msg.learned.learned.medR;
+      o.minArea = msg.learned.minArea;
+      o.maxArea = msg.learned.maxArea;
+      if (msg.lockThresholds) { o.tHigh = msg.learned.tHigh; o.tLow = msg.learned.tLow; }
+    }
+    if (msg.minArea) o.minArea = msg.minArea;
+    const r = detect(o);
+    self.postMessage({ action: 'detect', colonies: r.colonies, diag: r.diag });
+  } catch (err) {
+    self.postMessage({ action: msg.action || 'detect', error: String(err && err.message || err) });
+  }
+};
+
+function buildMask(msg) {
+  if (!msg.roi || msg.roi.shape !== 'circle') return null;
+  const w = msg.w, h = msg.h, m = new Uint8Array(w * h);
+  const cx = msg.roi.cx, cy = msg.roi.cy, r = msg.roi.r;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    m[y * w + x] = (Math.hypot(x - cx, y - cy) <= r) ? 1 : 0;
+  }
+  return m;
+}
+
+</script>
+
+<script>
+// --- GLOBAL STATE ---
+let img = null;
+let mode = 'pan';
+let roiShape = 'rect';
+
+const mainCanvas = document.getElementById('mainCanvas');
+const mainCtx = mainCanvas.getContext('2d', { willReadFrequently: true });
+const mainViewport = document.getElementById('mainViewport');
+let mScale = 1, mPanX = 0, mPanY = 0;
+let isInteracting = false;
+let startX = 0, startY = 0;
+let roi = null; // { shape:'rect', x,y,w,h }  OR  { shape:'circle', cx,cy,r }  in image-pixel coords
+
+const snapCanvas = document.getElementById('snapCanvas');
+const snapCtx = snapCanvas.getContext('2d', { willReadFrequently: true });
+const snapViewport = document.getElementById('snapViewport');
+let snapOffscreen = document.createElement('canvas');
+let snapOffCtx = snapOffscreen.getContext('2d', { willReadFrequently: true });
+let snapImgData = null;
+let snapRoiLocal = null; // roi params translated into the snapshot's own 0..w/0..h space
+let colonies = [];
+let sScale = 1, sPanX = 0, sPanY = 0;
+let isSnapPan = false;
+
+let tableData = [];
+let rowCounter = 1;
+
+// Worker (built from inline template so the whole tool stays a single offline file)
+const workerBlob = new Blob([document.getElementById('workerSrc').textContent], { type: 'application/javascript' });
+const worker = new Worker(URL.createObjectURL(workerBlob));
+let workerBusy = false;
+
+// --- stage sizing ---
+// Left column (image stages) vs. right column (controls) is one free-drag divider; the two
+// stages stacked inside the left column share a second free-drag divider. Both start balanced at
+// the midpoint and can be dragged almost anywhere — the only limit is a small margin so neither
+// side can be dragged out of existence entirely. The swap button flips which stage is on top.
+const btnSwapPanels = document.getElementById('btnSwapPanels');
+const layoutEl = document.getElementById('layout');
+const leftColEl = document.getElementById('leftCol');
+const vsplit = document.getElementById('vsplit');
+const hsplit = document.getElementById('hsplit');
+let colFrac = 0.5, rowFrac = 0.5, stageOrderSwapped = false;
+function applySplit() {
+  layoutEl.style.setProperty('--lw', colFrac.toFixed(4) + 'fr');
+  layoutEl.style.setProperty('--rw', (1 - colFrac).toFixed(4) + 'fr');
+  leftColEl.style.setProperty('--th', rowFrac.toFixed(4) + 'fr');
+  leftColEl.style.setProperty('--bh', (1 - rowFrac).toFixed(4) + 'fr');
+  requestAnimationFrame(refitViews);
+}
+btnSwapPanels.addEventListener('click', () => {
+  leftColEl.classList.toggle('swap-order');
+  requestAnimationFrame(refitViews);
+});
+function dragHandler(el, axis, minFrac, maxFrac, onDrag) {
+  el.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    document.body.classList.add(axis === 'x' ? 'dragging-split' : 'dragging-hsplit');
+    const rect = layoutEl.getBoundingClientRect();
+    const onMove = (ev) => {
+      let f = axis === 'x' ? (ev.clientX - rect.left) / rect.width : (ev.clientY - rect.top) / rect.height;
+      f = Math.max(minFrac, Math.min(maxFrac, f));
+      onDrag(f);
+      applySplit();
+    };
+    const onUp = () => {
+      document.body.classList.remove('dragging-split', 'dragging-hsplit');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
+}
+dragHandler(vsplit, 'x', 0.06, 0.94, f => { colFrac = f; });
+dragHandler(hsplit, 'y', 0.06, 0.94, f => { rowFrac = f; });
+applySplit();
+
+const modePanBtn = document.getElementById('modePan');
+const modeDrawBtn = document.getElementById('modeDraw');
+const btnWholeImg = document.getElementById('btnWholeImg');
+const modeHint = document.getElementById('modeHint');
+const sensInput = document.getElementById('sensitivity');
+const typeInput = document.getElementById('colonyType');
+const minAreaInput = document.getElementById('minArea');
+const splitInput = document.getElementById('splitTouching');
+const countDisplay = document.getElementById('colonyCount');
+const btnSave = document.getElementById('btnSave');
+const btnClearArea = document.getElementById('btnClearArea');
+const showNumbersCheckbox = document.getElementById('showNumbers');
+const tbody = document.querySelector('#resultsTable tbody');
+const emptyMain = document.getElementById('emptyMain');
+const emptySnap = document.getElementById('emptySnap');
+const loadingSnap = document.getElementById('loadingSnap');
+const loadingMsg = document.getElementById('loadingMsg');
+const snapHint = document.getElementById('snapHint');
+const workerStatus = document.getElementById('workerStatus');
+const rangeFlagWrap = document.getElementById('rangeFlagWrap');
+const rejectElongatedInput = document.getElementById('rejectElongated');
+const adjBright = document.getElementById('adjBright');
+const adjContrast = document.getElementById('adjContrast');
+const adjGamma = document.getElementById('adjGamma');
+const adjClahe = document.getElementById('adjClahe');
+const adjClip = document.getElementById('adjClip');
+const adjStatus = document.getElementById('adjStatus');
+const trainPanel = document.getElementById('trainPanel');
+const trainMsg = document.getElementById('trainMsg');
+const btnTrain = document.getElementById('btnTrain');
+const btnTrainApply = document.getElementById('btnTrainApply');
+const btnTrainClear = document.getElementById('btnTrainClear');
+const lockThresholds = document.getElementById('lockThresholds');
+const learnedReadout = document.getElementById('learnedReadout');
+
+// Working copy of the uploaded photo with the user's image adjustments baked in. Everything
+// downstream (display, snapshot extraction, detection) reads from this canvas rather than the
+// original Image, so what is measured is exactly what is shown.
+const srcCanvas = document.createElement('canvas');
+const srcCtx = srcCanvas.getContext('2d', { willReadFrequently: true });
+let autoLevelsLo = null, autoLevelsHi = null;
+let trainMode = false, trainPicks = [], learnedParams = null;
+
+const LOADING_LINES = [
+  'Counting dots, judging none.',
+  'Asking each colony its name.',
+  'Separating the clingy ones.',
+  'Running the numbers, not a marathon.'
+];
+
+document.querySelectorAll('input[name="roiShape"]').forEach(r => r.addEventListener('change', (e) => { roiShape = e.target.value; }));
+
+// --- 1. IMAGE UPLOAD & RENDERING ---
+document.getElementById('fileUpload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    img = new Image();
+    img.onload = () => {
+      roi = null;
+      autoLevelsLo = autoLevelsHi = null;
+      clearTraining();
+      applyAdjustments();
+      clearSnapshot();
+      emptyMain.style.display = 'none';
+      modeHint.style.display = 'block';
+      mScale = Math.min(mainViewport.clientWidth / img.width, mainViewport.clientHeight / img.height) * 0.9;
+      mPanX = (mainViewport.clientWidth - img.width * mScale) / 2;
+      mPanY = (mainViewport.clientHeight - img.height * mScale) / 2;
+      drawMain();
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+
+// ===================== IMAGE ADJUSTMENT =====================
+// Adjustments are applied to a full-resolution working copy that both the display and the
+// detector read. CLAHE is Contrast Limited Adaptive Histogram Equalisation (Pizer et al., 1987,
+// Comput. Vis. Graph. Image Process. 39:355-368): the image is divided into tiles, a clipped
+// histogram equalisation is derived per tile, and the per-pixel mapping is bilinearly interpolated
+// between the four surrounding tile mappings so no tile seams appear. Clipping the histogram
+// before equalising is what keeps flat agar from being amplified into noise.
+function claheLuminance(lumaOut, data, w, h, clipFactor, tilesX, tilesY) {
+  const tw = Math.ceil(w / tilesX), th = Math.ceil(h / tilesY);
+  const maps = [];
+  for (let ty = 0; ty < tilesY; ty++) {
+    for (let tx = 0; tx < tilesX; tx++) {
+      const hist = new Float64Array(256);
+      let count = 0;
+      const x0 = tx * tw, y0 = ty * th, x1 = Math.min(w, x0 + tw), y1 = Math.min(h, y0 + th);
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        hist[lumaOut[y * w + x]]++; count++;
+      }
+      const clipLimit = Math.max(1, clipFactor * count / 256);
+      let excess = 0;
+      for (let i = 0; i < 256; i++) if (hist[i] > clipLimit) { excess += hist[i] - clipLimit; hist[i] = clipLimit; }
+      const spread = excess / 256;
+      for (let i = 0; i < 256; i++) hist[i] += spread;
+      const map = new Uint8Array(256);
+      let cum = 0;
+      for (let i = 0; i < 256; i++) { cum += hist[i]; map[i] = Math.max(0, Math.min(255, Math.round(255 * cum / (count || 1)))); }
+      maps.push(map);
+    }
+  }
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const fy = Math.min(tilesY - 1, Math.max(0, (y - th / 2) / th));
+    const ty0 = Math.floor(fy), ty1 = Math.min(tilesY - 1, ty0 + 1), wy = fy - ty0;
+    for (let x = 0; x < w; x++) {
+      const fx = Math.min(tilesX - 1, Math.max(0, (x - tw / 2) / tw));
+      const tx0 = Math.floor(fx), tx1 = Math.min(tilesX - 1, tx0 + 1), wx = fx - tx0;
+      const v = lumaOut[y * w + x];
+      const a = maps[ty0 * tilesX + tx0][v], b = maps[ty0 * tilesX + tx1][v];
+      const c = maps[ty1 * tilesX + tx0][v], d = maps[ty1 * tilesX + tx1][v];
+      out[y * w + x] = ((a * (1 - wx) + b * wx) * (1 - wy) + (c * (1 - wx) + d * wx) * wy) | 0;
+    }
+  }
+  return out;
+}
+
+function buildLut() {
+  // Order: auto-levels percentile stretch -> brightness -> contrast -> gamma.
+  const bright = parseInt(adjBright.value);
+  const contrast = parseInt(adjContrast.value);
+  const gamma = parseInt(adjGamma.value) / 100;
+  const cFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  const lut = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) {
+    let v = i;
+    if (autoLevelsLo != null && autoLevelsHi != null && autoLevelsHi > autoLevelsLo) {
+      v = 255 * (v - autoLevelsLo) / (autoLevelsHi - autoLevelsLo);
+    }
+    v = v + bright;
+    v = cFactor * (v - 128) + 128;
+    v = 255 * Math.pow(Math.max(0, Math.min(1, v / 255)), 1 / gamma);
+    lut[i] = Math.max(0, Math.min(255, Math.round(v)));
+  }
+  return lut;
+}
+
+function applyAdjustments() {
+  if (!img) return;
+  const t0 = performance.now();
+  srcCanvas.width = img.width; srcCanvas.height = img.height;
+  srcCtx.drawImage(img, 0, 0);
+  const active = adjClahe.checked || autoLevelsLo != null ||
+                 adjBright.value !== '0' || adjContrast.value !== '0' || adjGamma.value !== '100';
+  if (!active) { adjStatus.textContent = 'original'; return; }
+
+  const id = srcCtx.getImageData(0, 0, img.width, img.height);
+  const d = id.data, w = img.width, h = img.height, n = w * h;
+
+  if (adjClahe.checked) {
+    const luma = new Uint8Array(n);
+    for (let i = 0, j = 0; j < n; i += 4, j++) {
+      luma[j] = Math.max(0, Math.min(255, Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114)));
+    }
+    const eq = claheLuminance(luma, d, w, h, parseInt(adjClip.value) / 10, 8, 8);
+    // Re-apply the equalised luminance as a per-pixel gain so hue is preserved.
+    for (let i = 0, j = 0; j < n; i += 4, j++) {
+      const oldL = luma[j] || 1, g = eq[j] / oldL;
+      d[i] = Math.max(0, Math.min(255, d[i] * g));
+      d[i + 1] = Math.max(0, Math.min(255, d[i + 1] * g));
+      d[i + 2] = Math.max(0, Math.min(255, d[i + 2] * g));
+    }
+  }
+  const lut = buildLut();
+  for (let i = 0; i < d.length; i += 4) { d[i] = lut[d[i]]; d[i + 1] = lut[d[i + 1]]; d[i + 2] = lut[d[i + 2]]; }
+  srcCtx.putImageData(id, 0, 0);
+  adjStatus.textContent = 'adjusted · ' + Math.round(performance.now() - t0) + ' ms';
+}
+
+function computeAutoLevels() {
+  if (!img) return;
+  srcCanvas.width = img.width; srcCanvas.height = img.height;
+  srcCtx.drawImage(img, 0, 0);
+  const d = srcCtx.getImageData(0, 0, img.width, img.height).data;
+  const hist = new Float64Array(256);
+  let n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    hist[Math.max(0, Math.min(255, Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114)))]++;
+    n++;
+  }
+  // 0.5th / 99.5th percentile stretch: robust to a few blown highlights or dust specks.
+  let cum = 0, lo = 0, hi = 255;
+  for (let i = 0; i < 256; i++) { cum += hist[i]; if (cum >= n * 0.005) { lo = i; break; } }
+  cum = 0;
+  for (let i = 255; i >= 0; i--) { cum += hist[i]; if (cum >= n * 0.005) { hi = i; break; } }
+  autoLevelsLo = lo; autoLevelsHi = hi;
+}
+
+let adjTimer = null;
+function scheduleAdjust() {
+  document.getElementById('valBright').textContent = adjBright.value;
+  document.getElementById('valContrast').textContent = adjContrast.value;
+  document.getElementById('valGamma').textContent = (parseInt(adjGamma.value) / 100).toFixed(2);
+  document.getElementById('valClip').textContent = (parseInt(adjClip.value) / 10).toFixed(1);
+  clearTimeout(adjTimer);
+  adjTimer = setTimeout(() => {
+    applyAdjustments();
+    drawMain();
+    if (roi) { extractSnapshot(); runDetection(); }
+  }, 160);
+}
+[adjBright, adjContrast, adjGamma, adjClip].forEach(el => el.addEventListener('input', scheduleAdjust));
+adjClahe.addEventListener('change', scheduleAdjust);
+document.getElementById('btnAutoLevels').addEventListener('click', () => {
+  computeAutoLevels();
+  adjStatus.textContent = 'auto levels ' + autoLevelsLo + '\u2013' + autoLevelsHi;
+  scheduleAdjust();
+});
+document.getElementById('btnResetAdj').addEventListener('click', () => {
+  adjBright.value = 0; adjContrast.value = 0; adjGamma.value = 100; adjClip.value = 25;
+  adjClahe.checked = false; autoLevelsLo = autoLevelsHi = null;
+  scheduleAdjust();
+});
+
+function drawMain() {
+  if (!img) return;
+  mainCanvas.width = mainViewport.clientWidth;
+  mainCanvas.height = mainViewport.clientHeight;
+  mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+  mainCtx.save();
+  mainCtx.translate(mPanX, mPanY);
+  mainCtx.scale(mScale, mScale);
+  mainCtx.drawImage(srcCanvas, 0, 0);
+
+  if (roi) {
+    mainCtx.strokeStyle = '#0072B2';
+    mainCtx.lineWidth = 2 / mScale;
+    mainCtx.setLineDash([8 / mScale, 6 / mScale]);
+    mainCtx.fillStyle = 'rgba(20, 32, 51, 0.45)';
+    mainCtx.beginPath();
+    mainCtx.rect(0, 0, img.width, img.height);
+    if (roi.shape === 'rect') {
+      mainCtx.rect(roi.x, roi.y, roi.w, roi.h);
+    } else {
+      mainCtx.moveTo(roi.cx + roi.r, roi.cy);
+      mainCtx.arc(roi.cx, roi.cy, roi.r, 0, Math.PI * 2, true);
+    }
+    mainCtx.fill('evenodd');
+    mainCtx.beginPath();
+    if (roi.shape === 'rect') mainCtx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+    else mainCtx.arc(roi.cx, roi.cy, roi.r, 0, Math.PI * 2);
+    mainCtx.stroke();
+    mainCtx.setLineDash([]);
+
+    // Move/resize handles — only in "Select area" mode, so pan mode stays purely for navigation.
+    if (mode === 'draw') {
+      mainCtx.fillStyle = '#0072B2';
+      mainCtx.strokeStyle = '#ffffff';
+      mainCtx.lineWidth = 1.4 / mScale;
+      const hs = 5 / mScale;
+      const drawHandle = (hx, hy) => {
+        mainCtx.beginPath(); mainCtx.rect(hx - hs, hy - hs, hs * 2, hs * 2); mainCtx.fill(); mainCtx.stroke();
+      };
+      if (roi.shape === 'rect') {
+        for (const id in getRectHandles(roi)) { const h = getRectHandles(roi)[id]; drawHandle(h.x, h.y); }
+      } else {
+        drawHandle(roi.cx + roi.r, roi.cy);
+      }
+    }
+  }
+  mainCtx.restore();
+}
+
+// --- ROI move/resize geometry ---
+function getRectHandles(r) {
+  const { x, y, w, h } = r;
+  return {
+    nw: { x, y }, n: { x: x + w / 2, y }, ne: { x: x + w, y },
+    w: { x, y: y + h / 2 }, e: { x: x + w, y: y + h / 2 },
+    sw: { x, y: y + h }, s: { x: x + w / 2, y: y + h }, se: { x: x + w, y: y + h }
+  };
+}
+function hitTestRoiHandle(pos) {
+  if (!roi) return null;
+  const tol = 9 / mScale;
+  if (roi.shape === 'rect') {
+    const H = getRectHandles(roi);
+    for (const id in H) if (Math.hypot(pos.x - H[id].x, pos.y - H[id].y) <= tol) return id;
+  } else {
+    if (Math.hypot(pos.x - (roi.cx + roi.r), pos.y - roi.cy) <= tol) return 'r';
+  }
+  return null;
+}
+function pointInRoi(pos) {
+  if (!roi) return false;
+  if (roi.shape === 'rect') return pos.x >= roi.x && pos.x <= roi.x + roi.w && pos.y >= roi.y && pos.y <= roi.y + roi.h;
+  return Math.hypot(pos.x - roi.cx, pos.y - roi.cy) <= roi.r;
+}
+function cursorForHandle(id) {
+  return { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize',
+           n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', r: 'ew-resize' }[id] || 'move';
+}
+function resizeRect(handle, pos) {
+  const MIN = 15;
+  let { x, y, w, h } = roiStart;
+  let x1 = x, y1 = y, x2 = x + w, y2 = y + h;
+  const px = Math.max(0, Math.min(img.width, pos.x)), py = Math.max(0, Math.min(img.height, pos.y));
+  if (handle.includes('w')) x1 = px;
+  if (handle.includes('e')) x2 = px;
+  if (handle.includes('n')) y1 = py;
+  if (handle.includes('s')) y2 = py;
+  if (x2 - x1 < MIN) { if (handle.includes('w')) x1 = x2 - MIN; else x2 = x1 + MIN; }
+  if (y2 - y1 < MIN) { if (handle.includes('n')) y1 = y2 - MIN; else y2 = y1 + MIN; }
+  roi.x = Math.max(0, x1); roi.y = Math.max(0, y1);
+  roi.w = Math.min(img.width, x2) - roi.x;
+  roi.h = Math.min(img.height, y2) - roi.y;
+}
+
+// --- 2. MAIN VIEWPORT INTERACTION ---
+function setMode(newMode) {
+  mode = newMode;
+  modePanBtn.classList.toggle('active', mode === 'pan');
+  modeDrawBtn.classList.toggle('active', mode === 'draw');
+  mainViewport.classList.toggle('draw-mode', mode === 'draw');
+  modeHint.textContent = mode === 'pan' ? "Scroll to zoom. Drag to pan."
+    : (roi ? "Drag inside the selection to move it, or a handle to resize. Drag outside it to start a new selection."
+           : (roiShape === 'circle' ? "Click at the dish centre and drag out to its edge." : "Click and drag to select the area to count."));
+  drawMain();
+}
+modePanBtn.onclick = () => setMode('pan');
+modeDrawBtn.onclick = () => setMode('draw');
+document.querySelectorAll('input[name="roiShape"]').forEach(r => r.addEventListener('change', () => { if (mode === 'draw') setMode('draw'); }));
+
+btnWholeImg.onclick = () => {
+  if (!img) return;
+  roi = { shape: 'rect', x: 0, y: 0, w: img.width, h: img.height };
+  drawMain();
+  extractSnapshot();
+  runDetection();
+};
+
+function getMousePos(e) {
+  const rect = mainViewport.getBoundingClientRect();
+  return { x: (e.clientX - rect.left - mPanX) / mScale, y: (e.clientY - rect.top - mPanY) / mScale };
+}
+
+mainViewport.addEventListener('wheel', (e) => {
+  if (!img) return;
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+  const rect = mainViewport.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
+  mPanX = mouseX - (mouseX - mPanX) * zoomFactor;
+  mPanY = mouseY - (mouseY - mPanY) * zoomFactor;
+  mScale *= zoomFactor;
+  drawMain();
+});
+
+let roiAction = null;   // null | 'new' | 'move' | 'resize'
+let roiHandle = null;
+let roiStart = null;    // snapshot of roi at drag start, used as the resize anchor
+let dragOffset = null;  // for 'move': pointer position minus roi origin at drag start
+
+mainViewport.addEventListener('mousedown', (e) => {
+  if (!img) return;
+  isInteracting = true;
+  const pos = getMousePos(e);
+  if (mode === 'pan' || e.button === 2) {
+    startX = e.clientX - mPanX; startY = e.clientY - mPanY;
+    mainViewport.style.cursor = 'grabbing';
+  } else if (mode === 'draw' && e.button === 0) {
+    startX = pos.x; startY = pos.y;
+    const handle = hitTestRoiHandle(pos);
+    if (handle) {
+      roiAction = 'resize'; roiHandle = handle; roiStart = JSON.parse(JSON.stringify(roi));
+    } else if (pointInRoi(pos)) {
+      roiAction = 'move'; roiStart = JSON.parse(JSON.stringify(roi));
+      dragOffset = roi.shape === 'rect' ? { dx: pos.x - roi.x, dy: pos.y - roi.y } : { dx: pos.x - roi.cx, dy: pos.y - roi.cy };
+    } else {
+      roiAction = 'new';
+      if (roiShape === 'rect') roi = { shape: 'rect', x: startX, y: startY, w: 0, h: 0 };
+      else roi = { shape: 'circle', cx: startX, cy: startY, r: 0 };
+    }
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isInteracting) return;
+  if (mode === 'pan' || e.button === 2) {
+    mPanX = e.clientX - startX; mPanY = e.clientY - startY;
+    drawMain();
+    return;
+  }
+  if (mode !== 'draw' || !roiAction) return;
+  const pos = getMousePos(e);
+  if (roiAction === 'new') {
+    if (roiShape === 'rect') {
+      roi.x = Math.max(0, Math.min(startX, pos.x));
+      roi.y = Math.max(0, Math.min(startY, pos.y));
+      roi.w = Math.min(img.width - roi.x, Math.abs(pos.x - startX));
+      roi.h = Math.min(img.height - roi.y, Math.abs(pos.y - startY));
+    } else {
+      const r = Math.hypot(pos.x - startX, pos.y - startY);
+      roi.r = Math.max(0, Math.min(r, startX, startY, img.width - startX, img.height - startY));
+    }
+  } else if (roiAction === 'move') {
+    if (roi.shape === 'rect') {
+      roi.x = Math.max(0, Math.min(img.width - roi.w, pos.x - dragOffset.dx));
+      roi.y = Math.max(0, Math.min(img.height - roi.h, pos.y - dragOffset.dy));
+    } else {
+      roi.cx = Math.max(roi.r, Math.min(img.width - roi.r, pos.x - dragOffset.dx));
+      roi.cy = Math.max(roi.r, Math.min(img.height - roi.r, pos.y - dragOffset.dy));
+    }
+  } else if (roiAction === 'resize') {
+    if (roi.shape === 'rect') {
+      resizeRect(roiHandle, pos);
+    } else {
+      // Anchor the point diametrically opposite the handle (the west edge of the circle at drag
+      // start) and grow the radius from there, the same way a rectangle resizes from one edge.
+      // Anchoring on the *current* centre instead would cap the radius at however close the
+      // circle already sits to an image edge, making it impossible to enlarge a circle whose
+      // centre is already near a boundary.
+      const anchorX = roiStart.cx - roiStart.r;
+      const targetX = Math.max(0, Math.min(img.width, pos.x));
+      const desiredR = (targetX - anchorX) / 2;
+      const maxR = Math.min((img.width - anchorX) / 2, roiStart.cy, img.height - roiStart.cy);
+      const newR = Math.max(8, Math.min(desiredR, maxR));
+      roi.r = newR; roi.cx = anchorX + newR; roi.cy = roiStart.cy;
+    }
+  }
+  drawMain();
+  liveCropPreview();
+});
+
+// Hover cursor feedback when not dragging: shows what a click will do.
+mainViewport.addEventListener('mousemove', (e) => {
+  if (isInteracting || mode !== 'draw' || !img) return;
+  const pos = getMousePos(e);
+  const handle = hitTestRoiHandle(pos);
+  if (handle) mainViewport.style.cursor = cursorForHandle(handle);
+  else if (pointInRoi(pos)) mainViewport.style.cursor = 'move';
+  else mainViewport.style.cursor = 'crosshair';
+});
+
+let livePreviewQueued = false;
+function liveCropPreview() {
+  if (!roi || livePreviewQueued) return;
+  livePreviewQueued = true;
+  requestAnimationFrame(() => { livePreviewQueued = false; if (roi) extractSnapshot(); });
+}
+
+window.addEventListener('mouseup', () => {
+  if (!isInteracting) return;
+  isInteracting = false;
+  mainViewport.style.cursor = mode === 'draw' ? 'crosshair' : 'grab';
+  if (mode === 'draw' && roiAction) {
+    if (roi) {
+      const big = roi.shape === 'rect' ? (roi.w > 15 && roi.h > 15) : (roi.r > 8);
+      if (big) { extractSnapshot(); runDetection(); }
+      else if (roiAction === 'new') { roi = null; clearSnapshot(); drawMain(); }
+    }
+    roiAction = null; roiHandle = null; roiStart = null; dragOffset = null;
+  }
+});
+
+mainViewport.addEventListener('contextmenu', e => e.preventDefault());
+snapViewport.addEventListener('contextmenu', e => e.preventDefault());
+
+// --- 3. SNAPSHOT & AUTO-DETECTION ---
+btnClearArea.onclick = () => { roi = null; clearSnapshot(); drawMain(); };
+
+function clearSnapshot() {
+  snapCanvas.width = 0; snapCanvas.height = 0;
+  snapOffscreen.width = 0; snapOffscreen.height = 0;
+  snapImgData = null; colonies = [];
+  countDisplay.textContent = '0';
+  btnSave.disabled = true;
+  sScale = 1; sPanX = 0; sPanY = 0;
+  emptySnap.style.display = 'flex';
+  snapHint.style.display = 'none';
+}
+
+function extractSnapshot() {
+  let bx, by, bw, bh;
+  if (roi.shape === 'rect') { bx = roi.x; by = roi.y; bw = roi.w; bh = roi.h; }
+  else { bx = roi.cx - roi.r; by = roi.cy - roi.r; bw = roi.r * 2; bh = roi.r * 2; }
+  bx = Math.max(0, bx); by = Math.max(0, by);
+  bw = Math.min(img.width - bx, bw); bh = Math.min(img.height - by, bh);
+
+  snapOffscreen.width = bw; snapOffscreen.height = bh;
+  snapOffCtx.clearRect(0, 0, bw, bh);
+  snapOffCtx.drawImage(srcCanvas, bx, by, bw, bh, 0, 0, bw, bh);
+  snapImgData = snapOffCtx.getImageData(0, 0, bw, bh);
+
+  if (roi.shape === 'circle') snapRoiLocal = { shape: 'circle', cx: roi.cx - bx, cy: roi.cy - by, r: roi.r };
+  else snapRoiLocal = { shape: 'rect' };
+
+  emptySnap.style.display = 'none';
+  snapHint.style.display = 'block';
+  fitSnapshot();
+  btnSave.disabled = false;
+}
+
+function fitSnapshot() {
+  if (!snapImgData) return;
+  sScale = Math.min((snapViewport.clientWidth - 20) / snapImgData.width, (snapViewport.clientHeight - 20) / snapImgData.height);
+  sPanX = (snapViewport.clientWidth - snapImgData.width * sScale) / 2;
+  sPanY = (snapViewport.clientHeight - snapImgData.height * sScale) / 2;
+  drawSnapshot();
+}
+document.getElementById('sFit').onclick = fitSnapshot;
+
+function zoomSnap(factor, mouseX = snapViewport.clientWidth/2, mouseY = snapViewport.clientHeight/2) {
+  if (!snapImgData) return;
+  sPanX = mouseX - (mouseX - sPanX) * factor;
+  sPanY = mouseY - (mouseY - sPanY) * factor;
+  sScale *= factor;
+  drawSnapshot();
+}
+document.getElementById('sZoomIn').onclick = () => zoomSnap(1.2);
+document.getElementById('sZoomOut').onclick = () => zoomSnap(1/1.2);
+
+let loadingTimer = null;
+function runDetection() {
+  if (!snapImgData || workerBusy) return;
+  workerBusy = true;
+  loadingSnap.style.display = 'flex';
+  let li = 0;
+  loadingMsg.textContent = LOADING_LINES[0];
+  loadingTimer = setInterval(() => { li = (li + 1) % LOADING_LINES.length; loadingMsg.textContent = LOADING_LINES[li]; }, 1400);
+  workerStatus.textContent = 'processing…';
+
+  const payload = {
+    action: 'detect',
+    imgData: snapImgData.data,
+    w: snapImgData.width,
+    h: snapImgData.height,
+    mode: typeInput.value,
+    sensitivity: parseInt(sensInput.value),
+    splitTouching: splitInput.checked,
+    rejectElongated: rejectElongatedInput.checked,
+    roi: snapRoiLocal,
+    learned: learnedParams,
+    lockThresholds: lockThresholds.checked
+  };
+  const ma = parseInt(minAreaInput.value);
+  if (!isNaN(ma) && ma > 0) payload.minArea = ma;
+  worker.postMessage(payload);
+}
+
+worker.onmessage = (e) => {
+  workerBusy = false;
+  clearInterval(loadingTimer);
+  loadingSnap.style.display = 'none';
+  const msg = e.data;
+
+  if (msg.action === 'train') {
+    btnTrain.disabled = false;
+    if (msg.error || !msg.learned) {
+      trainMsg.innerHTML = 'No measurable signal at those points. Try clicking nearer the centre of clearly visible colonies, or adjust the image first.';
+      return;
+    }
+    learnedParams = msg.learned;
+    const L = msg.learned;
+    const mName = { white: 'white / cream', dark: 'dark / pigmented', colour: 'coloured' }[L.mode] || L.mode;
+    learnedReadout.style.display = 'block';
+    learnedReadout.innerHTML =
+      'Learned from ' + L.learned.nPicks + ' example colonies: appearance = <b>' + mName + '</b>; ' +
+      'median colony radius = <b>' + L.learned.medR.toFixed(1) + ' px</b> (area ' + Math.round(L.learned.medArea) + ' px&sup2;); ' +
+      'response threshold = <b>' + L.tHigh.toFixed(1) + '</b>; accepted area range ' + L.minArea + '&ndash;' + L.maxArea + ' px&sup2;.';
+    trainMsg.innerHTML = 'Examples applied. Appearance and colony size are now fixed to your picks; the threshold is re-derived for each new selection unless you lock it.';
+    btnTrainClear.disabled = false;
+    btnTrainApply.disabled = true;
+    runDetection();
+    return;
+  }
+
+  if (msg.error) { workerStatus.textContent = 'detection failed: ' + msg.error; return; }
+
+  colonies = msg.colonies.map(c => ({ x: c.x, y: c.y, r: 4 }));
+  const d = msg.diag;
+  const mName = { white: 'white', dark: 'dark', colour: 'coloured' }[d.mode] || d.mode;
+  const bits = [
+    'appearance: ' + mName + (typeInput.value === 'auto' ? ' (auto)' : ''),
+    'threshold ' + d.tHigh.toFixed(1) + '/' + d.tLow.toFixed(1),
+    'colony radius ~' + d.estR.toFixed(1) + ' px',
+    d.blobs + ' blob(s)',
+    d.splitCount + ' split(s)'
+  ];
+  if (d.rejectedShape) bits.push(d.rejectedShape + ' elongated rejected');
+  if (d.rejectedBorder) bits.push(d.rejectedBorder + ' edge fragment(s) rejected');
+  workerStatus.textContent = bits.join(' \u00b7 ');
+  drawSnapshot();
+};
+
+// --- training from user-picked example colonies ---
+function clearTraining() {
+  trainMode = false; trainPicks = []; learnedParams = null;
+  trainPanel.classList.remove('armed');
+  btnTrain.textContent = 'Teach from my picks';
+  btnTrain.disabled = false;
+  btnTrainApply.disabled = true;
+  btnTrainClear.disabled = true;
+  learnedReadout.style.display = 'none';
+  trainMsg.innerHTML = 'Click <b>Teach from my picks</b>, then click the centre of at least three representative colonies in the analysis view. Colony appearance, size and threshold are measured from those examples.';
+}
+btnTrainClear.addEventListener('click', () => { clearTraining(); runDetection(); });
+
+btnTrain.addEventListener('click', () => {
+  if (!snapImgData) { trainMsg.textContent = 'Select an area on the plate first.'; return; }
+  trainMode = !trainMode;
+  trainPicks = [];
+  trainPanel.classList.toggle('armed', trainMode);
+  btnTrain.textContent = trainMode ? 'Stop picking' : 'Teach from my picks';
+  btnTrainApply.disabled = true;
+  trainMsg.innerHTML = trainMode
+    ? 'Picking mode: click the centre of each example colony in the analysis view. Marked so far: <b>0</b>. At least three are needed.'
+    : 'Picking cancelled.';
+  drawSnapshot();
+});
+
+btnTrainApply.addEventListener('click', () => {
+  if (trainPicks.length < 3 || !snapImgData) return;
+  trainMode = false;
+  trainPanel.classList.remove('armed');
+  btnTrain.textContent = 'Teach from my picks';
+  btnTrain.disabled = true;
+  trainMsg.textContent = 'Measuring your examples\u2026';
+  workerBusy = true;
+  loadingSnap.style.display = 'flex';
+  loadingMsg.textContent = 'Learning what you meant.';
+  worker.postMessage({
+    action: 'train',
+    imgData: snapImgData.data,
+    w: snapImgData.width,
+    h: snapImgData.height,
+    picks: trainPicks.map(p => ({ x: p.x, y: p.y })),
+    roi: snapRoiLocal
+  });
+});
+
+sensInput.addEventListener('input', () => { document.getElementById('sensVal').textContent = sensInput.value; runDetection(); });
+typeInput.addEventListener('change', runDetection);
+rejectElongatedInput.addEventListener('change', runDetection);
+lockThresholds.addEventListener('change', runDetection);
+minAreaInput.addEventListener('change', runDetection);
+splitInput.addEventListener('change', runDetection);
+showNumbersCheckbox.addEventListener('change', drawSnapshot);
+
+function drawSnapshot() {
+  if (!snapImgData) return;
+  snapCanvas.width = snapViewport.clientWidth;
+  snapCanvas.height = snapViewport.clientHeight;
+  snapCtx.clearRect(0, 0, snapCanvas.width, snapCanvas.height);
+  snapCtx.save();
+  snapCtx.translate(sPanX, sPanY);
+  snapCtx.scale(sScale, sScale);
+  snapCtx.drawImage(snapOffscreen, 0, 0);
+
+  if (snapRoiLocal && snapRoiLocal.shape === 'circle') {
+    snapCtx.save();
+    snapCtx.beginPath();
+    snapCtx.rect(0, 0, snapImgData.width, snapImgData.height);
+    snapCtx.arc(snapRoiLocal.cx, snapRoiLocal.cy, snapRoiLocal.r, 0, Math.PI * 2, true);
+    snapCtx.fillStyle = 'rgba(0,0,0,0.55)';
+    snapCtx.fill('evenodd');
+    snapCtx.restore();
+  }
+
+  const showNum = showNumbersCheckbox.checked;
+  colonies.forEach((c, i) => {
+    snapCtx.beginPath();
+    snapCtx.arc(c.x, c.y, c.r / sScale + 2, 0, Math.PI * 2);
+    snapCtx.strokeStyle = '#009E73';
+    snapCtx.lineWidth = 1.5 / sScale;
+    snapCtx.stroke();
+    if (showNum) {
+      snapCtx.fillStyle = 'rgba(20,32,51,0.72)';
+      snapCtx.beginPath();
+      snapCtx.arc(c.x + (8/sScale), c.y - (8/sScale), 7/sScale, 0, Math.PI*2);
+      snapCtx.fill();
+      snapCtx.fillStyle = 'white';
+      snapCtx.font = `${10/sScale}px system-ui`;
+      snapCtx.textAlign = 'center';
+      snapCtx.textBaseline = 'middle';
+      snapCtx.fillText(i + 1, c.x + (8/sScale), c.y - (8/sScale));
+    }
+  });
+  // user-picked training examples, drawn distinctly from detections
+  trainPicks.forEach((p, i) => {
+    snapCtx.beginPath();
+    snapCtx.arc(p.x, p.y, 9 / sScale, 0, Math.PI * 2);
+    snapCtx.strokeStyle = '#D55E00';
+    snapCtx.lineWidth = 2.2 / sScale;
+    snapCtx.setLineDash([4 / sScale, 3 / sScale]);
+    snapCtx.stroke();
+    snapCtx.setLineDash([]);
+    snapCtx.beginPath();
+    snapCtx.moveTo(p.x - 4 / sScale, p.y); snapCtx.lineTo(p.x + 4 / sScale, p.y);
+    snapCtx.moveTo(p.x, p.y - 4 / sScale); snapCtx.lineTo(p.x, p.y + 4 / sScale);
+    snapCtx.stroke();
+  });
+
+  snapCtx.restore();
+  countDisplay.textContent = colonies.length;
+}
+
+// --- 4. SNAPSHOT VIEWPORT INTERACTION (manual refine) ---
+snapViewport.addEventListener('wheel', (e) => {
+  if (!snapImgData) return;
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+  const rect = snapViewport.getBoundingClientRect();
+  zoomSnap(zoomFactor, e.clientX - rect.left, e.clientY - rect.top);
+});
+
+snapViewport.addEventListener('mousedown', (e) => {
+  if (!snapImgData) return;
+  const rect = snapViewport.getBoundingClientRect();
+  if (e.button === 2 || e.shiftKey) {
+    isSnapPan = true;
+    startX = e.clientX - sPanX; startY = e.clientY - sPanY;
+    snapViewport.style.cursor = 'grabbing';
+  } else if (e.button === 0) {
+    const mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
+    const imgX = (mouseX - sPanX) / sScale, imgY = (mouseY - sPanY) / sScale;
+    if (trainMode && imgX >= 0 && imgX <= snapImgData.width && imgY >= 0 && imgY <= snapImgData.height) {
+      // In picking mode a click marks (or unmarks) an example colony rather than editing the count.
+      const hitIdx = trainPicks.findIndex(p => Math.hypot(p.x - imgX, p.y - imgY) < 10 / sScale + 6);
+      if (hitIdx >= 0) trainPicks.splice(hitIdx, 1);
+      else trainPicks.push({ x: imgX, y: imgY });
+      btnTrainApply.disabled = trainPicks.length < 3;
+      trainMsg.innerHTML = 'Picking mode: click the centre of each example colony in the analysis view. Marked so far: <b>' +
+        trainPicks.length + '</b>.' + (trainPicks.length < 3 ? ' At least three are needed.' : ' Press <b>Apply examples</b> when done.');
+      drawSnapshot();
+      return;
+    }
+    if (imgX >= 0 && imgX <= snapImgData.width && imgY >= 0 && imgY <= snapImgData.height) {
+      if (snapRoiLocal && snapRoiLocal.shape === 'circle') {
+        if (Math.hypot(imgX - snapRoiLocal.cx, imgY - snapRoiLocal.cy) > snapRoiLocal.r) return;
+      }
+      let hitIdx = -1, minDist = 10 / sScale;
+      colonies.forEach((c, i) => { const dist = Math.hypot(c.x - imgX, c.y - imgY); if (dist < minDist) { minDist = dist; hitIdx = i; } });
+      if (hitIdx >= 0) colonies.splice(hitIdx, 1);
+      else colonies.push({ x: imgX, y: imgY, r: 4 });
+      drawSnapshot();
+    }
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isSnapPan) return;
+  sPanX = e.clientX - startX; sPanY = e.clientY - startY;
+  drawSnapshot();
+});
+window.addEventListener('mouseup', () => { if (isSnapPan) { isSnapPan = false; snapViewport.style.cursor = 'crosshair'; } });
+
+// --- 5. TABLE & CALCULATIONS ---
+function formatSci(num) {
+  if (isNaN(num) || num === 0) return "0";
+  return num.toExponential(2).replace('e+', ' × 10^').replace('e-', ' × 10^-');
+}
+
+function validateInputs(dil, vol) {
+  const errs = [];
+  if (!Number.isInteger(dil) || dil < 0) errs.push('Dilution exponent must be a non-negative integer.');
+  if (!(vol > 0)) errs.push('Volume plated must be a positive number.');
+  if (vol > 5000) errs.push('Volume plated exceeds a typical plated volume (>5 mL) — check units (µL expected).');
+  return errs;
+}
+
+function rangeFlag(count) {
+  if (count < 25) return 'Below FDA BAM countable range (<25)';
+  if (count > 250) return 'Above FDA BAM countable range (>250)';
+  return '';
+}
+
+document.getElementById('dilution').addEventListener('input', updateRangeFlagPreview);
+document.getElementById('volume').addEventListener('input', updateRangeFlagPreview);
+function updateRangeFlagPreview() {
+  const dil = parseInt(document.getElementById('dilution').value);
+  const vol = parseInt(document.getElementById('volume').value);
+  const errs = validateInputs(dil, vol);
+  rangeFlagWrap.innerHTML = errs.length ? `<span style="color:var(--oi-vermillion); font-weight:600;">${errs.join(' ')}</span>` : '';
+  btnSave.disabled = errs.length > 0 || !snapImgData;
+}
+
+btnSave.addEventListener('click', () => {
+  const dil = parseInt(document.getElementById('dilution').value);
+  const vol = parseInt(document.getElementById('volume').value);
+  const errs = validateInputs(dil, vol);
+  if (errs.length) { updateRangeFlagPreview(); return; }
+  const count = colonies.length;
+  const cfu = (count * Math.pow(10, dil)) / (vol / 1000);
+  tableData.push({ id: rowCounter++, use: true, count, dil, vol, cfu, flag: rangeFlag(count) });
+  renderTable();
+});
+
+function renderTable() {
+  tbody.innerHTML = '';
+  tableData.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.style.opacity = row.use ? '1' : '0.5';
+    tr.style.background = row.use ? '#ffffff' : 'var(--panel-alt)';
+    tr.innerHTML = `
+      <td><input type="checkbox" class="row-check" data-idx="${idx}" ${row.use ? 'checked' : ''}></td>
+      <td>${row.id}</td>
+      <td style="font-weight: bold;">${row.count}</td>
+      <td>10⁻${row.dil}</td>
+      <td>${row.vol}</td>
+      <td style="color:#0d6b4f; font-weight:600;">${formatSci(row.cfu)}</td>
+      <td>${row.flag ? `<span class="flag-badge" title="${row.flag}">⚠ ${row.count < 25 ? '<25' : '>250'}</span>` : ''}</td>
+      <td><button class="ghost-warn delete-btn" data-idx="${idx}" style="padding:4px 8px; font-size:11px;">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', (e) => { tableData[e.target.dataset.idx].use = e.target.checked; renderTable(); }));
+  document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { tableData.splice(e.target.dataset.idx, 1); renderTable(); }));
+  updateSummary();
+}
+
+function updateSummary() {
+  const active = tableData.filter(r => r.use);
+  document.getElementById('selRows').textContent = active.length;
+  if (active.length === 0) { document.getElementById('avgCfuDisplay').textContent = "—"; return; }
+  let totalCfu = 0;
+  active.forEach(r => totalCfu += r.cfu);
+  document.getElementById('avgCfuDisplay').textContent = formatSci(totalCfu / active.length);
+}
+
+document.getElementById('btnExportCsv').addEventListener('click', () => {
+  const rows = [['Row', 'Included', 'Count', 'Dilution (10^-x)', 'Volume plated (uL)', 'CFU/mL', 'Range flag']];
+  tableData.forEach(r => rows.push([r.id, r.use ? 'Y' : 'N', r.count, r.dil, r.vol, r.cfu, r.flag || '']));
+  const active = tableData.filter(r => r.use);
+  if (active.length) rows.push(['', '', '', '', 'Average CFU/mL (included rows):', active.reduce((s,r)=>s+r.cfu,0)/active.length, '']);
+  const csv = rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `colony_counts_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+});
+
+function refitViews() {
+  if (img) {
+    mScale = Math.min(mainViewport.clientWidth / img.width, mainViewport.clientHeight / img.height) * 0.9;
+    mPanX = (mainViewport.clientWidth - img.width * mScale) / 2;
+    mPanY = (mainViewport.clientHeight - img.height * mScale) / 2;
+    drawMain();
+  }
+  if (snapImgData) fitSnapshot();
+}
+window.addEventListener('resize', refitViews);
+
+updateRangeFlagPreview();
+</script>
+</body>
+</html>

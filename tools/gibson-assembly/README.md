@@ -1,0 +1,5 @@
+Gibson Assembly Designer is an offline, single-file primer design tool for Gibson (isothermal) assembly. Paste in your fragments in the order they'll be assembled — circular or linear — and it designs Gibson-ready PCR primers using validated nearest-neighbour Tm calculations, sizes each overlap to the field-standard 20 bp / ≥48 °C minimum, and screens every binding region and overlap arm for off-target homology against the real source plasmid (if you attach one), every other fragment, and every other primer set — flagging anything that could mis-prime or mis-assemble, with a one-click unique-spacer fix when a repeat can't be designed around.
+
+Results include a full order sheet (primer sequences, Tm, annealing temp, extension time), a homology/specificity report you can check at a glance, an illustrative map showing exactly where each primer sits and which way it points on the finished construct, and "Why?" toggles on every primer and junction explaining the reasoning behind its length and Tm — so nothing is a black box before you order.
+
+It runs entirely in the browser (no sequence data leaves the page) and needs no installation — just open the HTML file.

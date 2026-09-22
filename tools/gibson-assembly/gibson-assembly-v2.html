@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gibson Assembly Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#f3f0ea; --paper-2:#ece7dc; --card:#fffefc; --ink:#181d21; --ink-2:#48524f; --ink-3:#868f8c;
+    --line:#e2ddd0; --line-2:#cfc8b8;
+    --teal:#0d9488; --teal-d:#0a6f66; --teal-l:#dcf4ef; --teal-vivid:#06b6a0;
+    --indigo:#4f46e5; --indigo-d:#3730a3; --indigo-l:#e6e4fb;
+    --amber:#d97706; --amber-l:#fdedd3; --rose:#e11d48; --rose-l:#fbe2e8;
+    --grass:#16a34a; --grass-l:#dcf6e6; --blue:#0284c7; --blue-l:#dceffb; --violet:#8b5cf6; --violet-l:#efe8fd;
+    --mono:'JetBrains Mono',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:'Space Grotesk','Inter',system-ui,sans-serif;
+    --r:16px; --r-s:11px; --shadow:0 1px 2px rgba(24,29,33,.05),0 12px 32px rgba(24,29,33,.07);
+    --grad-hero:linear-gradient(120deg,#0d9488 0%,#0891b2 45%,#4f46e5 100%);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:
+    radial-gradient(900px 500px at 100% -10%, rgba(79,70,229,.05), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(13,148,136,.06), transparent 55%),
+    var(--paper);
+    color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px 100px}
+  header{padding:0 0 22px}
+  .hero{background:var(--grad-hero);border-radius:var(--r);padding:30px 32px;color:#fff;position:relative;overflow:hidden;box-shadow:0 14px 40px rgba(13,148,136,.28)}
+  .hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 15% 20%,rgba(255,255,255,.14) 0,transparent 40%),radial-gradient(circle at 85% 85%,rgba(255,255,255,.10) 0,transparent 45%);pointer-events:none}
+  .hero::after{content:"🧬";position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:86px;opacity:.13;filter:grayscale(1) brightness(2)}
+  .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;position:relative}
+  h1{font-family:var(--display);font-size:29px;font-weight:700;letter-spacing:-.015em;color:#fff}
+  .tagline{color:rgba(255,255,255,.82);font-size:13px;font-family:var(--mono);letter-spacing:.02em}
+  .lead{color:rgba(255,255,255,.92);font-size:14px;margin-top:10px;max-width:780px;position:relative}
+
+  /* mode switch */
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0 24px}
+  .mode{border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px;cursor:pointer;background:var(--card);transition:border-color .15s,box-shadow .15s;position:relative}
+  .mode:hover{border-color:var(--teal-l)}
+  .mode.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-l)}
+  .mode .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--teal-d);letter-spacing:.08em}
+  .mode h3{font-size:15px;font-weight:650;margin:5px 0 4px}
+  .mode p{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .mode .tick{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:50%;border:2px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+  .mode.on .tick{background:var(--teal);border-color:var(--teal)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+  .card-h{display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(13,148,136,.05),transparent)}
+  .card-h h2{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:-.005em}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:linear-gradient(120deg,var(--teal),var(--indigo));padding:4px 9px;border-radius:6px;box-shadow:0 2px 6px rgba(13,148,136,.35)}
+  .card-h .aside{margin-left:auto;font-size:12px;color:var(--ink-3)}
+  .card-b{padding:20px}
+
+  label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+  .hint{font-size:11.5px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+  input[type=text],input[type=number],select,textarea{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;transition:border-color .12s,box-shadow .12s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-l)}
+  textarea{font-family:var(--mono);font-size:12px;min-height:70px;resize:vertical;line-height:1.5}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a928c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+  .topbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:4px}
+  .topbar .fw{flex:1;min-width:220px}
+  .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line-2);border-radius:9px;padding:3px;gap:3px}
+  .seg button{font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);background:transparent;border:none;border-radius:6px;padding:7px 13px;cursor:pointer}
+  .seg button.on{background:var(--teal);color:#fff}
+
+  .part{border:1px solid var(--line);border-left:4px solid var(--fc,var(--teal));border-radius:var(--r-s);padding:12px;margin-bottom:11px;background:var(--paper)}
+  .tmpl-details{margin-top:9px;border-top:1px dashed var(--line-2);padding-top:9px}
+  .tmpl-details>summary{cursor:pointer;list-style:none;font-size:11.5px;font-weight:600;color:var(--teal-d);display:flex;align-items:center;gap:6px}
+  .tmpl-details>summary::-webkit-details-marker{display:none}
+  .tmpl-details>summary::before{content:"▸";transition:transform .15s}
+  .tmpl-details[open]>summary::before{transform:rotate(90deg)}
+  .tmpl-ta{margin-top:7px;min-height:56px}
+  .part-top{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-weight:600;font-size:12px;color:#fff;min-width:24px;height:24px;padding:0 7px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--fc,var(--teal))}
+  .part-top input[type=text]{flex:1;min-width:150px}
+  .tools{display:flex;gap:4px;margin-left:auto}
+  .ibtn{font:inherit;font-size:11px;font-weight:600;color:var(--ink-2);background:var(--card);border:1px solid var(--line-2);border-radius:7px;padding:5px 8px;cursor:pointer;line-height:1}
+  .ibtn:hover{border-color:var(--teal);color:var(--teal-d)}
+  .ibtn:disabled{opacity:.35;cursor:default}
+  .stat-tag{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+  .role{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px}
+  .role-amp{background:var(--teal-l);color:var(--teal-d)} .role-ins{background:var(--amber-l);color:var(--amber)} .role-frag{background:var(--blue-l);color:#28557e}
+
+  .btn{font:inherit;font-size:13.5px;font-weight:650;border:none;border-radius:10px;padding:11px 20px;cursor:pointer;transition:transform .08s,box-shadow .15s,background .12s}
+  .btn:active{transform:translateY(1px)}
+  .btn-go{background:linear-gradient(120deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.28)}
+  .btn-go:hover{box-shadow:0 6px 18px rgba(79,70,229,.38);transform:translateY(-1px)}
+  .btn-ghost{background:var(--card);color:var(--ink-2);border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--teal);color:var(--teal-d)}
+  .btn-lg{font-size:15px;padding:14px 28px}
+  .btn-row{display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-top:6px}
+
+  details.adv{border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper);margin-top:16px}
+  details.adv>summary{cursor:pointer;list-style:none;padding:12px 16px;font-size:13px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+  details.adv>summary::-webkit-details-marker{display:none}
+  details.adv>summary::before{content:"▸";color:var(--teal);transition:transform .15s}
+  details.adv[open]>summary::before{transform:rotate(90deg)}
+  .adv-body{padding:2px 16px 16px}
+  .sec-tag{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 0 8px}
+
+  .note{display:flex;gap:10px;font-size:12.5px;line-height:1.55;border-radius:var(--r-s);padding:11px 13px;margin-bottom:9px}
+  .note .ic{flex-shrink:0}
+  .n-i{background:var(--blue-l);color:#28557e} .n-ok{background:var(--grass-l);color:#346b2c} .n-w{background:var(--amber-l);color:#7d5a18} .n-b{background:var(--rose-l);color:#8f3022}
+
+  /* assembly map */
+  .map{margin:6px 0 4px}
+  .map-bar{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line-2)}
+  .map-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;min-width:0;overflow:hidden;white-space:nowrap;padding:0 4px;position:relative}
+  .map-seg.ins{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px)}
+  .map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px}
+  .map-legend .lg{display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+  .pmap{background:linear-gradient(160deg,var(--card),var(--paper-2));border:1px solid var(--line);border-radius:var(--r-s);padding:20px 10px}
+  .arrow-lg{color:var(--ink-3);font-size:13px}
+  .why-btn{font:inherit;font-size:10.5px;font-weight:700;color:var(--indigo-d);background:var(--indigo-l);border:none;border-radius:6px;padding:4px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background .12s}
+  .why-btn:hover{background:var(--violet-l);color:var(--violet)}
+  .why-btn .car{transition:transform .15s;font-size:9px}
+  .why-btn.open .car{transform:rotate(180deg)}
+  .why-box{margin-top:9px;padding:10px 13px;background:var(--indigo-l);border:1px dashed var(--indigo);border-radius:9px;font-size:11.5px;line-height:1.65;color:var(--ink-2)}
+  .why-box.hidden{display:none}
+  .why-box b{color:var(--indigo-d)}
+  .lg .dot{width:11px;height:11px;border-radius:3px}
+
+  .summary-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .stat{flex:1;min-width:110px;background:linear-gradient(160deg,var(--card),var(--paper-2));border:1px solid var(--line);border-radius:var(--r-s);padding:12px 14px;border-top:2px solid var(--teal-l)}
+  .stat .v{font-size:22px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;background:linear-gradient(120deg,var(--teal-d),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .v.len-bad{background:linear-gradient(120deg,var(--rose),#b91c1c);-webkit-background-clip:text;background-clip:text}
+  .stat .v.len-warn{background:linear-gradient(120deg,var(--amber),#b45309);-webkit-background-clip:text;background-clip:text}
+  .stat .k{font-size:11px;color:var(--ink-3);margin-top:2px}
+
+  .fcard{border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:14px;overflow:hidden}
+  .fcard-h{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);border-left:4px solid var(--fc)}
+  .fcard-h .nm{font-weight:650;font-size:14px}
+  .fcard-h .meta{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right}
+  .primer{padding:12px 14px}
+  .primer+.primer{border-top:1px dashed var(--line)}
+  .p-label{font-family:var(--mono);font-size:11px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .dir-f{color:var(--teal-d)} .dir-r{color:var(--rose)}
+  .p-name{color:var(--ink-3);font-weight:400}
+  .anatomy{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:7px;background:var(--line)}
+  .a-tail{background:var(--amber)} .a-bind{background:var(--teal)}
+  .seqbox{font-family:var(--mono);font-size:12.5px;word-break:break-all;background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:9px 11px;line-height:1.7}
+  .s-tail{color:var(--amber);font-weight:700} .s-bind{color:var(--ink-2)}
+  .pmeta{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:7px;align-items:center}
+  .pmeta b{color:var(--ink);font-weight:650}
+  .len-ok{color:var(--grass)} .len-warn{color:var(--amber)} .len-bad{color:var(--rose)}
+  .copy{font:inherit;font-size:10.5px;font-weight:600;color:var(--teal-d);background:var(--teal-l);border:none;border-radius:6px;padding:4px 9px;cursor:pointer}
+  .copy:hover{background:var(--teal);color:#fff}
+  .pflags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .flag{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:6px}
+  .f-ok{background:var(--grass-l);color:#346b2c} .f-w{background:var(--amber-l);color:#7d5a18} .f-b{background:var(--rose-l);color:#8f3022}
+
+  .jcard{border:1px solid var(--line);border-radius:var(--r-s);padding:13px 15px;margin-bottom:11px;background:var(--paper)}
+  .jcard.risk{border-color:rgba(189,64,48,.45)}
+  .jhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+  .jhead .jt{font-weight:650;font-size:13.5px}
+  .jflow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;margin-bottom:9px}
+  .jpill{color:#fff;border-radius:6px;padding:3px 9px;font-weight:600;font-size:11px}
+  .jarrow{color:var(--ink-3)}
+  .joverlap{font-family:var(--mono);font-size:12.5px;word-break:break-all;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;line-height:1.7}
+  .o-up{color:var(--teal-d);font-weight:700} .o-ins{color:var(--amber);font-weight:700} .o-down{color:var(--blue);font-weight:700}
+  .diffc{background:var(--amber-l);color:var(--rose);font-weight:700;border-radius:2px;padding:0 1px}
+  .ba{margin-top:9px;font-size:11.5px}
+  .ba-row{display:flex;gap:8px;align-items:baseline;margin-bottom:2px}
+  .ba-tag{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-3);width:52px;flex-shrink:0}
+  .ba-row .mono{font-family:var(--mono);word-break:break-all}
+  .jmeta{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:8px}
+  .jmeta b{color:var(--ink);font-weight:650}
+
+  table.lab{width:100%;border-collapse:collapse;font-size:12px}
+  table.lab th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:9px 10px;border-bottom:2px solid var(--line-2);white-space:nowrap}
+  table.lab td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.lab td.seqcell{font-family:var(--mono);font-size:11px;word-break:break-all;min-width:220px}
+  table.lab tr:hover td{background:var(--paper)}
+
+  .asm{font-family:var(--mono);font-size:11.5px;word-break:break-all;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-s);padding:13px;line-height:1.7;max-height:220px;overflow:auto}
+
+  .refs{display:flex;flex-wrap:wrap;gap:8px}
+  .refbtn{display:inline-flex;flex-direction:column;gap:2px;text-decoration:none;background:var(--paper);border:1px solid var(--line-2);border-radius:9px;padding:9px 12px;transition:border-color .12s}
+  .refbtn:hover{border-color:var(--teal)}
+  .refbtn .t{font-size:12px;font-weight:600;color:var(--ink)}
+  .refbtn .d{font-family:var(--mono);font-size:10.5px;color:var(--teal-d)}
+
+  .hidden{display:none}
+  footer{text-align:center;color:var(--ink-3);font-size:11.5px;margin-top:28px}
+  @media (max-width:760px){.modes{grid-template-columns:1fr}.grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr}h1{font-size:22px}}
+  @media (max-width:480px){.grid-3,.grid-4{grid-template-columns:1fr}}
+  .steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative}
+  .steps span{font-size:12px;color:#fff;background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.28);border-radius:8px;padding:7px 12px;display:flex;align-items:center;gap:7px}
+  .steps b{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#fff;color:var(--indigo-d);font-size:11px;font-weight:700;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="hero">
+      <div class="brand"><h1>Gibson Assembly Designer</h1><span class="tagline">validated NN Tm · specificity-screened overlaps</span></div>
+      <p class="lead">Design PCR primers that make each part Gibson-ready. Overlaps are sized to clear the reaction temperature, and every binding region and overlap arm is screened for off-target homology — against its own source plasmid, every other primer's target region, and every other fragment — so you don't amplify or assemble the wrong thing.</p>
+      <div class="steps"><span><b>1</b> Paste your fragments in assembly order</span><span><b>2</b> Add a source plasmid per fragment if it's PCR'd from one</span><span><b>3</b> Design → check the homology report → order primers</span></div>
+    </div>
+  </header>
+
+  <!-- FRAGMENT INPUT -->
+  <div class="card" id="inputA">
+    <div class="card-h"><span class="eyebrow">Fragments</span><h2>Your construct</h2><span class="aside" id="asideA"></span></div>
+    <div class="card-b">
+      <div class="topbar">
+        <div class="fw"><label class="fld">Construct / product name</label><input type="text" id="nameA" placeholder="e.g. pBbA0k-EAAAK-ShortSC003"></div>
+        <div><label class="fld">Topology</label>
+          <div class="seg" id="topoA"><button class="on" data-t="circular" onclick="setTopo('A','circular')">Circular</button><button data-t="linear" onclick="setTopo('A','linear')">Linear</button></div></div>
+      </div>
+      <div class="note n-i" style="margin-top:14px"><span class="ic">🧬</span><div>Enter fragments <b>5′→3′</b> in assembly order. A fragment below the insert threshold folds into the next junction as overlap; if it's shorter than the overlap needs to be, the overlap extends into the fragments on either side. If a fragment is PCR'd out of a larger plasmid, open "source plasmid" on that fragment and paste the whole thing — this lets the homology check catch off-target priming sites elsewhere in it, not just within the piece you're keeping.</div></div>
+      <div id="fragList" style="margin-top:14px"></div>
+      <div class="btn-row"><button class="btn btn-ghost" onclick="addFrag()">+ Add fragment</button><button class="btn btn-ghost" onclick="loadExampleA()">Load example</button></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS (shared) -->
+  <div class="card">
+    <div class="card-b" style="padding-top:16px;padding-bottom:8px">
+      <details class="adv" style="margin-top:0">
+        <summary>Reaction &amp; design settings</summary>
+        <div class="adv-body">
+          <div class="sec-tag">Polymerase &amp; primer binding</div>
+          <div class="grid-3">
+            <div><label class="fld">Polymerase</label><select id="poly" onchange="syncPoly()"><option value="PhantaFlash">Phanta Flash (recommended — fastest)</option><option value="Q5">Q5 / Q5 HiFi</option><option value="Phusion">Phusion</option><option value="OneTaq">OneTaq</option><option value="Taq">Taq</option></select></div>
+            <div><label class="fld">Target binding Tm (°C)</label><input type="number" id="bindTm" value="65" min="50" max="72" step="0.5"><div class="hint">Every primer’s binding region is designed to land near this — keeps the whole set at one annealing temp.</div></div>
+            <div><label class="fld">Binding length (bp)</label><div class="grid-2"><input type="number" id="bindMin" value="18" min="14" max="30"><input type="number" id="bindMax" value="30" min="20" max="45"></div><div class="hint">min – max. Actual max also auto-shrinks per-primer so bind+overlap tail never exceeds "Max total primer" below.</div></div>
+          </div>
+          <div class="sec-tag">Overlap (homology arm)</div>
+          <div class="grid-3">
+            <div><label class="fld">Overlap length (bp)</label><div class="grid-2"><input type="number" id="ovMin" value="20" min="20" max="35"><input type="number" id="ovMax" value="30" min="20" max="45"></div><div class="hint">Hard minimum 20 bp total (NEBuilder/SnapGene guidance) — will search longer automatically if a repeat is in the way.</div></div>
+            <div><label class="fld">Min overhang per primer (bp)</label><input type="number" id="ovSideMin" value="15" min="5" max="20"><div class="hint">Each primer's own tail must be at least this long — checked FIRST, before homology Tm. The overlap is always split so no primer gets a near-zero overhang.</div></div>
+            <div><label class="fld">Min overlap Tm (°C)</label><input type="number" id="ovTm" value="48" min="42" max="60" step="0.5"><div class="hint">48–50 °C clears the 50 °C reaction. Estimated via the Wallace rule (2×(A+T)+4×(G+C)) — checked after the 15 bp/primer length floor is met.</div></div>
+            <div><label class="fld">Max total primer (nt)</label><input type="number" id="maxPrimer" value="60" min="45" max="100"><div class="hint">&gt;60 nt → PAGE/HPLC.</div></div>
+          </div>
+          <div class="sec-tag">Conditions &amp; homology screen</div>
+          <div class="grid-4">
+            <div><label class="fld">Primer conc (µM)</label><input type="number" id="conc" value="0.5" min="0.05" max="2" step="0.05"></div>
+            <div><label class="fld">Na⁺/K⁺ (mM)</label><input type="number" id="na" value="50" min="0" max="1000"></div>
+            <div><label class="fld">Mg²⁺ (mM)</label><input type="number" id="mg" value="2" min="0" max="20" step="0.5"></div>
+            <div><label class="fld">Off-target mismatch tolerance</label><input type="number" id="mmLimit" value="2" min="0" max="6"><div class="hint">Used for BOTH the binding region and the overlap arm: flags a site with ≤ this many mismatches (≤1 in the terminal 5 nt) as a real off-target risk, not just exact repeats.</div></div>
+          </div>
+          <div class="grid-4"><div><label class="fld">Insert threshold (bp)</label><input type="number" id="minAmp" value="50" min="20" max="200"><div class="hint">Fold parts/fragments shorter than this.</div></div>
+            <div><label class="fld">Max homopolymer run</label><input type="number" id="maxPolyX" value="5" min="3" max="10"><div class="hint">Primer3 default: flag AAAAAA-style runs longer than this.</div></div>
+            <div><label class="fld">Primer GC% range</label><div class="grid-2"><input type="number" id="gcMin" value="20" min="0" max="50"><input type="number" id="gcMax" value="80" min="50" max="100"></div><div class="hint">Primer3Plus defaults (20–80%)</div></div></div>
+        </div>
+      </details>
+      <div class="btn-row" style="margin-top:16px"><button class="btn btn-go btn-lg" onclick="run()">Design primers →</button><span id="msg" class="hint" style="margin:0"></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="eyebrow">How this tool designs</span><h2>Expert Gibson practice, built in</h2></div>
+    <div class="card-b">
+      <div class="grid-2">
+        <div class="note n-i" style="margin-bottom:0"><span class="ic">📏</span><div><b>≥20 bp overlaps, GC-favoured.</b> 20 bp is the accepted floor at the 50 °C reaction temperature (NEBuilder/SnapGene); the tool never goes below it, and prefers higher-GC arms when several options tie.</div></div>
+        <div class="note n-i" style="margin-bottom:0"><span class="ic">🧩</span><div><b>Whole-fragment overlaps first.</b> Where possible the entire overlap is drawn from one flanking fragment's own tail/head — simplest, fewest primers modified — falling back to a split only if that's not unique.</div></div>
+        <div class="note n-i" style="margin-bottom:0"><span class="ic">🔎</span><div><b>Both binding region and overlap are homology-screened</b> against every template and fragment, with mismatch tolerance (near-repeats count, not just exact ones) — the Primer-BLAST principle applied to Gibson design.</div></div>
+        <div class="note n-i" style="margin-bottom:0"><span class="ic">🌡️</span><div><b>Binding Tm matched F/R, 3′ GC clamp checked.</b> Binding and overlap Tm are tracked separately — only the binding region matters for PCR annealing temperature.</div></div>
+      </div>
+      <div class="hint" style="margin-top:10px">Also worth doing at the bench: gel-purify PCR products before assembly if any non-specific bands appear; keep template plasmid (not PCR product) proportion low if linearizing by PCR; use a 1–2:1 insert:vector molar ratio as a starting point.</div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="eyebrow">References</span><h2>Method basis</h2></div>
+    <div class="card-b"><div class="refs">
+      <a class="refbtn" href="https://doi.org/10.1038/nmeth.1318" target="_blank"><span class="t">Enzymatic assembly of DNA molecules up to several hundred kilobases</span><span class="d">Gibson et al. 2009 · 10.1038/nmeth.1318</span></a>
+      <a class="refbtn" href="https://doi.org/10.1186/1471-2105-13-134" target="_blank"><span class="t">Primer-BLAST: target-specific primer design &amp; specificity</span><span class="d">Ye et al. 2012 · 10.1186/1471-2105-13-134</span></a>
+      <a class="refbtn" href="https://doi.org/10.1146/annurev.biophys.32.110601.141800" target="_blank"><span class="t">The thermodynamics of DNA structural motifs (NN Tm)</span><span class="d">SantaLucia &amp; Hicks 2004 · 10.1146/annurev.biophys.32.110601.141800</span></a>
+      <a class="refbtn" href="https://doi.org/10.1073/pnas.95.4.1460" target="_blank"><span class="t">Unified NN parameters &amp; salt correction</span><span class="d">SantaLucia 1998 · 10.1073/pnas.95.4.1460</span></a>
+      <a class="refbtn" href="https://www.neb.com/en/tools-and-resources/usage-guidelines/nebuilder-assembly-tool" target="_blank"><span class="t">NEBuilder HiFi overlap guidance (20 bp min., scale with fragment count)</span><span class="d">New England Biolabs</span></a>
+      <a class="refbtn" href="https://www.snapgene.com/guides/gibson-assembly" target="_blank"><span class="t">Gibson Assembly primer design guide</span><span class="d">SnapGene</span></a>
+      <a class="refbtn" href="https://doi.org/10.1093/nar/gks596" target="_blank"><span class="t">Primer3 — new capabilities and interfaces (poly-X, GC%, self-dimer defaults)</span><span class="d">Untergasser et al. 2012 · 10.1093/nar/gks596</span></a>
+      <a class="refbtn" href="https://www.primer3plus.com/primer3plusHelp.html" target="_blank"><span class="t">Primer3Plus documentation &amp; picking criteria</span><span class="d">primer3plus.com</span></a>
+      <a class="refbtn" href="https://doi.org/10.1016/S0140-6736(86)91282-2" target="_blank"><span class="t">Wallace rule for short-oligo Tm (2×(A+T)+4×(G+C)) — used for overlap/homology Tm</span><span class="d">Thein &amp; Wallace 1986 · The Lancet 327(8472):93</span></a>
+    </div></div>
+  </div>
+
+  <footer>Offline tool · all computation runs in your browser · no sequence leaves this page.</footer>
+</div>
+
+
+<script>
+/* ===================== thermodynamics (validated: ΔG37 CGTTGA = −5.4) ===================== */
+const NN_H={AA:-7.9,AC:-8.4,AG:-7.8,AT:-7.2,CA:-8.5,CC:-8.0,CG:-10.6,CT:-7.8,GA:-8.2,GC:-9.8,GG:-8.0,GT:-8.4,TA:-7.2,TC:-8.2,TG:-8.5,TT:-7.9};
+const NN_S={AA:-22.2,AC:-22.4,AG:-21.0,AT:-20.4,CA:-22.7,CC:-19.9,CG:-27.2,CT:-21.0,GA:-22.2,GC:-24.4,GG:-19.9,GT:-22.4,TA:-21.3,TC:-22.2,TG:-22.7,TT:-22.2};
+const INIT_H={GC:0.1,AT:2.3}, INIT_S={GC:-2.8,AT:4.1}, R=1.9872;
+const COMP={A:'T',T:'A',G:'C',C:'G',N:'N'};
+function clean(s){return (s||'').toUpperCase().replace(/[^ACGTN]/g,'');}
+function rc(s){let o='';for(let i=s.length-1;i>=0;i--)o+=COMP[s[i]]||'N';return o;}
+function gcv(s){if(!s.length)return 0;let n=0;for(const b of s)if(b==='G'||b==='C')n++;return n/s.length*100;}
+function selfComp(s){return s.length%2===0&&rc(s)===s;}
+function nnParams(seq){let h=0,s=0;for(let i=0;i<seq.length-1;i++){const d=seq.slice(i,i+2);h+=NN_H[d]??-8.0;s+=NN_S[d]??-22.0;}
+  for(const b of [seq[0],seq[seq.length-1]]){const k=(b==='G'||b==='C')?'GC':'AT';h+=INIT_H[k];s+=INIT_S[k];}
+  if(selfComp(seq))s+=-1.4;return {h,s};}
+function calcTm(seq,conc,na,mg){seq=clean(seq);if(seq.length<2)return 0;
+  const {h,s}=nnParams(seq),N=seq.length;
+  const naEq=(na+120*Math.sqrt(Math.max(0,mg)))/1000;
+  const sSalt=s+0.368*(N-1)*Math.log(Math.max(1e-6,naEq));
+  const Ct=conc*1e-6, x=selfComp(seq)?1:4;
+  return (h*1000)/(sSalt+R*Math.log(Ct/x))-273.15;}
+// Wallace rule (Thein & Wallace 1986, The Lancet 327(8472):93) — Tm = 2(A+T) + 4(G+C). A simple count-
+// based estimate, standard for short (14-20 nt) oligos; used here for the OVERLAP/homology arm Tm check
+// specifically (the binding region keeps the full nearest-neighbour calculation above).
+function wallaceTm(seq){seq=clean(seq);let at=0,gc=0;for(const b of seq){if(b==='A'||b==='T')at++;else if(b==='G'||b==='C')gc++;}
+  return 2*at+4*gc;}
+function hairpin(seq){const r=rc(seq);let m=0;for(let k=4;k<=8;k++)for(let i=0;i+k<=r.length;i++)if(seq.includes(r.slice(i,i+k)))m=Math.max(m,k);return m;}
+function dimer3(a,b){const rb=rc(b);let m=0;for(let k=3;k<=Math.min(8,a.length);k++)if(rb.includes(a.slice(-k)))m=k;return m;}
+// longest single-base run (Primer3 PRIMER_MAX_POLY_X — long homopolymers cause slippage/mispriming)
+function polyXRun(seq){let best=1,cur=1;for(let i=1;i<seq.length;i++){if(seq[i]===seq[i-1]){cur++;if(cur>best)best=cur;}else cur=1;}return seq.length?best:0;}
+// count of G/C bases in the terminal 5 nt (Primer3 PRIMER_MAX_END_GC concept): 0 = unstable 3' end
+// (no clamp); 4-5 = an over-stable, all-GC 3' end that itself raises mis-priming/dimer risk.
+function endGC(seq){const t=seq.slice(-5);let n=0;for(const b of t)if(b==='G'||b==='C')n++;return n;}
+// number of non-ACGT characters in a raw (pre-clean) sequence, for a data-quality note
+function countAmbiguous(raw){return ((raw||'').toUpperCase().match(/[^ACGT\s]/g)||[]).length;}
+
+/* ===================== homology / specificity primitives ===================== */
+// count exact occurrences of probe on BOTH strands of seq
+function occAll(probe,seq){if(!probe||probe.length>seq.length)return 0;let n=0,i;
+  for(i=0;(i=seq.indexOf(probe,i))!==-1;i++)n++;const r=rc(seq);for(i=0;(i=r.indexOf(probe,i))!==-1;i++)n++;return n;}
+const EXT_RATE={PhantaFlash:5,Q5:20,Phusion:20,OneTaq:60,Taq:60};
+const POLY_TM ={PhantaFlash:65,Q5:65,Phusion:65,OneTaq:58,Taq:55};
+function extTime(bp,poly){const r=EXT_RATE[poly]||30;let sec=Math.max(poly==='Taq'||poly==='OneTaq'?10:1,Math.round(bp/1000*r));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
+
+/* ===================== state ===================== */
+const COLORS=['#0d9488','#4f46e5','#d97706','#8b5cf6','#e11d48','#16a34a','#0284c7','#c026d3'];
+let topoA='circular';
+let frags=[{name:'',seq:'',template:''},{name:'',seq:'',template:''}];
+
+function v(id){const e=document.getElementById(id);return e?e.value:'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function setTopo(which,t){topoA=t;segOn('topoA',t);}
+function segOn(id,t){document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));}
+function syncPoly(){document.getElementById('bindTm').value=POLY_TM[v('poly')]||65;}
+
+/* ---- fragment list ---- */
+function renderFrags(){const host=document.getElementById('fragList');const minAmp=+v('minAmp')||50;
+  host.innerHTML=frags.map((f,i)=>{const col=COLORS[i%COLORS.length];const len=clean(f.seq).length;const isIns=len>0&&len<minAmp;
+    const tlen=clean(f.template).length;
+    return `<div class="part" style="--fc:${col}"><div class="part-top"><span class="chip">${i+1}</span>
+      <input type="text" value="${esc(f.name)}" oninput="frags[${i}].name=this.value" placeholder="Fragment ${i+1} name">
+      ${len?(isIns?'<span class="role role-ins">fold-in</span>':'<span class="role role-amp">amplified</span>'):''}
+      <span class="stat-tag" id="fs${i}">${len?len+' bp':''}</span>
+      <span class="tools"><button class="ibtn" onclick="moveFrag(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="ibtn" onclick="moveFrag(${i},1)" ${i===frags.length-1?'disabled':''}>↓</button><button class="ibtn" onclick="delFrag(${i})" ${frags.length<=1?'disabled':''}>✕</button></span></div>
+      <textarea oninput="frags[${i}].seq=this.value;fStat(${i})" placeholder="paste sequence 5′→3′…" spellcheck="false">${f.seq}</textarea>
+      <details class="tmpl-details" ${tlen?'open':''}>
+        <summary>${tlen?`✓ source plasmid attached (${tlen} bp) — click to edit`:'+ source plasmid (optional) — paste if this fragment is PCR\u2019d out of a larger plasmid'}</summary>
+        <textarea class="tmpl-ta" oninput="frags[${i}].template=this.value;fStat(${i})" placeholder="paste the FULL source plasmid this fragment is amplified from…" spellcheck="false">${f.template}</textarea>
+        <div class="hint">Lets the homology check catch off-target priming sites elsewhere in the real plasmid, not just within the piece above.</div>
+      </details></div>`;}).join('');}
+function fStat(i){const len=clean(frags[i].seq).length;const el=document.getElementById('fs'+i);if(el)el.textContent=len?len+' bp':'';}
+function addFrag(){frags.push({name:'',seq:'',template:''});renderFrags();}
+function delFrag(i){if(frags.length<=1)return;frags.splice(i,1);renderFrags();}
+function moveFrag(i,d){const j=i+d;if(j<0||j>=frags.length)return;[frags[i],frags[j]]=[frags[j],frags[i]];renderFrags();}
+
+/* ===================== shared engine ===================== */
+function readS(){return {poly:v('poly'),bindTm:+v('bindTm'),bindMin:+v('bindMin'),bindMax:+v('bindMax'),
+  ovMin:Math.max(20,+v('ovMin')||20),ovMax:Math.max(20,+v('ovMax')||30),ovTm:+v('ovTm'),maxPrimer:+v('maxPrimer')||60,
+  conc:+v('conc'),na:+v('na'),mg:+v('mg'),mm:(v('mmLimit')===''?2:+v('mmLimit')),minAmp:+v('minAmp')||50,
+  maxPolyX:+v('maxPolyX')||5,gcMin:+v('gcMin')||20,gcMax:+v('gcMax')||80,ovSideMin:+v('ovSideMin')||15};}
+
+// ===================== overlap design: prioritized, homology-screened ladder =====================
+// Expert practice (SnapGene/NEB/MIT protocol): the overlap can be taken wholly from ONE flanking
+// fragment (simplest — only the downstream primer needs a tail) or split between both. We try, in
+// order: (1) whole overlap from upstream's own tail, (2) whole overlap from downstream's own head,
+// (3) a centered split, (4) any split ratio (sliding) — at increasing length from the 20 bp floor.
+// Each candidate is screened for homology against BOTH flanking templates and every other fragment/
+// template using the same mismatch-tolerant model as primer specificity (near-repeats count, not
+// just exact ones). If nothing within the normal max length is unique, we try a longer overlap drawn
+// ENTIRELY from one fragment's own real sequence (always physically valid, unlike borrowing sequence
+// across two different templates) before giving up and flagging the junction as homology-blocked.
+function mmHits(arm,template,mm,expected){if(!template||!arm.length)return 0;
+  const win=arm.length;const strands=[template,rc(template)];let hits=0;
+  for(const st of strands){const n=st.length;for(let i=0;i+win<=n;i++){let d=0,k;
+    for(k=0;k<win&&d<=mm;k++)if(arm[k]!==st[i+k])d++;if(d<=mm)hits++;}}
+  return Math.max(0,hits-expected);}
+
+// ===================== overlap design: every primer gets a real, minimum-length overhang =====================
+// Each fragment's contribution to the overlap becomes the TAIL added to one specific primer (the
+// upstream fragment's a-bp contribution lands on the downstream primer's tail; the downstream
+// fragment's c-bp contribution lands on the upstream primer's tail, reverse-complemented). So
+// "per-primer overhang" = a and c respectively — both must independently clear S.ovSideMin. This is
+// stricter than NEBuilder's own minimum (which allows the whole arm from one side, giving one primer
+// a 0 bp tail); enforced here because a lopsided split is what produced near-zero overhangs before.
+function designOverlap(U,D,insert,S,otherTemplates){
+  const uT=U.template||U.seq, dT=D.template||D.seq, insLen=insert.length;
+  const totalFloor=Math.max(20,S.ovMin);                     // NEBuilder-style total overlap floor
+  const sideMin=Math.max(0,S.ovSideMin-insLen);              // each fragment's own contribution floor
+  const minL=Math.max(totalFloor,insLen+2*sideMin);
+  function screen(arm){const hU=mmHits(arm,uT,S.mm,0),hD=mmHits(arm,dT,S.mm,0);
+    const hOther=otherTemplates.some(t=>mmHits(arm,t,S.mm,0)>0);
+    return {hU,hD,hOther,unique:hU===0&&hD===0&&!hOther};}
+  function mk(a,c){if(a>U.seq.length||c>D.seq.length)return null;
+    const upPart=a>0?U.seq.slice(-a):'',downPart=c>0?D.seq.slice(0,c):'';const seq=upPart+insert+downPart;
+    const tm=wallaceTm(seq);const s=screen(seq);
+    return {seq,upPart,insert,downPart,a,c,L:seq.length,tm,gc:gcv(seq),hp:hairpin(seq),
+      fwdTail:upPart+insert,revTail:rc(insert+downPart),cleared:tm>=S.ovTm,
+      hU:s.hU,hD:s.hD,hOther:s.hOther,unique:s.unique,source:'split'};}
+  function ladder(maxL){const cands=[];
+    for(let L=minL;L<=maxL;L++){const extra=L-insLen;if(extra<2*sideMin)continue;
+      const aCenter=Math.max(sideMin,Math.min(extra-sideMin,Math.round(extra/2)));
+      const cc=mk(aCenter,extra-aCenter);if(cc)cands.push(cc);}
+    for(let L=minL;L<=maxL;L++){const extra=L-insLen;if(extra<2*sideMin)continue;
+      for(let a=sideMin;a<=extra-sideMin;a++){const cc=mk(a,extra-a);if(cc)cands.push(cc);}}
+    return cands;}
+  const score=x=>(x.unique?0:1000)+(x.cleared?0:120)+x.L*0.15+Math.abs(x.a-x.c)*0.05+Math.max(0,55-x.gc)*0.05;
+  let cands=ladder(Math.max(S.ovMax,minL));
+  cands.sort((p,q)=>score(p)-score(q));
+  let best=cands[0],extendedSearch=false;
+  if(!best||!best.unique){
+    const extMax=Math.min(80,Math.max(U.seq.length,D.seq.length));
+    const wide=ladder(extMax).filter(c=>c.unique);
+    if(wide.length){wide.sort((p,q)=>score(p)-score(q));best=wide[0];extendedSearch=best.L>Math.max(S.ovMax,minL);}
+  }
+  if(!best){const seq=insert||U.seq.slice(-Math.min(minL,U.seq.length));
+    best={seq,upPart:'',insert,downPart:'',a:0,c:0,L:seq.length,tm:wallaceTm(seq),gc:gcv(seq),hp:hairpin(seq),
+      fwdTail:insert,revTail:rc(insert),cleared:false,hU:0,hD:0,hOther:false,unique:false,source:'fallback'};}
+  best.extended=insLen>0&&(best.a>0||best.c>0);
+  best.blocked=!best.unique;
+  best.extendedSearch=extendedSearch;
+  best.sideShort=best.a<S.ovSideMin-insLen||best.c<S.ovSideMin-insLen; // flags the rare fallback that couldn't meet the floor
+  return best;}
+
+// highlight positions of `a` that differ from `b` (equal-length compare)
+function diffHTML(a,b){let h='';for(let i=0;i<a.length;i++)h+=(b[i]!==undefined&&a[i]!==b[i])?`<mark class="diffc">${a[i]}</mark>`:a[i];return h;}
+// generate a unique random spacer (for homology-blocked junctions) — screened against every template
+function randomSpacer(L,templates){const B='ACGT';for(let t=0;t<500;t++){let s='';for(let i=0;i<L;i++)s+=B[Math.floor(Math.random()*4)];
+    const g=gcv(s);if(g<40||g>65)continue;if(/(.)\1{3,}/.test(s))continue;
+    if(templates.every(tp=>mmHits(s,tp,1,0)===0))return s;}return null;}
+
+// mismatch-tolerant, 3'-weighted mis-priming site count (Primer-BLAST-style). A primer can extend at an
+// off-target site only if its 3' region matches with few mismatches AND its 3'-terminal bases pair. We scan
+// both strands for the primer's 3' window (≤16 nt), counting sites with ≤maxMM mismatches in the window and
+// ≤max3p mismatches in the terminal 5 nt. The intended site (0 mismatches) is included, so >1 ⇒ off-target.
+function misprimeSites(bindSeq,template,maxMM,max3p){if(!template)return 1;
+  const win=Math.min(bindSeq.length,16);const p=bindSeq.slice(-win);const strands=[template,rc(template)];let sites=0;
+  for(const st of strands){const n=st.length;for(let i=0;i+win<=n;i++){let mm=0,k;
+    for(k=0;k<win&&mm<=maxMM;k++)if(p[k]!==st[i+k])mm++;
+    if(mm>maxMM)continue;
+    let mm5=0;for(k=win-5;k<win;k++)if(k>=0&&p[k]!==st[i+k])mm5++;
+    if(mm5<=max3p)sites++;}}
+  return sites;}
+
+// grow a binding oligo (which='F'|'R') from a goal-oriented region, screened for uniqueness in `template`
+// grow a binding oligo (which='F'|'R') from a goal-oriented region, screened for uniqueness in `template`.
+// effMax caps binding length so bind+tail never blows past S.maxPrimer even before any Tm target is met.
+// targetTm lets a second "balance" pass aim at a PARTNER primer's Tm instead of the flat global target,
+// so F and R land close together rather than each independently stopping at the first length that clears.
+function growBind(region,template,S,which,effMax,targetTm){
+  const mk=which==='F'?(L=>region.slice(0,L)):(L=>rc(region.slice(-L)));
+  const hardMax=Math.min(effMax||S.bindMax,region.length);const tgt=targetTm||S.bindTm;
+  let chosen=null,firstClear=null;
+  for(let L=S.bindMin;L<=hardMax;L++){const seq=mk(L);const tm=calcTm(seq,S.conc,S.na,S.mg);
+    const sites=template?misprimeSites(seq,template,S.mm,1):1;
+    chosen={seq,len:L,tm,sites,gc:gcv(seq),hp:hairpin(seq)};
+    if(tm>=S.bindTm&&sites<=1&&!firstClear)firstClear=chosen;
+    if(tm>=tgt&&sites<=1)return finishBind(chosen,S);}
+  return finishBind(firstClear||chosen||{seq:mk(Math.min(S.bindMin,region.length)),len:Math.min(S.bindMin,region.length),tm:0,sites:1,gc:0,hp:0},S);}
+function finishBind(b,S){b.tmOk=b.tm>=S.bindTm;b.unique=(b.sites<=1);b.clamp=/[GC]$/.test(b.seq);
+  b.polyX=polyXRun(b.seq);b.polyXBad=b.polyX>S.maxPolyX;b.endGC=endGC(b.seq);b.gcOk=b.gc>=S.gcMin&&b.gc<=S.gcMax;
+  b.selfDimer=dimer3(b.seq,b.seq);return b;}
+// enumerate every candidate binding length (15 nt floor .. budget cap) for one end of the fragment
+function bindCandidates(region,template,S,which,cap){
+  const mk=which==='F'?(L=>region.slice(0,L)):(L=>rc(region.slice(-L)));
+  const out=[];const floor=15;
+  for(let L=floor;L<=cap&&L<=region.length;L++){const seq=mk(L);
+    out.push({seq,len:L,tm:calcTm(seq,S.conc,S.na,S.mg),sites:template?misprimeSites(seq,template,S.mm,1):1,
+      gc:gcv(seq),hp:hairpin(seq),clamp:/[GC]$/.test(seq),polyX:polyXRun(seq)});}
+  return out;}
+// Choose the F/R length PAIR by joint scoring. What matters most for each fragment's OWN PCR is that
+// F and R anneal at the same temperature (gap term, weighted highest); we then pull the pair toward the
+// common target Tm so fragments are as consistent as sequence composition allows. Each fragment is
+// amplified in a separate tube, so a GC-rich end that runs a little hot as a matched pair is fine.
+// Poly-X runs and out-of-range GC% (Primer3/Primer3Plus defaults) are soft-penalized so a cleaner
+// candidate is preferred when one's available, without ever blocking a design outright.
+function designBindPair(a,tmpl,S,fwdTailLen,revTailLen){
+  const capF=Math.max(15,Math.min(S.bindMax,S.maxPrimer-fwdTailLen));
+  const capR=Math.max(15,Math.min(S.bindMax,S.maxPrimer-revTailLen));
+  const fC=bindCandidates(a.seq,tmpl,S,'F',capF), rC=bindCandidates(a.seq,tmpl,S,'R',capR);
+  const fU=fC.filter(x=>x.sites<=1), rU=rC.filter(x=>x.sites<=1);
+  const fPool=fU.length?fU:fC, rPool=rU.length?rU:rC;   // prefer specific candidates; fall back if none
+  const target=S.bindTm;let best=null;
+  for(const f of fPool)for(const r of rPool){
+    const gap=Math.abs(f.tm-r.tm), mean=(f.tm+r.tm)/2;
+    const belowMin=(f.len<S.bindMin?1:0)+(r.len<S.bindMin?1:0);
+    const polyXPen=(f.polyX>S.maxPolyX?1.2:0)+(r.polyX>S.maxPolyX?1.2:0);
+    const gcPen=(f.gc<S.gcMin||f.gc>S.gcMax?0.8:0)+(r.gc<S.gcMin||r.gc>S.gcMax?0.8:0);
+    const score=gap*4 + Math.abs(mean-target)*1.4
+      + (f.clamp?0:1.0)+(r.clamp?0:1.0) + belowMin*1.5 + polyXPen + gcPen + (f.len+r.len)*0.03;
+    if(!best||score<best.score)best={score,f,r};}
+  return {fb:finishBind(best.f,S), rb:finishBind(best.r,S)};}
+// recommended starting annealing temperature: Q5/Phusion/Phanta anneal ~3 °C ABOVE the lower primer Tm
+// (fusion enzymes stabilise binding); Taq/OneTaq ~5 °C below. Always a starting point — run a gradient.
+function annealTemp(tmF,tmR,poly){const lo=Math.min(tmF,tmR);const fusion=['Q5','Phusion','PhantaFlash'].includes(poly);
+  return Math.max(45,Math.min(72,Math.round(fusion?lo+3:lo-5)));}
+
+/* ===================== MODE A: fragments in order ===================== */
+function designA(S){
+  const items=frags.map((f,i)=>({name:(f.name||'').trim()||('Fragment '+(i+1)),seq:clean(f.seq),
+    template:clean(f.template)||undefined,hasTemplate:!!clean(f.template),orig:i})).filter(f=>f.seq.length>0);
+  if(!items.length)return{error:'Add at least one fragment with a sequence.'};
+  items.forEach(f=>f.ins=f.seq.length<S.minAmp);
+  const circular=topoA==='circular';
+  const ambCount=frags.reduce((s,f)=>s+countAmbiguous(f.seq)+countAmbiguous(f.template),0);
+  const d=assemble(items,circular,S);
+  if(!d.error)d.ambCount=ambCount;
+  return d;
+}
+
+/* ===================== assembler + screening ===================== */
+function assemble(items,circular,S){
+  // classify inserts (short) unless already flagged; default each amplified item's own template to
+  // its own sequence unless the user attached a real source plasmid for it
+  items.forEach(f=>{if(f.ins===undefined)f.ins=f.seq.length<S.minAmp; if(!f.ins&&f.template===undefined)f.template=f.seq;});
+  const amps=[];let lead=[],pend=[];
+  items.forEach(f=>{if(f.ins){(amps.length?pend:lead).push(f);}else{amps.push(Object.assign({},f,{insBefore:pend}));pend=[];}});
+  const trail=pend;
+  if(!amps.length)return{error:'Nothing to amplify — every fragment is below the insert threshold.'};
+  const m=amps.length;
+  amps.forEach((a,k)=>{a.color=COLORS[k%COLORS.length];a.fwdTail='';a.revTail='';});
+  const junctions=[];const insSeq=arr=>arr.map(x=>x.seq).join('');
+  function mk(U,D,insArr,wrap){const ins=insSeq(insArr);
+    // Gibson mis-assembly risk is scoped to what actually enters the tube: the OTHER AMPLICONS
+    // (a.seq), not their full source plasmids — most of a source plasmid (backbone, resistance
+    // marker, unrelated cassettes) is never carried into the reaction, so screening against it
+    // invites false extension from sequence that was never physically present.
+    const others=amps.filter(a=>a!==U&&a!==D).map(a=>a.seq);
+    const ov=designOverlap(U,D,ins,S,others);
+    D.fwdTail=ov.fwdTail;U.revTail=ov.revTail;junctions.push({U,D,ins,insArr,ov,wrap:!!wrap});}
+  if(circular){for(let k=1;k<m;k++)mk(amps[k-1],amps[k],amps[k].insBefore,false);mk(amps[m-1],amps[0],[...trail,...lead,...amps[0].insBefore],true);}
+  else{for(let k=1;k<m;k++)mk(amps[k-1],amps[k],amps[k].insBefore,false);
+    if(lead.length){amps[0].fwdTail=insSeq(lead)+amps[0].fwdTail;}if(trail.length){amps[m-1].revTail=rc(insSeq(trail))+amps[m-1].revTail;}}
+
+  // junction risk is already resolved by the ladder in designOverlap
+  junctions.forEach(j=>{
+    j.fwdTailHits=j.ov.hD||0;   // arm recurs in downstream template beyond the expected site
+    j.revTailHits=j.ov.hU||0;   // arm recurs in upstream template beyond the expected site
+    j.misassembly=!!j.ov.hOther;
+    j.risk=!j.ov.unique;        // true only if no unique arm was found anywhere in the search
+  });
+
+  // per-fragment primers with binding specificity screen (against its own source plasmid if given,
+  // else its own sequence), length budget, and F/R Tm balancing
+  const results=amps.map((a,k)=>{
+    const tmpl=a.template||a.seq;
+    const {fb,rb}=designBindPair(a,tmpl,S,a.fwdTail.length,a.revTail.length);
+    const fSeq=a.fwdTail+fb.seq, rSeq=a.revTail+rb.seq;
+    const amplicon=a.fwdTail.length+a.seq.length+a.revTail.length;
+    return {a,idx:k,fb,rb,fwdTail:a.fwdTail,revTail:a.revTail,fSeq,rSeq,amplicon,fTot:fSeq.length,rTot:rSeq.length,dimer:dimer3(fSeq,rSeq),
+      dTm:Math.abs(fb.tm-rb.tm), ta:annealTemp(fb.tm,rb.tm,S.poly), template:tmpl, hasOwnTemplate:!!a.hasTemplate};
+  });
+
+  // assembled sequence + reconstruction check
+  let asm;
+  if(circular)asm=amps.map((a,k)=>(k>0?insSeq(a.insBefore):'')+a.seq).join('')+insSeq([...trail,...lead,...amps[0].insBefore]);
+  else asm=insSeq(lead)+amps.map((a,k)=>(k>0?insSeq(a.insBefore):'')+a.seq).join('')+insSeq(trail);
+  const ref=items.map(f=>f.seq).join('');
+  const reconstructOk=circular?rotEq(asm,ref):(asm===ref);
+
+  // exact bp-level layout for the primer map — mirrors the asm-building order above exactly, so every
+  // segment's [start,end) lines up with the real position in the assembled sequence.
+  const layout=[];let pos=0;
+  const pushIns=(arr,label)=>{if(!arr||!arr.length)return;const s=insSeq(arr);if(!s.length)return;
+    layout.push({type:'ins',name:label||arr.map(x=>x.name).join(' + '),start:pos,end:pos+s.length});pos+=s.length;};
+  if(circular){
+    amps.forEach((a,k)=>{if(k>0)pushIns(a.insBefore);
+      layout.push({type:'amp',name:a.name,start:pos,end:pos+a.seq.length,color:a.color,amp:a});pos+=a.seq.length;});
+    const wrapJ=junctions.find(j=>j.wrap);if(wrapJ)pushIns(wrapJ.insArr);
+  } else {
+    pushIns(lead);
+    amps.forEach((a,k)=>{if(k>0)pushIns(a.insBefore);
+      layout.push({type:'amp',name:a.name,start:pos,end:pos+a.seq.length,color:a.color,amp:a});pos+=a.seq.length;});
+    pushIns(trail);
+  }
+  return {amps,results,junctions,circular,jCount:junctions.length,asm,reconstructOk,S,layout};
+}
+function rotEq(a,b){return a.length===b.length&&(a+a).includes(b);}
+
+/* ===================== run + render ===================== */
+function run(){const S=readS();const msg=document.getElementById('msg');msg.textContent='';
+  const d=designA(S);
+  const host=document.getElementById('results');
+  if(d.error){host.innerHTML=`<div class="card"><div class="card-b"><div class="note n-b"><span class="ic">✗</span><div>${d.error}</div></div></div></div>`;host.scrollIntoView({behavior:'smooth'});return;}
+  host.innerHTML=renderResults(d);host.scrollIntoView({behavior:'smooth',block:'start'});}
+
+function badge(n,max){const c=n<=45?'len-ok':n<=max?'len-warn':'len-bad';return `<b class="${c}">${n}</b>`;}
+function tmFlag(tm,floor){return tm>=floor?'f-ok':tm>=floor-3?'f-w':'f-b';}
+
+function renderResults(d){const S=d.S;
+  const longest=Math.max(...d.results.flatMap(r=>[r.fTot,r.rTot]));
+  const lowOv=d.junctions.filter(j=>!j.ov.cleared).length;
+  const longP=d.results.filter(r=>r.fTot>S.maxPrimer||r.rTot>S.maxPrimer).length;
+  const misprime=d.results.filter(r=>!r.fb.unique||!r.rb.unique).length;
+  const blocked=d.junctions.filter(j=>j.risk).length;                 // no unique overlap found anywhere
+  const extended=d.junctions.filter(j=>j.ov.extendedSearch&&!j.risk).length; // resolved, but needed a longer overlap
+  const tmMismatch=d.results.filter(r=>r.dTm>3).length;
+  const qualityFlags=d.results.filter(r=>r.fb.polyXBad||r.rb.polyXBad||!r.fb.gcOk||!r.rb.gcOk||r.fb.selfDimer>=6||r.rb.selfDimer>=6).length;
+  const tas=d.results.map(r=>r.ta);const taMin=Math.min(...tas),taMax=Math.max(...tas);
+  const taLabel=taMin===taMax?taMin+' °C':taMin+'–'+taMax+' °C';
+  const nm=v('nameA')||'Assembled construct';
+
+  let h=`<div class="card"><div class="card-h"><span class="eyebrow">Result</span><h2>${esc(nm)}</h2><span class="aside">${d.circular?'circular':'linear'} · ${d.amps.length} amplified · ${d.jCount} junction${d.jCount!==1?'s':''}</span></div><div class="card-b">`;
+  h+=assemblyMap(d);
+  h+=`<div class="summary-row" style="margin-top:16px">
+    <div class="stat"><div class="v">${d.amps.length}</div><div class="k">PCR fragments</div></div>
+    <div class="stat"><div class="v ${tmMismatch?'len-warn':'len-ok'}">${d.results.length?Math.max(...d.results.map(r=>r.dTm)).toFixed(1):0}<span style="font-size:13px"> °C</span></div><div class="k">max F/R ΔTm</div></div>
+    <div class="stat"><div class="v">${taLabel.replace(' °C','')}<span style="font-size:13px"> °C</span></div><div class="k">anneal temp${taMin===taMax?'':' (range)'}</div></div>
+    <div class="stat"><div class="v ${misprime?'len-bad':'len-ok'}">${misprime}</div><div class="k">mis-priming</div></div>
+    <div class="stat"><div class="v ${blocked?'len-bad':'len-ok'}">${blocked}</div><div class="k">unresolved homology</div></div></div>`;
+  h+=`<div class="note n-i"><span class="ic">🌡️</span><div><b>Suggested annealing temperature: ${taLabel}.</b> ${['Q5','Phusion','PhantaFlash'].includes(S.poly)?'Set ~3 °C above the lower primer Tm for '+S.poly+' (fusion polymerases bind more stably).':'Set ~5 °C below the lower primer Tm for '+S.poly+'.'} A starting point — run a ±3 °C gradient to optimise.${taMin!==taMax?' Fragments differ; either run them at their own temperatures or use the middle of the range with a gradient.':''}</div></div>`;
+
+
+  if(!d.reconstructOk)h+=note('w','Check fragment order/orientation','The primers reconstruct a sequence that doesn’t match your fragments concatenated in order — a fragment may be reverse-complemented or out of order.');
+  if(misprime)h+=note('b','Binding region can mis-prime',`${misprime} primer(s) have a 3′ binding region that also matches an off-target site in its own template with ≤${S.mm} mismatches (and a pairing 3′ terminus) — the classic cause of unwanted PCR products. The tool lengthened the binding region to shift its 3′ window into unique sequence where that helps; a residual flag means the 3′ terminus itself has a near-homolog, which lengthening cannot fix — move the amplicon boundary (choose a different junction, or a longer/shorter fragment) instead. Basis: Primer-BLAST 3′-weighted specificity model (Ye et al. 2012, 10.1186/1471-2105-13-134).`);
+  if(extended)h+=note('ok','Longer overlap used to clear a repeat',`${extended} junction(s) had homology in the normal ${S.ovMin}–${S.ovMax} bp window, so the tool used a longer overlap (still drawn from real, contiguous sequence in one fragment — never borrowed across templates) until it found a unique arm. See each junction for the length actually used.`);
+  if(blocked)h+=note('b','Homology could not be resolved',`${blocked} junction(s) sit in a repeat too long to escape within either fragment's own sequence, so no unique overlap exists there as designed. Real options: (1) choose a different part/fragment boundary so the junction lands outside the repeat, (2) append a short unique linker sequence onto one fragment near this junction (a spacer suggestion is given below — you don't need the whole thing in the overlap, just enough of it to clear the homology and length checks), or (3) synonymously recode one copy of the repeated region (same protein, different DNA) so it no longer matches. Moving bases from one template's amplicon into another's is NOT valid here — they would need to physically exist in both templates.`);
+  if(lowOv)h+=note('w','Overlap below target Tm',`${lowOv} junction(s) couldn’t reach ${S.ovTm} °C within the searched length (AT-rich boundary). Usually still assembles in HiFi, but consider raising Max overlap length.`);
+  if(longP)h+=note('w','Primer exceeds length limit',`${longP} primer(s) exceed ${S.maxPrimer} nt — order PAGE/HPLC-purified or split the added sequence.`);
+  if(tmMismatch)h+=note('w','Forward/reverse Tm gap',`${tmMismatch} fragment(s) still have F/R binding Tm >3 °C apart after optimisation — this happens when the two fragment ends differ a lot in GC content and no length pair closes the gap. Still usually workable (rule of thumb: keep it under 5 °C); anneal near the lower Tm and run a gradient.`);
+  if(qualityFlags)h+=note('w','Composition flags (Primer3 defaults)',`${qualityFlags} primer(s) have a homopolymer run longer than ${S.maxPolyX} bp, GC% outside ${S.gcMin}–${S.gcMax}%, or a self-dimer ≥6 bp — see the flag on each primer below. These rarely block a reaction outright but are known contributors to slippage, poor yield, or primer-dimer; based on Primer3/Primer3Plus's standard picking criteria (Untergasser et al. 2012, 10.1093/nar/gks596).`);
+  if(d.ambCount)h+=note('w','Non-ACGT characters found',`${d.ambCount} character(s) outside A/C/G/T were found in your input (e.g. N or an ambiguity code) and were stripped before designing — double-check the affected sequence(s) for sequencing/formatting errors, since a dropped base shifts everything downstream of it.`);
+  if(!misprime&&!blocked&&!extended&&!lowOv&&!longP&&!tmMismatch&&!qualityFlags&&!d.ambCount&&d.reconstructOk)h+=note('ok','Clean design','Every binding region is unique in its template, every overlap is unique and clears the reaction temperature, F/R Tms are matched within 3 °C, composition checks are clean, and the fragments reconstruct the target exactly.');
+  h+=`</div></div>`;
+
+  // ===== Homology & Specificity Check — one place that answers: could any primer or overlap =====
+  // ===== amplify/anneal somewhere it shouldn't? Checked against: the fragment's own source     =====
+  // ===== plasmid (if attached), every OTHER fragment/junction, and its own template self-repeat.=====
+  h+=`<div class="card"><div class="card-h"><span class="eyebrow">Safety check</span><h2>Homology &amp; Specificity Check</h2><span class="aside">binding regions vs. source plasmid · overlaps vs. every other fragment</span></div><div class="card-b">`;
+  h+=`<div class="hint" style="margin-bottom:12px">Every primer's <b>binding region</b> is screened for off-target sites within the plasmid it's actually PCR'd from (mismatch-tolerant — near-repeats count, not just exact ones). Every <b>Gibson overlap</b> is screened against both neighbouring fragments and every other fragment in the design, so it can't accidentally prime or anneal somewhere else.</div>`;
+  h+=`<table class="lab"><thead><tr><th>Fragment</th><th>Forward binding</th><th>Reverse binding</th><th>Template checked</th></tr></thead><tbody>`;
+  d.results.forEach(r=>{const a=r.a;
+    const fFlag=r.fb.unique?`<span class="flag f-ok">✓ specific</span>`:`<span class="flag f-b">✗ ${r.fb.sites-1} off-target site${r.fb.sites-1>1?'s':''}</span>`;
+    const rFlag=r.rb.unique?`<span class="flag f-ok">✓ specific</span>`:`<span class="flag f-b">✗ ${r.rb.sites-1} off-target site${r.rb.sites-1>1?'s':''}</span>`;
+    h+=`<tr><td style="font-weight:600;color:${a.color}">${esc(a.name)}</td><td>${fFlag}</td><td>${rFlag}</td><td class="hint" style="margin:0">${r.hasOwnTemplate?'attached source plasmid ('+r.template.length+' bp)':'fragment\u2019s own sequence only ('+r.template.length+' bp — attach its source plasmid above for a fuller check)'}</td></tr>`;});
+  h+=`</tbody></table>`;
+  h+=`<table class="lab" style="margin-top:14px"><thead><tr><th>Junction</th><th>Overlap</th><th>Status</th></tr></thead><tbody>`;
+  d.junctions.forEach((j,i)=>{
+    const label=(j.wrap?'wrap · ':'')+esc(j.U.name)+' → '+esc(j.D.name);
+    let status;
+    if(j.risk)status=`<span class="flag f-b">✗ homology-blocked — see junction ${i+1} below</span>`;
+    else if(j.ov.extendedSearch)status=`<span class="flag f-w">✓ unique (extended to ${j.ov.L} bp to clear a repeat)</span>`;
+    else status=`<span class="flag f-ok">✓ unique vs. all other fragments &amp; templates</span>`;
+    h+=`<tr><td>${label}</td><td>${j.ov.L} bp, Tm ${j.ov.tm.toFixed(1)}°C</td><td>${status}</td></tr>`;});
+  h+=`</tbody></table>`;
+  const anyRisk=misprime||blocked;
+  if(anyRisk)h+=`<div class="note n-b" style="margin-top:12px"><span class="ic">✗</span><div><b>Action needed.</b> ${misprime?'For binding-region hits, move the amplicon boundary (a different junction, or a longer/shorter fragment) — lengthening the primer only helps if the near-homolog isn\u2019t at the very 3′ end.':''} ${blocked?'For blocked junctions, add a unique spacer at that junction (button in the Junctions section below) — this becomes the new, unambiguous overlap.':''}</div></div>`;
+  h+=`</div></div>`;
+
+  // primers
+  h+=`<div class="card"><div class="card-h"><span class="eyebrow">Primers</span><h2>Per-fragment</h2><span class="aside">uppercase = overlap tail · lowercase = binding</span></div><div class="card-b">`;
+  d.results.forEach(r=>{const a=r.a;const dcls=r.dTm<=2?'f-ok':r.dTm<=5?'f-w':'f-b';
+    h+=`<div class="fcard" style="--fc:${a.color}"><div class="fcard-h"><span class="chip" style="background:${a.color}">${r.idx+1}</span><span class="nm">${esc(a.name)}</span><span class="meta"><span class="flag ${dcls}" style="margin-right:6px">ΔTm ${r.dTm.toFixed(1)}°C</span>anneal ~${r.ta}°C · ${r.amplicon} bp</span></div>`;
+    h+=primerBlock('Forward','F',r.fwdTail,r.fb,r.fSeq,r.fTot,S,r.rb.tm,S.poly);
+    h+=primerBlock('Reverse','R',r.revTail,r.rb,r.rSeq,r.rTot,S,r.fb.tm,S.poly);
+    if(r.dimer>=7)h+=`<div class="primer" style="padding-top:0"><div class="pflags"><span class="flag f-w">⚠ F/R share ${r.dimer} bp 3′ complementarity — possible primer-dimer</span></div></div>`;
+    h+=`</div>`;});
+  h+=`</div></div>`;
+
+  // junctions
+  h+=`<div class="card"><div class="card-h"><span class="eyebrow">Junctions</span><h2>Homology arms &amp; screening</h2><span class="aside">${d.jCount} region${d.jCount!==1?'s':''}</span></div><div class="card-b">`;
+  d.junctions.forEach((j,i)=>h+=junctionBlock(j,i,S,d.goalMode));
+  h+=`</div></div>`;
+
+  // table + assembled
+  h+=labTable(d,S,nm);
+  const fasta='>'+nm.replace(/\s+/g,'_')+' '+d.asm.length+'bp '+(d.circular?'circular':'linear')+'\n'+(d.asm.match(/.{1,70}/g)||[]).join('\n');
+  window.__asm=fasta;
+  h+=`<div class="card"><div class="card-h"><span class="eyebrow">Product</span><h2>Predicted assembled sequence</h2><span class="aside">${d.asm.length} bp</span></div><div class="card-b">
+    <div class="asm">${d.asm}</div><div class="btn-row"><button class="btn btn-ghost" onclick="cp(window.__asm,this)">Copy FASTA</button><button class="btn btn-ghost" onclick="dl('${nm.replace(/[^A-Za-z0-9]/g,'_')}.fasta',window.__asm,this)">Download FASTA</button></div></div></div>`;
+  h+=primerMapCard(d);
+  return h;
+}
+
+function assemblyMap(d){const total=d.amps.reduce((s,a)=>s+a.seq.length,0)+d.junctions.reduce((s,j)=>s+(j.ins?j.ins.length:0),0)||1;
+  let segs='';const order=[];
+  d.amps.forEach((a,k)=>{order.push({t:'amp',a});const j=d.junctions.find(x=>x.U===a&&!x.wrap);if(j&&j.ins)order.push({t:'ins',j});});
+  // simpler: iterate amps and their following interior insert
+  segs='';d.amps.forEach((a,k)=>{const w=(a.seq.length/total*100).toFixed(2);
+    segs+=`<div class="map-seg" style="flex:${a.seq.length};background:${a.color}" title="${esc(a.name)} — ${a.seq.length} bp">${a.seq.length>total*0.06?esc(a.name):''}</div>`;
+    const nj=d.junctions.find(x=>x.U===a&&x.ins&&!x.wrap);
+    if(nj)segs+=`<div class="map-seg ins" style="flex:${nj.ins.length};background:${'#b07d2a'}" title="insert ${nj.ins.length} bp"></div>`;});
+  const legend=d.amps.map(a=>`<span class="lg"><span class="dot" style="background:${a.color}"></span>${esc(a.name)}</span>`).join('')+(d.junctions.some(j=>j.ins)?`<span class="lg"><span class="dot ins" style="background:#b07d2a"></span>novel insert</span>`:'');
+  return `<div class="map"><div class="map-bar">${segs}</div><div class="map-legend">${legend}</div></div>`;
+}
+
+/* ===================== illustrative primer-location map (SVG) ===================== */
+function polar(cx,cy,r,angDeg){const rad=angDeg*Math.PI/180;return {x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)};}
+function donutSlice(cx,cy,rOuter,rInner,a0,a1){
+  const large=(a1-a0)>180?1:0;
+  const p1=polar(cx,cy,rOuter,a0),p2=polar(cx,cy,rOuter,a1),p3=polar(cx,cy,rInner,a1),p4=polar(cx,cy,rInner,a0);
+  return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${rOuter} ${rOuter} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `+
+         `L ${p3.x.toFixed(2)} ${p3.y.toFixed(2)} A ${rInner} ${rInner} 0 ${large} 0 ${p4.x.toFixed(2)} ${p4.y.toFixed(2)} Z`;
+}
+// small triangular arrowhead sitting at (cx,cy,r,angDeg), tip pointing tangentially: dir=+1 clockwise
+// (forward primer, extends "into" the fragment), dir=-1 counter-clockwise (reverse primer).
+function primerArrow(cx,cy,r,angDeg,dir,size,color){
+  const rad=angDeg*Math.PI/180;
+  const x=cx+r*Math.cos(rad),y=cy+r*Math.sin(rad);
+  const tipRad=(angDeg+(dir>0?90:-90))*Math.PI/180;
+  const tipX=x+size*Math.cos(tipRad),tipY=y+size*Math.sin(tipRad);
+  const halfW=size*0.62;
+  const p1x=x+halfW*Math.cos(rad),p1y=y+halfW*Math.sin(rad);
+  const p2x=x-halfW*Math.cos(rad),p2y=y-halfW*Math.sin(rad);
+  return `<polygon points="${tipX.toFixed(1)},${tipY.toFixed(1)} ${p1x.toFixed(1)},${p1y.toFixed(1)} ${p2x.toFixed(1)},${p2y.toFixed(1)}" fill="${color}" stroke="#fff" stroke-width="0.6"/>`;
+}
+function renderPrimerMap(d){
+  const total=d.asm.length||1;
+  const fr=r=>r.a; // helper unused placeholder
+  if(d.circular){
+    const W=520,H=520,cx=260,cy=260,rOuter=204,rInner=170,rLabel=rOuter+34;
+    let svg='';
+    // backbone track (faint) so gaps read as "still part of the plasmid", not missing data
+    svg+=`<circle cx="${cx}" cy="${cy}" r="${(rOuter+rInner)/2}" fill="none" stroke="var(--line-2)" stroke-width="${rOuter-rInner+4}" opacity=".35"/>`;
+    d.layout.forEach(seg=>{
+      const a0=-90+(seg.start/total)*360, a1=-90+(seg.end/total)*360;
+      if(seg.type==='ins'){
+        svg+=`<path d="${donutSlice(cx,cy,rOuter-4,rInner+4,a0,a1)}" fill="url(#hatch)" stroke="var(--amber)" stroke-width="1"/>`;
+      } else {
+        svg+=`<path d="${donutSlice(cx,cy,rOuter,rInner,a0,a1)}" fill="${seg.color}" opacity=".92" stroke="#fff" stroke-width="1.5"/>`;
+        // forward primer arrow at segment start (points clockwise, into the fragment)
+        svg+=primerArrow(cx,cy,rOuter+9,a0,1,10,seg.color);
+        // reverse primer arrow at segment end (points counter-clockwise, back into the fragment)
+        svg+=primerArrow(cx,cy,rInner-9,a1,-1,10,seg.color);
+        // fragment label, tangentially placed, flipped upright on the left half
+        const mid=(a0+a1)/2, rad=mid*Math.PI/180, onRight=Math.cos(rad)>=0;
+        const lp=polar(cx,cy,rLabel,mid);
+        const lx=lp.x.toFixed(1),ly=lp.y.toFixed(1);
+        svg+=`<line x1="${polar(cx,cy,rOuter+2,mid).x.toFixed(1)}" y1="${polar(cx,cy,rOuter+2,mid).y.toFixed(1)}" x2="${lx}" y2="${ly}" stroke="${seg.color}" stroke-width="1" opacity=".55"/>`;
+        svg+=`<text x="${lx}" y="${ly}" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="${onRight?'start':'end'}" dominant-baseline="middle">${esc(seg.name)}</text>`;
+      }
+    });
+    svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-family="var(--display)" font-size="19" font-weight="700" fill="var(--ink)">${total.toLocaleString()} bp</text>`;
+    svg+=`<text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink-3)">circular · ${d.amps.length} fragments</text>`;
+    const defs=`<defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="var(--amber-l)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--amber)" stroke-width="2"/></pattern></defs>`;
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:460px;display:block;margin:0 auto">${defs}${svg}</svg>`;
+  } else {
+    const W=760,H=170,padX=50,barY=78,barH=30,x0=padX,x1=W-padX;
+    const bpToX=bp=>x0+(bp/total)*(x1-x0);
+    let svg=`<line x1="${x0}" y1="${barY+barH/2}" x2="${x1}" y2="${barY+barH/2}" stroke="var(--line-2)" stroke-width="${barH+6}" opacity=".3"/>`;
+    d.layout.forEach(seg=>{
+      const sx=bpToX(seg.start),ex=bpToX(seg.end);
+      if(seg.type==='ins'){
+        svg+=`<rect x="${sx.toFixed(1)}" y="${barY}" width="${(ex-sx).toFixed(1)}" height="${barH}" fill="url(#hatchL)" stroke="var(--amber)" stroke-width="1"/>`;
+      } else {
+        svg+=`<rect x="${sx.toFixed(1)}" y="${barY}" width="${(ex-sx).toFixed(1)}" height="${barH}" fill="${seg.color}" opacity=".92" stroke="#fff" stroke-width="1.5"/>`;
+        // forward primer: triangle above the bar at segment start, pointing right (into the fragment)
+        svg+=`<polygon points="${sx.toFixed(1)},${(barY-20).toFixed(1)} ${(sx+11).toFixed(1)},${(barY-13).toFixed(1)} ${sx.toFixed(1)},${(barY-6).toFixed(1)}" fill="${seg.color}" stroke="#fff" stroke-width=".6"/>`;
+        // reverse primer: triangle below the bar at segment end, pointing left (back into the fragment)
+        svg+=`<polygon points="${ex.toFixed(1)},${(barY+barH+6).toFixed(1)} ${(ex-11).toFixed(1)},${(barY+barH+13).toFixed(1)} ${ex.toFixed(1)},${(barY+barH+20).toFixed(1)}" fill="${seg.color}" stroke="#fff" stroke-width=".6"/>`;
+        const midx=(sx+ex)/2;
+        svg+=`<text x="${midx.toFixed(1)}" y="${(barY+barH+38).toFixed(1)}" text-anchor="middle" font-family="var(--sans)" font-size="12" font-weight="600" fill="var(--ink)">${esc(seg.name)}</text>`;
+      }
+    });
+    svg+=`<text x="${padX}" y="24" font-family="var(--display)" font-size="16" font-weight="700" fill="var(--ink)">${total.toLocaleString()} bp</text>`;
+    svg+=`<text x="${padX}" y="42" font-family="var(--mono)" font-size="11" fill="var(--ink-3)">linear · ${d.amps.length} fragments</text>`;
+    const defs=`<defs><pattern id="hatchL" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="var(--amber-l)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--amber)" stroke-width="2"/></pattern></defs>`;
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">${defs}${svg}</svg>`;
+  }
+}
+function primerMapCard(d){
+  const legend=d.amps.map(a=>`<span class="lg"><span class="dot" style="background:${a.color}"></span>${esc(a.name)}</span>`).join('')
+    +(d.layout.some(s=>s.type==='ins')?`<span class="lg"><span class="dot ins" style="background:var(--amber)"></span>novel insert</span>`:'')
+    +`<span class="lg"><span class="arrow-lg">▶</span>forward primer</span><span class="lg"><span class="arrow-lg">◀</span>reverse primer</span>`;
+  return `<div class="card"><div class="card-h"><span class="eyebrow">Map</span><h2>Where the primers sit on the construct</h2><span class="aside">${d.circular?'circular':'linear'} · ${d.asm.length} bp</span></div>
+    <div class="card-b"><div class="pmap">${renderPrimerMap(d)}</div>
+    <div class="map-legend" style="margin-top:16px;justify-content:center">${legend}</div>
+    <div class="hint" style="text-align:center;margin-top:8px">Each arrowhead marks where that fragment's primer binds and the direction it extends — forward primers point into the fragment (clockwise/rightward), reverse primers point back into it from the other end.</div>
+    </div></div>`;
+}
+
+function primerBlock(dir,suf,tail,bind,full,tot,S,partnerTm,poly){const tl=tail.length,bl=bind.len;const dcl=dir==='Forward'?'dir-f':'dir-r';
+  const flags=[];flags.push(`<span class="flag ${tmFlag(bind.tm,S.bindTm)}">bind Tm ${bind.tm.toFixed(1)}°C</span>`);
+  flags.push(bind.unique?`<span class="flag f-ok">✓ 3′-specific in template</span>`:`<span class="flag f-b">✗ ${bind.sites-1} off-target 3′ site${bind.sites-1>1?'s':''} (≤${S.mm} mm) — mis-priming</span>`);
+  if(!bind.clamp)flags.push(`<span class="flag f-w">no 3′ G/C clamp</span>`);
+  else if(bind.endGC>=4)flags.push(`<span class="flag f-w">3′ end very GC-rich (${bind.endGC}/5) — may mis-prime</span>`);
+  if(bind.hp>=8)flags.push(`<span class="flag f-w">⚠ hairpin ${bind.hp} bp</span>`);
+  if(bind.selfDimer>=6)flags.push(`<span class="flag f-w">⚠ self-dimer ${bind.selfDimer} bp</span>`);
+  if(bind.polyXBad)flags.push(`<span class="flag f-w">⚠ ${bind.polyX} bp homopolymer run (Primer3 limit ${S.maxPolyX})</span>`);
+  if(!bind.gcOk)flags.push(`<span class="flag f-w">GC ${bind.gc.toFixed(0)}% outside ${S.gcMin}–${S.gcMax}% range</span>`);
+  if(tot>S.maxPrimer)flags.push(`<span class="flag f-b">✗ ${tot} nt — PAGE/HPLC</span>`);
+  const why=whyToggle(whyBindText(bind,S,dir==='Forward'?'reverse':'forward',partnerTm,poly));
+  return `<div class="primer"><div class="p-label ${dcl}">${dir==='Forward'?'▶':'◀'} ${dir.toUpperCase()} <span class="p-name">_${suf}</span>${why.btn}</div>
+    <div class="anatomy">${tl>0?`<div class="a-tail" style="flex:${tl}"></div>`:''}<div class="a-bind" style="flex:${bl}"></div></div>
+    <div class="seqbox">${tail?`<span class="s-tail">${tail.toUpperCase()}</span>`:''}<span class="s-bind">${bind.seq.toLowerCase()}</span></div>
+    <div class="pmeta"><span>Total ${badge(tot,S.maxPrimer)} nt</span><span>tail <b>${tl}</b></span><span>bind <b>${bl}</b></span><span>GC <b>${gcv(bind.seq).toFixed(0)}%</b></span><button class="copy" onclick="cp('${full}',this)">copy</button></div>
+    <div class="pflags">${flags.join('')}</div>${why.box}</div>`;
+}
+
+function junctionBlock(j,i,S,goalMode){const ov=j.ov;const title=j.wrap?`Junction ${i+1} · wrap-around`:`Junction ${i+1}`;
+  const insName=j.insArr.length?j.insArr.map(x=>x.name).join(' + '):'';
+  let flow=`<span class="jpill" style="background:${j.U.color}">${esc(j.U.name)}</span>`;
+  if(j.ins)flow+=`<span class="jarrow">+</span><span class="jpill" style="background:#b07d2a">${esc(insName)} (${j.ins.length} bp)</span>`;
+  flow+=`<span class="jarrow">→</span><span class="jpill" style="background:${j.D.color}">${esc(j.D.name)}</span>`;
+  const seqHTML=`${ov.upPart?`<span class="o-up">${ov.upPart}</span>`:''}${ov.insert?`<span class="o-ins">${ov.insert}</span>`:''}${ov.downPart?`<span class="o-down">${ov.downPart}</span>`:''}`;
+  const srcDesc={split:`overlap = <b>${ov.a} bp on ${esc(j.U.name)}'s primer</b> + <b>${ov.c} bp on ${esc(j.D.name)}'s primer</b> (both ≥ ${S.ovSideMin} bp — no lopsided split)`,
+                 fallback:`overlap = fallback arm (validate manually — one side may be short)`};
+  const desc=ov.insert
+    ?(ov.extended?`overlap = <b>${ov.a} bp from ${esc(j.U.name)}</b> + <b>${ov.insert.length} bp insert</b> + <b>${ov.c} bp from ${esc(j.D.name)}</b> (arm extended into neighbours; insert alone too short)`:`overlap = the ${ov.insert.length} bp insert itself`)
+    :(srcDesc[ov.source]||srcDesc.split);
+  const screen=[];
+  if(j.risk){
+    if(ov.hD>0)screen.push(`<span class="flag f-b">✗ arm recurs in ${esc(j.D.name)} template ×${ov.hD} beyond the intended site</span>`);
+    if(ov.hU>0)screen.push(`<span class="flag f-b">✗ arm recurs in ${esc(j.U.name)} template ×${ov.hU} beyond the intended site</span>`);
+    if(ov.hOther)screen.push(`<span class="flag f-b">✗ arm matches another fragment/template — mis-assembly risk</span>`);
+    screen.push(`<span class="flag f-w">no unique overlap found up to 80 bp</span>`);
+  } else {
+    screen.push(`<span class="flag f-ok">✓ arm unique in both flanking templates</span>`);
+    screen.push(`<span class="flag f-ok">✓ unique across all other fragments</span>`);
+    if(ov.extendedSearch)screen.push(`<span class="flag f-w">extended to ${ov.L} bp to clear a repeat</span>`);
+  }
+  const ovPolyX=polyXRun(ov.seq);
+  if(ovPolyX>S.maxPolyX)screen.push(`<span class="flag f-w">⚠ ${ovPolyX} bp homopolymer run in overlap (Primer3 limit ${S.maxPolyX})</span>`);
+  let spacerBtn='';
+  if(j.risk){const jid='j'+i;window.__jctx=window.__jctx||{};window.__jctx[jid]={u:j.U.name,d:j.D.name,templates:[j.U.template||j.U.seq,j.D.template||j.D.seq],uSeq:j.U.seq,dSeq:j.D.seq};
+    spacerBtn=`<div class="btn-row" style="margin-top:9px"><button class="btn btn-ghost btn-sm" style="font-size:12px;padding:8px 14px" onclick="suggestSpacer('${jid}')">Suggest a unique spacer for this junction</button></div><div id="spacerOut_${jid}" class="ba"></div>`;}
+  const why=whyToggle(whyOverlapText(ov,S,title));
+  return `<div class="jcard ${j.risk?'risk':''}"><div class="jhead"><span class="jt">${title}${j.risk?' · ⚠ homology-blocked':ov.extendedSearch?' · extended':''}</span><span class="flag ${tmFlag(ov.tm,S.ovTm)}">Tm ${ov.tm.toFixed(1)}°C</span>${ov.cleared?'':'<span class="flag f-w">below target</span>'}${why.btn}</div>
+    <div class="jflow">${flow}</div><div class="joverlap">${seqHTML}</div>
+    <div class="jmeta"><span>${desc}</span></div>
+    <div class="jmeta"><span>Length <b>${ov.L} bp</b></span><span>GC <b>${ov.gc.toFixed(0)}%</b></span><span>hairpin <b>${ov.hp} bp</b></span></div>
+    <div class="pflags" style="margin-top:9px">${screen.join('')}</div>${why.box}
+    ${j.risk?`<div class="note n-w" style="margin-top:9px"><span class="ic">⚠</span><div>No unique overlap exists here within either fragment's own sequence. Best real options: choose a different part/fragment boundary so the junction falls outside the repeat, insert a unique linker (suggestion below), or synonymously recode one copy of the repeat.</div></div>${spacerBtn}`:''}</div>`;
+}
+function suggestSpacer(jid){const ctx=window.__jctx[jid];const out=document.getElementById('spacerOut_'+jid);
+  const sp=randomSpacer(30,ctx.templates);
+  if(!sp){out.innerHTML=`<div class="hint">Could not auto-generate a clean unique spacer — try a manually designed linker (e.g. GSGSGS-repeat or a restriction-site-free sequence) and check it by eye against both templates.</div>`;return;}
+  // Simulate appending the spacer to the END of the upstream fragment's own sequence (ordinary body
+  // content, not a separate fold-in piece) and re-running the normal overlap search — this shows
+  // concretely how much of the spacer the design actually needs, since it rarely needs all of it.
+  const S=readS();
+  const Usim={seq:ctx.uSeq+sp,template:ctx.uSeq+sp}, Dsim={seq:ctx.dSeq,template:ctx.dSeq};
+  let preview='';
+  try{
+    const sim=designOverlap(Usim,Dsim,'',S,[]);
+    const usedFromSpacer=Math.min(sim.a,sp.length), extraFromU=Math.max(0,sim.a-sp.length);
+    if(sim.unique){
+      preview=`<div class="hint" style="margin-top:6px"><b>Preview:</b> once appended, the design only needs <b>${usedFromSpacer} of these ${sp.length} bp</b>${extraFromU>0?` (plus ${extraFromU} bp already in ${esc(ctx.u)})`:''} to form a unique, Tm-clearing overlap — the remaining ${sp.length-usedFromSpacer} bp just stays as ordinary sequence in ${esc(ctx.u)}, it does not need to be forced into both primers.</div>`;
+    } else {
+      preview=`<div class="hint" style="margin-top:6px">This 30 bp spacer wasn't quite enough on its own in a quick preview — a longer or differently-placed linker may be needed; re-run the full design after inserting it to get the definitive answer.</div>`;
+    }
+  }catch(e){/* preview is best-effort; the spacer sequence itself is still valid */}
+  out.innerHTML=`<div class="ba-row"><span class="ba-tag">spacer</span><span class="mono s-tail" style="color:var(--amber)">${sp}</span> <button class="copy" onclick="cp('${sp}',this)">copy</button></div>
+    <div class="hint">A unique ${sp.length} bp, ~50% GC spacer with no long homopolymers, screened against both templates. Append it to the end of ${esc(ctx.u)} (or the start of ${esc(ctx.d)}) as ordinary sequence, then re-run — you do NOT need the whole spacer to end up in the overlap, just enough of it to clear the homology and length checks.</div>${preview}`;}
+
+function labTable(d,S,nm){let rows='';let tsv='Fragment\tPrimer\tSequence\tBind Tm F/R\tAnneal Ta\tAmplicon\tExt\tProduct\n';
+  d.results.forEach(r=>{const a=r.a;const n=`Frag${r.idx+1}`;const et=extTime(r.amplicon,S.poly);
+    rows+=`<tr><td rowspan="2" style="font-weight:600;color:${a.color}">${esc(a.name)}</td><td>${n}_F</td><td class="seqcell"><span class="s-tail">${r.fwdTail.toUpperCase()}</span><span class="s-bind">${r.fb.seq.toLowerCase()}</span> <button class="copy" onclick="cp('${r.fSeq}',this)">copy</button></td><td rowspan="2">${r.fb.tm.toFixed(1)} / ${r.rb.tm.toFixed(1)}</td><td rowspan="2"><b>${r.ta}°C</b></td><td rowspan="2">${r.amplicon}</td><td rowspan="2">${et}</td><td rowspan="2">${esc(nm)}</td></tr>
+    <tr><td>${n}_R</td><td class="seqcell"><span class="s-tail">${r.revTail.toUpperCase()}</span><span class="s-bind">${r.rb.seq.toLowerCase()}</span> <button class="copy" onclick="cp('${r.rSeq}',this)">copy</button></td></tr>`;
+    tsv+=`${a.name}\t${n}_F\t${r.fSeq}\t${r.fb.tm.toFixed(1)}\t${r.ta}\t${r.amplicon}\t${et}\t${nm}\n`;tsv+=`\t${n}_R\t${r.rSeq}\t${r.rb.tm.toFixed(1)}\t\t\t\t\n`;});
+  window.__lab=tsv;
+  return `<div class="card"><div class="card-h"><span class="eyebrow">Order sheet</span><h2>Primer table</h2></div><div class="card-b" style="padding:0;overflow-x:auto">
+    <table class="lab"><thead><tr><th>Fragment</th><th>Primer</th><th>Sequence (5′→3′)</th><th>Bind Tm F/R</th><th>Anneal</th><th>Amplicon</th><th>Ext</th><th>Product</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card-b" style="padding-top:14px;border-top:1px solid var(--line)"><div class="btn-row" style="margin:0"><button class="btn btn-ghost" onclick="cp(window.__lab,this)">Copy TSV</button><button class="btn btn-ghost" onclick="dl('primers.tsv',window.__lab,this)">Download TSV</button></div></div></div>`;
+}
+
+function note(t,head,body){const cls={i:'n-i',ok:'n-ok',w:'n-w',b:'n-b'}[t];const ic={i:'ℹ',ok:'✓',w:'⚠',b:'✗'}[t];return `<div class="note ${cls}"><span class="ic">${ic}</span><div><b>${head}.</b> ${body}</div></div>`;}
+function cp(text,btn){const t=(text||'').replace(/&amp;/g,'&');if(navigator.clipboard)navigator.clipboard.writeText(t);if(btn){const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1100);}}
+function dl(name,text,btn){const b=new Blob([text],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);if(btn){const o=btn.textContent;btn.textContent='downloaded ✓';setTimeout(()=>btn.textContent=o,1100);}}
+
+/* ===================== "why" toggles — explain each design decision on demand ===================== */
+let __whyId=0;
+function whyToggle(html){const id='why'+(__whyId++);
+  return {btn:`<button class="why-btn" onclick="toggleWhy('${id}',this)">Why? <span class="car">▾</span></button>`,
+          box:`<div class="why-box hidden" id="${id}">${html}</div>`};}
+function toggleWhy(id,btn){const el=document.getElementById(id);if(el)el.classList.toggle('hidden');if(btn)btn.classList.toggle('open');}
+
+function whyBindText(bind,S,dirLabel,partnerTm,poly){
+  const overshoot=bind.tm-S.bindTm;
+  let reason=`Grown from the ${S.bindMin} bp minimum, one base at a time, until it reached the ${S.bindTm} °C target`;
+  if(!bind.unique)reason+=`, then extended further to move the 3′ end into sequence that doesn\u2019t recur elsewhere in the template`;
+  return `<b>Target ${S.bindTm} °C</b> — set to match ${poly}'s own guidance (anneal at the primer's Tm). `+reason+
+    `, while checking every candidate length against the partner ${dirLabel} primer (${partnerTm.toFixed(1)} °C) so both stop close together — that's what keeps one fragment's whole PCR at a single annealing temperature.`+
+    (Math.abs(overshoot)>3?` This end finished ${overshoot>0?'above':'below'} target because its GC content is unusually ${overshoot>0?'high':'low'} — at any length, this sequence will sit near ${bind.tm.toFixed(0)} °C; the only way to change that is to move the amplicon boundary.`:'');
+}
+function whyOverlapText(ov,S,jName){
+  const srcTxt={split:`the arm was split — <b>${ov.a} bp</b> onto the upstream fragment's primer + <b>${ov.c} bp</b> onto the downstream fragment's primer`,
+                fallback:'a fallback arm was used — one side may be short, validate manually'}[ov.source]||'a fallback arm was used';
+  let t=`<b>Priority 1 — length.</b> Each primer's own share of the overlap must be at least ${S.ovSideMin} bp before anything else is considered — this is checked first, structurally, so no primer ever ends up with a near-zero overhang. `;
+  t+=`<br><b>Priority 2 — homology Tm.</b> Once the length floor is met, the overlap's melting temperature is estimated with the Wallace rule (Thein &amp; Wallace 1986: Tm = 2×(A+T) + 4×(G+C), the standard quick estimate for short 14–20 nt stretches) and must clear ${S.ovTm} °C so it anneals reliably at the 50 °C isothermal step. This overlap: ${ov.tm.toFixed(0)} °C at ${ov.L} bp. `;
+  if(ov.extendedSearch)t+=`The normal ${S.ovMin}–${S.ovMax} bp window had a repeat nearby, so the length was extended (using only real, contiguous sequence already in one fragment — never borrowed from elsewhere) until a unique stretch was found. `;
+  t+=`<br><b>Why this split?</b> Every length/position meeting both priorities above was also screened for homology against both flanking fragments and every other fragment in the design; ${srcTxt} came back shortest, unique, and Tm-clearing, so that's what's used.`;
+  return t;
+}
+
+
+/* ---- example ---- */
+function loadExampleA(){setTopo('A','circular');document.getElementById('nameA').value='Demo: backbone + His6 + insert';
+  const bb='ATGGCAAGCAAAGGCGAAGAGCTGTTTACCGGCGTGGTGCCGATTCTGGTGGAACTGGATGGCGATGTGAACGGCCATAAATTTAGCGTGAGCGGCGAAGGCGAAGGCGATGCAACCTATGGCAAACTGACCCTGAAATTTATTTGCACCACCGGCAAACTGCCGGTGCCGTGGCCGACC';
+  const ins='ATGAGCAAAGGCGAAGAACTGTTTACCGGCGTTGTGCCGATTCTGGTTGAACTGGATGGCGATGTGAATGGTCACAAGTTTTCTGTGTCCGGTGAAGGTGAAGGTGATGCTACCTATGGTAAACTGACCCTGAAATTCATCTGCACTACTGGT';
+  // give the backbone a full source-plasmid context (extra flanking sequence) to demo the homology check
+  const bbPlasmid='GGGGCCCCTTTTAAAAGGGGCCCCTTTTAAAA'+bb+'AAAATTTTCCCCGGGGAAAATTTTCCCCGGGG';
+  frags=[{name:'pVector-backbone',seq:bb,template:bbPlasmid},{name:'His6 linker',seq:'CATCATCATCATCATCAT',template:''},{name:'GFP-insert',seq:ins,template:''}];renderFrags();
+  document.getElementById('msg').textContent='Loaded — His6 is a short fold-in fragment; the backbone has a source plasmid attached to demo the homology check.';}
+
+/* ---- init ---- */
+renderFrags();document.getElementById('asideA').textContent='';syncPoly();
+</script>
+</body>
+</html>

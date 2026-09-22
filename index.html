@@ -190,7 +190,7 @@
   <section class="trust-strip">
     <div class="wrap">
       <p class="trust-label">Deployed across leading research environments</p>
-      <ul class="trust-logos">
+      <ul class="trust-logos" id="trust-logos">
         <li>The Bench Next To Mine</li>
         <li>My PI <span>(unaware)</span></li>
         <li>One Lab In Singapore, Apparently</li>
@@ -276,12 +276,14 @@
 <footer class="site-footer">
   <div class="wrap footer-inner">
     <div class="footer-id">
-      <svg class="footer-mark" viewBox="22 46 208 144" aria-hidden="true">
-        <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
-        <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
-        <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
-        <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
-      </svg>
+      <button class="footer-spud" id="footer-potato" type="button" aria-label="Poke the footer potato">
+        <svg class="footer-mark" viewBox="22 46 208 144" aria-hidden="true">
+          <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+          <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+          <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+          <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+        </svg>
+      </button>
       <div>
         <h3>Dongmin Byun</h3>
         <p class="footer-role">Labsolutely tired researcher @ National University of Singapore</p>
@@ -313,6 +315,9 @@
     <span class="footer-wink">Powered by caffeine, spite, and an approaching thesis deadline.</span>
   </div>
 </footer>
+
+<div class="toast" id="toast"></div>
+<div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
 
 <script src="assets/tools.js"></script>
 <script src="assets/app.js"></script>

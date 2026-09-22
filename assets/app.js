@@ -391,21 +391,16 @@ function initMascot() {
     "Named the file 'FINAL_v2_ACTUALLYFINAL_useThisOne'.",
   ];
 
-  const IDLE_LINES = [
-    "Still there?",
-    "I'll just talk to myself, then.",
-    "This silence is very reproducible.",
-    "No pressure. I'll just be here. Idle. Like the incubator.",
-    "Nobody's clicking. Very on brand for this lab.",
-    "I have goggles and nowhere to be.",
-  ];
-  const IDLE_DELAY = 18000;
-  const MAX_IDLE_NAGS = 3;
-  const pickIdleLine = makeNoRepeatPicker(IDLE_LINES);
+  // If nobody's clicked it in a while, the mascot starts asking for it.
+  // First nag is always the same line; after that, a little variety.
+  const IDLE_FIRST_MS = 18000;
+  const IDLE_REPEAT_MS = 15000;
+  const IDLE_MAX_NAGS = 3;
+  const IDLE_LINES = ["Bite me, bite me, bite me.", "Still here.", "Click me. I'm bored."];
 
   let hideTimer;
   let idleTimer;
-  let idleNagCount = 0;
+  let idleCount = 0;
 
   // The goggles are worn correctly at all times, except when they aren't.
   const goggles = document.getElementById("goggles");
@@ -442,18 +437,15 @@ function initMascot() {
     clearTimeout(hideTimer);
     hideTimer = setTimeout(() => speech.classList.remove("show"), ms);
   }
-  // The mascot nags after a stretch of inactivity, up to MAX_IDLE_NAGS
-  // times, then goes quiet again until the next click resets it.
   function scheduleIdleNag() {
     clearTimeout(idleTimer);
+    if (idleCount >= IDLE_MAX_NAGS) return;
     idleTimer = setTimeout(() => {
-      if (idleNagCount >= MAX_IDLE_NAGS) return;
-      idleNagCount++;
-      say(pickIdleLine(), 3600);
+      say(idleCount === 0 ? IDLE_LINES[0] : IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)], 3200);
+      idleCount++;
       scheduleIdleNag();
-    }, IDLE_DELAY);
+    }, idleCount === 0 ? IDLE_FIRST_MS : IDLE_REPEAT_MS);
   }
-  scheduleIdleNag();
 
   function hop() {
     mascot.classList.remove("hop");
@@ -461,29 +453,8 @@ function initMascot() {
     mascot.classList.add("hop");
   }
 
-  // If nobody's clicked it in a while, the mascot starts asking for it.
-  // First nag is always the same line; after that, a little variety.
-  const IDLE_FIRST_MS = 18000;
-  const IDLE_REPEAT_MS = 15000;
-  const IDLE_MAX_NAGS = 3;
-  const IDLE_LINES = ["Bite me, bite me, bite me.", "Still here.", "Click me. I'm bored."];
-  let idleTimer;
-  let idleCount = 0;
-
-  function scheduleIdleNag() {
-    clearTimeout(idleTimer);
-    if (idleCount >= IDLE_MAX_NAGS) return;
-    idleTimer = setTimeout(() => {
-      say(idleCount === 0 ? IDLE_LINES[0] : pick(IDLE_LINES), 3200);
-      idleCount++;
-      scheduleIdleNag();
-    }, idleCount === 0 ? IDLE_FIRST_MS : IDLE_REPEAT_MS);
-  }
-
   mascot.addEventListener("click", () => {
     hop();
-    idleNagCount = 0;
-    scheduleIdleNag();
 
     // Any real interaction resets the "are you still there" clock.
     idleCount = 0;
@@ -520,60 +491,6 @@ function initMascot() {
   scheduleIdleNag();
 }
 
-function initEasterEggs() {
-  const SPEC_ASIDES = [
-    "Legal reviewed this page. Legal does not exist.",
-    "This spec sheet has been audited by nobody, on purpose.",
-    "I wrote 'None' twice and I stand by both.",
-    "Compliance officer: also me, also unqualified.",
-    "We considered ISO 27001. We considered a nap instead.",
-    "Every number on this table is emotionally accurate.",
-    "This row was added at 2am to pad the section.",
-    "Ctrl+Z is, legally speaking, our entire QA department.",
-    "If you're reading this closely, you should be sleeping.",
-    "The SLA is 'eventually,' and I mean that sincerely.",
-  ];
-  const TRUST_ASIDES = [
-    "The bench next to mine has since filed a complaint.",
-    "My PI found out. This joke is now retired. Slowly.",
-    "The lab in Singapore is, in fact, this one.",
-    "Four people in Korea and I have never met them.",
-    "The postdoc still hasn't replied. It's been a year.",
-    "None of these logos are real. All of the gratitude is.",
-    "I asked in the corridor. Nobody remembers agreeing to this.",
-    "This strip exists because empty space felt worse.",
-  ];
-  const pickSpecAside = makeNoRepeatPicker(SPEC_ASIDES);
-  const pickTrustAside = makeNoRepeatPicker(TRUST_ASIDES);
-
-  const aside = document.createElement("div");
-  aside.className = "egg-aside";
-  aside.setAttribute("role", "status");
-  document.body.appendChild(aside);
-  let hideTimer;
-
-  function showAside(anchor, text) {
-    const rect = anchor.getBoundingClientRect();
-    aside.textContent = text;
-    aside.style.left = `${Math.min(Math.max(rect.left, 12), window.innerWidth - 252)}px`;
-    aside.style.top = `${Math.max(rect.top - 46, 8)}px`;
-    aside.classList.add("show");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => aside.classList.remove("show"), 2600);
-  }
-
-  document.addEventListener("click", (e) => {
-    const specRow = e.target.closest(".spec-row");
-    if (specRow) {
-      showAside(specRow, pickSpecAside());
-      return;
-    }
-
-    const trustItem = e.target.closest(".trust-logos li");
-    if (trustItem) showAside(trustItem, pickTrustAside());
-  });
-}
-
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -584,4 +501,6 @@ renderSpecs();
 renderSupport();
 initReveal();
 initMascot();
-initEasterEggs();
+initTrustStrip();
+initFooterPotato();
+initSecretPotato();

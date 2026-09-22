@@ -248,6 +248,25 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 
 .speech.show { opacity: 1; transform: translateY(0); }
 
+/* small floating aside for click-triggered easter eggs elsewhere on the page */
+.egg-aside {
+  position: fixed;
+  z-index: 60;
+  max-width: 240px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+  pointer-events: none;
+}
+.egg-aside.show { opacity: 1; transform: translateY(0); }
+
 .mascot {
   display: block;
   width: 204px;
@@ -442,6 +461,7 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
   letter-spacing: -0.015em;
   color: var(--text-faint);
   opacity: .82;
+  cursor: pointer;
   transition: opacity .25s var(--ease), color .25s var(--ease);
 }
 
@@ -720,6 +740,7 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 
 .spec-row:last-child { border-bottom: none; }
 .spec-row:hover { background: color-mix(in srgb, var(--bg-tint) 60%, transparent); }
+.spec-row { cursor: pointer; }
 
 .spec-row dt {
   font-size: 14px;

@@ -945,6 +945,84 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 
 .reveal.in { opacity: 1; transform: none; }
 
+/* ---------------- easter eggs ---------------- */
+
+/* Compliance rows and trust-strip logos are quietly clickable — same
+   affordance language as the header nav (cursor + a subtle brighten). */
+.spec-row { cursor: pointer; }
+.trust-logos li { cursor: pointer; }
+
+/* Footer mascot, small and separately interactive from the hero one. */
+.footer-spud {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .3s var(--ease);
+}
+
+.footer-spud:hover { transform: rotate(-6deg) scale(1.08); }
+.footer-spud:active { transform: rotate(-3deg) scale(.95); }
+
+@keyframes footer-nod {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-9deg); }
+  60% { transform: rotate(7deg); }
+}
+.footer-spud.nod { animation: footer-nod .5s var(--ease); }
+
+/* A floating toast for every click-driven aside that isn't the hero
+   mascot's own speech bubble (which stays anchored above it). Fixed to
+   the viewport so it reads the same regardless of scroll position. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 12px);
+  z-index: 80;
+  max-width: min(86vw, 380px);
+  background: var(--ink);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 550;
+  line-height: 1.45;
+  padding: 12px 18px;
+  border-radius: 980px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s var(--ease), transform .3s var(--ease);
+  text-align: center;
+}
+
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Confetti spawned by the hidden "potato" keyword easter egg. */
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -30px;
+  width: 22px;
+  height: 22px;
+  color: var(--potato);
+  opacity: 0;
+  animation: confetti-fall 1.8s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+}
+
 /* ---------------- responsive ---------------- */
 
 @media (max-width: 720px) {

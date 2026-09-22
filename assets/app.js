@@ -157,13 +157,37 @@ const SPECS = [
   ["Headcount", "One, and he is tired"],
 ];
 
+// One extra aside per row, in the same order as SPECS — shown as a toast
+// when that row is clicked.
+const SPEC_ASIDES = [
+  "Also whenever the WiFi is having a good day.",
+  "It has never once asked to leave.",
+  "There is a cloud. It is outside. We do not control it.",
+  "We looked into it. Then we looked away.",
+  "We do have an ISO. It just says “9001 problems.”",
+  "Some users report it taking even less time to regret.",
+  "Response times worsen during exam season.",
+  "Vertical scalability: also one scientist, just standing.",
+  "Step two is blaming the incubator.",
+  "Still cheaper than what your department currently pays.",
+  "Series A pending a very generous relative.",
+  "Org chart available on request. It is one circle.",
+];
+
 function renderSpecs() {
   const table = document.getElementById("spec-table");
   if (!table) return;
 
   table.innerHTML = SPECS.map(
-    ([k, v]) => `<div class="spec-row"><dt>${k}</dt><dd>${v}</dd></div>`
+    ([k, v], i) => `<div class="spec-row" data-aside="${i}"><dt>${k}</dt><dd>${v}</dd></div>`
   ).join("");
+
+  table.addEventListener("click", (e) => {
+    const row = e.target.closest(".spec-row");
+    if (!row) return;
+    const aside = SPEC_ASIDES[Number(row.dataset.aside)];
+    if (aside) toast(aside);
+  });
 }
 
 function renderSupport() {
@@ -179,6 +203,101 @@ function renderSupport() {
       </svg>
       ${SUPPORT_LABEL}
     </a>`;
+}
+
+// Shared floating toast, used by every click-driven aside that isn't the
+// hero mascot's own speech bubble (that one stays anchored above it).
+let toastHideTimer;
+function toast(text, ms = 3200) {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(toastHideTimer);
+  toastHideTimer = setTimeout(() => el.classList.remove("show"), ms);
+}
+
+const TRUST_ASIDES = [
+  "They know. They have chosen not to say anything.",
+  "Let's keep it that way.",
+  "We have not been able to independently confirm this.",
+  "Growing to five, pending outreach.",
+  "We remain hopeful.",
+];
+
+function initTrustStrip() {
+  const list = document.getElementById("trust-logos");
+  if (!list) return;
+
+  [...list.children].forEach((li, i) => {
+    li.addEventListener("click", () => toast(TRUST_ASIDES[i] || "Verified. Somehow."));
+  });
+}
+
+const FOOTER_LINES = [
+  "You scrolled all the way down here. Respect.",
+  "This is the bottom. There is nothing else.",
+  "Also a potato. Smaller. Somehow more tired.",
+  "Footer potato, reporting for duty.",
+  "Thanks for reading this far. Go home.",
+  "Still cheaper than a SaaS subscription.",
+  "There is no easter egg down here. Wait.",
+];
+
+function initFooterPotato() {
+  const btn = document.getElementById("footer-potato");
+  if (!btn) return;
+
+  let i = Math.floor(Math.random() * FOOTER_LINES.length);
+  btn.addEventListener("click", () => {
+    btn.classList.remove("nod");
+    void btn.offsetWidth;
+    btn.classList.add("nod");
+    toast(FOOTER_LINES[i], 3000);
+    i = (i + 1) % FOOTER_LINES.length;
+  });
+}
+
+// Type "potato" anywhere on the page for a small reward. Not documented,
+// not advertised — that's the point.
+function initSecretPotato() {
+  const target = "potato";
+  let buffer = "";
+
+  const confettiHost = document.getElementById("confetti-layer");
+  function spawnConfetti() {
+    if (!confettiHost) return;
+    for (let i = 0; i < 10; i++) {
+      const piece = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      piece.setAttribute("viewBox", "22 46 208 144");
+      piece.classList.add("confetti-piece");
+      piece.style.left = `${Math.random() * 96}vw`;
+      piece.style.animationDelay = `${Math.random() * 0.4}s`;
+      piece.innerHTML = `<path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="currentColor"></path>`;
+      confettiHost.appendChild(piece);
+      piece.addEventListener("animationend", () => piece.remove());
+    }
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Ignore typing while a real text field is focused.
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    buffer = (buffer + e.key.toLowerCase()).slice(-target.length);
+    if (buffer === target) {
+      spawnConfetti();
+      toast("You have found the secret potato mode. There is no prize.", 3600);
+      const mascot = document.getElementById("mascot");
+      if (mascot) {
+        mascot.classList.remove("hop");
+        void mascot.offsetWidth;
+        mascot.classList.add("hop");
+      }
+      buffer = "";
+    }
+  });
 }
 
 function initReveal() {
@@ -212,30 +331,27 @@ function initMascot() {
   if (!mascot || !speech) return;
 
   const lines = [
-    // at the movies
+    // at the movies — kept lean, only the ones that land without explaining themselves
     "You're gonna need a bigger centrifuge.",
     "Life, uh, finds a way. Usually in my negative control.",
     "I see dead cells.",
-    "One does not simply walk into the −80.",
     "You either die a PhD student, or live long enough to become the PI.",
-    "Keep your friends close and your aliquots closer.",
-    "Say hello to my little pipette.",
+    "Keep your friends close and your lab partner closer.",
     "First rule of lab meeting: do not talk about your results.",
     "Just keep pipetting. Just keep pipetting.",
     "Houston, we have a contamination.",
     "I'll be back. After this incubation.",
     "Nobody puts the ladder in lane one.",
-    "Toto, I don't think we're within error anymore.",
-    "My precious. (the last aliquot)",
-    "I know kung fu. I do not know the FACS.",
+    "The last aliquot. My precious.",
 
-    // at the bench
-    "p = 0.051. We're calling it a trend.",
+    // things that actually happened
+    "p = 0.051. I'm calling it.",
     "The gel looked fine yesterday.",
     "Labsolutely tired.",
-    "My PCR has been running since March.",
+    "My PCR has been running since Tuesday.",
+    "I think I used the expensive enzyme for a colony PCR.",
     "It worked once. That's reproducible enough.",
-    "Started at 9am. It's 9pm. I ran one gel.",
+    "Started at 9am. It's 9pm. Ran one gel.",
     "Yes, I labelled that tube 'tube'.",
     "Someone used my aliquots. I know who.",
     "Ran the stats until they agreed with me.",
@@ -247,11 +363,37 @@ function initMascot() {
     "Cited myself. Twice. In one paragraph.",
     "Dropped the plate. We don't talk about it.",
     "Slides made at 3am, presented at 9am.",
-    "Three years in. Still can't pipette 0.5 µL.",
+    "Three years in. Still can't read a full paper.",
     "The freezer that broke had my only stock.",
+    "Autoclaved my only competent cells.",
+    "Forgot the stir bar. Again.",
+    "Left the incubator door open overnight.",
+    "Made the buffer without the buffer.",
+    "Forgot to add the enzyme. Whole day, gone.",
+    "Vortexed the tube with the cap off.",
+    "Wrote the wrong date on every tube this week.",
+    "Pipetted into the wrong row. All of it.",
+    "The positive control was negative. So was I.",
+    "Genotyped the wrong mouse.",
+    "Left my only sample on the bench. Overnight. Unlabeled.",
+    "Mixed up 37°C and room temp for the whole incubation.",
+    "The pH meter said 7. I did not believe the pH meter.",
+    "Forgot to vortex. Everything's a gradient now.",
+    "The 'quick wash' took forty minutes.",
+    "Diluted the standard curve wrong. All of it. Again.",
   ];
 
-  let index = Math.floor(Math.random() * lines.length);
+  // True random each time, just never the exact same line twice in a row.
+  let lastLine = -1;
+  function pickLine() {
+    let i = Math.floor(Math.random() * lines.length);
+    if (lines.length > 1) {
+      while (i === lastLine) i = Math.floor(Math.random() * lines.length);
+    }
+    lastLine = i;
+    return lines[i];
+  }
+
   let hideTimer;
 
   // The goggles are worn correctly at all times, except when they aren't.
@@ -294,8 +436,31 @@ function initMascot() {
     mascot.classList.add("hop");
   }
 
+  // If nobody's clicked it in a while, the mascot starts asking for it.
+  // First nag is always the same line; after that, a little variety.
+  const IDLE_FIRST_MS = 18000;
+  const IDLE_REPEAT_MS = 15000;
+  const IDLE_MAX_NAGS = 3;
+  const IDLE_LINES = ["Bite me, bite me, bite me.", "Still here.", "Click me. I'm bored."];
+  let idleTimer;
+  let idleCount = 0;
+
+  function scheduleIdleNag() {
+    clearTimeout(idleTimer);
+    if (idleCount >= IDLE_MAX_NAGS) return;
+    idleTimer = setTimeout(() => {
+      say(idleCount === 0 ? IDLE_LINES[0] : pick(IDLE_LINES), 3200);
+      idleCount++;
+      scheduleIdleNag();
+    }, idleCount === 0 ? IDLE_FIRST_MS : IDLE_REPEAT_MS);
+  }
+
   mascot.addEventListener("click", () => {
     hop();
+
+    // Any real interaction resets the "are you still there" clock.
+    idleCount = 0;
+    scheduleIdleNag();
 
     // goggles on -> fling them off, and start counting
     if (goggles && gogglesOn) {
@@ -317,14 +482,15 @@ function initMascot() {
       return;
     }
 
-    say(lines[index], 3600);
-    index = (index + 1) % lines.length;
+    say(pickLine(), 3600);
     jokesSinceThrow++;
   });
 
   mascot.addEventListener("animationend", (e) => {
     if (e.target === mascot) mascot.classList.remove("hop");
   });
+
+  scheduleIdleNag();
 }
 
 const yearEl = document.getElementById("year");
@@ -337,3 +503,6 @@ renderSpecs();
 renderSupport();
 initReveal();
 initMascot();
+initTrustStrip();
+initFooterPotato();
+initSecretPotato();

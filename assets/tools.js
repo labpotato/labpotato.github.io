@@ -33,12 +33,13 @@ const TOOLS = [
     name: "Colony Counter",
     tagline: "Stop squinting at plates",
     description:
-      "Count and annotate colonies straight from a plate photo, then export the marked-up image and your tallies. Your eyes deserve better than tally marks on a Post-it.",
+      "Drop in a plate photo and it finds the dish, corrects the lighting, separates the touching ones and counts. Correct anything it got wrong by clicking, then export the marked-up image and your CFU/mL. Your eyes deserve better than tally marks on a Post-it.",
     icon: "colony",
     accent: "emerald",
     folder: "tools/colony-counter",
     versions: [
-      { v: "v1", file: "colony-counter-v1.html" }
+      { v: "v1", file: "colony-counter-v1.html" },
+      { v: "v2", file: "colony-counter-v2.html" }
     ]
   },
 

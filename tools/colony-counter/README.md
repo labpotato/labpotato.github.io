@@ -1,6 +1,6 @@
 Colony Counter is a single-file, offline browser tool for counting bacterial colonies from a plate photograph and turning the count into CFU/mL. Open the HTML file in a browser — nothing to install, and the image never leaves your machine.
 
-Load a photo (drop it, paste it, or pick a file) and the tool finds the dish by itself and counts. From there you correct anything it got wrong by clicking, and log the plate to a table that works out CFU/mL for you.
+Load a photo (drop it, paste it, or pick a file), then press **Find the dish** and it locates the plate and counts. Loading an image on its own starts nothing. From there you correct anything it got wrong by clicking, and log the plate to a table that works out CFU/mL for you.
 
 What it does:
 
@@ -10,6 +10,8 @@ What it does:
 - **Separates touching colonies** by marker-controlled watershed, with the markers chosen by topological persistence so a single round colony is never split in half.
 - **Estimates colonies inside solid clumps** that no distance-based method can cut apart, from their area, and flags them separately rather than folding them silently into the total.
 - **Rejects plate furniture** — the dish wall, condensation rings, scratches and marker strokes — before it can be counted or mistaken for a clump.
+- **Colour-codes what it found** — green for confident, amber for anything worth a second look, vermillion for an estimated clump, black for marks you placed yourself. On deliberately hard test plates the score flagged every object the detector got wrong and nothing on the plates it got right.
+- **Boosts low-resolution plates** — below about three pixels of colony radius it resamples onto a finer grid, which took ten touching pairs from 40 of 50 correctly resolved to 50 of 50. It adds no detail the camera did not record.
 - **Keeps your manual corrections** when you change a setting and re-count, with undo and redo.
 - **Exports** the table as CSV and the marked-up image as a PNG carrying the count, the settings and how many colonies you changed by hand.
 

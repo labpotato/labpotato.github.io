@@ -66,6 +66,11 @@ const SUITE = [
   { name: 'very large photo (2600px)',    o: { seed: 27, n: 90,  contrast: 55, agar: [115, 110, 95], rMean: 26, rSd: 5, w: 2600, h: 2600 } }
 ];
 
+// Importable as a module (lowres.js and confidence.js reuse these); running it directly runs the
+// suite below. Nothing above this line touches the filesystem, so an import costs nothing.
+module.exports = { loadCoreFromHtml, circleMask, match, SUITE };
+if (require.main !== module) return;
+
 function arg(name, dflt) {
   const i = process.argv.indexOf('--' + name);
   return i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? +process.argv[i + 1] : dflt;

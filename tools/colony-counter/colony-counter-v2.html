@@ -148,7 +148,7 @@ a:hover { text-decoration: underline; }
 .app {
   flex: 1; min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 392px;
+  grid-template-columns: minmax(0, 1fr) var(--rail-w, 470px);
 }
 
 /* ---------------- stage ---------------- */
@@ -200,6 +200,19 @@ a:hover { text-decoration: underline; }
 .count-pill .n { font-size: 21px; font-weight: 700; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .count-pill .lab { display: block; font-size: 10.5px; font-weight: 660; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; line-height: 1.2; }
 .count-pill .sub { display: block; font-size: 10.5px; color: var(--text-faint); font-weight: 500; line-height: 1.25; max-width: 190px; }
+
+.legend {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin-top: 11px; font-size: 11.5px; color: var(--text-muted);
+}
+.legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.legend i {
+  width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; flex: none;
+}
+.legend .hi { color: var(--oi-green); }
+.legend .lo { color: var(--oi-orange); }
+.legend .cl { color: var(--oi-vermillion); }
+.legend .me { color: var(--text); }
 
 .stage-foot {
   position: absolute; left: 12px; bottom: 12px; right: 12px;
@@ -385,14 +398,14 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* ---------------- responsive ---------------- */
-@media (max-width: 1080px) {
-  .app { grid-template-columns: minmax(0, 1fr) 340px; }
-}
+@media (max-width: 1500px) { .app { --rail-w: 440px; } }
+@media (max-width: 1280px) { .app { --rail-w: 400px; } }
+@media (max-width: 1080px) { .app { --rail-w: 352px; } }
 @media (max-width: 860px) {
   body { height: auto; min-height: 100dvh; overflow: auto; }
   .hint { font-size: 11.5px; max-width: 62%; padding: 5px 9px; }
   .app { display: block; }
-  .stage { height: 62vh; min-height: 340px; }
+  .stage { height: 52vh; min-height: 300px; }
   .rail { border-left: 0; border-top: 1px solid var(--border); overflow: visible; }
   .stage-bar { gap: 6px; }
   .tool kbd { display: none; }
@@ -597,6 +610,30 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         </span>
       </label>
 
+      <div class="field">
+        <label for="upscale">Low-resolution boost</label>
+        <select id="upscale">
+          <option value="auto" selected>Automatic — only if the colonies are tiny</option>
+          <option value="1">Off</option>
+          <option value="2">Always 2×</option>
+          <option value="3">Always 3×</option>
+        </select>
+        <div class="statusline" id="upscaleNote">Below about three pixels of colony radius there is no room for the shape tests to work, and touching colonies cannot be told apart. Resampling onto a finer grid gives the geometry somewhere to happen. It adds no detail the camera did not record, and it makes counting two to four times slower while it is in use.</div>
+      </div>
+
+      <div class="field">
+        <div class="slider-row"><label for="markerSize">Marker size</label><span class="val" id="markerVal">100%</span></div>
+        <input type="range" id="markerSize" min="25" max="200" value="100">
+        <div class="scale-ends"><span>smaller</span><span>larger</span></div>
+      </div>
+
+      <div class="legend" id="legend">
+        <span class="hi"><i></i>confident</span>
+        <span class="lo"><i></i>check this one</span>
+        <span class="cl"><i></i>clump, estimated</span>
+        <span class="me"><i></i>yours</span>
+      </div>
+
       <details class="adv" id="advDetect">
         <summary>Advanced detection</summary>
         <div class="adv-body">
@@ -624,6 +661,13 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
           <div class="field">
             <label for="minArea">Minimum colony area (px², blank = automatic)</label>
             <input type="number" id="minArea" min="1" placeholder="automatic">
+          </div>
+
+          <div class="field">
+            <div class="slider-row"><label for="confCut">Confidence cut-off</label><span class="val" id="confVal">0.60</span></div>
+            <input type="range" id="confCut" min="0" max="95" value="60">
+            <div class="scale-ends"><span>mark few for review</span><span>mark many</span></div>
+            <div class="statusline">Objects scoring below this are drawn in amber so you look at them. It changes only the colour, never the count.</div>
           </div>
 
           <label class="check">
@@ -1268,6 +1312,67 @@ function downsampleRGBAf(data, w, h, f) {
   return { data: out, w: dw, h: dh, f };
 }
 
+// ---------- upscaling for low-resolution plates ----------
+// Enlarging a photograph adds no information. What it adds is room: below about three pixels of
+// colony radius the distance transform has almost nothing to work with, a saddle between two
+// touching colonies is one or two pixels deep and rounds away, the structuring element cannot be
+// made both larger than a colony and smaller than the spacing, and every area is quantised so
+// coarsely that the size filters become arbitrary. Resampling onto a finer grid gives the geometry
+// somewhere to happen, and a Catmull-Rom kernel reconstructs a smooth colony edge rather than the
+// staircase a nearest-neighbour or bilinear enlargement would hand to the threshold.
+//
+// It is an interpolation, not a reconstruction: it cannot resolve two colonies that the camera
+// merged into one blob, and it will not make a colony visible that the sensor never recorded.
+// [INFERENCE]
+function catmullRom(t, p0, p1, p2, p3) {
+  const t2 = t * t, t3 = t2 * t;
+  return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+}
+function upscaleRGBA(data, w, h, u) {
+  const dw = Math.round(w * u), dh = Math.round(h * u);
+  const out = new Uint8ClampedArray(dw * dh * 4);
+  const cl = (v, m) => v < 0 ? 0 : (v > m ? m : v);
+  const row = new Float32Array(dw * 4 * 4);       // four source rows resampled horizontally
+  for (let dy = 0; dy < dh; dy++) {
+    const sy = (dy + 0.5) / u - 0.5;
+    const y1 = Math.floor(sy), ty = sy - y1;
+    for (let ky = 0; ky < 4; ky++) {
+      const yy = cl(y1 - 1 + ky, h - 1);
+      for (let dx = 0; dx < dw; dx++) {
+        const sx = (dx + 0.5) / u - 0.5;
+        const x1 = Math.floor(sx), tx = sx - x1;
+        for (let c = 0; c < 3; c++) {
+          const p0 = data[(yy * w + cl(x1 - 1, w - 1)) * 4 + c];
+          const p1 = data[(yy * w + cl(x1, w - 1)) * 4 + c];
+          const p2 = data[(yy * w + cl(x1 + 1, w - 1)) * 4 + c];
+          const p3 = data[(yy * w + cl(x1 + 2, w - 1)) * 4 + c];
+          row[(ky * dw + dx) * 4 + c] = catmullRom(tx, p0, p1, p2, p3);
+        }
+      }
+    }
+    for (let dx = 0; dx < dw; dx++) {
+      const o = (dy * dw + dx) * 4;
+      for (let c = 0; c < 3; c++) {
+        out[o + c] = catmullRom(ty,
+          row[(0 * dw + dx) * 4 + c], row[(1 * dw + dx) * 4 + c],
+          row[(2 * dw + dx) * 4 + c], row[(3 * dw + dx) * 4 + c]);
+      }
+      out[o + 3] = 255;
+    }
+  }
+  return { data: out, w: dw, h: dh };
+}
+function upscaleMask(mask, w, h, u) {
+  if (!mask) return null;
+  const dw = Math.round(w * u), dh = Math.round(h * u);
+  const out = new Uint8Array(dw * dh);
+  for (let y = 0; y < dh; y++) {
+    const sy = Math.min(h - 1, Math.floor(y / u));
+    for (let x = 0; x < dw; x++) out[y * dw + x] = mask[sy * w + Math.min(w - 1, Math.floor(x / u))];
+  }
+  return out;
+}
+
 // ---------- colony scale estimation ----------
 function medianBlobRadius(P, w, h, k, validMask) {
   const resp = combinedResponse(P, w, h, k, validMask);
@@ -1579,8 +1684,10 @@ function detectCore(opts) {
         if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { touchesBorder = true; break; }
       }
       const st = structureOf(px, w, dist);
+      let pe = 0; for (const i of px) if (ev[i] > pe) pe = ev[i];
       raw.push({ x: s.x, y: s.y, r: Math.max(1.5, Math.sqrt(s.area / Math.PI)), area: s.area,
-                 axisRatio: s.axisRatio, peak: st.peak, fill: st.fill, touchesBorder, n: 1 });
+                 axisRatio: s.axisRatio, peak: st.peak, fill: st.fill, ev: pe,
+                 split: parts.length > 1, touchesBorder, n: 1 });
     }
   }
 
@@ -1663,7 +1770,38 @@ function detectCore(opts) {
     }
   }
 
-  for (const c of colonies) { delete c.touchesBorder; delete c.compact; delete c.fill; }
+  // ---- per-colony confidence ----
+  // Four things independently say whether an object is a colony, and they are already measured by
+  // the time we get here: how far its response rises above the level that seeds the mask, how round
+  // it is, how completely it fills its own bounding box, and how close its area is to the typical
+  // single colony on this plate. An object that is strong, round, solid and ordinary-sized scores
+  // near 1; one that is faint, ragged or the wrong size scores low and is drawn in a colour that
+  // asks the user to look at it.
+  //
+  // This is a heuristic for directing attention, NOT a calibrated probability: a 0.8 here does not
+  // mean eight out of ten such objects are colonies, and no such calibration has been done. It is
+  // deliberately pessimistic about the three cases that deserve a second look - an object the
+  // watershed had to cut out of a cluster, a clump counted by area, and an object clipped by the
+  // edge of the selection. [INFERENCE]
+  const tSpan = Math.max(1e-6, th.tHigh - th.tLow);
+  for (const c of colonies) {
+    const margin = Math.max(0, Math.min(1, (c.ev - th.tHigh) / tSpan));
+    const shape = Math.max(0, Math.min(1, c.axisRatio / 0.85));
+    const solid = Math.max(0, Math.min(1, c.fill / 0.78));
+    const size = medSingleArea > 0 ? Math.exp(-Math.abs(Math.log(Math.max(1, c.area) / medSingleArea))) : 0.6;
+    let conf = 0.34 * margin + 0.24 * shape + 0.14 * solid + 0.28 * size;
+    if (c.split) conf *= 0.88;              // cut out of a cluster rather than found whole
+    if (c.clump) conf *= 0.55;              // counted by area, not resolved
+    if (c.touchesBorder) conf *= 0.72;      // part of it is outside the selection
+    c.conf = Math.max(0, Math.min(1, conf));
+  }
+  // 0.60 by default. On the test plates this flags every object the detector got wrong while
+  // flagging nothing at all on the plates it got right; see validation/README.md.
+  const confCut = opts.confidenceCut != null ? opts.confidenceCut : 0.60;
+  let lowConf = 0;
+  for (const c of colonies) if (c.conf < confCut) lowConf++;
+
+  for (const c of colonies) { delete c.touchesBorder; delete c.compact; delete c.fill; delete c.ev; }
   const total = colonies.reduce((s, c) => s + (c.n || 1), 0);
   return {
     colonies,
@@ -1671,7 +1809,7 @@ function detectCore(opts) {
       mode, modeScores, k, estR, otsu: th.otsu, eta: th.eta, tHigh: th.tHigh, tLow: th.tLow,
       minArea, blobs: filtered.length, objects: colonies.length, total,
       splitCount, mergedFragments, rejectedShape, rejectedSize, rejectedBorder, rejectedHuge, rejectedThin, rejectedThinParent,
-      medSingleArea, rSingle, clumpObjects, clumpExtra
+      medSingleArea, rSingle, clumpObjects, clumpExtra, lowConf, confCut
     }
   };
 }
@@ -1687,21 +1825,58 @@ const WORK_RADIUS = 7;      // target colony radius, in pixels, at the analysis 
 const WORK_AREA_CAP = 6e6;  // hard ceiling on the number of pixels segmented at once
 
 function detect(opts) {
-  const { data, w, h } = opts;
-  const validMask = opts.validMask || null;
+  let { data, w, h } = opts;
+  let validMask = opts.validMask || null;
   let estR = opts.colonyRadius, k = opts.seRadius;
   if (!estR) {
     const est = estimateScale(data, w, h, validMask);
     estR = est.radius;
     if (!k) k = est.k;
   }
+
+  // Optional enlargement for plates whose colonies are only a few pixels across. 'auto' enlarges
+  // only when the measured colony radius is below the point where the geometry runs out of room,
+  // and aims for roughly 5 px, which is enough for the distance transform and the watershed.
+  let up = 1;
+  const want = opts.upscale;
+  // 'auto' fires only below the radius where the geometry actually runs short - around three and a
+  // half pixels - and aims for about eight, which is where the touching-colony tests stop losing
+  // pairs. It is capped at three: beyond that the cost grows as the square for no further gain.
+  if (want === 'auto') { if (estR < 3.6) up = Math.max(1, Math.min(3, Math.round(8 / Math.max(0.8, estR)))); }
+  else if (want > 1) up = Math.min(4, Math.round(want));
+  if (up > 1 && w * h * up * up > 4.2e7) up = 1;        // refuse to enlarge past what memory allows
+  if (up > 1) {
+    const us = upscaleRGBA(data, w, h, up);
+    validMask = upscaleMask(validMask, w, h, up);
+    data = us.data; w = us.w; h = us.h;
+    estR *= up; k = Math.round(k * up);
+    opts = Object.assign({}, opts, {
+      minArea: opts.minArea != null ? Math.round(opts.minArea * up * up) : undefined,
+      maxArea: opts.maxArea != null ? Math.round(opts.maxArea * up * up) : undefined,
+      tHigh: opts.tHigh, tLow: opts.tLow
+    });
+  }
+  opts = Object.assign({}, opts, { data, w, h, validMask });
   // Two independent reasons to work smaller: colonies far larger than the target radius carry no
   // extra information at full size, and a photograph large enough to exhaust memory has to be
   // reduced whatever its colonies look like.
   let f = Math.max(1, Math.min(8, Math.floor(estR / WORK_RADIUS)));
   f = Math.max(f, Math.ceil(Math.sqrt((w * h) / WORK_AREA_CAP)));
   f = Math.min(f, 8);
-  if (f === 1) return detectCore(Object.assign({}, opts, { colonyRadius: estR, seRadius: k }));
+  // Geometry measured on an enlarged copy is reported in the caller's own pixels.
+  function unscale(r) {
+    if (up > 1) {
+      for (const c of r.colonies) { c.x /= up; c.y /= up; c.r /= up; c.area /= up * up; if (c.peak != null) c.peak /= up; }
+      r.diag.upscale = up;
+      r.diag.estR /= up;
+      r.diag.k = Math.round(r.diag.k / up);
+      r.diag.minArea = Math.round(r.diag.minArea / (up * up));
+      r.diag.medSingleArea = Math.round((r.diag.medSingleArea || 0) / (up * up));
+    }
+    return r;
+  }
+
+  if (f === 1) return unscale(detectCore(Object.assign({}, opts, { colonyRadius: estR, seRadius: k })));
 
   const ds = downsampleRGBAf(data, w, h, f);
   const dMask = downsampleMask(validMask, w, h, f, ds.w, ds.h);
@@ -1724,7 +1899,7 @@ function detect(opts) {
   r.diag.estR = (r.diag.estR || estR / f) * f;
   r.diag.minArea = Math.round(r.diag.minArea * f * f);
   r.diag.medSingleArea = Math.round((r.diag.medSingleArea || 0) * f * f);
-  return r;
+  return unscale(r);
 }
 
 // ---------- learn parameters from user-clicked example colonies ----------
@@ -1957,6 +2132,8 @@ if (typeof self !== 'undefined' && typeof self.addEventListener === 'function') 
         splitTouching: msg.splitTouching,
         rejectElongated: msg.rejectElongated,
         estimateClumps: msg.estimateClumps,
+        upscale: msg.upscale,
+        confidenceCut: msg.confidenceCut,
         validMask
       };
       if (msg.persistenceFactor != null) o.persistenceFactor = msg.persistenceFactor;
@@ -2023,10 +2200,34 @@ let cachedMode = null;          // appearance mode chosen by the last auto run
 let scaleCache = null;          // {sig, estR, k} — measured colony scale for the current image + selection
 let rows = [], rowSeq = 0;
 let undoStack = [], redoStack = [];
+let runSeq = 0;                 // bumped whenever an analysis completes or the image changes
 
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
 const viewport = $('viewport');
+
+// Marker colours. Green and amber are the Okabe-Ito colourblind-safe green and orange; a clump is
+// drawn in vermillion because it is a different kind of object, not merely a less certain one; a
+// hand-placed mark is black, cased in white so it survives a dark agar as well as a pale one.
+const MARK = {
+  high:   '#009E73',
+  low:    '#E69F00',
+  clump:  '#D55E00',
+  manual: '#000000'
+};
+function markColour(c) {
+  if (c.src === 'manual') return MARK.manual;
+  if (c.clump) return MARK.clump;
+  return (c.conf != null && c.conf < confCut()) ? MARK.low : MARK.high;
+}
+function confCut() { return (+$('confCut').value) / 100; }
+function markScale() { return (+$('markerSize').value) / 100; }
+// Radius a hand-placed mark is drawn at: the typical colony on this plate when one has been
+// measured, a modest default when nothing has been counted yet, scaled by the marker-size control.
+function manualRadius() {
+  const base = (lastDiag && lastDiag.medSingleArea > 0) ? Math.sqrt(lastDiag.medSingleArea / Math.PI) : 5;
+  return Math.max(1.5, base * markScale());
+}
 
 const LOADING = [
   'Counting dots, judging none.',
@@ -2060,13 +2261,20 @@ function adoptImage(im) {
   roi = null; autoColonies = []; manualAdd = []; suppress = []; colonies = [];
   learned = null; cachedMode = null; scaleCache = null; teachPicks = []; teachMode = false;
   undoStack = []; redoStack = [];
+  // Nothing measured from the previous photograph may survive onto this one.
+  lastDiag = null; pending = null; runSeq++;
+  $('diag').textContent = ''; $('modeTag').textContent = ''; $('roiTag').textContent = '';
+  $('learnedOut').style.display = 'none';
+  $('btnTeachClear').disabled = true;
   $('empty').style.display = 'none';
   $('imgTag').textContent = im.naturalWidth + ' × ' + im.naturalHeight;
   unmute('panel2'); unmute('panel3'); unmute('panel4');
   fitView();
   refreshUI();
-  setHint('Looking for the dish…');
-  autoDish(true);
+  // Loading a photo does not start anything. Counting begins when the plate area is defined -
+  // by "Find the dish", by drawing one, or by "Whole image" - or when Count colonies is pressed.
+  setTool('select');
+  setHint('Loaded. Press "Find the dish" to have the area located for you, or drag one out yourself. Counting starts once the area is set.');
 }
 
 $('file').addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; });
@@ -2286,17 +2494,22 @@ function draw() {
 
   // colonies
   const showN = colonies.length <= 400 && view.s > 0.25;
+  const ms = markScale();
   let idx = 0;
   for (const c of colonies) {
     idx++;
-    const r = Math.max(2.5 * px, c.r);
+    const r = Math.max(2.5 * px, (c.src === 'manual' ? c.r : c.r * ms));
+    if (c.src === 'manual') {           // white casing, so black reads on dark agar too
+      ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+      ctx.lineWidth = 4 * px; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke();
+    }
     ctx.beginPath();
     ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-    ctx.lineWidth = (c.src === 'manual' ? 2.2 : 1.7) * px;
-    ctx.strokeStyle = c.clump ? '#E69F00' : (c.src === 'manual' ? '#CC79A7' : '#009E73');
+    ctx.lineWidth = (c.src === 'manual' ? 2 : 1.7) * px;
+    ctx.strokeStyle = markColour(c);
     ctx.stroke();
     if (c.clump && c.n > 1) {
-      ctx.fillStyle = '#E69F00';
+      ctx.fillStyle = MARK.clump;
       ctx.font = (11 * px) + 'px system-ui, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('×' + c.n, c.x, c.y);
@@ -2535,7 +2748,7 @@ function removeAt(p) {
 // the sensitivity or the selection does not silently resurrect every colony the user struck out.
 function mergeColonies() {
   const kept = autoColonies.filter(c => !suppress.some(s => Math.hypot(s.x - c.x, s.y - c.y) < Math.max(6, (s.r || c.r) * 1.2)));
-  colonies = kept.concat(manualAdd.map(m => ({ x: m.x, y: m.y, r: lastDiag && lastDiag.medSingleArea ? Math.sqrt(lastDiag.medSingleArea / Math.PI) : 5, n: 1, src: 'manual' })));
+  colonies = kept.concat(manualAdd.map(m => ({ x: m.x, y: m.y, r: manualRadius(), n: 1, src: 'manual' })));
   draw();
   refreshCount();
 }
@@ -2546,7 +2759,9 @@ function refreshCount() {
   const t = total();
   $('countN').textContent = t;
   const bits = [];
+  const low = colonies.filter(c => c.src === 'auto' && !c.clump && c.conf != null && c.conf < confCut()).length;
   const clumps = colonies.filter(c => c.clump);
+  if (low) bits.push(low + ' to check');
   if (clumps.length) bits.push(clumps.length + ' clump' + (clumps.length > 1 ? 's' : '') + ' estimated');
   if (manualAdd.length) bits.push(manualAdd.length + ' added by hand');
   if (suppress.length) bits.push(suppress.length + ' removed by hand');
@@ -2601,7 +2816,7 @@ $('btnClearRoi').onclick = () => {
 $('edgeMargin').addEventListener('input', e => { $('marginVal').textContent = e.target.value + '%'; draw(); });
 $('edgeMargin').addEventListener('change', () => { if (roi) runDetect(); });
 
-function autoDish(silent) {
+function autoDish() {
   if (!img) return;
   // dish finding runs on a reduced copy: a 12-megapixel buffer costs memory to move and adds
   // nothing to locating a circle hundreds of pixels across
@@ -2614,7 +2829,7 @@ function autoDish(silent) {
   const d = cx2.getImageData(0, 0, w, h);
   busy(true, 'Looking for the dish…');
   const id = ++jobId;
-  pending = { kind: 'finddish', id, f, silent };
+  pending = { kind: 'finddish', id, f };
   const copy = new Uint8ClampedArray(d.data);
   worker.postMessage({ action: 'finddish', id, imgData: copy, w, h }, [copy.buffer]);
 }
@@ -2686,6 +2901,8 @@ function runDetect(opts) {
     rejectElongated: $('rejectElongated').checked,
     estimateClumps: $('estimateClumps').checked,
     persistenceFactor: (+$('splitStrength').value) / 100,
+    upscale: $('upscale').value === 'auto' ? 'auto' : +$('upscale').value,
+    confidenceCut: confCut(),
     colonyRadius: reuse ? reuse.estR : undefined,
     seRadius: reuse ? reuse.k : undefined,
     minArea: (!isNaN(ma) && ma > 0) ? ma : undefined,
@@ -2735,8 +2952,9 @@ worker.onmessage = e => {
   if (m.error) { setHint('Detection failed: ' + m.error); $('diag').textContent = ''; return; }
 
   const { bx, by } = ctxInfo;
-  autoColonies = m.colonies.map(c => ({ x: c.x + bx, y: c.y + by, r: c.r, area: c.area, n: c.n || 1, clump: !!c.clump, src: 'auto' }));
+  autoColonies = m.colonies.map(c => ({ x: c.x + bx, y: c.y + by, r: c.r, area: c.area, n: c.n || 1, clump: !!c.clump, conf: c.conf, src: 'auto' }));
   lastDiag = m.diag;
+  runSeq++;
   if (ctxInfo.sig) scaleCache = { sig: ctxInfo.sig, estR: m.diag.estR, k: m.diag.k };
   if ($('colonyType').value === 'auto') cachedMode = m.diag.mode;
   mergeColonies();
@@ -2760,7 +2978,9 @@ function showDiag(d) {
   if (d.rejectedBorder) bits.push(d.rejectedBorder + ' edge fragment(s) rejected');
   if (d.rejectedShape) bits.push(d.rejectedShape + ' elongated rejected');
   if (d.clumpObjects) bits.push(d.clumpObjects + ' clump(s) → +' + d.clumpExtra + ' estimated');
+  if (d.upscale > 1) bits.push('enlarged ' + d.upscale + '× for detail');
   if (d.workScale > 1) bits.push('analysed at 1/' + d.workScale + ' scale');
+  if (d.lowConf) bits.push(d.lowConf + ' below the confidence cut-off');
   bits.push(d.ms + ' ms');
   $('diag').textContent = bits.join(' · ');
 }
@@ -2775,6 +2995,17 @@ $('sens').addEventListener('input', e => {
   syncSeg(+e.target.value);
 });
 $('sens').addEventListener('change', () => { if (roi) runDetect(); });
+$('upscale').addEventListener('change', () => { cachedMode = null; scaleCache = null; if (roi) runDetect({ redecide: true }); });
+// Marker size and the confidence cut-off are drawing decisions. Neither changes the count, so
+// neither re-runs the detector; moving them repaints immediately.
+$('markerSize').addEventListener('input', e => {
+  $('markerVal').textContent = e.target.value + '%';
+  mergeColonies();
+});
+$('confCut').addEventListener('input', e => {
+  $('confVal').textContent = (e.target.value / 100).toFixed(2);
+  draw(); refreshCount();
+});
 $('splitStrength').addEventListener('input', e => { $('splitVal').textContent = (e.target.value / 100).toFixed(2); });
 $('splitStrength').addEventListener('change', () => { if (roi) runDetect(); });
 
@@ -2932,15 +3163,21 @@ $('btnPng').onclick = () => {
   g.drawImage(srcCanvas, bx, by, bw, bh, 0, 0, bw, bh);
   let i = 0;
   const showN = colonies.length <= 400;
+  const ms2 = markScale();
+  const lw = Math.max(1.2, bw / 700);
   for (const col of colonies) {
     i++;
-    const x = col.x - bx, y = col.y - by, r = Math.max(3, col.r);
+    const x = col.x - bx, y = col.y - by, r = Math.max(3, col.src === 'manual' ? col.r : col.r * ms2);
+    if (col.src === 'manual') {
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+      g.lineWidth = lw * 2.6; g.strokeStyle = 'rgba(255,255,255,0.85)'; g.stroke();
+    }
     g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
-    g.lineWidth = Math.max(1.2, bw / 700);
-    g.strokeStyle = col.clump ? '#E69F00' : (col.src === 'manual' ? '#CC79A7' : '#009E73');
+    g.lineWidth = lw;
+    g.strokeStyle = markColour(col);
     g.stroke();
     if (col.clump && col.n > 1) {
-      g.fillStyle = '#E69F00'; g.font = 'bold ' + Math.max(10, r) + 'px sans-serif';
+      g.fillStyle = MARK.clump; g.font = 'bold ' + Math.max(10, r) + 'px sans-serif';
       g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText('×' + col.n, x, y);
     } else if (showN) {
@@ -3017,11 +3254,33 @@ window.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = fals
 // references
 // ============================================================
 $('refs').innerHTML = `
-<p><b>What the count is.</b> Every object drawn in green is one colony the detector resolved.
-Objects drawn in amber are clumps the detector could not separate; the number beside them is an
-estimate from their area, and they are listed separately under the count. Objects in pink were
-added by hand. An automatic count is a first pass: confirm it with the Add and Remove tools before
-reporting it.</p>
+<p><b>What the colours mean.</b>
+<span style="color:#009E73"><b>Green</b></span> — resolved, and scoring above the confidence cut-off.
+<span style="color:#E69F00"><b>Amber</b></span> — resolved, but scoring below it: worth a look.
+<span style="color:#D55E00"><b>Vermillion</b></span> — a clump the detector could not separate; the
+number beside it is estimated from its area and is listed separately under the count.
+<b>Black</b> — placed by you. An automatic count is a first pass: confirm it with the Add and
+Remove tools before reporting it.</p>
+
+<p><b>The confidence score.</b> <span class="tagi">INFERENCE</span> Four measurements already made
+during segmentation: how far the object's response rises above the level that seeds the mask, how
+round it is, how completely it fills its own bounding box, and how close its area is to the typical
+single colony on this plate. An object cut out of a cluster, counted as a clump, or clipped by the
+edge of the selection is marked down. <b>It is a way of directing your attention, not a
+probability</b> — 0.8 does not mean eight in ten such objects are colonies, and no calibration
+against real plates has been done. On the synthetic suite it separates usefully: mean score 0.93 for
+correct detections against 0.39 for mistakes, and at the default cut-off of 0.60 it flagged every
+object the detector got wrong on the hard plates while flagging none at all on the plates it got
+right. Changing the cut-off changes only the colour, never the count.</p>
+
+<p><b>Low-resolution boost.</b> <span class="tagi">INFERENCE</span> Below roughly three pixels of
+colony radius the distance transform has nothing to work with: the saddle between two touching
+colonies is a pixel or two deep and rounds away, and every area is quantised too coarsely for the
+size filters to mean much. Resampling onto a finer grid with a Catmull-Rom kernel gives that
+geometry room. On a 520 px test plate with ten touching pairs at 2.5 px radius, enlargement took the
+pairs correctly separated from 40 of 50 to 50 of 50. <b>It adds no detail the camera did not
+record</b>: it cannot split two colonies the sensor merged into one blob, and it makes counting two
+to four times slower while it is in use.</p>
 
 <p><b>CFU/mL.</b> count ÷ (dilution fraction × volume plated in mL), per the
 <a href="https://www.fda.gov/food/laboratory-methods-food/bam-chapter-3-aerobic-plate-count" target="_blank" rel="noopener">FDA Bacteriological Analytical Manual, ch. 3</a>.
@@ -3075,6 +3334,9 @@ plate</b>, and two limits are inherent rather than fixable — colonies overlapp
 roughly half their radius leave no waist for any distance-based method to cut, and a colony
 physically touching a scratch is absorbed into it.</p>
 `;
+
+// A read-only hook for the browser test harness; it exposes no state and changes no behaviour.
+window.__seq = () => runSeq;
 
 // ============================================================
 // boot

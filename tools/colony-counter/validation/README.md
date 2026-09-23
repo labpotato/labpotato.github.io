@@ -48,6 +48,40 @@ picked the wrong map on 5 of 7 plates, because it scored each map by how round
 and uniform its objects were, and on a bright-colony plate the dark map latches
 onto the round, uniform gaps *between* the colonies.
 
+## The other two scripts
+
+```
+node lowres.js ../colony-counter-v2.html        # is the low-resolution boost worth it?
+node confidence.js ../colony-counter-v2.html    # does the confidence score track correctness?
+```
+
+**`lowres.js`** builds plates whose colonies are 1.8 to 3 px across and compares the boost off,
+automatic, 2x and 3x. The count is already right without it, because an unresolved pair is counted
+as a clump of two; what changes is whether the colonies are actually *resolved*. On the plate with
+ten touching pairs at 2.5 px radius:
+
+```
+                      off        auto
+colonies matched     40/50      50/50
+```
+
+It also confirms `auto` leaves a normal plate alone (control: 1x, unchanged).
+
+**`confidence.js`** runs plates chosen so the detector makes real mistakes, then compares the score
+of objects that matched a real colony against those that did not:
+
+```
+658 correct (mean score 0.929)    7 wrong (mean score 0.391)
+
+cut-off   flags this share of the mistakes   of the correct ones
+  0.50                 86%                          1%
+  0.60                100%                          1%     <- the default
+```
+
+On the six plates the detector gets right, nothing is flagged at any cut-off up to 0.70. The score
+is a way of directing attention, **not a probability**: 0.8 does not mean eight in ten such objects
+are colonies, and no calibration against real plates exists.
+
 ## What this does not tell you
 
 These are generated images. They have a dish wall, an illumination gradient, a

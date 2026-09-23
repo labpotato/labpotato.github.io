@@ -16,7 +16,10 @@ What it does:
 - **Lets you add or remove with one click** — while placing colonies by hand, clicking an existing mark removes it instead of adding a duplicate on top, so switching tools mid-correction is rarely needed. A dedicated Remove tool is still there for rapid-fire cleanup.
 - **Two independent size controls** — one scales the circles drawn on colonies the detector found, the other (on the stage, next to the Add tool) sets the size of the mark your own click leaves.
 - **Keeps your manual corrections** when you change a setting and re-count, with undo and redo.
-- **Exports** the table as CSV and the marked-up image as a PNG carrying the count, the settings and how many colonies you changed by hand.
+- **A hand-placed mark starts at roughly the size the detector is already finding**, not an arbitrary default, and resets to that whenever a new photo is loaded rather than carrying over a size dialled in for a different plate.
+- **Reset to defaults** on the colony-settings menu restores automatic detection — sensitivity, splitting, clustering, any taught examples — in one click, without touching the plate area you already selected or the photo.
+- **Teaching can be cleared mid-pick**, wiping the circles drawn so far without leaving picking mode, so a bad set of examples costs one click to redo rather than a full stop-and-restart.
+- **Exports** the table as a tab-separated .txt file — row, count, dilution, volume, CFU/mL and the average, paste-ready into Excel as numbers, not as text carrying a unicode "×10ⁿ" — and the marked-up image as a PNG carrying the count, the settings and how many colonies you changed by hand.
 
 Accuracy, on 17 synthetic plates with known colony counts: mean absolute count error **0.59%**, precision **100%**, recall **99.5%**. The harness that measures this ships alongside the tool in `validation/` and reads the detection core out of the published HTML, so you can re-run it yourself. It has **not** yet been benchmarked against a manually counted reference plate — treat an automatic count as a first pass.
 

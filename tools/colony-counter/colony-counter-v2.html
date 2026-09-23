@@ -249,6 +249,13 @@ a:hover { text-decoration: underline; }
 }
 .stage-menu .apclose:hover { background: var(--bg-tint); color: var(--text); }
 .stage-menu .apclose svg { width: 15px; height: 15px; }
+.smhead .text-btn {
+  flex: none; border: 0; background: transparent; color: var(--accent);
+  font: inherit; font-size: 12px; font-weight: 620; cursor: pointer;
+  padding: 4px 8px; border-radius: 7px;
+}
+.smhead .text-btn:hover { background: var(--accent-soft); }
+.smhead .text-btn:disabled { color: var(--text-faint); cursor: not-allowed; background: none; }
 .stage-menu .legend { margin-top: 12px; }
 
 /* the count pill doubles as the trigger for the colony menu */
@@ -569,6 +576,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
     <div class="stage-menu drop-down" id="colonyMenu">
       <div class="smhead">
         <h4>Colonies</h4>
+        <button class="text-btn" id="btnResetColony" type="button" title="Restore the original colony-counting settings. The plate area and photo are not touched.">Reset</button>
         <button class="apclose" id="btnColonyClose" type="button" title="Close" aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
@@ -841,7 +849,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       </div>
 
       <div class="row" style="margin-top:10px;">
-        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button">Export CSV</button>
+        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button">Export for Excel (.txt)</button>
         <button class="btn btn-ghost btn-sm" id="btnPng" type="button">Export marked image</button>
       </div>
     </div>
@@ -2585,11 +2593,14 @@ function adoptImage(im) {
   roi = null; autoColonies = []; manualAdd = []; suppress = []; colonies = [];
   learned = null; cachedMode = null; scaleCache = null; teachPicks = []; teachMode = false;
   undoStack = []; redoStack = [];
-  // Nothing measured from the previous photograph may survive onto this one.
+  // Nothing measured from the previous photograph may survive onto this one — including a marker
+  // size dialled in against the old colonies, which would otherwise silently stop matching the new
+  // ones. 100% always means "the size just measured", so the honest reset is back to 100%.
+  setManualScale(100, 'reset');
   lastDiag = null; pending = null; runSeq++;
   $('diag').textContent = ''; $('modeTag').textContent = ''; $('roiTag').textContent = '';
   $('learnedOut').style.display = 'none';
-  $('btnTeachClear').disabled = true;
+  syncTeachClearButton();
   $('empty').style.display = 'none';
   $('imgTag').textContent = im.naturalWidth + ' × ' + im.naturalHeight;
   unmute('panel2'); unmute('panel3'); unmute('panel4');
@@ -2968,6 +2979,16 @@ function seedRadius(x, y) {
   return 8;
 }
 
+// The Clear button does one of two things depending on where teaching stands: mid-pick it wipes
+// the circles so far without leaving picking mode, so a bad set of examples costs one click to
+// restart, not a full stop-and-restart cycle; once examples are applied, the same button reverts
+// to fully automatic detection.
+function syncTeachClearButton() {
+  const btn = $('btnTeachClear');
+  if (teachMode) { btn.disabled = teachPicks.length === 0; btn.textContent = 'Clear picks'; }
+  else { btn.disabled = !learned; btn.textContent = 'Clear'; }
+}
+
 function refreshTeachReadout() {
   const n = teachPicks.length;
   if (!n) {
@@ -2989,6 +3010,7 @@ function refreshTeachReadout() {
   else msg += ' · press Apply when they all fit';
   $('teachMsg').textContent = msg;
   $('btnTeach').textContent = n >= 3 ? 'Apply ' + n + ' examples' : 'Stop picking';
+  syncTeachClearButton();
 }
 
 // ============================================================
@@ -3427,6 +3449,40 @@ function forceRecount() {
 $('btnCount').onclick = forceRecount;
 $('btnRecountStage').onclick = forceRecount;
 
+// Every control that changes how colonies are found, restored to what the tool ships with. The
+// photo, the plate area (including the edge margin, which belongs to the area, not the counting)
+// and any manual add/remove corrections are deliberately left alone — those are the user's own
+// work and their own selection, not a "setting". Resolution lives physically in the Image menu but
+// is a detection parameter in every way that matters here, so it resets too.
+function resetColonySettings() {
+  $('sens').value = 50; $('sensVal').textContent = '50'; syncSeg(50);
+  setManualScale(100, 'reset');
+  $('markerSize').value = 100; $('markerVal').textContent = '100%';
+  $('showNumbers').checked = true;
+  $('splitTouching').checked = true;
+  $('resolveClusters').checked = true;
+  $('estimateClumps').checked = true;
+  $('colonyType').value = 'auto';
+  $('splitStrength').value = 10; $('splitVal').textContent = '0.10';
+  $('minArea').value = '';
+  $('confCut').value = 60; $('confVal').textContent = '0.60';
+  $('rejectElongated').checked = false;
+  $('lockThresholds').checked = false;
+  $('upscale').value = 'auto';
+
+  if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; }
+  learned = null; teachPicks = [];
+  $('learnedOut').style.display = 'none';
+  $('teachMsg').textContent = 'Mark three or more colonies and drag each circle to fit. Their size, brightness and colour are measured from what you drew.';
+  syncTeachClearButton();
+
+  cachedMode = null; scaleCache = null;
+  draw();
+  setHint('Colony-counting settings restored. The plate area was left as it was.');
+  if (roi) runDetect({ redecide: true });
+}
+$('btnResetColony').onclick = resetColonySettings;
+
 worker.onmessage = e => {
   const m = e.data;
   if (!pending || m.id !== pending.id) return;
@@ -3464,8 +3520,8 @@ worker.onmessage = e => {
       '</b>' + (lr.chroma != null ? ' (chroma ' + lr.chroma.toFixed(0) + ')' : '') +
       ' → appearance <b>' + nm + '</b>, threshold <b>' + L.tHigh.toFixed(1) + '</b>.';
     $('teachMsg').textContent = 'Your examples are in use. Appearance and size are fixed to them; the threshold is re-derived per selection unless you lock it.';
-    $('btnTeachClear').disabled = false;
     teachPicks = [];
+    syncTeachClearButton();
     runDetect();
     return;
   }
@@ -3574,6 +3630,7 @@ $('btnTeach').onclick = () => {
     teachMode = false; teachPicks = [];
     $('btnTeach').textContent = 'Start picking';
     $('teachMsg').textContent = 'Picking cancelled.';
+    syncTeachClearButton();
     draw();
     return;
   }
@@ -3598,11 +3655,17 @@ $('btnTeach').onclick = () => {
   }, [copy.buffer]);
 };
 $('btnTeachClear').onclick = () => {
+  if (teachMode) {
+    teachPicks = [];
+    refreshTeachReadout();
+    draw();
+    return;
+  }
   learned = null; teachPicks = []; teachMode = false;
   $('learnedOut').style.display = 'none';
-  $('btnTeachClear').disabled = true;
   $('btnTeach').textContent = 'Start picking';
   $('teachMsg').textContent = 'Back to automatic settings.';
+  syncTeachClearButton();
   draw();
   if (roi) runDetect();
 };
@@ -3624,6 +3687,12 @@ function fmtSci(v) {
 function sup(n) {
   const map = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
   return String(n).split('').map(c => map[c] || c).join('');
+}
+// "9.00 × 10⁶" reads well on screen and pastes as literal text everywhere else. A spreadsheet
+// wants the plain digits, so the exported file gets a rounded integer instead — no unicode, no
+// exponent, nothing that forces the receiving cell to stay text instead of becoming a number.
+function numForExport(v) {
+  return isFinite(v) ? String(Math.round(v)) : '';
 }
 // Countable range per the FDA Bacteriological Analytical Manual, ch. 3: flagged, never blocked.
 function flagFor(n) {
@@ -3673,15 +3742,20 @@ function renderRows() {
 }
 
 $('btnCsv').onclick = () => {
-  if (!rows.length) { setHint('Add at least one plate to the table first.'); return; }
-  const head = ['row', 'count', 'dilution_exponent', 'volume_plated_uL', 'cfu_per_mL', 'countable_range_flag', 'manual_added', 'manual_removed', 'clumps_estimated', 'included_in_mean'];
-  const lines = [head.join(',')];
-  for (const r of rows) {
-    lines.push([r.id, r.n, r.dil, r.vol, cfu(r.n, r.dil, r.vol).toExponential(4), flagFor(r.n).t, r.manual, r.removed, r.clumps, r.use ? 'yes' : 'no'].join(','));
-  }
   const used = rows.filter(r => r.use);
-  if (used.length) lines.push(['mean', '', '', '', (used.reduce((s, r) => s + cfu(r.n, r.dil, r.vol), 0) / used.length).toExponential(4), '', '', '', '', ''].join(','));
-  download(new Blob([lines.join('\n')], { type: 'text/csv' }), 'colony-counts.csv');
+  if (!used.length) { setHint(rows.length ? 'Tick at least one row to export it.' : 'Add at least one plate to the table first.'); return; }
+  // Tab-separated: pasted straight into Excel it lands as columns on its own, no import dialog.
+  // Plain ASCII throughout (µL -> uL) so nothing depends on how the receiving app reads the file's
+  // encoding. Only the columns asked for, in the order asked for; a row the checkbox has turned off
+  // is left out entirely rather than exported with a flag column explaining why to ignore it.
+  const head = ['Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'];
+  const lines = [head.join('\t')];
+  for (const r of used) {
+    lines.push([r.id, r.n, r.dil, r.vol, numForExport(cfu(r.n, r.dil, r.vol))].join('\t'));
+  }
+  const avg = used.reduce((s, r) => s + cfu(r.n, r.dil, r.vol), 0) / used.length;
+  lines.push(['Average', '', '', '', numForExport(avg)].join('\t'));
+  download(new Blob([lines.join('\r\n')], { type: 'text/plain' }), 'colony-counts.txt');
 };
 
 $('btnPng').onclick = () => {
@@ -3813,7 +3887,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     $('kbdHelp').classList.remove('on');
     setAdjustPanel(false);
-    if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; draw(); }
+    if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; syncTeachClearButton(); draw(); }
     return;
   }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -3938,6 +4012,7 @@ window.__colonies = () => colonies;
 window.__measureFit = (x, y, r) => measureFit(x, y, r);
 window.__diag = () => lastDiag;
 window.__teachMode = (v) => { teachMode = v; };
+window.__learned = () => learned;
 
 // ============================================================
 // boot

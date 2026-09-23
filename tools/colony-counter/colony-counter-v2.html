@@ -422,6 +422,12 @@ thead th {
   color: var(--text-muted); padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 tbody td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); }
+.rowtitle-edit {
+  width: 100%; min-width: 64px; border: 1px solid transparent; background: transparent;
+  font: inherit; font-size: 12px; color: var(--text); padding: 3px 5px; border-radius: 5px;
+}
+.rowtitle-edit:hover { border-color: var(--border); }
+.rowtitle-edit:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr.off { opacity: .45; }
 td .rowdel { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; border-radius: 5px; }
@@ -589,12 +595,8 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
           <button type="button" data-sens="50" aria-pressed="true">Balanced</button>
           <button type="button" data-sens="68" aria-pressed="false">More</button>
         </div>
-      </div>
-
-      <div class="field">
-        <div class="slider-row"><label for="manualSize">Your marker size</label><span class="val" id="manualSizeVal">100%</span></div>
-        <input type="range" id="manualSize" min="25" max="300" value="100">
-        <div class="scale-ends"><span>smaller</span><span>larger</span></div>
+        <input type="range" id="sens" min="5" max="95" value="50" style="margin-top:8px;" title="Scroll to nudge">
+        <div class="scale-ends"><span>fewer colonies</span><span id="sensVal" style="color:var(--text);font-weight:640;">50</span><span>more colonies</span></div>
       </div>
 
       <div class="field">
@@ -633,10 +635,6 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
               <option value="dark">Dark colonies on paler agar</option>
               <option value="colour">Coloured colonies (chromogenic)</option>
             </select>
-          </div>
-          <div class="field">
-            <div class="slider-row"><label for="sens">Fine sensitivity</label><span class="val" id="sensVal">50</span></div>
-            <input type="range" id="sens" min="5" max="95" value="50">
           </div>
           <div class="field">
             <div class="slider-row"><label for="splitStrength">Splitting strength</label><span class="val" id="splitVal">0.10</span></div>
@@ -679,6 +677,10 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         <button class="tool" id="btnAdjustToggle" type="button" aria-pressed="false" title="Image adjustment">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
           <span>Adjust</span>
+        </button>
+        <button class="tool" id="btnAutoLevelsStage" type="button" title="Auto-correct brightness and contrast">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+          <span>Auto</span>
         </button>
         <button class="tool" id="zOut" type="button" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
         <button class="tool" id="zFit" type="button" title="Fit to view (F)"><span>Fit</span></button>
@@ -788,6 +790,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       <div class="row" style="margin-top:7px;">
         <button class="btn btn-ghost btn-sm" id="btnRect" type="button">Draw box</button>
         <button class="btn btn-ghost btn-sm" id="btnCircle" type="button">Draw circle</button>
+        <button class="btn btn-ghost btn-sm" id="btnLasso" type="button">Draw lasso</button>
         <button class="btn btn-ghost btn-sm" id="btnWhole" type="button">Whole image</button>
       </div>
 
@@ -820,7 +823,11 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
     <div class="panel muted" id="panel4">
       <div class="phead"><span class="step">4</span><h3>Results</h3></div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+      <div class="field" style="margin-top:0;">
+        <label for="rowTitle">Title (optional)</label>
+        <input type="text" id="rowTitle" placeholder="e.g. Sample A, Plate 3, 24h" maxlength="60">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px;">
         <div class="field" style="margin-top:0;">
           <label for="dilution">Dilution (10⁻ˣ)</label>
           <input type="number" id="dilution" value="4" min="0" step="1">
@@ -838,7 +845,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
 
       <div class="tablewrap">
         <table id="tbl">
-          <thead><tr><th>Use</th><th>#</th><th>Count</th><th>Dil.</th><th>µL</th><th>CFU/mL</th><th>Flag</th><th></th></tr></thead>
+          <thead><tr><th>Use</th><th>#</th><th>Title</th><th>Count</th><th>Dil.</th><th>µL</th><th>CFU/mL</th><th>Flag</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -2411,6 +2418,49 @@ function findDish(data, w, h) {
 // cent of the plate, and all three read as bright structure. Excluding a thin outer band by default
 // removes the commonest source of false colonies on a circular selection at the cost of a sliver of
 // agar that is rarely counted in practice anyway.
+// Freehand selection mask, filled with a standard scanline scan-line polygon fill (even-odd rule):
+// for each row, the edges crossing that row are intersected and sorted, and the pixels between
+// each pair of crossings are set. This is the same well-known algorithm used to fill polygons in
+// vector graphics, chosen because a per-pixel point-in-polygon test would cost one pass over every
+// vertex for every pixel in the selection - fine for a handful of points, far too slow for a
+// hand-traced outline that can carry hundreds.
+//
+// The margin is applied the same way the circle's is: by scaling every vertex toward the polygon's
+// own centroid by (1 - margin), not by true geometric offsetting. For a roughly star-convex shape
+// like a hand-traced plate boundary this hugs the original outline closely; for a very concave
+// trace it is an approximation, same as the circle's margin is only exact for a circle. [INFERENCE]
+function lassoMask(w, h, points, margin) {
+  const m = new Uint8Array(w * h);
+  let pts = points;
+  const n = pts.length;
+  if (n < 3) return m;
+  if (margin > 0) {
+    let cx = 0, cy = 0;
+    for (const p of pts) { cx += p.x; cy += p.y; }
+    cx /= n; cy /= n;
+    const s = 1 - margin;
+    pts = pts.map(p => ({ x: cx + (p.x - cx) * s, y: cy + (p.y - cy) * s }));
+  }
+  let y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+  y0 = Math.max(0, Math.floor(y0)); y1 = Math.min(h - 1, Math.ceil(y1));
+  const xs = [];
+  for (let y = y0; y <= y1; y++) {
+    xs.length = 0;
+    const yc = y + 0.5;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      if ((a.y <= yc && b.y > yc) || (b.y <= yc && a.y > yc)) xs.push(a.x + (yc - a.y) / (b.y - a.y) * (b.x - a.x));
+    }
+    xs.sort((p, q) => p - q);
+    for (let i = 0; i + 1 < xs.length; i += 2) {
+      const xa = Math.max(0, Math.round(xs[i])), xb = Math.min(w - 1, Math.round(xs[i + 1]) - 1);
+      for (let x = xa; x <= xb; x++) m[y * w + x] = 1;
+    }
+  }
+  return m;
+}
+
 function buildMask(msg) {
   const w = msg.w, h = msg.h;
   const margin = msg.edgeMargin != null ? Math.max(0, Math.min(0.25, msg.edgeMargin)) : 0;
@@ -2424,6 +2474,9 @@ function buildMask(msg) {
       m[y * w + x] = (dx * dx + dy * dy <= r2) ? 1 : 0;
     }
     return m;
+  }
+  if (msg.roi.shape === 'lasso' && msg.roi.points && msg.roi.points.length >= 3) {
+    return lassoMask(w, h, msg.roi.points, margin);
   }
   if (margin > 0) {
     const mx = Math.round(w * margin * 0.5), my = Math.round(h * margin * 0.5);
@@ -2549,6 +2602,13 @@ function markColour(c) {
   return (c.conf != null && c.conf < confCut()) ? MARK.low : MARK.high;
 }
 function confCut() { return (+$('confCut').value) / 100; }
+// What a colony's marker is actually drawn at - kept in one place so hit-testing always matches
+// what the eye sees, which the old code did not (it hit-tested on the raw, unscaled radius while
+// drawing at c.r * the detected-marker-size slider).
+function renderedRadius(c) {
+  const px = 1 / view.s;
+  return Math.max(2.5 * px, c.src === 'manual' ? c.r : c.r * markScale());
+}
 // Scales the circles drawn on colonies the detector found (including clumps). Deliberately separate
 // from manualScale below: shrinking the display size of a thousand auto-detected dots on a crowded
 // plate is a different need from choosing how big YOUR OWN click leaves a mark.
@@ -2596,7 +2656,7 @@ function adoptImage(im) {
   // Nothing measured from the previous photograph may survive onto this one — including a marker
   // size dialled in against the old colonies, which would otherwise silently stop matching the new
   // ones. 100% always means "the size just measured", so the honest reset is back to 100%.
-  setManualScale(100, 'reset');
+  setManualScale(100);
   lastDiag = null; pending = null; runSeq++;
   $('diag').textContent = ''; $('modeTag').textContent = ''; $('roiTag').textContent = '';
   $('learnedOut').style.display = 'none';
@@ -2724,7 +2784,7 @@ $('adjGamma').addEventListener('input', e => { adj.gamma = e.target.value / 100;
 $('adjClip').addEventListener('input', e => { adj.clip = e.target.value / 10; $('valClip').textContent = adj.clip.toFixed(1); if (adj.clahe) scheduleAdjust(); });
 $('adjClahe').addEventListener('change', e => { adj.clahe = e.target.checked; scheduleAdjust(); });
 $('btnResetAdj').onclick = () => { resetAdjustments(true); if (roi) runDetect(); };
-$('btnAutoLevels').onclick = () => {
+function runAutoLevels() {
   if (!img) return;
   // stretch to the 0.5 / 99.5 percentiles of luminance, sampled
   const w = rawCanvas.width, h = rawCanvas.height;
@@ -2743,7 +2803,10 @@ $('btnAutoLevels').onclick = () => {
   $('adjContrast').value = adj.contrast; $('valContrast').textContent = adj.contrast;
   applyAdjustments();
   if (roi) runDetect();
-};
+}
+$('btnAutoLevels').onclick = runAutoLevels;
+// Same one-click correction, reachable on the stage without opening the Image menu first.
+$('btnAutoLevelsStage').onclick = runAutoLevels;
 
 // ============================================================
 // view
@@ -2802,6 +2865,7 @@ function draw() {
     ctx.beginPath();
     ctx.rect(0, 0, img.naturalWidth, img.naturalHeight);
     if (roi.shape === 'circle') ctx.arc(roi.cx, roi.cy, roi.r, 0, Math.PI * 2, true);
+    else if (roi.shape === 'lasso') tracePolygon(ctx, roi.points);
     else { ctx.moveTo(roi.x, roi.y); ctx.lineTo(roi.x, roi.y + roi.h); ctx.lineTo(roi.x + roi.w, roi.y + roi.h); ctx.lineTo(roi.x + roi.w, roi.y); ctx.closePath(); }
     ctx.fillStyle = 'rgba(8,10,14,0.55)';
     ctx.fill('evenodd');
@@ -2811,6 +2875,7 @@ function draw() {
     ctx.strokeStyle = '#56B4E9';
     ctx.beginPath();
     if (roi.shape === 'circle') ctx.arc(roi.cx, roi.cy, roi.r, 0, Math.PI * 2);
+    else if (roi.shape === 'lasso') tracePolygon(ctx, roi.points);
     else ctx.rect(roi.x, roi.y, roi.w, roi.h);
     ctx.stroke();
 
@@ -2821,6 +2886,7 @@ function draw() {
       ctx.lineWidth = 1.2 * px;
       ctx.beginPath();
       if (roi.shape === 'circle') ctx.arc(roi.cx, roi.cy, roi.r * (1 - m), 0, Math.PI * 2);
+      else if (roi.shape === 'lasso') tracePolygon(ctx, shrinkToward(roi.points, m));
       else ctx.rect(roi.x + roi.w * m * 0.5, roi.y + roi.h * m * 0.5, roi.w * (1 - m), roi.h * (1 - m));
       ctx.stroke();
       ctx.setLineDash([]);
@@ -2837,11 +2903,10 @@ function draw() {
   // colonies
   // Past 400 the labels cover more plate than they explain, so the toggle is an upper bound.
   const showN = $('showNumbers').checked && colonies.length <= 400 && view.s > 0.25;
-  const ms = markScale();
   let idx = 0;
   for (const c of colonies) {
     idx++;
-    const r = Math.max(2.5 * px, (c.src === 'manual' ? c.r : c.r * ms));
+    const r = renderedRadius(c);
     if (c.src === 'manual') {           // white casing, so black reads on dark agar too
       ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
       ctx.lineWidth = 4 * px; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke();
@@ -2895,6 +2960,28 @@ function draw() {
   });
 
   ctx.restore();
+}
+
+// A closed polygon path, traced into whatever path ctx currently has open. Used for the lasso's
+// own outline both when dimming outside it and when stroking its boundary, so the two can never
+// show a different shape from each other.
+function tracePolygon(ctx, pts) {
+  if (!pts || !pts.length) return;
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+}
+// Scales every vertex toward the polygon's own centroid by (1 - m) - the same technique the
+// circle's own margin preview already uses (r * (1 - m)), extended to an arbitrary outline. It
+// mirrors exactly what the worker's mask does for a lasso margin, so the dashed preview always
+// matches what actually gets analysed.
+function shrinkToward(pts, m) {
+  if (!pts.length) return pts;
+  let cx = 0, cy = 0;
+  for (const p of pts) { cx += p.x; cy += p.y; }
+  cx /= pts.length; cy /= pts.length;
+  const s = 1 - m;
+  return pts.map(p => ({ x: cx + (p.x - cx) * s, y: cy + (p.y - cy) * s }));
 }
 
 window.addEventListener('resize', () => { draw(); });
@@ -3019,7 +3106,7 @@ function refreshTeachReadout() {
 function edgeMargin() { return (+$('edgeMargin').value) / 100; }
 
 function roiHandles() {
-  if (!roi) return [];
+  if (!roi || roi.shape === 'lasso') return [];   // no drag-resize handles for a freehand trace
   if (roi.shape === 'circle') return [
     { id: 'e', x: roi.cx + roi.r, y: roi.cy }, { id: 'w', x: roi.cx - roi.r, y: roi.cy },
     { id: 'n', x: roi.cx, y: roi.cy - roi.r }, { id: 's', x: roi.cx, y: roi.cy + roi.r }];
@@ -3034,10 +3121,31 @@ function hitHandle(p) {
   for (const h of roiHandles()) if (Math.hypot(h.x - p.x, h.y - p.y) < tol) return h.id;
   return null;
 }
+// Standard even-odd ray-casting point-in-polygon test. Runs on the main thread for interaction
+// only (hit-testing a click), so its O(n) cost per call is irrelevant next to the worker's
+// scanline mask fill, which is the one that has to run once per pixel.
+function pointInPolygon(p, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+    if (((yi > p.y) !== (yj > p.y)) && (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
 function inRoi(p) {
   if (!roi) return false;
   if (roi.shape === 'circle') return Math.hypot(p.x - roi.cx, p.y - roi.cy) <= roi.r;
+  if (roi.shape === 'lasso') return pointInPolygon(p, roi.points);
   return p.x >= roi.x && p.x <= roi.x + roi.w && p.y >= roi.y && p.y <= roi.y + roi.h;
+}
+// The longer side of a polygon's own bounding box - used as the one validity gate for a freehand
+// trace, mirroring how a drawn circle needs r>12 and a drawn box needs both sides over 15px before
+// either is accepted rather than discarded as an accidental click.
+function lassoSpan(points) {
+  if (!points || points.length < 3) return 0;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const p of points) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+  return Math.max(x1 - x0, y1 - y0);
 }
 function clampRoi() {
   if (!roi || !img) return;
@@ -3046,6 +3154,8 @@ function clampRoi() {
     roi.r = Math.max(10, Math.min(roi.r, Math.max(W, H)));
     roi.cx = Math.min(Math.max(roi.cx, -roi.r * 0.2), W + roi.r * 0.2);
     roi.cy = Math.min(Math.max(roi.cy, -roi.r * 0.2), H + roi.r * 0.2);
+  } else if (roi.shape === 'lasso') {
+    for (const p of roi.points) { p.x = Math.max(0, Math.min(W, p.x)); p.y = Math.max(0, Math.min(H, p.y)); }
   } else {
     roi.x = Math.max(0, Math.min(roi.x, W - 5));
     roi.y = Math.max(0, Math.min(roi.y, H - 5));
@@ -3109,11 +3219,17 @@ viewport.addEventListener('pointerdown', e => {
     const hnd = sameShape ? hitHandle(p) : null;
     if (hnd) { drag = { kind: 'resize', h: hnd, start: JSON.parse(JSON.stringify(roi)) }; return; }
     if (sameShape && inRoi(p)) {
-      drag = { kind: 'move', off: roi.shape === 'circle' ? { x: p.x - roi.cx, y: p.y - roi.cy } : { x: p.x - roi.x, y: p.y - roi.y } };
+      drag = { kind: 'move',
+        off: roi.shape === 'circle' ? { x: p.x - roi.cx, y: p.y - roi.cy }
+           : roi.shape === 'lasso' ? { x: p.x - roi.points[0].x, y: p.y - roi.points[0].y }
+           : { x: p.x - roi.x, y: p.y - roi.y },
+        lassoStart: roi.shape === 'lasso' ? roi.points.map(pt => ({ x: pt.x, y: pt.y })) : null };
       return;
     }
     drag = { kind: 'new', ox: p.x, oy: p.y };
-    roi = roiShape === 'circle' ? { shape: 'circle', cx: p.x, cy: p.y, r: 0 } : { shape: 'rect', x: p.x, y: p.y, w: 0, h: 0 };
+    roi = roiShape === 'circle' ? { shape: 'circle', cx: p.x, cy: p.y, r: 0 }
+        : roiShape === 'lasso' ? { shape: 'lasso', points: [{ x: p.x, y: p.y }] }
+        : { shape: 'rect', x: p.x, y: p.y, w: 0, h: 0 };
     draw();
     return;
   }
@@ -3161,9 +3277,21 @@ viewport.addEventListener('pointermove', e => {
   }
   if (drag.kind === 'new') {
     if (roi.shape === 'circle') { roi.cx = drag.ox; roi.cy = drag.oy; roi.r = Math.hypot(p.x - drag.ox, p.y - drag.oy); }
+    else if (roi.shape === 'lasso') {
+      const pts = roi.points, last = pts[pts.length - 1];
+      // A point is kept only once the pointer has moved a couple of image pixels from the last one
+      // kept, and the trace is capped outright - both guard against a slow drag turning into
+      // thousands of near-duplicate points, which would cost real time in the scanline fill later.
+      if (pts.length < 4000 && Math.hypot(p.x - last.x, p.y - last.y) >= 2 / view.s) pts.push({ x: p.x, y: p.y });
+    }
     else { roi.x = Math.min(drag.ox, p.x); roi.y = Math.min(drag.oy, p.y); roi.w = Math.abs(p.x - drag.ox); roi.h = Math.abs(p.y - drag.oy); }
   } else if (drag.kind === 'move') {
     if (roi.shape === 'circle') { roi.cx = p.x - drag.off.x; roi.cy = p.y - drag.off.y; }
+    else if (roi.shape === 'lasso') {
+      const nx = p.x - drag.off.x, ny = p.y - drag.off.y;
+      const dx = nx - drag.lassoStart[0].x, dy = ny - drag.lassoStart[0].y;
+      roi.points = drag.lassoStart.map(pt => ({ x: pt.x + dx, y: pt.y + dy }));
+    }
     else { roi.x = p.x - drag.off.x; roi.y = p.y - drag.off.y; }
     clampRoi();
   } else if (drag.kind === 'resize') {
@@ -3200,7 +3328,7 @@ function endPointer(e) {
   }
   if (kind === 'teachSize' || kind === 'teachMove') { refreshTeachReadout(); draw(); return; }
   if (kind === 'new' || kind === 'move' || kind === 'resize') {
-    const big = roi && (roi.shape === 'circle' ? roi.r > 12 : (roi.w > 15 && roi.h > 15));
+    const big = roi && (roi.shape === 'circle' ? roi.r > 12 : roi.shape === 'lasso' ? lassoSpan(roi.points) > 20 : (roi.w > 15 && roi.h > 15));
     if (!big) { if (kind === 'new') { roi = null; colonies = []; autoColonies = []; } draw(); refreshUI(); return; }
     clampRoi();
     refreshUI();
@@ -3251,9 +3379,10 @@ $('btnUndo').onclick = undo; $('btnRedo').onclick = redo;
 // radius of its centre, whichever is larger — so small colonies stay clickable when zoomed out.
 function hitColony(p) {
   let best = -1, bd = Infinity;
+  const slack = 3.5 / view.s;   // ~3.5 real screen pixels of click forgiveness, not a flat image-px floor
   colonies.forEach((c, i) => {
     const d = Math.hypot(c.x - p.x, c.y - p.y);
-    const reach = Math.max(12 / view.s, 10, c.r * 1.3);
+    const reach = renderedRadius(c) + slack;
     if (d <= reach && d < bd) { bd = d; best = i; }
   });
   return best;
@@ -3311,7 +3440,7 @@ function setTool(t) {
   $('addSizeBar').classList.toggle('show', t === 'add');
   setHint({
     pan: 'Drag to pan, scroll or pinch to zoom.',
-    select: roiShape === 'circle' ? 'Click the centre of the dish and drag out to its wall. Drag the dots to adjust.' : 'Drag a box around the area to count. Drag the dots to adjust.',
+    select: SHAPE_HINT[roiShape],
     add: 'Click empty space to add a colony, or click a marked one to remove it.',
     remove: 'Click a marked colony to remove it.'
   }[t]);
@@ -3322,15 +3451,20 @@ $('mSelect').onclick = () => setTool('select');
 $('mAdd').onclick = () => setTool('add');
 $('mRemove').onclick = () => setTool('remove');
 
+const SHAPE_HINT = {
+  circle: 'Click the centre of the dish and drag out to its wall. Drag the dots to adjust.',
+  lasso: 'Drag freehand around the area to count. Drag inside it to move it, or draw again to replace it.',
+  rect: 'Drag a box around the area to count. Drag the dots to adjust.'
+};
 function chooseShape(s) {
   roiShape = s;
   setTool('select');
-  if (roi && roi.shape !== s) setHint(s === 'circle'
-    ? 'Click the centre of the dish and drag out to its wall — this replaces the current selection.'
-    : 'Drag a box around the area to count — this replaces the current selection.');
+  if (roi && roi.shape !== s) setHint('Draw again to replace the current selection with a ' +
+    (s === 'circle' ? 'circle' : s === 'lasso' ? 'freehand outline' : 'box') + '.');
 }
 $('btnCircle').onclick = () => chooseShape('circle');
 $('btnRect').onclick = () => chooseShape('rect');
+$('btnLasso').onclick = () => chooseShape('lasso');
 $('btnWhole').onclick = () => {
   if (!img) return;
   roi = { shape: 'rect', x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
@@ -3372,6 +3506,11 @@ function roiBox() {
   const W = img.naturalWidth, H = img.naturalHeight;
   let bx, by, bw, bh;
   if (roi.shape === 'circle') { bx = roi.cx - roi.r; by = roi.cy - roi.r; bw = roi.r * 2; bh = roi.r * 2; }
+  else if (roi.shape === 'lasso') {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of roi.points) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+    bx = x0; by = y0; bw = x1 - x0; bh = y1 - y0;
+  }
   else { bx = roi.x; by = roi.y; bw = roi.w; bh = roi.h; }
   bx = Math.max(0, Math.floor(bx)); by = Math.max(0, Math.floor(by));
   bw = Math.min(W - bx, Math.ceil(bw)); bh = Math.min(H - by, Math.ceil(bh));
@@ -3401,6 +3540,8 @@ function runDetect(opts) {
 
   const local = roi.shape === 'circle'
     ? { shape: 'circle', cx: roi.cx - bx, cy: roi.cy - by, r: roi.r }
+    : roi.shape === 'lasso'
+    ? { shape: 'lasso', points: roi.points.map(p => ({ x: p.x - bx, y: p.y - by })) }
     : { shape: 'rect' };
 
   // Re-analysing the same selection re-measures the same colony size. The measurement is kept and
@@ -3456,7 +3597,7 @@ $('btnRecountStage').onclick = forceRecount;
 // is a detection parameter in every way that matters here, so it resets too.
 function resetColonySettings() {
   $('sens').value = 50; $('sensVal').textContent = '50'; syncSeg(50);
-  setManualScale(100, 'reset');
+  setManualScale(100);
   $('markerSize').value = 100; $('markerVal').textContent = '100%';
   $('showNumbers').checked = true;
   $('splitTouching').checked = true;
@@ -3569,6 +3710,15 @@ function bindRerun(id, ev) { $(id).addEventListener(ev || 'change', () => { if (
 ['splitTouching', 'estimateClumps', 'resolveClusters', 'rejectElongated', 'lockThresholds'].forEach(id => bindRerun(id));
 $('minArea').addEventListener('change', () => { if (roi) runDetect(); });
 $('colonyType').addEventListener('change', () => { cachedMode = null; if (roi) runDetect({ redecide: true }); });
+let sensWheelTimer = null;
+$('sens').addEventListener('wheel', e => {
+  e.preventDefault();
+  const nv = Math.max(5, Math.min(95, (+$('sens').value) + (e.deltaY < 0 ? 2 : -2)));
+  $('sens').value = nv;
+  $('sens').dispatchEvent(new Event('input'));
+  clearTimeout(sensWheelTimer);
+  sensWheelTimer = setTimeout(() => { if (roi) runDetect(); }, 180);
+}, { passive: false });
 $('sens').addEventListener('input', e => {
   $('sensVal').textContent = e.target.value;
   syncSeg(+e.target.value);
@@ -3583,17 +3733,14 @@ $('markerSize').addEventListener('input', e => {
 });
 // The same setting reachable from two places: on the stage while the Add tool is in use, and in
 // the colony menu. They are one value with two handles, so they are kept in step.
-function setManualScale(v, from) {
+function setManualScale(v) {
   v = Math.max(25, Math.min(300, Math.round(v)));
   manualScale = v / 100;
-  if (from !== 'menu') { $('manualSize').value = v; }
-  if (from !== 'quick') { $('manualSizeQuick').value = v; }
-  $('manualSizeVal').textContent = v + '%';
+  $('manualSizeQuick').value = v;
   $('manualSizeQuickVal').textContent = v + '%';
   mergeColonies();
 }
-$('manualSize').addEventListener('input', e => setManualScale(+e.target.value, 'menu'));
-$('manualSizeQuick').addEventListener('input', e => setManualScale(+e.target.value, 'quick'));
+$('manualSizeQuick').addEventListener('input', e => setManualScale(+e.target.value));
 $('confCut').addEventListener('input', e => {
   $('confVal').textContent = (e.target.value / 100).toFixed(2);
   draw(); refreshCount();
@@ -3643,7 +3790,9 @@ $('btnTeach').onclick = () => {
   const cc = c.getContext('2d', { willReadFrequently: true });
   cc.drawImage(srcCanvas, bx, by, bw, bh, 0, 0, bw, bh);
   const d = cc.getImageData(0, 0, bw, bh);
-  const local = roi.shape === 'circle' ? { shape: 'circle', cx: roi.cx - bx, cy: roi.cy - by, r: roi.r } : { shape: 'rect' };
+  const local = roi.shape === 'circle' ? { shape: 'circle', cx: roi.cx - bx, cy: roi.cy - by, r: roi.r }
+    : roi.shape === 'lasso' ? { shape: 'lasso', points: roi.points.map(p => ({ x: p.x - bx, y: p.y - by })) }
+    : { shape: 'rect' };
   busy(true, 'Learning what you meant.');
   const id = ++jobId;
   pending = { kind: 'train', id };
@@ -3716,7 +3865,9 @@ $('btnAddRow').onclick = () => {
   const n = total();
   const dil = +$('dilution').value, vol = +$('volume').value;
   if (!isFinite(dil) || !(vol > 0)) { setHint('Enter a dilution and a volume greater than zero.'); return; }
-  rows.push({ id: ++rowSeq, n, dil, vol, use: true, manual: manualAdd.length, removed: suppress.length, clumps: colonies.filter(c => c.clump).length });
+  const title = $('rowTitle').value.trim();
+  rows.push({ id: ++rowSeq, title, n, dil, vol, use: true, manual: manualAdd.length, removed: suppress.length, clumps: colonies.filter(c => c.clump).length });
+  $('rowTitle').value = '';
   renderRows();
 };
 function renderRows() {
@@ -3726,13 +3877,17 @@ function renderRows() {
     const f = flagFor(r.n);
     const tr = document.createElement('tr');
     if (!r.use) tr.className = 'off';
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     tr.innerHTML =
       '<td><input type="checkbox" ' + (r.use ? 'checked' : '') + ' aria-label="Include row ' + r.id + '"></td>' +
-      '<td>' + r.id + '</td><td>' + r.n + '</td><td>10⁻' + r.dil + '</td><td>' + r.vol + '</td>' +
+      '<td>' + r.id + '</td>' +
+      '<td><input type="text" class="rowtitle-edit" placeholder="—" maxlength="60" value="' + esc(r.title || '') + '"></td>' +
+      '<td>' + r.n + '</td><td>10⁻' + r.dil + '</td><td>' + r.vol + '</td>' +
       '<td>' + fmtSci(cfu(r.n, r.dil, r.vol)) + '</td>' +
       '<td><span class="flag ' + f.k + '">' + f.t + '</span></td>' +
       '<td><button class="rowdel" title="Remove row">×</button></td>';
-    tr.querySelector('input').onchange = e => { r.use = e.target.checked; renderRows(); };
+    tr.querySelector('input[type="checkbox"]').onchange = e => { r.use = e.target.checked; renderRows(); };
+    tr.querySelector('.rowtitle-edit').onchange = e => { r.title = e.target.value.trim(); };
     tr.querySelector('.rowdel').onclick = () => { rows = rows.filter(x => x !== r); renderRows(); };
     tb.appendChild(tr);
   }
@@ -3748,13 +3903,13 @@ $('btnCsv').onclick = () => {
   // Plain ASCII throughout (µL -> uL) so nothing depends on how the receiving app reads the file's
   // encoding. Only the columns asked for, in the order asked for; a row the checkbox has turned off
   // is left out entirely rather than exported with a flag column explaining why to ignore it.
-  const head = ['Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'];
+  const head = ['Title', 'Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'];
   const lines = [head.join('\t')];
   for (const r of used) {
-    lines.push([r.id, r.n, r.dil, r.vol, numForExport(cfu(r.n, r.dil, r.vol))].join('\t'));
+    lines.push([(r.title || '').replace(/\t/g, ' '), r.id, r.n, r.dil, r.vol, numForExport(cfu(r.n, r.dil, r.vol))].join('\t'));
   }
   const avg = used.reduce((s, r) => s + cfu(r.n, r.dil, r.vol), 0) / used.length;
-  lines.push(['Average', '', '', '', numForExport(avg)].join('\t'));
+  lines.push(['', 'Average', '', '', '', numForExport(avg)].join('\t'));
   download(new Blob([lines.join('\r\n')], { type: 'text/plain' }), 'colony-counts.txt');
 };
 
@@ -3821,7 +3976,9 @@ function refreshUI() {
   $('mAdd').disabled = !has; $('mRemove').disabled = !has;
   $('btnRecountStage').disabled = !has;
   $('roiTag').textContent = !roi ? '' :
-    (roi.shape === 'circle' ? 'circle r=' + Math.round(roi.r) + ' px' : 'box ' + Math.round(roi.w) + '×' + Math.round(roi.h));
+    (roi.shape === 'circle' ? 'circle r=' + Math.round(roi.r) + ' px' :
+     roi.shape === 'lasso' ? 'freehand (' + roi.points.length + ' pts)' :
+     'box ' + Math.round(roi.w) + '×' + Math.round(roi.h));
   if (!has && (tool === 'add' || tool === 'remove')) setTool('select');
   refreshUndo();
   refreshCount();
@@ -4013,6 +4170,8 @@ window.__measureFit = (x, y, r) => measureFit(x, y, r);
 window.__diag = () => lastDiag;
 window.__teachMode = (v) => { teachMode = v; };
 window.__learned = () => learned;
+window.__roi = () => roi;
+window.__roiShape = () => roiShape;
 
 // ============================================================
 // boot

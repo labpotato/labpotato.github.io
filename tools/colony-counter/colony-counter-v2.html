@@ -23,8 +23,8 @@
   --border-soft: #efeeea;
 
   --text: #16181d;
-  --text-muted: #5f636d;
-  --text-faint: #8e929c;
+  --text-muted: #43474f;
+  --text-faint: #5a5e66;
 
   --brand-ink: #1d2433;
   --accent: #0a5fd0;
@@ -69,7 +69,7 @@
 
     --text: #f1f2f4;
     --text-muted: #a0a4ad;
-    --text-faint: #797d87;
+    --text-faint: #868b94;
 
     --brand-ink: #eceef2;
     --accent: #4d9bff;
@@ -200,6 +200,53 @@ a:hover { text-decoration: underline; }
 .count-pill .n { font-size: 21px; font-weight: 700; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .count-pill .lab { display: block; font-size: 10.5px; font-weight: 660; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; line-height: 1.2; }
 .count-pill .sub { display: block; font-size: 10.5px; color: var(--text-faint); font-weight: 500; line-height: 1.25; max-width: 190px; }
+.pill-recount {
+  flex: none; width: 30px; height: 30px; margin-left: 2px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); background: var(--accent-soft); color: var(--accent);
+  cursor: pointer; transition: background .15s var(--ease), color .15s var(--ease), transform .15s var(--ease);
+}
+.pill-recount:hover { background: var(--accent); color: #fff; }
+.pill-recount:disabled { opacity: .4; cursor: not-allowed; }
+.pill-recount svg { width: 15px; height: 15px; }
+.pill-recount.spinning svg { animation: spin 1s linear infinite; }
+
+/* ---- stage sub-bar: appears below the top toolbar row, e.g. the manual-marker-size control ---- */
+.stage-subbar { flex: 1 0 100%; display: none; pointer-events: none; }
+.stage-subbar.show { display: flex; }
+.size-bar {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 7px 13px; border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto; font-size: 12.5px; font-weight: 560; color: var(--text);
+}
+.size-bar svg { width: 15px; height: 15px; flex: none; color: var(--accent); }
+.size-bar input[type="range"] { width: 130px; margin: 0; }
+.size-bar .val { font-variant-numeric: tabular-nums; font-weight: 660; min-width: 36px; text-align: right; color: var(--text); }
+
+/* ---- floating image-adjustment panel, anchored above the fit/zoom row ---- */
+.adjust-panel {
+  position: absolute; right: 12px; bottom: 60px; z-index: 6;
+  width: min(300px, calc(100% - 24px));
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 14px 15px; display: none; pointer-events: auto;
+  /* Tied to the stage's own height, not the viewport's: on a short mobile stage a fixed vh cap
+     still overflows the stage box, and .stage clips overflow, which hid the panel's own close
+     button above the visible area. */
+  max-height: calc(100% - 84px); overflow-y: auto;
+}
+.adjust-panel.show { display: block; }
+.adjust-panel .aphead { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.adjust-panel .aphead h4 { margin: 0; font-size: 13.5px; font-weight: 650; flex: 1; letter-spacing: -0.02em; }
+.adjust-panel .apclose {
+  flex: none; width: 24px; height: 24px; border: 0; background: transparent; color: var(--text-faint);
+  cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+}
+.adjust-panel .apclose:hover { background: var(--bg-tint); color: var(--text); }
+.adjust-panel .apclose svg { width: 15px; height: 15px; }
 
 .legend {
   display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
@@ -287,10 +334,11 @@ body.dragover .drop-cue { display: flex; }
 .btn svg { width: 15px; height: 15px; flex: none; }
 .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 6px 16px -9px color-mix(in srgb, var(--accent) 90%, transparent); }
 .btn-primary:hover { background: var(--accent-hover); }
-.btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
-.btn-ghost:hover { background: var(--bg-tint); border-color: var(--text-faint); }
-.btn-warn { background: transparent; color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
-.btn-warn:hover { background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.btn-ghost { background: var(--bg-tint); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); color: var(--accent); }
+.btn-ghost.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.btn-warn { background: color-mix(in srgb, var(--warn) 7%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.btn-warn:hover { background: color-mix(in srgb, var(--warn) 15%, transparent); border-color: var(--warn); }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .btn-lg { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 620; }
 .btn-sm { padding: 6px 10px; font-size: 12px; }
@@ -466,7 +514,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/></svg>
           <span>Select</span><kbd>S</kbd>
         </button>
-        <button class="tool" id="mAdd" type="button" aria-pressed="false" title="Click to add a colony (A)" disabled>
+        <button class="tool" id="mAdd" type="button" aria-pressed="false" title="Click empty space to add, click a marker to remove (A)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8.5v7M8.5 12h7"/></svg>
           <span>Add</span><kbd>A</kbd>
         </button>
@@ -493,15 +541,64 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
           <span class="lab">colonies</span>
           <span class="sub" id="countSub">nothing counted yet</span>
         </span>
+        <button class="pill-recount" id="btnRecountStage" type="button" title="Recount (Enter)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg>
+        </button>
+      </div>
+
+      <!-- 2: the size of a manually-placed mark, shown only while the Add tool is active -->
+      <div class="stage-subbar" id="addSizeBar">
+        <div class="size-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>
+          <span>Your marker size</span>
+          <input type="range" id="manualSize" min="25" max="300" value="100">
+          <span class="val" id="manualSizeVal">100%</span>
+        </div>
       </div>
     </div>
 
     <div class="stage-foot">
       <div class="hint" id="hint">Upload a plate photo to begin. You can also paste one with Ctrl+V, or drop it anywhere on this page.</div>
       <div class="toolgroup zoomgroup">
+        <button class="tool" id="btnAdjustToggle" type="button" aria-pressed="false" title="Image adjustment">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+          <span>Adjust</span>
+        </button>
         <button class="tool" id="zOut" type="button" title="Zoom out (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
         <button class="tool" id="zFit" type="button" title="Fit to view (F)"><span>Fit</span></button>
         <button class="tool" id="zIn" type="button" title="Zoom in (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg></button>
+      </div>
+    </div>
+
+    <!-- floating image-adjustment panel: on the stage, anchored above the fit/zoom row -->
+    <div class="adjust-panel" id="adjustPanel">
+      <div class="aphead">
+        <h4>Image adjustment</h4>
+        <button class="apclose" id="btnAdjustClose" type="button" title="Close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="notice">Adjustments change what the detector measures, not only what you see — the count updates on its own once you stop dragging. For a reproducible result, record the values you used or leave them at default.</div>
+      <div class="field">
+        <div class="slider-row"><label for="adjBright">Brightness</label><span class="val" id="valBright">0</span></div>
+        <input type="range" id="adjBright" min="-100" max="100" value="0">
+      </div>
+      <div class="field">
+        <div class="slider-row"><label for="adjContrast">Contrast</label><span class="val" id="valContrast">0</span></div>
+        <input type="range" id="adjContrast" min="-100" max="100" value="0">
+      </div>
+      <div class="field">
+        <div class="slider-row"><label for="adjGamma">Gamma</label><span class="val" id="valGamma">1.00</span></div>
+        <input type="range" id="adjGamma" min="30" max="300" value="100">
+      </div>
+      <label class="check"><input type="checkbox" id="adjClahe"><span>Local contrast (CLAHE)</span></label>
+      <div class="field">
+        <div class="slider-row"><label for="adjClip">CLAHE clip limit</label><span class="val" id="valClip">2.5</span></div>
+        <input type="range" id="adjClip" min="10" max="60" value="25">
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" id="btnAutoLevels" type="button">Auto levels</button>
+        <button class="btn btn-ghost btn-sm" id="btnResetAdj" type="button">Reset</button>
       </div>
     </div>
 
@@ -622,9 +719,10 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       </div>
 
       <div class="field">
-        <div class="slider-row"><label for="markerSize">Marker size</label><span class="val" id="markerVal">100%</span></div>
+        <div class="slider-row"><label for="markerSize">Detected marker size</label><span class="val" id="markerVal">100%</span></div>
         <input type="range" id="markerSize" min="25" max="200" value="100">
         <div class="scale-ends"><span>smaller</span><span>larger</span></div>
+        <div class="statusline">Scales the circles drawn on colonies the detector found. Your own hand-placed marks have a separate size control — it appears on the stage when the Add tool is active.</div>
       </div>
 
       <div class="legend" id="legend">
@@ -679,33 +777,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         </div>
       </details>
 
-      <details class="adv" id="advImage">
-        <summary>Image adjustment</summary>
-        <div class="adv-body">
-          <div class="notice">Adjustments change what the detector measures, not only what you see. For a defensible count, leave these alone — uneven lighting is already corrected inside the detector — or record the values you used.</div>
-          <div class="field">
-            <div class="slider-row"><label for="adjBright">Brightness</label><span class="val" id="valBright">0</span></div>
-            <input type="range" id="adjBright" min="-100" max="100" value="0">
-          </div>
-          <div class="field">
-            <div class="slider-row"><label for="adjContrast">Contrast</label><span class="val" id="valContrast">0</span></div>
-            <input type="range" id="adjContrast" min="-100" max="100" value="0">
-          </div>
-          <div class="field">
-            <div class="slider-row"><label for="adjGamma">Gamma</label><span class="val" id="valGamma">1.00</span></div>
-            <input type="range" id="adjGamma" min="30" max="300" value="100">
-          </div>
-          <label class="check"><input type="checkbox" id="adjClahe"><span>Local contrast (CLAHE)</span></label>
-          <div class="field">
-            <div class="slider-row"><label for="adjClip">CLAHE clip limit</label><span class="val" id="valClip">2.5</span></div>
-            <input type="range" id="adjClip" min="10" max="60" value="25">
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <button class="btn btn-ghost btn-sm" id="btnAutoLevels" type="button">Auto levels</button>
-            <button class="btn btn-ghost btn-sm" id="btnResetAdj" type="button">Reset</button>
-          </div>
-        </div>
-      </details>
+      <div class="statusline" style="margin-top:12px;">Image adjustment (brightness, contrast, gamma, local contrast) moved to the <b>Adjust</b> button on the stage, above the zoom controls — its panel is always one click away while you're looking at the plate.</div>
 
       <details class="adv" id="advTeach">
         <summary>Teach it from your own picks</summary>
@@ -2221,12 +2293,16 @@ function markColour(c) {
   return (c.conf != null && c.conf < confCut()) ? MARK.low : MARK.high;
 }
 function confCut() { return (+$('confCut').value) / 100; }
+// Scales the circles drawn on colonies the detector found (including clumps). Deliberately separate
+// from manualScale below: shrinking the display size of a thousand auto-detected dots on a crowded
+// plate is a different need from choosing how big YOUR OWN click leaves a mark.
 function markScale() { return (+$('markerSize').value) / 100; }
+let manualScale = 1;   // set by the on-stage "Your marker size" bar, shown while the Add tool is active
 // Radius a hand-placed mark is drawn at: the typical colony on this plate when one has been
-// measured, a modest default when nothing has been counted yet, scaled by the marker-size control.
+// measured, a modest default when nothing has been counted yet, scaled by manualScale.
 function manualRadius() {
   const base = (lastDiag && lastDiag.medSingleArea > 0) ? Math.sqrt(lastDiag.medSingleArea / Math.PI) : 5;
-  return Math.max(1.5, base * markScale());
+  return Math.max(1.5, base * manualScale);
 }
 
 const LOADING = [
@@ -2366,7 +2442,13 @@ function applyAdjustments() {
 }
 
 let adjTimer = null;
-function scheduleAdjust() { clearTimeout(adjTimer); adjTimer = setTimeout(applyAdjustments, 90); }
+// Whatever changed the pixels is measured off those same pixels, so a debounced re-count follows
+// every adjustment automatically. The 90ms debounce means one recount after you stop dragging, not
+// one per pixel of slider travel.
+function scheduleAdjust() {
+  clearTimeout(adjTimer);
+  adjTimer = setTimeout(() => { applyAdjustments(); if (roi) runDetect(); }, 90);
+}
 
 function resetAdjustments(redraw) {
   adj.bright = 0; adj.contrast = 0; adj.gamma = 1; adj.clahe = false; adj.clip = 2.5;
@@ -2382,7 +2464,7 @@ $('adjContrast').addEventListener('input', e => { adj.contrast = +e.target.value
 $('adjGamma').addEventListener('input', e => { adj.gamma = e.target.value / 100; $('valGamma').textContent = adj.gamma.toFixed(2); scheduleAdjust(); });
 $('adjClip').addEventListener('input', e => { adj.clip = e.target.value / 10; $('valClip').textContent = adj.clip.toFixed(1); if (adj.clahe) scheduleAdjust(); });
 $('adjClahe').addEventListener('change', e => { adj.clahe = e.target.checked; scheduleAdjust(); });
-$('btnResetAdj').onclick = () => { resetAdjustments(true); };
+$('btnResetAdj').onclick = () => { resetAdjustments(true); if (roi) runDetect(); };
 $('btnAutoLevels').onclick = () => {
   if (!img) return;
   // stretch to the 0.5 / 99.5 percentiles of luminance, sampled
@@ -2401,6 +2483,7 @@ $('btnAutoLevels').onclick = () => {
   $('adjBright').value = adj.bright; $('valBright').textContent = adj.bright;
   $('adjContrast').value = adj.contrast; $('valContrast').textContent = adj.contrast;
   applyAdjustments();
+  if (roi) runDetect();
 };
 
 // ============================================================
@@ -2623,7 +2706,12 @@ viewport.addEventListener('pointerdown', e => {
     return;
   }
 
-  if (tool === 'add') { pushUndo(); manualAdd.push({ x: p.x, y: p.y }); mergeColonies(); return; }
+  if (tool === 'add') {
+    const hit = hitColony(p);
+    if (hit >= 0) removeColonyAt(hit);
+    else { pushUndo(); manualAdd.push({ x: p.x, y: p.y }); mergeColonies(); }
+    return;
+  }
   if (tool === 'remove') { removeAt(p); return; }
 });
 
@@ -2722,17 +2810,20 @@ function redo() {
 function refreshUndo() { $('btnUndo').disabled = !undoStack.length; $('btnRedo').disabled = !redoStack.length; }
 $('btnUndo').onclick = undo; $('btnRedo').onclick = redo;
 
-function removeAt(p) {
-  // Accept a click anywhere within the colony's own outline, or within a comfortable screen-space
-  // radius of its centre, whichever is larger — so small colonies stay clickable when zoomed out.
+// Accept a click anywhere within the colony's own outline, or within a comfortable screen-space
+// radius of its centre, whichever is larger — so small colonies stay clickable when zoomed out.
+function hitColony(p) {
   let best = -1, bd = Infinity;
   colonies.forEach((c, i) => {
     const d = Math.hypot(c.x - p.x, c.y - p.y);
     const reach = Math.max(12 / view.s, 10, c.r * 1.3);
     if (d <= reach && d < bd) { bd = d; best = i; }
   });
-  if (best < 0) return;
-  const c = colonies[best];
+  return best;
+}
+function removeColonyAt(idx) {
+  if (idx < 0) return;
+  const c = colonies[idx];
   pushUndo();
   if (c.src === 'manual') {
     let mi = -1, md = Infinity;
@@ -2743,6 +2834,7 @@ function removeAt(p) {
   }
   mergeColonies();
 }
+function removeAt(p) { removeColonyAt(hitColony(p)); }
 
 // Manual corrections survive a re-run. A removal is stored as a point, not as an index, so changing
 // the sensitivity or the selection does not silently resurrect every colony the user struck out.
@@ -2779,10 +2871,11 @@ function setTool(t) {
   for (const [id, name] of [['mPan', 'pan'], ['mSelect', 'select'], ['mAdd', 'add'], ['mRemove', 'remove']])
     $(id).setAttribute('aria-pressed', String(tool === name));
   viewport.className = 'mode-' + t;
+  $('addSizeBar').classList.toggle('show', t === 'add');
   setHint({
     pan: 'Drag to pan, scroll or pinch to zoom.',
     select: roiShape === 'circle' ? 'Click the centre of the dish and drag out to its wall. Drag the dots to adjust.' : 'Drag a box around the area to count. Drag the dots to adjust.',
-    add: 'Click where a colony was missed.',
+    add: 'Click empty space to add a colony, or click a marked one to remove it.',
     remove: 'Click a marked colony to remove it.'
   }[t]);
   draw();
@@ -2851,6 +2944,7 @@ function roiBox() {
 let busyTimer = null;
 function busy(on, msg) {
   $('busy').classList.toggle('on', !!on);
+  $('btnRecountStage').classList.toggle('spinning', !!on);
   clearInterval(busyTimer);
   if (on) {
     let i = 0;
@@ -2910,7 +3004,12 @@ function runDetect(opts) {
     lockThresholds: $('lockThresholds').checked
   }, [copy.buffer]);
 }
-$('btnCount').onclick = () => { cachedMode = null; scaleCache = null; runDetect({ redecide: true }); };
+function forceRecount() {
+  if (!roi) return;
+  cachedMode = null; scaleCache = null; runDetect({ redecide: true });
+}
+$('btnCount').onclick = forceRecount;
+$('btnRecountStage').onclick = forceRecount;
 
 worker.onmessage = e => {
   const m = e.data;
@@ -3000,6 +3099,11 @@ $('upscale').addEventListener('change', () => { cachedMode = null; scaleCache = 
 // neither re-runs the detector; moving them repaints immediately.
 $('markerSize').addEventListener('input', e => {
   $('markerVal').textContent = e.target.value + '%';
+  mergeColonies();
+});
+$('manualSize').addEventListener('input', e => {
+  manualScale = (+e.target.value) / 100;
+  $('manualSizeVal').textContent = e.target.value + '%';
   mergeColonies();
 });
 $('confCut').addEventListener('input', e => {
@@ -3216,6 +3320,7 @@ function unmute(id) { $(id).classList.remove('muted'); }
 function refreshUI() {
   const has = !!roi;
   $('mAdd').disabled = !has; $('mRemove').disabled = !has;
+  $('btnRecountStage').disabled = !has;
   $('roiTag').textContent = !roi ? '' :
     (roi.shape === 'circle' ? 'circle r=' + Math.round(roi.r) + ' px' : 'box ' + Math.round(roi.w) + '×' + Math.round(roi.h));
   if (!has && (tool === 'add' || tool === 'remove')) setTool('select');
@@ -3223,6 +3328,13 @@ function refreshUI() {
   refreshCount();
   draw();
 }
+
+function setAdjustPanel(on) {
+  $('adjustPanel').classList.toggle('show', on);
+  $('btnAdjustToggle').setAttribute('aria-pressed', String(on));
+}
+$('btnAdjustToggle').onclick = () => setAdjustPanel(!$('adjustPanel').classList.contains('show'));
+$('btnAdjustClose').onclick = () => setAdjustPanel(false);
 
 $('btnHelp').onclick = () => $('kbdHelp').classList.add('on');
 $('kbdHelp').onclick = e => { if (e.target === $('kbdHelp')) $('kbdHelp').classList.remove('on'); };
@@ -3235,6 +3347,7 @@ window.addEventListener('keydown', e => {
   if (e.key === '?' ) { $('kbdHelp').classList.add('on'); return; }
   if (e.key === 'Escape') {
     $('kbdHelp').classList.remove('on');
+    setAdjustPanel(false);
     if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; draw(); }
     return;
   }
@@ -3246,7 +3359,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'f') fitView();
   else if (k === '+' || k === '=') zoomAt(1.25, viewport.clientWidth / 2, viewport.clientHeight / 2);
   else if (k === '-') zoomAt(1 / 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2);
-  else if (e.key === 'Enter' && roi) { cachedMode = null; runDetect({ redecide: true }); }
+  else if (e.key === 'Enter' && roi) forceRecount();
 });
 window.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = false; });
 

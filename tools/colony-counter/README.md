@@ -12,6 +12,9 @@ What it does:
 - **Rejects plate furniture** — the dish wall, condensation rings, scratches and marker strokes — before it can be counted or mistaken for a clump.
 - **Colour-codes what it found** — green for confident, amber for anything worth a second look, vermillion for an estimated clump, black for marks you placed yourself. On deliberately hard test plates the score flagged every object the detector got wrong and nothing on the plates it got right.
 - **Boosts low-resolution plates** — below about three pixels of colony radius it resamples onto a finer grid, which took ten touching pairs from 40 of 50 correctly resolved to 50 of 50. It adds no detail the camera did not record.
+- **Recounts on its own** whenever anything that changes what's measured changes — brightness, contrast, gamma, local contrast, or the plate area — after you stop dragging. There's also a recount button that's always visible next to the colony count, so it never needs a trip back to the panel.
+- **Lets you add or remove with one click** — while placing colonies by hand, clicking an existing mark removes it instead of adding a duplicate on top, so switching tools mid-correction is rarely needed. A dedicated Remove tool is still there for rapid-fire cleanup.
+- **Two independent size controls** — one scales the circles drawn on colonies the detector found, the other (on the stage, next to the Add tool) sets the size of the mark your own click leaves.
 - **Keeps your manual corrections** when you change a setting and re-count, with undo and redo.
 - **Exports** the table as CSV and the marked-up image as a PNG carrying the count, the settings and how many colonies you changed by hand.
 

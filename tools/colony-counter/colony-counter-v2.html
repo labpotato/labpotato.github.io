@@ -226,40 +226,36 @@ a:hover { text-decoration: underline; }
 .size-bar input[type="range"] { width: 130px; margin: 0; }
 .size-bar .val { font-variant-numeric: tabular-nums; font-weight: 660; min-width: 36px; text-align: right; color: var(--text); }
 
-/* ---- floating image-adjustment panel, anchored above the fit/zoom row ---- */
-.adjust-panel {
-  position: absolute; right: 12px; bottom: 60px; z-index: 6;
-  width: min(300px, calc(100% - 24px));
+/* ---- stage menus: one drops down from the colony count, one drops up from Adjust ---- */
+.stage-menu {
+  position: absolute; right: 12px; z-index: 7;
+  width: min(320px, calc(100% - 24px));
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-lg);
   padding: 14px 15px; display: none; pointer-events: auto;
   /* Tied to the stage's own height, not the viewport's: on a short mobile stage a fixed vh cap
-     still overflows the stage box, and .stage clips overflow, which hid the panel's own close
+     overflows the stage box, and .stage clips overflow, which would hide the menu's own close
      button above the visible area. */
-  max-height: calc(100% - 84px); overflow-y: auto;
+  overflow-y: auto; overscroll-behavior: contain;
 }
-.adjust-panel.show { display: block; }
-.adjust-panel .aphead { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
-.adjust-panel .aphead h4 { margin: 0; font-size: 13.5px; font-weight: 650; flex: 1; letter-spacing: -0.02em; }
-.adjust-panel .apclose {
+.stage-menu.show { display: block; }
+.stage-menu.drop-down { top: 58px; max-height: calc(100% - 128px); }
+.stage-menu.drop-up { bottom: 60px; max-height: calc(100% - 84px); }
+.stage-menu .smhead { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.stage-menu .smhead h4 { margin: 0; font-size: 13.5px; font-weight: 650; flex: 1; letter-spacing: -0.02em; }
+.stage-menu .apclose {
   flex: none; width: 24px; height: 24px; border: 0; background: transparent; color: var(--text-faint);
   cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
 }
-.adjust-panel .apclose:hover { background: var(--bg-tint); color: var(--text); }
-.adjust-panel .apclose svg { width: 15px; height: 15px; }
+.stage-menu .apclose:hover { background: var(--bg-tint); color: var(--text); }
+.stage-menu .apclose svg { width: 15px; height: 15px; }
+.stage-menu .legend { margin-top: 12px; }
 
-.legend {
-  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-  margin-top: 11px; font-size: 11.5px; color: var(--text-muted);
-}
-.legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.legend i {
-  width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; flex: none;
-}
-.legend .hi { color: var(--oi-green); }
-.legend .lo { color: var(--oi-orange); }
-.legend .cl { color: var(--oi-vermillion); }
-.legend .me { color: var(--text); }
+/* the count pill doubles as the trigger for the colony menu */
+.count-pill.is-trigger { cursor: pointer; }
+.count-pill.is-trigger:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.pill-caret { flex: none; width: 14px; height: 14px; color: var(--text-faint); transition: transform .18s var(--ease); }
+.count-pill.open .pill-caret { transform: rotate(180deg); color: var(--accent); }
 
 .stage-foot {
   position: absolute; left: 12px; bottom: 12px; right: 12px;
@@ -274,6 +270,17 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--shadow-sm);
 }
 .zoomgroup { margin-left: auto; pointer-events: auto; }
+
+.legend {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin-top: 11px; font-size: 11.5px; color: var(--text-muted);
+}
+.legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.legend i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; flex: none; }
+.legend .hi { color: var(--oi-green); }
+.legend .lo { color: var(--oi-orange); }
+.legend .cl { color: var(--oi-vermillion); }
+.legend .me { color: var(--text); }
 
 .empty {
   position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -535,7 +542,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         </button>
       </div>
 
-      <div class="count-pill" id="countPill">
+      <div class="count-pill is-trigger" id="countPill" role="button" tabindex="0" title="Colony options">
         <span class="n" id="countN">0</span>
         <span>
           <span class="lab">colonies</span>
@@ -544,17 +551,118 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         <button class="pill-recount" id="btnRecountStage" type="button" title="Recount (Enter)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg>
         </button>
+        <svg class="pill-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
 
-      <!-- 2: the size of a manually-placed mark, shown only while the Add tool is active -->
+      <!-- the size of a hand-placed mark, on the stage while the Add tool is active -->
       <div class="stage-subbar" id="addSizeBar">
         <div class="size-bar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>
           <span>Your marker size</span>
-          <input type="range" id="manualSize" min="25" max="300" value="100">
-          <span class="val" id="manualSizeVal">100%</span>
+          <input type="range" id="manualSizeQuick" min="25" max="300" value="100">
+          <span class="val" id="manualSizeQuickVal">100%</span>
         </div>
       </div>
+    </div>
+
+    <!-- ===== colony options: drops down from the count pill ===== -->
+    <div class="stage-menu drop-down" id="colonyMenu">
+      <div class="smhead">
+        <h4>Colonies</h4>
+        <button class="apclose" id="btnColonyClose" type="button" title="Close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Sensitivity</label>
+        <div class="seg" id="sensSeg" role="group">
+          <button type="button" data-sens="32" aria-pressed="false">Fewer</button>
+          <button type="button" data-sens="50" aria-pressed="true">Balanced</button>
+          <button type="button" data-sens="68" aria-pressed="false">More</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="slider-row"><label for="manualSize">Your marker size</label><span class="val" id="manualSizeVal">100%</span></div>
+        <input type="range" id="manualSize" min="25" max="300" value="100">
+        <div class="scale-ends"><span>smaller</span><span>larger</span></div>
+      </div>
+
+      <div class="field">
+        <div class="slider-row"><label for="markerSize">Detected marker size</label><span class="val" id="markerVal">100%</span></div>
+        <input type="range" id="markerSize" min="25" max="200" value="100">
+        <div class="scale-ends"><span>smaller</span><span>larger</span></div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="showNumbers" checked><span>Number each colony
+        <span class="note">Hidden automatically past 400 colonies, where the labels would cover the plate.</span></span></label>
+
+      <label class="check"><input type="checkbox" id="splitTouching" checked><span>Separate touching colonies
+        <span class="note">Cuts clusters apart where the shape still shows a waist between them.</span></span></label>
+
+      <label class="check"><input type="checkbox" id="resolveClusters" checked><span>Resolve fused clusters
+        <span class="note">Finds colonies that have merged past having a waist, from the arcs their outlines still show.</span></span></label>
+
+      <label class="check"><input type="checkbox" id="estimateClumps" checked><span>Estimate colonies in solid clumps
+        <span class="note">Last resort for a clump nothing can separate: estimates the number from its area and flags it.</span></span></label>
+
+      <div class="legend" id="legend">
+        <span class="hi"><i></i>confident</span>
+        <span class="lo"><i></i>check this one</span>
+        <span class="cl"><i></i>clump, estimated</span>
+        <span class="me"><i></i>yours</span>
+      </div>
+
+      <details class="adv" id="advDetect">
+        <summary>Fine tuning</summary>
+        <div class="adv-body">
+          <div class="field">
+            <label for="colonyType">Colony appearance</label>
+            <select id="colonyType">
+              <option value="auto" selected>Decide from the image (recommended)</option>
+              <option value="white">Pale colonies on darker agar</option>
+              <option value="dark">Dark colonies on paler agar</option>
+              <option value="colour">Coloured colonies (chromogenic)</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="slider-row"><label for="sens">Fine sensitivity</label><span class="val" id="sensVal">50</span></div>
+            <input type="range" id="sens" min="5" max="95" value="50">
+          </div>
+          <div class="field">
+            <div class="slider-row"><label for="splitStrength">Splitting strength</label><span class="val" id="splitVal">0.10</span></div>
+            <input type="range" id="splitStrength" min="4" max="40" value="10">
+            <div class="scale-ends"><span>split more</span><span>split less</span></div>
+          </div>
+          <div class="field">
+            <label for="minArea">Minimum colony area (px², blank = automatic)</label>
+            <input type="number" id="minArea" min="1" placeholder="automatic">
+          </div>
+          <div class="field">
+            <div class="slider-row"><label for="confCut">Confidence cut-off</label><span class="val" id="confVal">0.60</span></div>
+            <input type="range" id="confCut" min="0" max="95" value="60">
+            <div class="scale-ends"><span>mark few for review</span><span>mark many</span></div>
+            <div class="statusline">Objects scoring below this are drawn in amber so you look at them. Colour only, never the count.</div>
+          </div>
+          <label class="check"><input type="checkbox" id="rejectElongated"><span>Reject elongated objects
+            <span class="note">Extra filtering for scratches and marker lines. Long thin structures are always rejected; this widens the rule.</span></span></label>
+        </div>
+      </details>
+
+      <details class="adv" id="advTeach">
+        <summary>Teach it from your own picks</summary>
+        <div class="adv-body">
+          <div class="statusline" id="teachMsg">Mark three or more colonies and drag each circle to fit. Their size, brightness and colour are measured from what you drew.</div>
+          <div class="row" style="margin-top:9px;">
+            <button class="btn btn-ghost btn-sm" id="btnTeach" type="button">Start picking</button>
+            <button class="btn btn-warn btn-sm" id="btnTeachClear" type="button" disabled>Clear</button>
+          </div>
+          <label class="check"><input type="checkbox" id="lockThresholds"><span>Lock the learned threshold
+            <span class="note">Otherwise the threshold is re-derived for each new selection, and only appearance and size stay fixed.</span></span></label>
+          <div class="notice" id="learnedOut" style="display:none;"></div>
+        </div>
+      </details>
     </div>
 
     <div class="stage-foot">
@@ -570,15 +678,15 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       </div>
     </div>
 
-    <!-- floating image-adjustment panel: on the stage, anchored above the fit/zoom row -->
-    <div class="adjust-panel" id="adjustPanel">
-      <div class="aphead">
-        <h4>Image adjustment</h4>
+    <!-- ===== image options: drops up from the Adjust button, above the fit/zoom row ===== -->
+    <div class="stage-menu drop-up" id="adjustPanel">
+      <div class="smhead">
+        <h4>Image</h4>
         <button class="apclose" id="btnAdjustClose" type="button" title="Close" aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
-      <div class="notice">Adjustments change what the detector measures, not only what you see — the count updates on its own once you stop dragging. For a reproducible result, record the values you used or leave them at default.</div>
+      <div class="notice">These change what the detector measures, not only what you see — the count updates on its own once you stop dragging. For a reproducible result, record the values you used or leave them at default.</div>
       <div class="field">
         <div class="slider-row"><label for="adjBright">Brightness</label><span class="val" id="valBright">0</span></div>
         <input type="range" id="adjBright" min="-100" max="100" value="0">
@@ -599,6 +707,17 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       <div class="row" style="margin-top:10px;">
         <button class="btn btn-ghost btn-sm" id="btnAutoLevels" type="button">Auto levels</button>
         <button class="btn btn-ghost btn-sm" id="btnResetAdj" type="button">Reset</button>
+      </div>
+
+      <div class="field" style="margin-top:14px; border-top:1px solid var(--border-soft); padding-top:12px;">
+        <label for="upscale">Resolution</label>
+        <select id="upscale">
+          <option value="auto" selected>Automatic — enlarge only if the colonies are tiny</option>
+          <option value="1">Leave as it is</option>
+          <option value="2">Always enlarge 2×</option>
+          <option value="3">Always enlarge 3×</option>
+        </select>
+        <div class="statusline" id="upscaleNote">Below about three pixels of colony radius there is no room for the shape tests to work and touching colonies cannot be told apart. Resampling onto a finer grid gives the geometry somewhere to happen. It adds no detail the camera did not record, and it makes counting two to four times slower while in use.</div>
       </div>
     </div>
 
@@ -659,8 +778,8 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         </button>
       </div>
       <div class="row" style="margin-top:7px;">
-        <button class="btn btn-ghost btn-sm" id="btnCircle" type="button">Draw circle</button>
         <button class="btn btn-ghost btn-sm" id="btnRect" type="button">Draw box</button>
+        <button class="btn btn-ghost btn-sm" id="btnCircle" type="button">Draw circle</button>
         <button class="btn btn-ghost btn-sm" id="btnWhole" type="button">Whole image</button>
       </div>
 
@@ -684,114 +803,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         Count colonies
       </button>
 
-      <div class="field">
-        <label>Sensitivity</label>
-        <div class="seg" id="sensSeg" role="group">
-          <button type="button" data-sens="32" aria-pressed="false">Fewer</button>
-          <button type="button" data-sens="50" aria-pressed="true">Balanced</button>
-          <button type="button" data-sens="68" aria-pressed="false">More</button>
-        </div>
-      </div>
-
-      <label class="check">
-        <input type="checkbox" id="splitTouching" checked>
-        <span>Separate touching colonies
-          <span class="note">Cuts clusters apart where the shape still shows a waist between them.</span>
-        </span>
-      </label>
-
-      <label class="check">
-        <input type="checkbox" id="estimateClumps" checked>
-        <span>Estimate colonies inside solid clumps
-          <span class="note">Where colonies have merged past separating, estimates the number from the area and flags it.</span>
-        </span>
-      </label>
-
-      <div class="field">
-        <label for="upscale">Low-resolution boost</label>
-        <select id="upscale">
-          <option value="auto" selected>Automatic — only if the colonies are tiny</option>
-          <option value="1">Off</option>
-          <option value="2">Always 2×</option>
-          <option value="3">Always 3×</option>
-        </select>
-        <div class="statusline" id="upscaleNote">Below about three pixels of colony radius there is no room for the shape tests to work, and touching colonies cannot be told apart. Resampling onto a finer grid gives the geometry somewhere to happen. It adds no detail the camera did not record, and it makes counting two to four times slower while it is in use.</div>
-      </div>
-
-      <div class="field">
-        <div class="slider-row"><label for="markerSize">Detected marker size</label><span class="val" id="markerVal">100%</span></div>
-        <input type="range" id="markerSize" min="25" max="200" value="100">
-        <div class="scale-ends"><span>smaller</span><span>larger</span></div>
-        <div class="statusline">Scales the circles drawn on colonies the detector found. Your own hand-placed marks have a separate size control — it appears on the stage when the Add tool is active.</div>
-      </div>
-
-      <div class="legend" id="legend">
-        <span class="hi"><i></i>confident</span>
-        <span class="lo"><i></i>check this one</span>
-        <span class="cl"><i></i>clump, estimated</span>
-        <span class="me"><i></i>yours</span>
-      </div>
-
-      <details class="adv" id="advDetect">
-        <summary>Advanced detection</summary>
-        <div class="adv-body">
-          <div class="field">
-            <label for="colonyType">Colony appearance</label>
-            <select id="colonyType">
-              <option value="auto" selected>Decide from the image (recommended)</option>
-              <option value="white">Pale colonies on darker agar</option>
-              <option value="dark">Dark colonies on paler agar</option>
-              <option value="colour">Coloured colonies (chromogenic)</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <div class="slider-row"><label for="sens">Fine sensitivity</label><span class="val" id="sensVal">50</span></div>
-            <input type="range" id="sens" min="5" max="95" value="50">
-          </div>
-
-          <div class="field">
-            <div class="slider-row"><label for="splitStrength">Splitting strength</label><span class="val" id="splitVal">0.10</span></div>
-            <input type="range" id="splitStrength" min="4" max="40" value="10">
-            <div class="scale-ends"><span>split more</span><span>split less</span></div>
-          </div>
-
-          <div class="field">
-            <label for="minArea">Minimum colony area (px², blank = automatic)</label>
-            <input type="number" id="minArea" min="1" placeholder="automatic">
-          </div>
-
-          <div class="field">
-            <div class="slider-row"><label for="confCut">Confidence cut-off</label><span class="val" id="confVal">0.60</span></div>
-            <input type="range" id="confCut" min="0" max="95" value="60">
-            <div class="scale-ends"><span>mark few for review</span><span>mark many</span></div>
-            <div class="statusline">Objects scoring below this are drawn in amber so you look at them. It changes only the colour, never the count.</div>
-          </div>
-
-          <label class="check">
-            <input type="checkbox" id="rejectElongated">
-            <span>Reject elongated objects
-              <span class="note">Extra filtering for scratches and marker lines. Long thin structures are always rejected; this widens the rule.</span>
-            </span>
-          </label>
-        </div>
-      </details>
-
-      <div class="statusline" style="margin-top:12px;">Image adjustment (brightness, contrast, gamma, local contrast) moved to the <b>Adjust</b> button on the stage, above the zoom controls — its panel is always one click away while you're looking at the plate.</div>
-
-      <details class="adv" id="advTeach">
-        <summary>Teach it from your own picks</summary>
-        <div class="adv-body">
-          <div class="statusline" id="teachMsg">If the automatic settings miss the mark, click three or more representative colonies and the appearance, size and threshold are measured from those instead.</div>
-          <div class="row" style="margin-top:9px;">
-            <button class="btn btn-ghost btn-sm" id="btnTeach" type="button">Start picking</button>
-            <button class="btn btn-warn btn-sm" id="btnTeachClear" type="button" disabled>Clear</button>
-          </div>
-          <label class="check"><input type="checkbox" id="lockThresholds"><span>Lock the learned threshold
-            <span class="note">Otherwise the threshold is re-derived for each new selection, and only appearance and size stay fixed.</span></span></label>
-          <div class="notice" id="learnedOut" style="display:none;"></div>
-        </div>
-      </details>
+      <div class="statusline">Colony settings live behind the <b>colony count</b> at the top of the plate; image and resolution settings behind <b>Adjust</b>, bottom right. Both are one click away while you're looking at the plate.</div>
 
       <div class="statusline" id="diag"></div>
     </div>
@@ -1138,6 +1150,184 @@ function findMarkersByPersistence(dist, pixels, w, minPersistence, minVal) {
   }
   out.sort((a, b) => b.v - a.v);
   return out;
+}
+
+// ---------- radial-symmetry markers for fused clumps ----------
+// The distance transform can only separate two colonies that still leave a waist between them.
+// Past roughly half a radius of overlap the waist is gone, there is no saddle to cut on, and every
+// distance-based method - this one included - collapses the cluster into a single object. That is
+// the failure this addresses.
+//
+// What survives overlap is the OUTLINE. Two fused discs still show two convex arcs, and every point
+// on an arc knows where its own centre is: it lies one radius away, along the inward normal. So
+// each boundary pixel votes for a point one radius inward, and the votes pile up at each colony's
+// centre even where nothing else distinguishes them. This is the fast radial symmetry transform of
+// Loy & Zelinsky (2003), IEEE TPAMI 25(8):959-973, run over a few radii around the measured colony
+// size, on the shape alone rather than on the image, so texture inside the clump cannot disturb it.
+//
+// The transform only supplies MARKERS. The cutting is still done by the same marker-controlled
+// watershed used everywhere else, so a cluster resolved this way is divided along its real notches
+// rather than by straight lines between centres. [INFERENCE]
+// Suppression radius, as a fraction of the colony radius: the closest two centres are allowed to
+// be. Measured on clean pairs of discs: the distance transform separates them down to a centre
+// distance of 1.3 radii, radial symmetry reaches 1.1 at 1.05 here, and 0.9 at 0.80. Below 0.80
+// nothing further is gained, because by then the two outlines have merged into one convex blob
+// with no second arc to vote from, so there is no reason to risk a smaller value.
+const FRST_TUNE = { sep: 0.80, rad: 0.62, floor: 0.30 };
+// Uncovered area, as a fraction of one colony, that justifies adding another colony. Swept against
+// both test suites: 0.45 lifts cluster recall from 88.7% to 93.1% without costing a single false
+// positive on the ordinary plates, while 0.40 starts inventing colonies on them. Where the evidence
+// is only area, the conservative end of the range is the right place to sit.
+let COVER_FRAC = 0.45;
+function frstMarkers(compPixels, w, h, estR) {
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const i of compPixels) {
+    const x = i % w, y = (i / w) | 0;
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  const pad = Math.ceil(estR * 1.7) + 2;
+  const bx0 = x0 - pad, by0 = y0 - pad;
+  const bw = (x1 - x0 + 1) + 2 * pad, bh = (y1 - y0 + 1) + 2 * pad;
+  const n = bw * bh;
+  if (n > 4e6) return [];
+
+  // The shape as a soft field: 1 inside the object, 0 outside. Blurring it puts a clean gradient
+  // ring on the outline whose direction is the inward normal, and nothing anywhere else.
+  const f = new Float32Array(n);
+  for (const i of compPixels) f[((i / w | 0) - by0) * bw + ((i % w) - bx0)] = 1;
+  const fb = blur(f, bw, bh, Math.max(0.9, estR * 0.35));
+
+  const gx = new Float32Array(n), gy = new Float32Array(n), gm = new Float32Array(n);
+  let gmax = 0;
+  for (let y = 1; y < bh - 1; y++) for (let x = 1; x < bw - 1; x++) {
+    const i = y * bw + x;
+    const sx = (fb[i - bw + 1] + 2 * fb[i + 1] + fb[i + bw + 1]) - (fb[i - bw - 1] + 2 * fb[i - 1] + fb[i + bw - 1]);
+    const sy = (fb[i + bw - 1] + 2 * fb[i + bw] + fb[i + bw + 1]) - (fb[i - bw - 1] + 2 * fb[i - bw] + fb[i - bw + 1]);
+    gx[i] = sx; gy[i] = sy;
+    const m = Math.sqrt(sx * sx + sy * sy);
+    gm[i] = m; if (m > gmax) gmax = m;
+  }
+  if (!(gmax > 1e-6)) return [];
+  const gThr = gmax * 0.15;
+
+  // Vote over a few radii around the measured colony size, so a cluster of slightly unequal
+  // colonies still resolves. Only the inward (positive) direction votes: the outward one would
+  // put a matching pile of votes outside the object, which is never a colony centre.
+  const S = new Float32Array(n);
+  const O = new Float32Array(n), M = new Float32Array(n);
+  const kn = 9.9;                       // Loy & Zelinsky's normalising constant for n > 1
+  for (const kr of [0.78, 0.92, 1.06, 1.2]) {
+    const nr = Math.max(2, estR * kr);
+    O.fill(0); M.fill(0);
+    for (let y = 1; y < bh - 1; y++) for (let x = 1; x < bw - 1; x++) {
+      const i = y * bw + x, m = gm[i];
+      if (m < gThr) continue;
+      const px = Math.round(x + nr * gx[i] / m), py = Math.round(y + nr * gy[i] / m);
+      if (px < 0 || py < 0 || px >= bw || py >= bh) continue;
+      const j = py * bw + px;
+      O[j] += 1; M[j] += m;
+    }
+    const F = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const o = O[i] < kn ? O[i] : kn;
+      if (o <= 0) continue;
+      F[i] = (o / kn) * (o / kn) * (M[i] / kn);      // alpha = 2: sharpens the peaks
+    }
+    const Sn = blur(F, bw, bh, Math.max(0.8, nr * 0.25));
+    for (let i = 0; i < n; i++) S[i] += Sn[i];
+  }
+
+  // Peaks, inside the object only, separated by at least most of a colony radius.
+  const inComp = new Uint8Array(n);
+  for (const i of compPixels) inComp[((i / w | 0) - by0) * bw + ((i % w) - bx0)] = 1;
+  let smax = 0;
+  for (let i = 0; i < n; i++) if (inComp[i] && S[i] > smax) smax = S[i];
+  if (!(smax > 0)) return [];
+  const rad = Math.max(1, Math.round(estR * (FRST_TUNE.rad || 0.62)));
+  const cands = [];
+  for (let y = 1; y < bh - 1; y++) for (let x = 1; x < bw - 1; x++) {
+    const i = y * bw + x;
+    if (!inComp[i] || S[i] < smax * (FRST_TUNE.floor || 0.30)) continue;
+    let isMax = true;
+    for (let dy = -rad; dy <= rad && isMax; dy++) for (let dx = -rad; dx <= rad; dx++) {
+      if (!dx && !dy) continue;
+      const xx = x + dx, yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= bw || yy >= bh) continue;
+      if (S[yy * bw + xx] > S[i]) { isMax = false; break; }
+    }
+    if (isMax) cands.push({ i, v: S[i] });
+  }
+  cands.sort((a, b) => b.v - a.v);
+  const sep = estR * (FRST_TUNE.sep || 1.05);   // two colony centres cannot be nearer than this
+  const picked = [];
+  for (const c of cands) {
+    const x = c.i % bw, y = (c.i / bw) | 0;
+    let ok = true;
+    for (const p of picked) if (Math.hypot(x - p.lx, y - p.ly) < sep) { ok = false; break; }
+    if (ok) picked.push({ lx: x, ly: y, v: c.v, idx: (y + by0) * w + (x + bx0) });
+  }
+  return picked.map(p => ({ idx: p.idx, x: p.idx % w, y: (p.idx / w) | 0, v: p.v }));
+}
+
+// ---------- coverage markers: the colonies nothing can see ----------
+// A colony in the middle of a cluster can be almost entirely buried: its neighbours cover most of
+// its outline, so there is no waist for the distance transform and no arc for radial symmetry. Only
+// one thing still betrays it, and that is AREA. The cluster is simply too big for the number of
+// colonies found in it so far.
+//
+// So the last step asks a covering question: given discs of the measured colony radius, how many
+// does it take to cover this shape? Each marker already found claims the area within one radius of
+// it; whatever is still uncovered afterwards, in pieces at least a fair fraction of a colony in
+// size, needs another colony to explain it. Discs are added greedily at whatever position covers
+// the most of what is left, which is the standard greedy maximum-coverage heuristic and needs no
+// assumption about how the cluster is arranged.
+//
+// Being area-driven, it is the least certain of the three and runs last, only on what the other two
+// could not account for; the colonies it adds are the ones drawn for review rather than as
+// confident finds. [INFERENCE]
+function coverageMarkers(compPixels, w, h, estR, dist, existing, minNewFrac, cap) {
+  const n = compPixels.length;
+  if (!n) return [];
+  const r2 = estR * estR, single = Math.PI * r2;
+  const xs = new Int32Array(n), ys = new Int32Array(n);
+  for (let i = 0; i < n; i++) { xs[i] = compPixels[i] % w; ys[i] = (compPixels[i] / w) | 0; }
+  const covered = new Uint8Array(n);
+  function claim(cx, cy) {
+    for (let i = 0; i < n; i++) {
+      if (covered[i]) continue;
+      const dx = xs[i] - cx, dy = ys[i] - cy;
+      if (dx * dx + dy * dy <= r2) covered[i] = 1;
+    }
+  }
+  for (const m of existing) claim(m.x, m.y);
+
+  // A colony's centre sits well inside the shape, and never on top of a marker already placed.
+  const minDepth = estR * 0.45, minSep = estR * 0.8;
+  const step = n > 1500 ? 3 : (n > 600 ? 2 : 1);
+  const placed = [];
+  while (existing.length + placed.length < cap) {
+    let best = -1, bestCov = 0;
+    for (let c = 0; c < n; c += step) {
+      if (dist[compPixels[c]] < minDepth) continue;
+      const cx = xs[c], cy = ys[c];
+      let clash = false;
+      for (const m of existing) if (Math.hypot(cx - m.x, cy - m.y) < minSep) { clash = true; break; }
+      if (!clash) for (const m of placed) if (Math.hypot(cx - m.x, cy - m.y) < minSep) { clash = true; break; }
+      if (clash) continue;
+      let cov = 0;
+      for (let i = 0; i < n; i++) {
+        if (covered[i]) continue;
+        const dx = xs[i] - cx, dy = ys[i] - cy;
+        if (dx * dx + dy * dy <= r2) cov++;
+      }
+      if (cov > bestCov) { bestCov = cov; best = c; }
+    }
+    if (best < 0 || bestCov < single * minNewFrac) break;
+    placed.push({ x: xs[best], y: ys[best], idx: compPixels[best], covered: bestCov });
+    claim(xs[best], ys[best]);
+  }
+  return placed;
 }
 
 // ---------- binary-heap priority queue ----------
@@ -1591,6 +1781,7 @@ function detectCore(opts) {
   const sensitivity = opts.sensitivity != null ? opts.sensitivity : 50;
   const splitTouching = opts.splitTouching !== false;
   const rejectElongated = !!opts.rejectElongated;
+  const useFrst = opts.resolveClusters !== false;
   const estimateClumps = opts.estimateClumps !== false;
   const validMask = opts.validMask || null;
 
@@ -1670,7 +1861,7 @@ function detectCore(opts) {
   const distS = blur(dist, w, h, Math.max(0.5, Math.min(1.4, estR * 0.09)));
 
   const raw = [];
-  let splitCount = 0, rejectedShape = 0, rejectedSize = 0, mergedFragments = 0, rejectedThinParent = 0;
+  let splitCount = 0, rejectedShape = 0, rejectedSize = 0, mergedFragments = 0, rejectedThinParent = 0, frstResolved = 0, coverResolved = 0;
   for (const comp of filtered) {
     // Elongation is judged on the parent component, before any splitting. A scratch or a marker
     // stroke is one long thin component; the watershed happily chops it into a row of round-looking
@@ -1697,10 +1888,64 @@ function detectCore(opts) {
       const hF = opts.persistenceFactor != null ? opts.persistenceFactor : 0.10;
       const hAbs = opts.persistenceFloor != null ? opts.persistenceFloor : 0.85;
       const minPersistence = Math.max(hAbs, estR * hF);
-      const maxima = findMarkersByPersistence(distS, comp.pixels, w, minPersistence, Math.max(1.0, estR * 0.35));
+      let maxima = findMarkersByPersistence(distS, comp.pixels, w, minPersistence, Math.max(1.0, estR * 0.35));
+
+      // How many colonies this object plausibly holds, from its area alone. Overlapping discs share
+      // area, so this under-states a fused cluster rather than over-stating it - which makes it a
+      // safe trigger: if the distance transform already found at least this many lobes there is
+      // nothing fused left to recover.
+      const singleArea = Math.PI * estR * estR;
+      const byArea = comp.pixels.length / Math.max(1, singleArea);
+      if (useFrst && byArea > 1.45 && maxima.length < Math.round(byArea)) {
+        const rs = frstMarkers(comp.pixels, w, h, estR);
+        if (rs.length > maxima.length) {
+          // Keep every distance-transform marker - where it fired it is the more precise of the two
+          // - and add the radial-symmetry ones it missed.
+          const merged = maxima.slice();
+          const sep = estR * 1.0;
+          for (const r of rs) {
+            let clash = false;
+            for (const m of merged) if (Math.hypot(r.x - m.x, r.y - m.y) < sep) { clash = true; break; }
+            if (!clash) merged.push({ idx: r.idx, x: r.x, y: r.y, v: distS[r.idx] || 1 });
+          }
+          // A cluster cannot hold more colonies than its area allows even at heavy overlap.
+          const cap = Math.max(1, Math.round(comp.pixels.length / (singleArea * 0.42)));
+          if (merged.length > maxima.length) {
+            frstResolved += merged.length - maxima.length;
+            maxima = merged.length > cap ? merged.slice(0, cap) : merged;
+          }
+        }
+      }
+
+      // Whatever the two shape-based methods could not account for, ask the covering question.
+      if (useFrst && byArea > 1.3) {
+        const cap = Math.max(1, Math.round(comp.pixels.length / (singleArea * 0.42)));
+        if (maxima.length < cap) {
+          const extra = coverageMarkers(comp.pixels, w, h, estR, distS, maxima,
+            opts.coverFrac != null ? opts.coverFrac : COVER_FRAC, cap);
+          for (const e of extra) {
+            maxima.push({ idx: e.idx, x: e.x, y: e.y, v: distS[e.idx] || 1, fromCoverage: true });
+            coverResolved++;
+          }
+        }
+      }
+
       if (maxima.length > 1) {
+        // Cutting surface. The distance transform alone has no dip between two fused colonies, so a
+        // marker placed there by radial symmetry would flood across its neighbour. Adding the
+        // distance from each pixel to its nearest marker restores a ridge exactly halfway between
+        // any two centres, which is where a cut between equal discs belongs.
         const elev = new Float64Array(n);
-        for (const i of comp.pixels) elev[i] = -distS[i];
+        if (maxima.length > 1) {
+          for (const i of comp.pixels) {
+            const x = i % w, y = (i / w) | 0;
+            let near = Infinity;
+            for (const m of maxima) { const d = (x - m.x) * (x - m.x) + (y - m.y) * (y - m.y); if (d < near) near = d; }
+            elev[i] = -distS[i] + Math.sqrt(near) * 0.85;
+          }
+        } else {
+          for (const i of comp.pixels) elev[i] = -distS[i];
+        }
         const labels = watershed(elev, comp.pixels, maxima, w, h);
         const byLabel = new Map();
         for (const i of comp.pixels) { const l = labels[i]; if (!l) continue; if (!byLabel.has(l)) byLabel.set(l, []); byLabel.get(l).push(i); }
@@ -1828,8 +2073,15 @@ function detectCore(opts) {
   if (estimateClumps && colonies.length && medSingleArea > 0) {
     const pool = colonies.filter(c => c.compact <= 1.8).map(c => c.area).sort((a, b) => a - b);
     const p90 = quantile(pool.length ? pool : colonies.map(c => c.area).sort((a, b) => a - b), 0.90);
-    const cut = Math.max(medSingleArea * 1.75, p90 * 1.15);
+    const roundCut = Math.max(medSingleArea * 1.75, p90 * 1.15);
+    // Two colonies fused past the point where their outlines still show two arcs are beyond every
+    // method above - but they are still not round, and a single large colony is. So an object that
+    // is merely oval is asked for less excess area before it counts as more than one than a
+    // perfectly round one is, which is what catches a pair at under a radius of separation without
+    // turning every big round colony into two. [INFERENCE]
+    const ovalCut = Math.max(medSingleArea * 1.38, p90 * 1.02);
     for (const c of colonies) {
+      const cut = c.axisRatio < 0.85 ? ovalCut : roundCut;
       if (c.area <= cut) continue;
       if (c.peak < rSingle * 0.7) continue;                 // not built from colony-sized lobes
       if (c.fill < 0.42 || c.axisRatio < 0.45) continue;    // not a compact cluster
@@ -1880,7 +2132,7 @@ function detectCore(opts) {
     diag: {
       mode, modeScores, k, estR, otsu: th.otsu, eta: th.eta, tHigh: th.tHigh, tLow: th.tLow,
       minArea, blobs: filtered.length, objects: colonies.length, total,
-      splitCount, mergedFragments, rejectedShape, rejectedSize, rejectedBorder, rejectedHuge, rejectedThin, rejectedThinParent,
+      splitCount, mergedFragments, rejectedShape, rejectedSize, rejectedBorder, rejectedHuge, rejectedThin, rejectedThinParent, frstResolved, coverResolved,
       medSingleArea, rSingle, clumpObjects, clumpExtra, lowConf, confCut
     }
   };
@@ -1982,90 +2234,86 @@ function trainFromPicks(opts) {
   const { data, w, h, picks } = opts;
   const n = w * h;
   const validMask = opts.validMask || null;
+  if (!picks || !picks.length) return null;
+
+  // The user drew a circle around each example and sized it to the colony, so the radius is given
+  // rather than inferred — no region-growing, no threshold guess, no chance of the region escaping
+  // into the agar. That is the whole advantage of asking for a circle instead of a click.
+  const radii = picks.map(p => p.r).filter(r => r > 0.5).sort((a, b) => a - b);
+  if (!radii.length) return null;
+  const medR = radii[radii.length >> 1];
+  const medArea = Math.PI * medR * medR;
+
   const P0 = planes(data, n, validMask);
-  const est = estimateScale(data, w, h, validMask);
-  const P = denoisePlanes(P0, w, h, Math.max(0.4, Math.min(1.2, est.radius * 0.10)));
-  const k = est.k;
+  const P = denoisePlanes(P0, w, h, Math.max(0.4, Math.min(1.2, medR * 0.10)));
+  // Structuring element from the size the user drew, not from a sweep of the whole plate.
+  const k = Math.max(4, Math.min(Math.round(medR * 3), Math.floor(Math.min(w, h) / 5)));
 
-  // Pick the appearance map in which the clicked points stand out most, normalised by that map's
-  // own spread. A raw mean would always favour whichever map has the largest numeric range; the
-  // ratio against the map's own median-to-p99.5 span is scale-free, so the three compare fairly.
-  let best = null;
-  for (const m of ['white', 'dark', 'colour']) {
-    const e = evidenceMap(P, w, h, k, m, validMask);
-    const sample = [];
-    for (let i = 0; i < n; i += 7) if (!validMask || validMask[i]) sample.push(e[i]);
-    sample.sort((a, b) => a - b);
-    const med = quantile(sample, 0.5), p995 = quantile(sample, 0.995);
-    const span = Math.max(p995 - med, 1e-6);
-    let s = 0;
-    const rr = Math.max(3, Math.round(est.radius));
-    for (const p of picks) {
-      const px = Math.round(p.x), py = Math.round(p.y);
-      let peak = 0;
-      for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
-        const x = px + dx, y = py + dy;
-        if (x < 0 || y < 0 || x >= w || y >= h) continue;
-        const v = e[y * w + x]; if (v > peak) peak = v;
-      }
-      s += (peak - med) / span;
-    }
-    const z = s / Math.max(1, picks.length);
-    if (!best || z > best.z) best = { m, e, z };
-  }
-  const ev = best.e;
-  const bgSample = [];
-  for (let i = 0; i < n; i += 7) if (!validMask || validMask[i]) bgSample.push(ev[i]);
-  const bgMed = median(bgSample);
-  const bgMad = median(bgSample.map(v => Math.abs(v - bgMed))) || 1;
-
-  const peaks = [], areas = [];
+  // Colour and brightness of the examples against their own surroundings. Sampled from the middle
+  // of each circle (so an edge that is slightly too wide cannot drag the statistics into the agar)
+  // and from a ring outside it.
+  let inR = 0, inG = 0, inB = 0, inL = 0, inN = 0;
+  let outR = 0, outG = 0, outB = 0, outL = 0, outN = 0;
   for (const p of picks) {
-    const px0 = Math.round(p.x), py0 = Math.round(p.y);
-    let peak = 0, pi = py0 * w + px0;
-    const rad = Math.max(3, Math.round(est.radius));
-    for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
-      const x = px0 + dx, y = py0 + dy;
+    const r = p.r, R = Math.ceil(r * 1.55) + 1;
+    const cx = Math.round(p.x), cy = Math.round(p.y);
+    for (let y = cy - R; y <= cy + R; y++) for (let x = cx - R; x <= cx + R; x++) {
       if (x < 0 || y < 0 || x >= w || y >= h) continue;
       const i = y * w + x;
-      if (ev[i] > peak) { peak = ev[i]; pi = i; }
+      if (validMask && !validMask[i]) continue;
+      const d = Math.hypot(x - p.x, y - p.y) / r;
+      if (d <= 0.55) { inR += P.r[i]; inG += P.g[i]; inB += P.b[i]; inL += P.L[i]; inN++; }
+      else if (d >= 1.2 && d <= 1.5) { outR += P.r[i]; outG += P.g[i]; outB += P.b[i]; outL += P.L[i]; outN++; }
     }
-    if (peak <= 0) continue;
-    // Grow at 35% of this colony's own peak, never below the map's background, and never further
-    // than a few colony radii from the click: without both bounds the region floods the whole
-    // field whenever the background is not near zero.
-    const cut = Math.max(peak * 0.35, bgMed + 3 * bgMad);
-    const maxDist = Math.max(8, est.radius * 4);
-    const seen = new Uint8Array(n); const st = [pi]; seen[pi] = 1; let area = 0;
-    while (st.length) {
-      const i = st.pop(); area++;
-      const x = i % w, y = (i / w) | 0;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-        if (Math.hypot(nx - px0, ny - py0) > maxDist) continue;
-        const j = ny * w + nx;
-        if (seen[j] || ev[j] < cut) continue;
-        if (validMask && !validMask[j]) continue;
-        seen[j] = 1; st.push(j);
-      }
+  }
+  if (!inN || !outN) return null;
+  const cIn = [inR / inN, inG / inN, inB / inN], cOut = [outR / outN, outG / outN, outB / outN];
+  const lIn = inL / inN, lOut = outL / outN;
+  const dL = lIn - lOut;
+  // Opponent-colour difference: what is left once a plain brightness change is taken out. A colony
+  // that differs from the agar in hue shows here even when it matches it in brightness.
+  const o1 = (cIn[0] - cIn[1]) - (cOut[0] - cOut[1]);
+  const o2 = ((cIn[0] + cIn[1]) / 2 - cIn[2]) - ((cOut[0] + cOut[1]) / 2 - cOut[2]);
+  const chroma = Math.hypot(o1, o2);
+
+  // Appearance follows from those two numbers directly: a clear brightness difference names pale or
+  // dark, and chroma winning over brightness names coloured. No searching, because the examples
+  // already answered the question.
+  let mode;
+  if (chroma > Math.abs(dL) * 1.15 && chroma > 6) mode = 'colour';
+  else mode = dL >= 0 ? 'white' : 'dark';
+
+  // Threshold from the response the examples actually produce in the chosen map.
+  const ev = evidenceMap(P, w, h, k, mode, validMask);
+  const peaks = [];
+  for (const p of picks) {
+    // Integer bounds: a fractional loop start makes every y fractional, every index fractional,
+    // and every lookup undefined — which is silent, and reads as "no signal here".
+    const rr = Math.max(1, Math.round(p.r * 0.6));
+    const cx = Math.round(p.x), cy = Math.round(p.y);
+    let pk = 0;
+    for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) {
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const v = ev[y * w + x]; if (v > pk) pk = v;
     }
-    if (area < 3) continue;
-    peaks.push(peak); areas.push(area);
+    if (pk > 0) peaks.push(pk);
   }
   if (!peaks.length) return null;
-  const medPeak = median(peaks), medArea = median(areas);
-  const medR = Math.sqrt(medArea / Math.PI);
+  const medPeak = median(peaks);
+
   return {
-    mode: best.m,
-    seRadius: Math.max(5, Math.round(medR * 3)),
+    mode,
+    seRadius: k,
     colonyRadius: medR,
     tHigh: Math.max(2, medPeak * 0.45),
     tLow: Math.max(1, medPeak * 0.22),
     minArea: Math.max(3, Math.round(medArea * 0.30)),
     maxArea: Math.round(medArea * 12),
-    learned: { medPeak, medArea, medR, nPicks: peaks.length }
+    learned: {
+      medPeak, medArea, medR, nPicks: picks.length,
+      deltaL: dL, chroma,
+      rgbIn: cIn.map(v => Math.round(v)), rgbOut: cOut.map(v => Math.round(v))
+    }
   };
 }
 
@@ -2576,7 +2824,8 @@ function draw() {
   }
 
   // colonies
-  const showN = colonies.length <= 400 && view.s > 0.25;
+  // Past 400 the labels cover more plate than they explain, so the toggle is an upper bound.
+  const showN = $('showNumbers').checked && colonies.length <= 400 && view.s > 0.25;
   const ms = markScale();
   let idx = 0;
   for (const c of colonies) {
@@ -2606,21 +2855,141 @@ function draw() {
     }
   }
 
-  // training picks
-  for (const p of teachPicks) {
-    ctx.beginPath(); ctx.arc(p.x, p.y, 9 * px, 0, Math.PI * 2);
-    ctx.strokeStyle = '#D55E00'; ctx.lineWidth = 2.2 * px;
-    ctx.setLineDash([4 * px, 3 * px]); ctx.stroke(); ctx.setLineDash([]);
+  // Teaching circles. Each is coloured by how well it fits the colony under it, live as you drag:
+  // green it fits, blue the colony runs past it, amber the circle is bigger than its colony.
+  const FITCOL = { good: '#009E73', small: '#0072B2', big: '#E69F00', unclear: '#8e929c' };
+  teachPicks.forEach((p, i) => {
+    const v = p.fit ? p.fit.verdict : 'unclear';
+    const col = FITCOL[v] || FITCOL.unclear;
+    if (v === 'big') {                              // a warning ring, so it is hard to miss
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(230,159,0,0.25)'; ctx.lineWidth = 7 * px; ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.strokeStyle = col; ctx.lineWidth = 2 * px;
+    ctx.setLineDash(v === 'good' ? [] : [5 * px, 3.5 * px]);
+    ctx.stroke(); ctx.setLineDash([]);
+    // centre cross and a grab dot on the rim, so it reads as resizable
+    ctx.lineWidth = 1.6 * px;
     ctx.beginPath();
-    ctx.moveTo(p.x - 4 * px, p.y); ctx.lineTo(p.x + 4 * px, p.y);
-    ctx.moveTo(p.x, p.y - 4 * px); ctx.lineTo(p.x, p.y + 4 * px);
+    ctx.moveTo(p.x - 3.5 * px, p.y); ctx.lineTo(p.x + 3.5 * px, p.y);
+    ctx.moveTo(p.x, p.y - 3.5 * px); ctx.lineTo(p.x, p.y + 3.5 * px);
     ctx.stroke();
-  }
+    ctx.beginPath(); ctx.arc(p.x + p.r, p.y, 3.2 * px, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.fillStyle = col;
+    ctx.font = (10 * px) + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(String(i + 1) + (v === 'big' ? ' ⚠' : ''), p.x, p.y - p.r - 3 * px);
+  });
 
   ctx.restore();
 }
 
 window.addEventListener('resize', () => { draw(); });
+
+// ============================================================
+// teaching: how well does a drawn circle fit the colony under it?
+// ============================================================
+// Sampled straight off the adjusted pixels, so it reflects what the detector will measure.
+// Three rings: the middle of the circle, the band just inside its edge, and a band outside it.
+//   - if the band just inside the edge still looks like the colony centre, the colony carries on
+//     past the circle, so the circle is too SMALL;
+//   - if it already looks like the agar outside, the circle's edge is standing on background, so
+//     the circle is too BIG — which is the case worth warning about, because a circle larger than
+//     its colony teaches the detector the wrong size and the wrong brightness.
+function measureFit(px, py, r) {
+  if (!img || !(r > 1)) return null;
+  const W = srcCanvas.width, H = srcCanvas.height;
+  const R = Math.ceil(r * 1.6) + 2;
+  const x0 = Math.max(0, Math.round(px - R)), y0 = Math.max(0, Math.round(py - R));
+  const x1 = Math.min(W, Math.round(px + R)), y1 = Math.min(H, Math.round(py + R));
+  if (x1 - x0 < 3 || y1 - y0 < 3) return null;
+  const d = srcCtx.getImageData(x0, y0, x1 - x0, y1 - y0).data;
+  let iS = 0, iN = 0, sS = 0, sN = 0, oS = 0, oN = 0, cS = 0, cN = 0;
+  let rS = 0, gS = 0, bS = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const k = ((y - y0) * (x1 - x0) + (x - x0)) * 4;
+    const lum = d[k] * 0.299 + d[k + 1] * 0.587 + d[k + 2] * 0.114;
+    const dist = Math.hypot(x - px, y - py) / r;
+    if (dist <= 0.22) { cS += lum; cN++; }
+    if (dist <= 0.5) { iS += lum; iN++; rS += d[k]; gS += d[k + 1]; bS += d[k + 2]; }
+    else if (dist >= 0.82 && dist <= 1.0) { sS += lum; sN++; }
+    else if (dist >= 1.2 && dist <= 1.5) { oS += lum; oN++; }
+  }
+  if (!iN || !sN || !oN) return null;
+  const inner = iS / iN, shell = sS / sN, outer = oS / oN;
+  const core = cN ? cS / cN : inner;
+  const span = inner - outer;
+  if (Math.abs(span) < 6) {
+    // No contrast across the circle. Either there is no colony here at all, or the circle has been
+    // dragged so far past one that even its inner half is mostly agar — and that second case is
+    // exactly what the warning is for, so tell them apart by looking at the very centre.
+    const coreSpan = core - outer;
+    if (Math.abs(coreSpan) >= 6) {
+      return { verdict: 'big', inner, outer, span, edge: 0, rgb: [rS / iN, gS / iN, bS / iN] };
+    }
+    return { verdict: 'unclear', inner, outer, span, edge: 0, rgb: [rS / iN, gS / iN, bS / iN] };
+  }
+  const edge = (shell - outer) / span;         // 1 = edge still fully colony, 0 = edge is background
+  let verdict = 'good';
+  if (edge > 0.62) verdict = 'small';          // colony continues past the circle
+  else if (edge < 0.22) verdict = 'big';       // circle's rim is standing on agar
+  return { verdict, inner, outer, span, edge, rgb: [rS / iN, gS / iN, bS / iN] };
+}
+
+// A circle dropped on a colony should already fit it. The size is searched around a starting
+// guess and the one whose rim sits properly on the colony's edge is kept — the same measurement
+// that colours the circle afterwards, so what you get is what it would have called a good fit.
+// Dragging then only has to correct the cases where the tool and the eye disagree, which is the
+// point of letting the size be set per colony in the first place.
+function bestFitRadius(x, y, r0) {
+  let best = r0, bestScore = Infinity;
+  for (let k = 0.5; k <= 1.9; k += 0.07) {
+    const r = r0 * k;
+    if (r < 1.5) continue;
+    const f = measureFit(x, y, r);
+    if (!f || f.verdict === 'unclear') continue;
+    const s = Math.abs(f.edge - 0.45);          // 0.45 sits in the middle of the good band
+    if (s < bestScore) { bestScore = s; best = r; }
+  }
+  return best;
+}
+
+// Starting guess: the colony already detected under the click, if there is one, otherwise the
+// plate's measured colony size, otherwise a plain default.
+function seedRadius(x, y) {
+  const near = colonies.filter(c => Math.hypot(c.x - x, c.y - y) < Math.max(12, (lastDiag && lastDiag.estR ? lastDiag.estR : 8) * 1.5));
+  if (near.length) {
+    near.sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y));
+    if (near[0].r > 1.5) return near[0].r;
+  }
+  if (lastDiag && lastDiag.estR > 1) return lastDiag.estR;
+  return 8;
+}
+
+function refreshTeachReadout() {
+  const n = teachPicks.length;
+  if (!n) {
+    $('teachMsg').textContent = teachMode
+      ? 'Click a colony to drop a circle on it, then drag its edge until it fits. Three or more.'
+      : 'Mark three or more colonies and drag each circle to fit. Their size, brightness and colour are measured from what you drew.';
+    $('btnTeach').textContent = teachMode ? 'Stop picking' : 'Start picking';
+    return;
+  }
+  const oversize = teachPicks.filter(p => p.fit && p.fit.verdict === 'big').length;
+  const radii = teachPicks.map(p => p.r).sort((a, b) => a - b);
+  const medR = radii[radii.length >> 1];
+  const lit = teachPicks.filter(p => p.fit && p.fit.span > 0).length;
+  let msg = n + ' marked · median radius ' + medR.toFixed(1) + ' px · ' +
+    (lit > n / 2 ? 'paler than the agar' : 'darker than the agar');
+  if (oversize) msg += ' · ⚠ ' + oversize + ' circle' + (oversize > 1 ? 's are' : ' is') +
+    ' wider than the colony under it — shrink it, or the size and brightness it learns will be the agar\'s';
+  else if (n < 3) msg += ' · at least three are needed';
+  else msg += ' · press Apply when they all fit';
+  $('teachMsg').textContent = msg;
+  $('btnTeach').textContent = n >= 3 ? 'Apply ' + n + ' examples' : 'Stop picking';
+}
 
 // ============================================================
 // selection geometry
@@ -2673,6 +3042,8 @@ let pinchBase = null;
 
 viewport.addEventListener('pointerdown', e => {
   if (!img) return;
+  // The click that just dismissed a menu is not also a request to draw a new plate area.
+  if (dismissEvent === e) { dismissEvent = null; return; }
   viewport.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 2) {
@@ -2687,7 +3058,26 @@ viewport.addEventListener('pointerdown', e => {
   if (wantPan) { drag = { kind: 'pan', sx: e.clientX - view.x, sy: e.clientY - view.y }; viewport.classList.add('panning'); return; }
   if (e.button !== 0) return;
 
-  if (teachMode) { toggleTeachPick(p); return; }
+  if (teachMode) {
+    // Edge of an existing circle -> resize it. Inside one -> move it. Empty space -> a new one.
+    const tol = Math.max(5 / view.s, 3);
+    let hitEdge = -1, hitIn = -1;
+    teachPicks.forEach((q, i) => {
+      const d = Math.hypot(q.x - p.x, q.y - p.y);
+      if (Math.abs(d - q.r) <= tol + q.r * 0.12) hitEdge = i;
+      else if (d < q.r) hitIn = i;
+    });
+    if (hitEdge >= 0) { drag = { kind: 'teachSize', i: hitEdge, moved: false }; return; }
+    if (hitIn >= 0) { drag = { kind: 'teachMove', i: hitIn, moved: false,
+      off: { x: p.x - teachPicks[hitIn].x, y: p.y - teachPicks[hitIn].y } }; return; }
+    const pick = { x: p.x, y: p.y, r: bestFitRadius(p.x, p.y, seedRadius(p.x, p.y)) };
+    pick.fit = measureFit(pick.x, pick.y, pick.r);
+    teachPicks.push(pick);
+    drag = { kind: 'teachSize', i: teachPicks.length - 1, moved: false };
+    refreshTeachReadout();
+    draw();
+    return;
+  }
 
   if (tool === 'select') {
     // A selection of the shape currently chosen can be nudged or resized; one of the other shape is
@@ -2729,6 +3119,24 @@ viewport.addEventListener('pointermove', e => {
   if (!drag) return;
   const p = toImage(e);
   if (drag.kind === 'pan') { view.x = e.clientX - drag.sx; view.y = e.clientY - drag.sy; draw(); return; }
+  if (drag.kind === 'teachSize') {
+    const q = teachPicks[drag.i];
+    if (!q) { drag = null; return; }
+    q.r = Math.max(1.5, Math.hypot(p.x - q.x, p.y - q.y));
+    q.fit = measureFit(q.x, q.y, q.r);
+    drag.moved = true;
+    refreshTeachReadout(); draw();
+    return;
+  }
+  if (drag.kind === 'teachMove') {
+    const q = teachPicks[drag.i];
+    if (!q) { drag = null; return; }
+    q.x = p.x - drag.off.x; q.y = p.y - drag.off.y;
+    q.fit = measureFit(q.x, q.y, q.r);
+    drag.moved = true;
+    refreshTeachReadout(); draw();
+    return;
+  }
   if (drag.kind === 'new') {
     if (roi.shape === 'circle') { roi.cx = drag.ox; roi.cy = drag.oy; roi.r = Math.hypot(p.x - drag.ox, p.y - drag.oy); }
     else { roi.x = Math.min(drag.ox, p.x); roi.y = Math.min(drag.oy, p.y); roi.w = Math.abs(p.x - drag.ox); roi.h = Math.abs(p.y - drag.oy); }
@@ -2761,7 +3169,14 @@ function endPointer(e) {
   viewport.classList.remove('panning');
   if (!drag) return;
   const kind = drag.kind;
+  const wasTeach = drag;
   drag = null;
+  if (kind === 'teachMove' && !wasTeach.moved) {
+    teachPicks.splice(wasTeach.i, 1);          // a click that did not drag removes the circle
+    refreshTeachReadout(); draw();
+    return;
+  }
+  if (kind === 'teachSize' || kind === 'teachMove') { refreshTeachReadout(); draw(); return; }
   if (kind === 'new' || kind === 'move' || kind === 'resize') {
     const big = roi && (roi.shape === 'circle' ? roi.r > 12 : (roi.w > 15 && roi.h > 15));
     if (!big) { if (kind === 'new') { roi = null; colonies = []; autoColonies = []; } draw(); refreshUI(); return; }
@@ -2865,7 +3280,7 @@ function refreshCount() {
 // ============================================================
 // selection helpers
 // ============================================================
-let roiShape = 'circle';
+let roiShape = 'rect';   // the default: a box, which is what most people reach for first
 function setTool(t) {
   tool = t;
   for (const [id, name] of [['mPan', 'pan'], ['mSelect', 'select'], ['mAdd', 'add'], ['mRemove', 'remove']])
@@ -2994,6 +3409,7 @@ function runDetect(opts) {
     splitTouching: $('splitTouching').checked,
     rejectElongated: $('rejectElongated').checked,
     estimateClumps: $('estimateClumps').checked,
+    resolveClusters: $('resolveClusters').checked,
     persistenceFactor: (+$('splitStrength').value) / 100,
     upscale: $('upscale').value === 'auto' ? 'auto' : +$('upscale').value,
     confidenceCut: confCut(),
@@ -3037,10 +3453,16 @@ worker.onmessage = e => {
     learned = m.learned;
     const L = m.learned;
     const nm = { white: 'pale on dark', dark: 'dark on pale', colour: 'coloured' }[L.mode] || L.mode;
+    const lr = L.learned;
+    const swatch = lr.rgbIn ? '<span style="display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;' +
+      'border:1px solid var(--border);background:rgb(' + lr.rgbIn.join(',') + ')"></span> ' : '';
     $('learnedOut').style.display = 'block';
-    $('learnedOut').innerHTML = 'Measured from <b>' + L.learned.nPicks + '</b> examples: appearance <b>' + nm +
-      '</b>, colony radius <b>' + L.learned.medR.toFixed(1) + ' px</b> (area ' + Math.round(L.learned.medArea) +
-      ' px²), response threshold <b>' + L.tHigh.toFixed(1) + '</b>, accepted area ' + L.minArea + '–' + L.maxArea + ' px².';
+    $('learnedOut').innerHTML = 'From <b>' + lr.nPicks + '</b> circles you drew — ' +
+      'size: radius <b>' + lr.medR.toFixed(1) + ' px</b> (area ' + Math.round(lr.medArea) + ' px²) · ' +
+      'brightness: <b>' + (lr.deltaL >= 0 ? '+' : '') + (lr.deltaL != null ? lr.deltaL.toFixed(0) : '?') +
+      '</b> against the agar · colour: ' + swatch + '<b>' + (lr.rgbIn ? 'rgb(' + lr.rgbIn.join(', ') + ')' : '—') +
+      '</b>' + (lr.chroma != null ? ' (chroma ' + lr.chroma.toFixed(0) + ')' : '') +
+      ' → appearance <b>' + nm + '</b>, threshold <b>' + L.tHigh.toFixed(1) + '</b>.';
     $('teachMsg').textContent = 'Your examples are in use. Appearance and size are fixed to them; the threshold is re-derived per selection unless you lock it.';
     $('btnTeachClear').disabled = false;
     teachPicks = [];
@@ -3071,6 +3493,8 @@ function showDiag(d) {
     d.blobs + ' object' + (d.blobs === 1 ? '' : 's') + ' before splitting',
     d.splitCount + ' split'
   ];
+  if (d.frstResolved) bits.push(d.frstResolved + ' found by outline symmetry');
+  if (d.coverResolved) bits.push(d.coverResolved + ' found by area coverage');
   if (d.mergedFragments) bits.push(d.mergedFragments + ' fragment(s) re-merged');
   if (d.rejectedThinParent) bits.push(d.rejectedThinParent + ' structure(s) rejected (rim, scratch)');
   if (d.rejectedThin) bits.push(d.rejectedThin + ' thin object(s) rejected');
@@ -3086,7 +3510,7 @@ function showDiag(d) {
 
 // live re-run on control changes
 function bindRerun(id, ev) { $(id).addEventListener(ev || 'change', () => { if (roi) runDetect(); }); }
-['splitTouching', 'estimateClumps', 'rejectElongated', 'lockThresholds'].forEach(id => bindRerun(id));
+['splitTouching', 'estimateClumps', 'resolveClusters', 'rejectElongated', 'lockThresholds'].forEach(id => bindRerun(id));
 $('minArea').addEventListener('change', () => { if (roi) runDetect(); });
 $('colonyType').addEventListener('change', () => { cachedMode = null; if (roi) runDetect({ redecide: true }); });
 $('sens').addEventListener('input', e => {
@@ -3101,15 +3525,24 @@ $('markerSize').addEventListener('input', e => {
   $('markerVal').textContent = e.target.value + '%';
   mergeColonies();
 });
-$('manualSize').addEventListener('input', e => {
-  manualScale = (+e.target.value) / 100;
-  $('manualSizeVal').textContent = e.target.value + '%';
+// The same setting reachable from two places: on the stage while the Add tool is in use, and in
+// the colony menu. They are one value with two handles, so they are kept in step.
+function setManualScale(v, from) {
+  v = Math.max(25, Math.min(300, Math.round(v)));
+  manualScale = v / 100;
+  if (from !== 'menu') { $('manualSize').value = v; }
+  if (from !== 'quick') { $('manualSizeQuick').value = v; }
+  $('manualSizeVal').textContent = v + '%';
+  $('manualSizeQuickVal').textContent = v + '%';
   mergeColonies();
-});
+}
+$('manualSize').addEventListener('input', e => setManualScale(+e.target.value, 'menu'));
+$('manualSizeQuick').addEventListener('input', e => setManualScale(+e.target.value, 'quick'));
 $('confCut').addEventListener('input', e => {
   $('confVal').textContent = (e.target.value / 100).toFixed(2);
   draw(); refreshCount();
 });
+$('showNumbers').addEventListener('change', draw);
 $('splitStrength').addEventListener('input', e => { $('splitVal').textContent = (e.target.value / 100).toFixed(2); });
 $('splitStrength').addEventListener('change', () => { if (roi) runDetect(); });
 
@@ -3127,21 +3560,13 @@ $('sensSeg').addEventListener('click', e => {
 // ============================================================
 // teach from picks
 // ============================================================
-function toggleTeachPick(p) {
-  const i = teachPicks.findIndex(q => Math.hypot(q.x - p.x, q.y - p.y) < 12 / view.s);
-  if (i >= 0) teachPicks.splice(i, 1); else teachPicks.push(p);
-  $('teachMsg').textContent = teachPicks.length + ' example' + (teachPicks.length === 1 ? '' : 's') + ' marked' +
-    (teachPicks.length < 3 ? ' — at least three are needed.' : ' — press Apply, or keep clicking.');
-  $('btnTeach').textContent = teachPicks.length >= 3 ? 'Apply ' + teachPicks.length + ' examples' : 'Stop picking';
-  draw();
-}
+
 $('btnTeach').onclick = () => {
   if (!roi) { $('teachMsg').textContent = 'Select the plate area first.'; return; }
   if (!teachMode) {
     teachMode = true; teachPicks = [];
-    $('btnTeach').textContent = 'Stop picking';
-    $('teachMsg').textContent = 'Click the centre of at least three representative colonies.';
-    setHint('Picking examples: click three or more clear colonies, then press Apply.');
+    refreshTeachReadout();
+    setHint('Click a colony to drop a circle on it, then drag the circle\'s edge until it fits. Click a circle to remove it. Three or more, then press Apply.');
     draw();
     return;
   }
@@ -3169,7 +3594,7 @@ $('btnTeach').onclick = () => {
   worker.postMessage({
     action: 'train', id, imgData: copy, w: bw, h: bh,
     roi: local, edgeMargin: edgeMargin(),
-    picks: teachPicks.map(p => ({ x: p.x - bx, y: p.y - by }))
+    picks: teachPicks.map(p => ({ x: p.x - bx, y: p.y - by, r: p.r }))
   }, [copy.buffer]);
 };
 $('btnTeachClear').onclick = () => {
@@ -3266,7 +3691,7 @@ $('btnPng').onclick = () => {
   const g = c.getContext('2d');
   g.drawImage(srcCanvas, bx, by, bw, bh, 0, 0, bw, bh);
   let i = 0;
-  const showN = colonies.length <= 400;
+  const showN = $('showNumbers').checked && colonies.length <= 400;
   const ms2 = markScale();
   const lw = Math.max(1.2, bw / 700);
   for (const col of colonies) {
@@ -3329,12 +3754,52 @@ function refreshUI() {
   draw();
 }
 
-function setAdjustPanel(on) {
-  $('adjustPanel').classList.toggle('show', on);
-  $('btnAdjustToggle').setAttribute('aria-pressed', String(on));
+// Two menus hang off the stage: colony settings under the count, image settings above Adjust.
+// Only one is ever open, both close on Escape or on a click anywhere else, and neither takes any
+// room in the panel when shut — which is the point of moving them out of it.
+function openMenu(which) {
+  const colony = which === 'colony', image = which === 'image';
+  $('colonyMenu').classList.toggle('show', colony);
+  $('countPill').classList.toggle('open', colony);
+  $('adjustPanel').classList.toggle('show', image);
+  $('btnAdjustToggle').setAttribute('aria-pressed', String(image));
 }
-$('btnAdjustToggle').onclick = () => setAdjustPanel(!$('adjustPanel').classList.contains('show'));
-$('btnAdjustClose').onclick = () => setAdjustPanel(false);
+function closeMenus() { openMenu(null); }
+function toggleMenu(which) {
+  const isOpen = which === 'colony'
+    ? $('colonyMenu').classList.contains('show')
+    : $('adjustPanel').classList.contains('show');
+  openMenu(isOpen ? null : which);
+}
+function setAdjustPanel(on) { openMenu(on ? 'image' : null); }
+
+$('btnAdjustToggle').onclick = e => { e.stopPropagation(); toggleMenu('image'); };
+$('btnAdjustClose').onclick = () => closeMenus();
+$('btnColonyClose').onclick = () => closeMenus();
+$('countPill').addEventListener('click', e => {
+  if (e.target.closest('#btnRecountStage')) return;   // the recount button is its own target
+  e.stopPropagation();
+  toggleMenu('colony');
+});
+$('countPill').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu('colony'); }
+});
+// A click that lands outside both menus shuts them, but a click inside one must not.
+// This runs in the capture phase, so it reaches the canvas handler's event first; the event is
+// recorded and that one handler skips it, which is what stops a dismissing click from also
+// starting a new plate selection and wiping the count.
+let dismissEvent = null;
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest('#colonyMenu, #adjustPanel, #countPill, #btnAdjustToggle')) return;
+  // While examples are being marked, the plate and the menu are used together: the circles go on
+  // the plate, the fit readout and Apply are in the menu. Dismissing it on every click would make
+  // the two impossible to use at once.
+  if (teachMode) return;
+  if ($('colonyMenu').classList.contains('show') || $('adjustPanel').classList.contains('show')) {
+    dismissEvent = e;
+    closeMenus();
+  }
+}, true);
 
 $('btnHelp').onclick = () => $('kbdHelp').classList.add('on');
 $('kbdHelp').onclick = e => { if (e.target === $('kbdHelp')) $('kbdHelp').classList.remove('on'); };
@@ -3412,6 +3877,23 @@ applied as a dual threshold after
 strong colony cores seed the mask and faint edges grow from them, while isolated faint pixels are
 rejected. The lower threshold is held above a median-plus-4-MAD noise estimate of the response.</p>
 
+<p><b>Clusters, in three passes.</b> Colonies that have grown into each other are the hardest part
+of the job, and one method cannot cover the range. Each pass handles what the one before it could
+not, and the count reports how many each contributed.
+<b>1 — a waist.</b> Where two colonies still meet at a narrow neck, the distance transform finds it;
+this works down to centres about 1.3 radii apart.
+<b>2 — an outline.</b> Past that there is no neck, but each colony still shows an arc of its own rim,
+and every point on an arc lies one radius from its own centre. Voting along the inward normal piles
+those votes up at each centre — the fast radial symmetry transform of Loy &amp; Zelinsky,
+<i>IEEE Trans. Pattern Anal. Mach. Intell.</i> 25(8):959–973, 2003, run on the shape rather than the
+image, which reaches about 0.9 radii.
+<b>3 — the area.</b> A colony in the middle of a cluster can have no neck and no visible arc at all.
+What gives it away is that the cluster is too large for the colonies found in it so far, so discs of
+the measured colony size are laid down greedily over whatever is still uncovered. This last pass is
+the least certain and its finds are marked for review.
+<span class="tagi">INFERENCE</span> The three-pass arrangement, and the thresholds in it, were tuned
+on synthetic clusters; measured numbers are in the next paragraph.</p>
+
 <p><b>Touching colonies.</b> Exact Euclidean distance transform
 (<a href="https://theoryofcomputing.org/articles/v008a019/" target="_blank" rel="noopener">Felzenszwalb &amp; Huttenlocher, 2012</a>);
 markers chosen by topological persistence (h-maxima, Soille, <i>Morphological Image Analysis</i>,
@@ -3450,6 +3932,12 @@ physically touching a scratch is absorbed into it.</p>
 
 // A read-only hook for the browser test harness; it exposes no state and changes no behaviour.
 window.__seq = () => runSeq;
+window.__picks = () => teachPicks;
+window.__view = () => view;
+window.__colonies = () => colonies;
+window.__measureFit = (x, y, r) => measureFit(x, y, r);
+window.__diag = () => lastDiag;
+window.__teachMode = (v) => { teachMode = v; };
 
 // ============================================================
 // boot

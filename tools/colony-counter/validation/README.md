@@ -82,6 +82,43 @@ On the six plates the detector gets right, nothing is flagged at any cut-off up 
 is a way of directing attention, **not a probability**: 0.8 does not mean eight in ten such objects
 are colonies, and no calibration against real plates exists.
 
+## Clusters — `clusters.js`
+
+```
+node clusters.js ../colony-counter-v2.html                # all three passes
+node clusters.js ../colony-counter-v2.html --no-clusters  # distance transform only
+```
+
+Colonies grown into each other are the hardest part of the job. `sep` in the output is the distance
+between colony centres as a multiple of the colony radius: 2.0 is just touching, 1.1 overlaps by
+nearly half a radius, 0.85 is heavily fused.
+
+```
+                      distance transform only        all three passes
+mean |count error|            19.01%                       7.06%
+precision                    100.0%                      100.0%
+recall                        72.3%                       93.1%
+F1                            83.9%                       96.4%
+```
+
+The `outline` and `area` columns attribute each recovered colony to the pass that found it, so a
+regression in one pass is visible rather than hidden in the total.
+
+Measured on clean pairs of discs, the reach of each pass is:
+
+| centres apart | what still separates them |
+|---|---|
+| 2.0 – 1.3 radii | the distance transform: there is still a waist |
+| 1.3 – 0.9 radii | radial symmetry: no waist, but each colony still shows an arc |
+| under 0.9 radii | nothing reliably — the two outlines have merged into one convex blob |
+
+**Where it still fails.** A colony in the middle of a tight cluster can be more than two thirds
+covered by its neighbours. It has no waist, no visible arc, and almost no area of its own, so only
+the third pass could find it — and the threshold there is deliberately set where it costs no false
+positives on ordinary plates, which means these are missed rather than guessed at. Clusters of eight
+in a rosette still under-count by about a quarter for this reason. That is a choice: counting them
+would mean inventing colonies on plates that do not have them.
+
 ## What this does not tell you
 
 These are generated images. They have a dish wall, an illumination gradient, a

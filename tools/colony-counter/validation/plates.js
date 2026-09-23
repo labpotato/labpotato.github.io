@@ -61,6 +61,34 @@ function makePlate(opt){
     }
   }
 
+  // arbitrary-size clusters: k colonies packed around a centre with a controllable overlap.
+  // sep is the centre-to-centre distance as a fraction of the radius: 2.0 = just touching,
+  // 1.2 = overlapping by 40% of a radius, 0.9 = heavily fused.
+  const clusters=opt.clusters||[];
+  for(const spec of clusters){
+    const k=spec.k, sep=(spec.sep!=null?spec.sep:1.2);
+    for(let c=0;c<(spec.count||1);c++){
+      for(let attempt=0;attempt<500;attempt++){
+        const a=rnd()*Math.PI*2, rr=Math.sqrt(rnd())*dishR*(margin-0.12);
+        const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr;
+        const r=Math.max(2,rMean+(rnd()*2-1)*rSd*0.4);
+        const group=[];
+        // one at the centre, the rest on a ring around it
+        group.push({x,y,r});
+        const ring=k-1;
+        const th0=rnd()*Math.PI*2;
+        for(let i=0;i<ring;i++){
+          const t=th0+i*2*Math.PI/ring;
+          const d=r*sep*(ring>2?1.0:1.0);
+          group.push({x:x+Math.cos(t)*d, y:y+Math.sin(t)*d, r:Math.max(2,r*(0.85+rnd()*0.3))});
+        }
+        let ok=group.every(g=>Math.hypot(g.x-cx,g.y-cy)<dishR*margin);
+        if(ok) for(const g of group) for(const e of cols){ if(Math.hypot(e.x-g.x,e.y-g.y)<(e.r+g.r)*1.5){ ok=false; break; } }
+        if(ok){ for(const g of group) cols.push(g); break; }
+      }
+    }
+  }
+
   // ---- render colonies with a soft (anti-aliased, slightly domed) edge ----
   const tint=opt.colonyTint||[1,1,1];
   const amp=opt.contrast!=null?opt.contrast:55;      // signed: +bright colonies, -dark colonies

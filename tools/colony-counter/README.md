@@ -7,7 +7,7 @@ What it does:
 - **Finds the dish automatically** — one click, no careful dragging round the rim. You can also draw a circle or a box, or count the whole frame.
 - **Corrects uneven lighting** before counting, with a morphological top-hat, so a plate lit from one side counts the same as one lit evenly.
 - **Works out the colony appearance itself** — pale colonies on dark agar, dark colonies on pale agar, or chromogenic colonies that differ from the agar only in hue.
-- **Separates touching colonies** by marker-controlled watershed, with the markers chosen by topological persistence so a single round colony is never split in half.
+- **Separates clustered colonies in three passes** — a waist between them where there is one, the arcs their outlines still show when there isn't, and finally the leftover area for a colony buried in the middle of a cluster. Against clusters this takes the count error from 19% to 7% and recall from 72% to 93%, without inventing a single colony on an ordinary plate.
 - **Estimates colonies inside solid clumps** that no distance-based method can cut apart, from their area, and flags them separately rather than folding them silently into the total.
 - **Rejects plate furniture** — the dish wall, condensation rings, scratches and marker strokes — before it can be counted or mistaken for a clump.
 - **Colour-codes what it found** — green for confident, amber for anything worth a second look, vermillion for an estimated clump, black for marks you placed yourself. On deliberately hard test plates the score flagged every object the detector got wrong and nothing on the plates it got right.

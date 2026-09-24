@@ -37,7 +37,7 @@ missed colony cancel out in the total. Read both.
 `colony-counter-v2.html`, default settings:
 
 ```
-mean |count error| 0.59%    precision 100.0%    recall 99.5%    F1 99.8%
+mean |count error| 0.34%    precision 100.0%    recall 99.7%    F1 99.9%
 ```
 
 `colony-counter-v1.html` is not comparable — it has no worker block of this

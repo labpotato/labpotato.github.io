@@ -188,6 +188,7 @@ a:hover { text-decoration: underline; }
   border: 1px solid currentColor; border-radius: 4px; padding: 0 3px; margin-left: 2px;
 }
 .tool:disabled { opacity: .4; cursor: not-allowed; }
+.tool-warn:not(:disabled):hover { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); }
 
 .count-pill {
   margin-left: auto; pointer-events: auto;
@@ -249,12 +250,12 @@ a:hover { text-decoration: underline; }
 }
 .stage-menu .apclose:hover { background: var(--bg-tint); color: var(--text); }
 .stage-menu .apclose svg { width: 15px; height: 15px; }
-.smhead .text-btn {
+.smhead .text-btn, .entry-grid .text-btn {
   flex: none; border: 0; background: transparent; color: var(--accent);
   font: inherit; font-size: 12px; font-weight: 620; cursor: pointer;
   padding: 4px 8px; border-radius: 7px;
 }
-.smhead .text-btn:hover { background: var(--accent-soft); }
+.smhead .text-btn:hover, .entry-grid .text-btn:hover { background: var(--accent-soft); }
 .smhead .text-btn:disabled { color: var(--text-faint); cursor: not-allowed; background: none; }
 .stage-menu .legend { margin-top: 12px; }
 
@@ -421,13 +422,18 @@ thead th {
   text-align: left; font-size: 10.5px; font-weight: 660; text-transform: uppercase; letter-spacing: .04em;
   color: var(--text-muted); padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap;
 }
-tbody td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); }
-.rowtitle-edit {
-  width: 100%; min-width: 64px; border: 1px solid transparent; background: transparent;
-  font: inherit; font-size: 12px; color: var(--text); padding: 3px 5px; border-radius: 5px;
+tbody td { padding: 5px 5px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+thead th { padding-left: 5px; padding-right: 5px; }
+thead th .nocase { text-transform: none; }
+table input.rowtitle-edit, table input.count-edit {
+  width: 100%; min-width: 52px; margin: 0; border: 1px solid transparent; background: transparent;
+  font: inherit; font-size: 12px; color: var(--text); padding: 3px 4px; border-radius: 5px;
 }
-.rowtitle-edit:hover { border-color: var(--border); }
-.rowtitle-edit:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+table input.rowtitle-edit { min-width: 76px; }
+table input.count-edit { width: 46px; min-width: 0; font-variant-numeric: tabular-nums; }
+table input.rowtitle-edit:hover, table input.count-edit:hover { border-color: var(--border); }
+table input.rowtitle-edit:focus, table input.count-edit:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+table input.count-edit.entered { font-style: italic; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr.off { opacity: .45; }
 td .rowdel { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; border-radius: 5px; }
@@ -437,8 +443,15 @@ td .rowdel:hover { color: var(--warn); background: color-mix(in srgb, var(--warn
 .flag.lo, .flag.hi { background: color-mix(in srgb, var(--oi-orange) 20%, transparent); color: #8a6200; }
 @media (prefers-color-scheme: dark) { .flag.lo, .flag.hi { color: var(--oi-orange); } }
 
+.entry-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin-top: 10px; }
+.entry-grid .field { margin-top: 0; }
+.entry-grid .text-btn { font-size: 11px; padding: 0 4px; }
+.entry-grid .text-btn[hidden] { display: none; }
+.stat .sd { font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; margin-top: 1px; min-height: 1em; }
+.bysample { margin-top: 10px; }
+.bysample table { font-size: 11.5px; }
 .summary { display: flex; gap: 10px; margin-top: 11px; }
-.stat { flex: 1; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+.stat { flex: 1; min-width: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
 .stat .k { font-size: 10.5px; font-weight: 640; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
 .stat .v { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
@@ -552,6 +565,10 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         <button class="tool" id="btnRedo" type="button" title="Redo (Ctrl+Shift+Z)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9H9a5 5 0 0 0 0 10h6"/><path d="m16 5 4 4-4 4"/></svg>
           <span class="sr-only">Redo</span>
+        </button>
+        <button class="tool tool-warn" id="btnClearStage" type="button" title="Clear the selection and its count (Delete)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+          <span>Clear</span>
         </button>
       </div>
 
@@ -800,6 +817,7 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
         <div class="scale-ends"><span>count to the wall</span><span>15%</span></div>
         <div class="statusline">The dish wall, the meniscus and any ring of condensation sit in the outermost few per cent and read as bright structure. Excluding a thin band is the single most effective way to stop false colonies around the rim.</div>
       </div>
+      <div class="notice" id="spotTip"><b>Counting drop spots?</b> Choose <b>Draw circle</b> and drag one round the first spot. After that a single click on any other spot places a circle the same size there and counts it — the colonies you added or removed by hand stay with the spot they belong to.</div>
       <div class="row" style="margin-top:9px;">
         <button class="btn btn-warn btn-sm" id="btnClearRoi" type="button">Clear selection</button>
       </div>
@@ -820,23 +838,35 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
     </div>
 
     <!-- 4 ------------------------------------------------ -->
-    <div class="panel muted" id="panel4">
+    <div class="panel" id="panel4">
       <div class="phead"><span class="step">4</span><h3>Results</h3></div>
 
       <div class="field" style="margin-top:0;">
-        <label for="rowTitle">Title (optional)</label>
-        <input type="text" id="rowTitle" placeholder="e.g. Sample A, Plate 3, 24h" maxlength="60">
+        <label>Plating method</label>
+        <div class="seg" id="methodSeg" role="group">
+          <button type="button" data-m="spread" aria-pressed="true">Spread or pour plate</button>
+          <button type="button" data-m="drop" aria-pressed="false">Drop or spot</button>
+        </div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px;">
-        <div class="field" style="margin-top:0;">
+      <div class="field">
+        <label for="rowTitle">Title (optional, kept until you change it)</label>
+        <input type="text" id="rowTitle" placeholder="e.g. Sample A, strain 3, 24 h" maxlength="60">
+      </div>
+      <div class="entry-grid">
+        <div class="field">
+          <div class="slider-row"><label for="countEntry">Colonies</label><button class="text-btn" id="btnUseDetected" type="button" hidden>use detected</button></div>
+          <input type="text" id="countEntry" inputmode="numeric" autocomplete="off" placeholder="0" title="The detected count, or type your own number. TNTC is accepted for a plate too numerous to count.">
+        </div>
+        <div class="field">
           <label for="dilution">Dilution (10⁻ˣ)</label>
           <input type="number" id="dilution" value="4" min="0" step="1">
         </div>
-        <div class="field" style="margin-top:0;">
-          <label for="volume">Volume plated (µL)</label>
+        <div class="field">
+          <label for="volume">Volume (µL)</label>
           <input type="number" id="volume" value="100" min="0.1" step="any">
         </div>
       </div>
+      <div class="statusline" id="countNote"></div>
       <div class="statusline" id="cfuPreview"></div>
 
       <div class="row" style="margin-top:10px;">
@@ -845,20 +875,28 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
 
       <div class="tablewrap">
         <table id="tbl">
-          <thead><tr><th>Use</th><th>#</th><th>Title</th><th>Count</th><th>Dil.</th><th>µL</th><th>CFU/mL</th><th>Flag</th><th></th></tr></thead>
+          <thead><tr><th>Use</th><th>#</th><th>Title</th><th>Count</th><th>Dil.</th><th><span class="nocase">µL</span></th><th>CFU/<span class="nocase">mL</span></th><th>Flag</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
 
       <div class="summary">
         <div class="stat"><div class="k">Rows used</div><div class="v" id="statRows">0</div></div>
-        <div class="stat"><div class="k">Mean CFU/mL</div><div class="v" id="statMean">—</div></div>
+        <div class="stat"><div class="k">Mean CFU/mL</div><div class="v" id="statMean">—</div><div class="sd" id="statSd"></div></div>
+        <div class="stat"><div class="k">Mean log₁₀</div><div class="v" id="statLog">—</div><div class="sd" id="statLogSd"></div></div>
       </div>
+      <div id="bySample"></div>
 
       <div class="row" style="margin-top:10px;">
-        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button">Export for Excel (.txt)</button>
-        <button class="btn btn-ghost btn-sm" id="btnPng" type="button">Export marked image</button>
+        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button" title="Title, row, count, dilution, volume, CFU/mL, then the averages - as numbers Excel reads as numbers">Export table (.txt)</button>
+        <button class="btn btn-ghost btn-sm" id="btnCountsTxt" type="button" title="One colony count per line, nothing else">Counts only (.txt)</button>
+        <button class="btn btn-ghost btn-sm" id="btnCopyCounts" type="button" title="Copy the counts, one per line, to paste into a spreadsheet column">Copy counts</button>
       </div>
+      <div class="row" style="margin-top:7px;">
+        <button class="btn btn-ghost btn-sm" id="btnPng" type="button">Export marked image</button>
+        <button class="btn btn-warn btn-sm" id="btnClearTable" type="button" disabled>Clear table</button>
+      </div>
+      <div class="statusline">The table is kept in this browser, so closing the tab does not lose it. It never leaves your machine.</div>
     </div>
 
     <!-- 5 ------------------------------------------------ -->
@@ -889,6 +927,8 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       <dt><kbd class="key">Ctrl</kbd>+<kbd class="key">Z</kbd></dt><dd>Undo a manual correction</dd>
       <dt><kbd class="key">Ctrl</kbd>+<kbd class="key">Shift</kbd>+<kbd class="key">Z</kbd></dt><dd>Redo</dd>
       <dt><kbd class="key">Enter</kbd></dt><dd>Count colonies</dd>
+      <dt><kbd class="key">Delete</kbd></dt><dd>Clear the selection</dd>
+      <dt>click</dt><dd>With a circle drawn: place the same-size circle on another spot</dd>
       <dt><kbd class="key">F</kbd></dt><dd>Fit the image to the view</dd>
       <dt><kbd class="key">+</kbd> / <kbd class="key">−</kbd></dt><dd>Zoom</dd>
       <dt><kbd class="key">Ctrl</kbd>+<kbd class="key">V</kbd></dt><dd>Paste a plate photo</dd>
@@ -1651,16 +1691,32 @@ function upscaleMask(mask, w, h, u) {
 }
 
 // ---------- colony scale estimation ----------
-function medianBlobRadius(P, w, h, k, validMask) {
-  const resp = combinedResponse(P, w, h, k, validMask);
+function medianBlobRadius(P, w, h, k, validMask, which) {
+  const resp = which === 'white' ? whiteTopHat(P.L, w, h, k)
+    : which === 'dark' ? blackTopHat(P.L, w, h, k)
+    : which === 'colour' ? evidenceMap(P, w, h, k, 'colour', validMask)
+    : combinedResponse(P, w, h, k, validMask);
   const vals = [];
   for (let i = 0; i < resp.length; i++) if (!validMask || validMask[i]) vals.push(resp[i]);
   if (!vals.length) return null;
   // Floor the threshold: on an exactly flat background Otsu's optimum lands at 0, which would
-  // select the whole field and collapse the estimate into one image-sized blob.
-  const t = Math.max(otsuThreshold(vals, 256).t, 2);
-  const mask = new Uint8Array(w * h);
-  for (let i = 0; i < mask.length; i++) mask[i] = (resp[i] > t && (!validMask || validMask[i])) ? 1 : 0;
+  // select the whole field and collapse the estimate into one image-sized blob. A second floor keeps
+  // the agar's own grain out of the count: at the smallest element sizes every noise bump is a
+  // "blob", the count peaks there, and a spot of 3.5 px colonies was measured as 1.5 px grain. Only
+  // objects standing 5 sigma clear of the map's noise may vote on the colony size. [INFERENCE]
+  const sub = [];
+  for (let i = 0; i < vals.length; i += 3) sub.push(vals[i]);
+  const med = median(sub), sig = 1.4826 * Math.max(0.35, median(sub.map(v => Math.abs(v - med))));
+  const otsu = Math.max(otsuThreshold(vals, 256).t, 2);
+  const t = Math.max(otsu, med + 5 * sig);
+  // Seeded at t, but measured at Otsu's level, which is what the size has always been measured at.
+  // Where Otsu sits inside the noise - a faint spot - the seeds are held up at 5 sigma and the
+  // measurement level may not follow them: measured on its seed alone a faint colony reads at its
+  // core only, and the full colony then looks like a pair to every cluster-splitting pass and is cut
+  // into pieces. It is grown instead to just above the noise. Where Otsu is already clear of the
+  // noise, this is exactly the plain Otsu threshold used before. [INFERENCE]
+  const tGrow = Math.min(t, Math.max(otsu, med + 2.7 * sig));
+  const mask = hysteresis(resp, w, h, t, tGrow, validMask);
   const comps = connectedComponents(mask, w, h);
   const radii = [];
   for (const c of comps) {
@@ -1704,10 +1760,20 @@ function estimateScale(data, w, h, validMask) {
   for (let k = Math.min(5, kCap); k < kCap; k = Math.ceil(k * 1.6)) ks.push(k);
   ks.push(kCap);
 
-  const entries = [];
-  for (const k of ks) {
-    const e = medianBlobRadius(P, ds.w, ds.h, k, dMask);
-    if (e && e.count > 0) entries.push({ k, r: Math.min(e.r, rCap), count: e.count });
+  // The ladder is climbed once per appearance - pale, dark, coloured - and the appearance that
+  // resolves the most objects decides the scale. One combined response let a single strong object
+  // of the other polarity dictate the result: a handwritten "6" beside a spot of faint pale colonies
+  // was the only dark object in view, it out-scored thirteen colonies on amplitude, and the colony
+  // radius came back as the width of the digit. Counted, thirteen beat one. [INFERENCE]
+  let entries = [], bestN = -1;
+  for (const which of ['white', 'dark', 'colour']) {
+    const es = [];
+    for (const k of ks) {
+      const e = medianBlobRadius(P, ds.w, ds.h, k, dMask, which);
+      if (e && e.count > 0) es.push({ k, r: Math.min(e.r, rCap), count: e.count });
+    }
+    const top = es.reduce((m, e) => Math.max(m, e.count), 0);
+    if (top > bestN) { bestN = top; entries = es; }
   }
 
   let radius, kPick;
@@ -1739,10 +1805,19 @@ function thresholdsFor(ev, n, validMask, sensitivity, opts) {
   const evMed = median(sub);
   const evMad = median(sub.map(v => Math.abs(v - evMed)));
   const noiseFloor = evMed + 4 * Math.max(evMad, 0.5);
-  let tHigh = (opts && opts.tHigh != null) ? opts.tHigh : Math.max(2, o.t * bias);
+  // Significance floor for the seed threshold. Otsu splits whatever two populations the map holds;
+  // on a small selection with a handful of faint colonies the larger "population" is the agar's own
+  // grain, and Otsu then splits the grain. A colony has to stand clear of the agar's noise, measured
+  // robustly on this same map (1.4826 x MAD estimates sigma for Gaussian noise), by a margin set by
+  // the sensitivity: 5 sigma at the default, the Rose criterion for reliable detection of a feature
+  // against noise (Rose, J. Opt. Soc. Am. 38:196, 1948). On the real spot plates colonies sat 5-18
+  // sigma above the agar and no agar maximum exceeded 3.4 sigma, so the gap is wide. [INFERENCE]
+  const sigma = 1.4826 * Math.max(evMad, 0.35);
+  const sigFloor = evMed + 5 * bias * sigma;
+  let tHigh = (opts && opts.tHigh != null) ? opts.tHigh : Math.max(2, o.t * bias, sigFloor);
   let tLow = (opts && opts.tLow != null) ? opts.tLow : Math.max(1, tHigh * 0.45, noiseFloor);
   if (tLow > tHigh) tLow = tHigh;
-  return { tHigh, tLow, otsu: o.t, eta: o.eta, noiseFloor, evMed, evMad: Math.max(evMad, 1e-6) };
+  return { tHigh, tLow, otsu: o.t, eta: o.eta, noiseFloor, sigFloor, sigma, evMed, evMad: Math.max(evMad, 1e-6) };
 }
 
 // ---------- appearance-mode scoring ----------
@@ -1855,6 +1930,29 @@ function detectCore(opts) {
   // --- mask and components ---
   const mask = hysteresis(ev, w, h, th.tHigh, th.tLow, validMask);
   const comps = connectedComponents(mask, w, h);
+
+  // Faint candidates: local peaks of the map that rise 3 noise sigmas above the agar but not to the
+  // seed threshold, away from anything that was counted. They are not counted. They are reported,
+  // because a dense spot of very faint colonies inflates the noise estimate itself and lands almost
+  // entirely in this band - a spot holding dozens was counted as a handful - and the honest response
+  // to a photograph that cannot resolve them is to say so rather than to lower the bar for every
+  // plate. Agar grain alone rarely reaches 3 sigma. [INFERENCE]
+  let faintCandidates = 0;
+  const faint = [];
+  {
+    const lo = th.evMed + 3 * th.sigma, rr = Math.max(2, Math.round(estR));
+    for (let y = rr; y < h - rr; y += 1) for (let x = rr; x < w - rr; x += 1) {
+      const i = y * w + x, v = ev[i];
+      if (v <= lo || v >= th.tHigh || mask[i] || (validMask && !validMask[i])) continue;
+      let isMax = true, nearMask = false;
+      for (let dy = -rr; dy <= rr && isMax; dy++) for (let dx = -rr; dx <= rr; dx++) {
+        const j = i + dy * w + dx;
+        if (ev[j] > v) { isMax = false; break; }
+        if (mask[j]) nearMask = true;
+      }
+      if (isMax && !nearMask) { faintCandidates++; if (faint.length < 600) faint.push({ x, y }); }
+    }
+  }
   const minArea = opts.minArea != null ? opts.minArea : Math.max(4, Math.round(Math.PI * Math.pow(Math.max(1.5, estR * 0.4), 2)));
   const maxArea = opts.maxArea != null ? opts.maxArea : Infinity;
   // A component covering a large slice of the selection is agar, a shadow or a label, never one
@@ -1932,8 +2030,14 @@ function detectCore(opts) {
         }
       }
 
-      // Whatever the two shape-based methods could not account for, ask the covering question.
-      if (useFrst && byArea > 1.3) {
+      // Whatever the two shape-based methods could not account for, ask the covering question -
+      // except of an object that is geometrically one disc: round, and with an inscribed circle
+      // nearly as large as its area implies. That is what a single colony with a bright halo looks
+      // like when it is simply bigger than the typical one, and covering it with typical-sized discs
+      // cut each of six such colonies into three or four. Fused colonies are not discs by this test:
+      // their inscribed circle is one colony wide while their area is several. [INFERENCE]
+      const oneDisc = pShape.axisRatio >= 0.85 && pStruct.peak + 0.5 >= 0.95 * Math.sqrt(comp.pixels.length / Math.PI);
+      if (useFrst && byArea > 1.3 && !oneDisc) {
         const cap = Math.max(1, Math.round(comp.pixels.length / (singleArea * 0.42)));
         if (maxima.length < cap) {
           const extra = coverageMarkers(comp.pixels, w, h, estR, distS, maxima,
@@ -2018,9 +2122,58 @@ function detectCore(opts) {
       const st = structureOf(px, w, dist);
       let pe = 0; for (const i of px) if (ev[i] > pe) pe = ev[i];
       raw.push({ x: s.x, y: s.y, r: Math.max(1.5, Math.sqrt(s.area / Math.PI)), area: s.area,
-                 axisRatio: s.axisRatio, peak: st.peak, fill: st.fill, ev: pe,
+                 axisRatio: s.axisRatio, peak: st.peak, fill: st.fill, ev: pe, snr: (pe - th.evMed) / th.sigma,
                  split: parts.length > 1, touchesBorder, n: 1 });
     }
+  }
+
+  // --- the object has to be what its appearance says it is ---
+  // A top-hat measures brightness against the local minimum. Inside a handwritten label the local
+  // minimum is the ink's own core, so every paler patch inside a stroke comes back as a bright
+  // object, at full amplitude, and passes every shape test. What it cannot fake is the plain fact:
+  // a pale colony is paler than the agar around it, and a patch of ink is darker than that agar even
+  // at its lightest. The agar level is a median over tiles several colonies wide, which neither a
+  // colony nor a pen stroke covers the majority of, interpolated to the object's centre. [INFERENCE]
+  let rejectedOnMarks = 0;
+  if ((mode === 'white' || mode === 'dark') && raw.length) {
+    const T = Math.max(16, Math.round(estR * 8));
+    const gx = Math.max(1, Math.ceil(w / T)), gy = Math.max(1, Math.ceil(h / T));
+    const tileMed = new Float32Array(gx * gy).fill(NaN);
+    for (let ty = 0; ty < gy; ty++) for (let tx = 0; tx < gx; tx++) {
+      const s = [];
+      for (let y = ty * T; y < Math.min(h, (ty + 1) * T); y += 2) for (let x = tx * T; x < Math.min(w, (tx + 1) * T); x += 2) {
+        const i = y * w + x; if (!validMask || validMask[i]) s.push(P0.L[i]);
+      }
+      if (s.length >= 8) tileMed[ty * gx + tx] = median(s);
+    }
+    const all = []; for (let i = 0; i < tileMed.length; i++) if (!isNaN(tileMed[i])) all.push(tileMed[i]);
+    const fallback = all.length ? median(all) : 128;
+    for (let i = 0; i < tileMed.length; i++) if (isNaN(tileMed[i])) tileMed[i] = fallback;
+    const agarAt = (x, y) => {
+      const fx = Math.max(0, Math.min(gx - 1, x / T - 0.5)), fy = Math.max(0, Math.min(gy - 1, y / T - 0.5));
+      const x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(gx - 1, x0 + 1), y1 = Math.min(gy - 1, y0 + 1);
+      const ax = fx - x0, ay = fy - y0;
+      return tileMed[y0 * gx + x0] * (1 - ax) * (1 - ay) + tileMed[y0 * gx + x1] * ax * (1 - ay) +
+             tileMed[y1 * gx + x0] * (1 - ax) * ay + tileMed[y1 * gx + x1] * ax * ay;
+    };
+    const need = 2 * th.sigma;
+    const byIdx = new Map();
+    const keep = [];
+    for (const c of raw) {
+      // the object's own extreme, read off the unfiltered luminance over its pixels
+      let ext = mode === 'white' ? -Infinity : Infinity;
+      const r2 = c.r * c.r, x0 = Math.max(0, Math.floor(c.x - c.r)), x1 = Math.min(w - 1, Math.ceil(c.x + c.r));
+      const y0 = Math.max(0, Math.floor(c.y - c.r)), y1 = Math.min(h - 1, Math.ceil(c.y + c.r));
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        if ((x - c.x) * (x - c.x) + (y - c.y) * (y - c.y) > r2) continue;
+        const v = P0.L[y * w + x];
+        if (mode === 'white' ? v > ext : v < ext) ext = v;
+      }
+      const agar = agarAt(c.x, c.y);
+      const ok = mode === 'white' ? ext >= agar + need : ext <= agar - need;
+      if (ok) keep.push(c); else rejectedOnMarks++;
+    }
+    raw.length = 0; for (const c of keep) raw.push(c);
   }
 
   // Objects clipped by the selection boundary are not whole colonies. Reject only *small* border
@@ -2143,12 +2296,12 @@ function detectCore(opts) {
   for (const c of colonies) { delete c.touchesBorder; delete c.compact; delete c.fill; delete c.ev; }
   const total = colonies.reduce((s, c) => s + (c.n || 1), 0);
   return {
-    colonies,
+    colonies, faint,
     diag: {
       mode, modeScores, k, estR, otsu: th.otsu, eta: th.eta, tHigh: th.tHigh, tLow: th.tLow,
       minArea, blobs: filtered.length, objects: colonies.length, total,
-      splitCount, mergedFragments, rejectedShape, rejectedSize, rejectedBorder, rejectedHuge, rejectedThin, rejectedThinParent, frstResolved, coverResolved,
-      medSingleArea, rSingle, clumpObjects, clumpExtra, lowConf, confCut
+      splitCount, mergedFragments, rejectedShape, rejectedSize, rejectedBorder, rejectedHuge, rejectedThin, rejectedThinParent, frstResolved, coverResolved, rejectedOnMarks,
+      medSingleArea, rSingle, clumpObjects, clumpExtra, lowConf, confCut, faintCandidates
     }
   };
 }
@@ -2206,6 +2359,7 @@ function detect(opts) {
   function unscale(r) {
     if (up > 1) {
       for (const c of r.colonies) { c.x /= up; c.y /= up; c.r /= up; c.area /= up * up; if (c.peak != null) c.peak /= up; }
+      if (r.faint) for (const q of r.faint) { q.x /= up; q.y /= up; }
       r.diag.upscale = up;
       r.diag.estR /= up;
       r.diag.k = Math.round(r.diag.k / up);
@@ -2233,6 +2387,7 @@ function detect(opts) {
     c.x = c.x * f + half; c.y = c.y * f + half;
     c.r *= f; c.area *= f * f; if (c.peak != null) c.peak *= f;
   }
+  if (r.faint) for (const q of r.faint) { q.x = q.x * f + half; q.y = q.y * f + half; }
   r.diag.workScale = f;
   r.diag.k = Math.round(r.diag.k * f);      // report in source pixels, so it can be fed back verbatim
   r.diag.estR = (r.diag.estR || estR / f) * f;
@@ -2535,7 +2690,7 @@ if (typeof self !== 'undefined' && typeof self.addEventListener === 'function') 
       const t0 = Date.now();
       const r = detect(o);
       r.diag.ms = Date.now() - t0;
-      self.postMessage({ action: 'detect', id: msg.id, colonies: r.colonies, diag: r.diag });
+      self.postMessage({ action: 'detect', id: msg.id, colonies: r.colonies, faint: r.faint || [], diag: r.diag });
     } catch (err) {
       self.postMessage({ action: msg.action || 'detect', id: msg.id, error: String((err && err.message) || err) });
     }
@@ -2571,6 +2726,7 @@ let view = { s: 1, x: 0, y: 0 };
 let tool = 'pan';
 let roi = null;                 // {shape:'circle',cx,cy,r} | {shape:'rect',x,y,w,h}
 let autoColonies = [];          // from the detector, image coordinates
+let faintPeaks = [];            // faint peaks just below the cut-off, shown only when there are many
 let manualAdd = [];             // user-added points
 let suppress = [];              // user-removed points (survive re-detection)
 let colonies = [];              // merged, what is drawn and counted
@@ -2582,6 +2738,9 @@ let scaleCache = null;          // {sig, estR, k} — measured colony scale for 
 let rows = [], rowSeq = 0;
 let undoStack = [], redoStack = [];
 let runSeq = 0;                 // bumped whenever an analysis completes or the image changes
+let countDirty = false;         // the Colonies box holds a number the user typed, not the detected one
+let lastSpotR = 0;              // radius of the last circle drawn, reused by a single click on the next spot
+let method = 'spread';          // plating method, which sets the countable range
 
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
@@ -2650,20 +2809,21 @@ function adoptImage(im) {
   resetAdjustments(false);
   applyAdjustments();
 
-  roi = null; autoColonies = []; manualAdd = []; suppress = []; colonies = [];
+  roi = null; autoColonies = []; manualAdd = []; suppress = []; colonies = []; faintPeaks = [];
   learned = null; cachedMode = null; scaleCache = null; teachPicks = []; teachMode = false;
   undoStack = []; redoStack = [];
   // Nothing measured from the previous photograph may survive onto this one — including a marker
   // size dialled in against the old colonies, which would otherwise silently stop matching the new
   // ones. 100% always means "the size just measured", so the honest reset is back to 100%.
   setManualScale(100);
+  countDirty = false; lastSpotR = 0;
   lastDiag = null; pending = null; runSeq++;
   $('diag').textContent = ''; $('modeTag').textContent = ''; $('roiTag').textContent = '';
   $('learnedOut').style.display = 'none';
   syncTeachClearButton();
   $('empty').style.display = 'none';
   $('imgTag').textContent = im.naturalWidth + ' × ' + im.naturalHeight;
-  unmute('panel2'); unmute('panel3'); unmute('panel4');
+  unmute('panel2'); unmute('panel3');
   fitView();
   refreshUI();
   // Loading a photo does not start anything. Counting begins when the plate area is defined -
@@ -2898,6 +3058,15 @@ function draw() {
         ctx.beginPath(); ctx.arc(hnd.x, hnd.y, 4.5 * px, 0, Math.PI * 2); ctx.fill();
       }
     }
+  }
+
+  if (faintWarning()) {
+    ctx.save();
+    ctx.setLineDash([2.5 * px, 2.5 * px]);
+    ctx.strokeStyle = 'rgba(200,204,212,0.85)'; ctx.lineWidth = 1.2 * px;
+    const fr = Math.max(4 * px, (lastDiag && lastDiag.estR ? lastDiag.estR : 3) * 0.9);
+    for (const q of faintPeaks) { ctx.beginPath(); ctx.arc(q.x, q.y, fr, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
   }
 
   // colonies
@@ -3328,9 +3497,18 @@ function endPointer(e) {
   }
   if (kind === 'teachSize' || kind === 'teachMove') { refreshTeachReadout(); draw(); return; }
   if (kind === 'new' || kind === 'move' || kind === 'resize') {
-    const big = roi && (roi.shape === 'circle' ? roi.r > 12 : roi.shape === 'lasso' ? lassoSpan(roi.points) > 20 : (roi.w > 15 && roi.h > 15));
+    let big = roi && (roi.shape === 'circle' ? roi.r > 12 : roi.shape === 'lasso' ? lassoSpan(roi.points) > 20 : (roi.w > 15 && roi.h > 15));
+    // Spot by spot: once a circle has been drawn, a click with no drag puts one the same size on the
+    // spot that was clicked, so a row of drops is a row of clicks rather than a row of careful drags.
+    if (!big && kind === 'new' && roi && roi.shape === 'circle' && lastSpotR > 0) {
+      roi = { shape: 'circle', cx: wasTeach.ox, cy: wasTeach.oy, r: lastSpotR };
+      big = true;
+    }
     if (!big) { if (kind === 'new') { roi = null; colonies = []; autoColonies = []; } draw(); refreshUI(); return; }
     clampRoi();
+    if (roi.shape === 'circle') lastSpotR = roi.r;
+    if (kind === 'new') { resetCorrections(); autoColonies = []; colonies = []; faintPeaks = []; lastDiag = null; }
+    else keepCorrectionsInside();
     refreshUI();
     runDetect();
   }
@@ -3373,6 +3551,21 @@ function redo() {
   refreshUndo();
 }
 function refreshUndo() { $('btnUndo').disabled = !undoStack.length; $('btnRedo').disabled = !redoStack.length; }
+// A new selection starts clean. Colonies added or struck out by hand belong to the area they were
+// made on, and carried onto the next spot they would be counted there too.
+function resetCorrections() {
+  manualAdd = []; suppress = []; undoStack = []; redoStack = [];
+  countDirty = false;
+  refreshUndo();
+}
+// Moving or resizing the same selection keeps the corrections still inside it and drops the rest.
+// Undo history is dropped with them: it could otherwise restore marks from outside the area.
+function keepCorrectionsInside() {
+  manualAdd = manualAdd.filter(inRoi); suppress = suppress.filter(inRoi);
+  undoStack = []; redoStack = [];
+  countDirty = false;
+  refreshUndo();
+}
 $('btnUndo').onclick = undo; $('btnRedo').onclick = redo;
 
 // Accept a click anywhere within the colony's own outline, or within a comfortable screen-space
@@ -3412,6 +3605,13 @@ function mergeColonies() {
 }
 
 function total() { return colonies.reduce((s, c) => s + (c.n || 1), 0); }
+// Many faint peaks just under the cut-off, and at least as many as were counted: the signature of a
+// dense spot of colonies too faint for this photograph to resolve, and also of agar texture or dust.
+// The tool cannot tell those apart, so it shows them and asks.
+function faintWarning() {
+  const nF = lastDiag && lastDiag.faintCandidates || 0;
+  return roi && nF >= 15 && nF >= autoColonies.length ? nF : 0;
+}
 
 function refreshCount() {
   const t = total();
@@ -3423,9 +3623,11 @@ function refreshCount() {
   if (clumps.length) bits.push(clumps.length + ' clump' + (clumps.length > 1 ? 's' : '') + ' estimated');
   if (manualAdd.length) bits.push(manualAdd.length + ' added by hand');
   if (suppress.length) bits.push(suppress.length + ' removed by hand');
+  const nF = faintWarning();
+  if (nF) bits.unshift('⚠ ' + nF + ' faint, not counted');
   $('countSub').textContent = bits.length ? bits.join(' · ') : (t ? 'automatic' : 'nothing counted yet');
-  $('btnAddRow').disabled = !t;
-  updateCfuPreview();
+  if (!countDirty) $('countEntry').value = (roi || t) ? String(t) : '';
+  syncCountEntry();
 }
 
 // ============================================================
@@ -3469,14 +3671,19 @@ $('btnWhole').onclick = () => {
   if (!img) return;
   roi = { shape: 'rect', x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
   roiShape = 'rect';
+  resetCorrections(); autoColonies = []; colonies = [];
   setHint('Counting the whole frame. Use this for an image already cropped to the plate — if the photo still shows the bench around the dish, "Find the dish" will be more accurate.');
   refreshUI(); runDetect({ redecide: true });
 };
-$('btnClearRoi').onclick = () => {
-  roi = null; autoColonies = []; manualAdd = []; suppress = []; colonies = [];
-  undoStack = []; redoStack = []; refreshUndo();
-  refreshCount(); refreshUI(); draw();
-};
+function clearSelection() {
+  roi = null; autoColonies = []; colonies = []; faintPeaks = []; lastDiag = null;
+  resetCorrections();
+  $('diag').textContent = ''; $('modeTag').textContent = '';
+  refreshUI();
+  setHint(tool === 'select' ? SHAPE_HINT[roiShape] : 'Selection cleared. Draw a new area to count.');
+}
+$('btnClearRoi').onclick = clearSelection;
+$('btnClearStage').onclick = clearSelection;
 $('edgeMargin').addEventListener('input', e => { $('marginVal').textContent = e.target.value + '%'; draw(); });
 $('edgeMargin').addEventListener('change', () => { if (roi) runDetect(); });
 
@@ -3635,6 +3842,7 @@ worker.onmessage = e => {
     const f = ctxInfo.f;
     roi = { shape: 'circle', cx: m.dish.cx * f, cy: m.dish.cy * f, r: m.dish.r * f };
     roiShape = 'circle';
+    resetCorrections(); autoColonies = []; colonies = [];
     clampRoi(); refreshUI(); draw();
     setHint('Dish found. Drag the dots if it is off, then the count updates.');
     runDetect({ redecide: true });
@@ -3671,13 +3879,18 @@ worker.onmessage = e => {
 
   const { bx, by } = ctxInfo;
   autoColonies = m.colonies.map(c => ({ x: c.x + bx, y: c.y + by, r: c.r, area: c.area, n: c.n || 1, clump: !!c.clump, conf: c.conf, src: 'auto' }));
+  faintPeaks = (m.faint || []).map(q => ({ x: q.x + bx, y: q.y + by }));
   lastDiag = m.diag;
   runSeq++;
   if (ctxInfo.sig) scaleCache = { sig: ctxInfo.sig, estR: m.diag.estR, k: m.diag.k };
   if ($('colonyType').value === 'auto') cachedMode = m.diag.mode;
   mergeColonies();
   showDiag(m.diag);
-  if (tool === 'select' || tool === 'pan') setHint('Counted. Switch to Add or Remove to correct anything by hand — your corrections survive a re-count.');
+  const nF = faintWarning();
+  if (nF) setHint(nF + ' faint objects (grey dotted rings) sit just below the cut-off and are not counted. If they are colonies — a dense spot of small colonies looks like this — press More in the colony menu, or type the count yourself in step 4. If they are agar texture or dust, carry on.');
+  else if (tool === 'select' || tool === 'pan') setHint(roi && roi.shape === 'circle' && tool === 'select' && lastSpotR > 0
+    ? 'Counted. Click once on the next spot to count it with a circle this size, or use Add and Remove to correct this one.'
+    : 'Counted. Switch to Add or Remove to correct anything by hand — your corrections survive a re-count.');
 };
 
 function showDiag(d) {
@@ -3697,6 +3910,7 @@ function showDiag(d) {
   if (d.rejectedThin) bits.push(d.rejectedThin + ' thin object(s) rejected');
   if (d.rejectedBorder) bits.push(d.rejectedBorder + ' edge fragment(s) rejected');
   if (d.rejectedShape) bits.push(d.rejectedShape + ' elongated rejected');
+  if (d.rejectedOnMarks) bits.push(d.rejectedOnMarks + ' on a label or mark rejected');
   if (d.clumpObjects) bits.push(d.clumpObjects + ' clump(s) → +' + d.clumpExtra + ' estimated');
   if (d.upscale > 1) bits.push('enlarged ' + d.upscale + '× for detail');
   if (d.workScale > 1) bits.push('analysed at 1/' + d.workScale + ' scale');
@@ -3824,9 +4038,10 @@ $('btnTeachClear').onclick = () => {
 // ============================================================
 function cfu(count, dil, volUl) {
   const volMl = volUl / 1000;
-  if (!(volMl > 0)) return NaN;
+  if (typeof count !== 'number' || !(volMl > 0)) return NaN;
   return count / (Math.pow(10, -dil) * volMl);
 }
+function rowCfu(r) { return cfu(r.n, r.dil, r.vol); }
 function fmtSci(v) {
   if (!isFinite(v) || v <= 0) return '—';
   const e = Math.floor(Math.log10(v));
@@ -3843,75 +4058,251 @@ function sup(n) {
 function numForExport(v) {
   return isFinite(v) ? String(Math.round(v)) : '';
 }
-// Countable range per the FDA Bacteriological Analytical Manual, ch. 3: flagged, never blocked.
-function flagFor(n) {
-  if (n < 25) return { k: 'lo', t: '<25' };
-  if (n > 250) return { k: 'hi', t: '>250' };
-  return { k: 'ok', t: '25–250' };
+function logForExport(v) { return isFinite(v) ? v.toFixed(3) : ''; }
+
+// A count is a whole number, or TNTC for a plate too numerous to count. Anything else is refused.
+function parseCount(s) {
+  s = String(s == null ? '' : s).trim();
+  if (/^tntc$/i.test(s)) return 'TNTC';
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return null;
+}
+
+// Countable range, flagged and never enforced. Spread and pour plates: 25-250 colonies per plate,
+// FDA Bacteriological Analytical Manual ch. 3. Drop plates: 3-30 colonies per drop, the range
+// Herigstad et al. (2001) recommend for 10 µL drops.
+const RANGES = { spread: [25, 250], drop: [3, 30] };
+function flagFor(n, m) {
+  if (n === 'TNTC') return { k: 'hi', t: 'TNTC' };
+  const [lo, hi] = RANGES[m] || RANGES.spread;
+  if (n < lo) return { k: 'lo', t: '<' + lo };
+  if (n > hi) return { k: 'hi', t: '>' + hi };
+  return { k: 'ok', t: lo + '–' + hi };
+}
+
+function syncCountEntry() {
+  const t = total();
+  const n = parseCount($('countEntry').value);
+  $('btnAddRow').disabled = n == null;
+  $('btnUseDetected').hidden = !(countDirty && roi);
+  $('btnUseDetected').textContent = 'use detected (' + t + ')';
+  $('countNote').textContent = countDirty
+    ? (n == null ? 'Type a whole number, or TNTC.' : 'Your number goes into the table' + (roi ? '; the plate still shows ' + t + ' detected.' : '.'))
+    : '';
+  updateCfuPreview();
 }
 function updateCfuPreview() {
-  const n = total();
+  const n = parseCount($('countEntry').value);
   const dil = +$('dilution').value, vol = +$('volume').value;
-  if (!n || !isFinite(dil) || !(vol > 0)) { $('cfuPreview').textContent = ''; return; }
-  const f = flagFor(n);
-  $('cfuPreview').innerHTML = '<b>' + fmtSci(cfu(n, dil, vol)) + ' CFU/mL</b> from this plate · ' +
-    'countable range <span class="flag ' + f.k + '">' + f.t + '</span>' +
-    (f.k === 'ok' ? '' : ' — outside the FDA countable range, reported anyway');
+  if (n == null || !isFinite(dil) || !(vol > 0)) { $('cfuPreview').textContent = ''; return; }
+  if (n === 'TNTC') { $('cfuPreview').innerHTML = '<span class="flag hi">TNTC</span> recorded as too numerous to count, and left out of the averages.'; return; }
+  const f = flagFor(n, method);
+  $('cfuPreview').innerHTML = '<b>' + fmtSci(cfu(n, dil, vol)) + ' CFU/mL</b> · countable range <span class="flag ' + f.k + '">' + f.t + '</span>' +
+    (f.k === 'ok' ? '' : ' — outside the countable range for ' + (method === 'drop' ? 'a drop' : 'a plate') + ', reported anyway');
 }
-$('dilution').addEventListener('input', updateCfuPreview);
-$('volume').addEventListener('input', updateCfuPreview);
+$('countEntry').addEventListener('input', () => {
+  countDirty = $('countEntry').value.trim() !== String(total());
+  syncCountEntry();
+});
+$('btnUseDetected').onclick = () => { countDirty = false; refreshCount(); };
+$('dilution').addEventListener('input', () => { updateCfuPreview(); saveState(); });
+$('volume').addEventListener('input', () => { updateCfuPreview(); saveState(); });
+$('rowTitle').addEventListener('input', saveState);
+
+function setMethod(m, fromUser) {
+  method = m === 'drop' ? 'drop' : 'spread';
+  for (const b of $('methodSeg').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.m === method));
+  // The volume that goes with each method, but only where it is still the other method's default:
+  // a volume someone typed is theirs.
+  if (fromUser) {
+    if (method === 'drop' && +$('volume').value === 100) $('volume').value = 10;
+    if (method === 'spread' && +$('volume').value === 10) $('volume').value = 100;
+  }
+  updateCfuPreview();
+  renderRows();
+}
+$('methodSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  setMethod(b.dataset.m, true);
+  saveState();
+});
 
 $('btnAddRow').onclick = () => {
-  const n = total();
+  const n = parseCount($('countEntry').value);
   const dil = +$('dilution').value, vol = +$('volume').value;
+  if (n == null) { setHint('Enter a whole number of colonies, or TNTC.'); return; }
   if (!isFinite(dil) || !(vol > 0)) { setHint('Enter a dilution and a volume greater than zero.'); return; }
+  // The title stays in its box: consecutive rows are usually the same sample at the next dilution
+  // or the next replicate, and retyping it each time is the thing that makes people stop using it.
   const title = $('rowTitle').value.trim();
-  rows.push({ id: ++rowSeq, title, n, dil, vol, use: true, manual: manualAdd.length, removed: suppress.length, clumps: colonies.filter(c => c.clump).length });
-  $('rowTitle').value = '';
+  rows.push({ id: ++rowSeq, title, n, dil, vol, use: true, entered: countDirty,
+              manual: manualAdd.length, removed: suppress.length, clumps: colonies.filter(c => c.clump).length });
   renderRows();
+  updateCfuPreview();
+  setHint('Added as row ' + rowSeq + (title ? ' (' + title + ')' : '') + '.');
 };
+
+function stats(vals) {
+  const n = vals.length;
+  if (!n) return { n: 0, mean: NaN, sd: NaN };
+  const mean = vals.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (n - 1)) : NaN;
+  return { n, mean, sd };
+}
+// Replicate plates of one sample average two ways, and both are reported: the arithmetic mean of
+// CFU/mL, and the mean and sample SD of log10 CFU/mL, which is the scale plate counts are usually
+// compared on because their spread grows with their size.
+function summarise(list) {
+  const c = list.map(rowCfu).filter(v => isFinite(v) && v > 0);
+  const lin = stats(c), lg = stats(c.map(v => Math.log10(v)));
+  return { n: c.length, mean: lin.mean, sd: lin.sd, logMean: lg.mean, logSd: lg.sd };
+}
+function groups(list) {
+  const g = new Map();
+  for (const r of list) { const k = r.title || ''; if (!g.has(k)) g.set(k, []); g.get(k).push(r); }
+  return g;
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
 function renderRows() {
   const tb = $('tbl').querySelector('tbody');
   tb.innerHTML = '';
   for (const r of rows) {
-    const f = flagFor(r.n);
+    const f = flagFor(r.n, method);
     const tr = document.createElement('tr');
     if (!r.use) tr.className = 'off';
-    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     tr.innerHTML =
       '<td><input type="checkbox" ' + (r.use ? 'checked' : '') + ' aria-label="Include row ' + r.id + '"></td>' +
       '<td>' + r.id + '</td>' +
       '<td><input type="text" class="rowtitle-edit" placeholder="—" maxlength="60" value="' + esc(r.title || '') + '"></td>' +
-      '<td>' + r.n + '</td><td>10⁻' + r.dil + '</td><td>' + r.vol + '</td>' +
-      '<td>' + fmtSci(cfu(r.n, r.dil, r.vol)) + '</td>' +
+      '<td><input type="text" class="count-edit' + (r.entered ? ' entered' : '') + '" inputmode="numeric" value="' + esc(r.n) + '" title="' + (r.entered ? 'Typed in by hand' : 'Detected count') + '. Edit to correct; TNTC is accepted."></td>' +
+      '<td>10⁻' + r.dil + '</td><td>' + r.vol + '</td>' +
+      '<td>' + (r.n === 'TNTC' ? '—' : fmtSci(rowCfu(r))) + '</td>' +
       '<td><span class="flag ' + f.k + '">' + f.t + '</span></td>' +
       '<td><button class="rowdel" title="Remove row">×</button></td>';
     tr.querySelector('input[type="checkbox"]').onchange = e => { r.use = e.target.checked; renderRows(); };
-    tr.querySelector('.rowtitle-edit').onchange = e => { r.title = e.target.value.trim(); };
+    tr.querySelector('.rowtitle-edit').onchange = e => { r.title = e.target.value.trim(); renderRows(); };
+    tr.querySelector('.count-edit').onchange = e => {
+      const v = parseCount(e.target.value);
+      if (v == null) { e.target.value = r.n; setHint('A count is a whole number, or TNTC.'); return; }
+      if (v !== r.n) { r.n = v; r.entered = true; }
+      renderRows();
+    };
     tr.querySelector('.rowdel').onclick = () => { rows = rows.filter(x => x !== r); renderRows(); };
     tb.appendChild(tr);
   }
   const used = rows.filter(r => r.use);
+  const s = summarise(used);
   $('statRows').textContent = used.length;
-  $('statMean').textContent = used.length ? fmtSci(used.reduce((s, r) => s + cfu(r.n, r.dil, r.vol), 0) / used.length) : '—';
+  $('statMean').textContent = s.n ? fmtSci(s.mean) : '—';
+  $('statSd').textContent = s.n > 1 ? 'SD ' + fmtSci(s.sd) : (used.length && !s.n ? 'no countable rows' : '');
+  $('statLog').textContent = s.n ? s.logMean.toFixed(2) : '—';
+  $('statLogSd').textContent = s.n > 1 ? '± ' + s.logSd.toFixed(2) + ' SD' : '';
+  // With more than one sample in the table, one grand average means nothing; each title gets its own.
+  const g = groups(used);
+  if (g.size > 1) {
+    let h = '<div class="tablewrap bysample"><table><thead><tr><th>Sample</th><th><span class="nocase">n</span></th><th>Mean CFU/<span class="nocase">mL</span></th><th>log₁₀ ± SD</th></tr></thead><tbody>';
+    for (const [k, list] of g) {
+      const q = summarise(list);
+      h += '<tr><td>' + (k ? esc(k) : '<i>untitled</i>') + '</td><td>' + q.n + '</td><td>' + (q.n ? fmtSci(q.mean) : '—') + '</td><td>' +
+        (q.n ? q.logMean.toFixed(2) + (q.n > 1 ? ' ± ' + q.logSd.toFixed(2) : '') : '—') + '</td></tr>';
+    }
+    $('bySample').innerHTML = h + '</tbody></table></div>';
+  } else $('bySample').innerHTML = '';
+  $('btnClearTable').disabled = !rows.length;
+  saveState();
+}
+
+function usedOrHint() {
+  const used = rows.filter(r => r.use);
+  if (!used.length) setHint(rows.length ? 'Tick at least one row to export it.' : 'Add at least one plate to the table first.');
+  return used;
 }
 
 $('btnCsv').onclick = () => {
-  const used = rows.filter(r => r.use);
-  if (!used.length) { setHint(rows.length ? 'Tick at least one row to export it.' : 'Add at least one plate to the table first.'); return; }
+  const used = usedOrHint();
+  if (!used.length) return;
   // Tab-separated: pasted straight into Excel it lands as columns on its own, no import dialog.
   // Plain ASCII throughout (µL -> uL) so nothing depends on how the receiving app reads the file's
-  // encoding. Only the columns asked for, in the order asked for; a row the checkbox has turned off
-  // is left out entirely rather than exported with a flag column explaining why to ignore it.
-  const head = ['Title', 'Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'];
-  const lines = [head.join('\t')];
+  // encoding. A row the checkbox has turned off is left out entirely.
+  const lines = [['Title', 'Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'].join('\t')];
   for (const r of used) {
-    lines.push([(r.title || '').replace(/\t/g, ' '), r.id, r.n, r.dil, r.vol, numForExport(cfu(r.n, r.dil, r.vol))].join('\t'));
+    lines.push([(r.title || '').replace(/\t/g, ' '), r.id, r.n, r.dil, r.vol, numForExport(rowCfu(r))].join('\t'));
   }
-  const avg = used.reduce((s, r) => s + cfu(r.n, r.dil, r.vol), 0) / used.length;
-  lines.push(['', 'Average', '', '', '', numForExport(avg)].join('\t'));
+  const s = summarise(used);
+  lines.push(['', 'Average', '', '', '', numForExport(s.mean)].join('\t'));
+  lines.push(['', 'SD', '', '', '', numForExport(s.sd)].join('\t'));
+  lines.push(['', 'Mean log10', '', '', '', logForExport(s.logMean)].join('\t'));
+  lines.push(['', 'SD log10', '', '', '', logForExport(s.logSd)].join('\t'));
+  const g = groups(used);
+  if (g.size > 1) {
+    lines.push('');
+    lines.push(['Sample', 'n', 'Mean CFU/mL', 'SD', 'Mean log10', 'SD log10'].join('\t'));
+    for (const [k, list] of g) {
+      const q = summarise(list);
+      lines.push([(k || 'untitled').replace(/\t/g, ' '), q.n, numForExport(q.mean), numForExport(q.sd), logForExport(q.logMean), logForExport(q.logSd)].join('\t'));
+    }
+  }
   download(new Blob([lines.join('\r\n')], { type: 'text/plain' }), 'colony-counts.txt');
 };
+// Only the numbers, one per line: the shape a column of a spreadsheet takes when pasted.
+function countsText(used) { return used.map(r => String(r.n)).join('\r\n'); }
+$('btnCountsTxt').onclick = () => {
+  const used = usedOrHint();
+  if (!used.length) return;
+  download(new Blob([countsText(used)], { type: 'text/plain' }), 'colony-counts-only.txt');
+};
+$('btnCopyCounts').onclick = async () => {
+  const used = usedOrHint();
+  if (!used.length) return;
+  const text = countsText(used);
+  // A selected textarea copies synchronously inside the click, which works from a file:// page where
+  // the asynchronous clipboard can wait on a permission prompt; the asynchronous one is the fallback.
+  let ok = false;
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  if (!ok && navigator.clipboard) {
+    try { await Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))]); ok = true; } catch (e) { ok = false; }
+  }
+  setHint(ok ? 'Copied ' + used.length + ' count' + (used.length > 1 ? 's' : '') + ', one per line. Paste into a spreadsheet column.' : 'The browser refused the clipboard. Use "Counts only (.txt)" instead.');
+};
+$('btnClearTable').onclick = () => {
+  if (!rows.length) return;
+  if (!confirm('Remove all ' + rows.length + ' rows from the table? This cannot be undone.')) return;
+  rows = []; rowSeq = 0;
+  renderRows();
+};
+
+// The table, the plating method and the entry fields live in this browser's storage, so a reload or
+// a closed tab does not cost a morning's counting. Storage can be missing or refused (private
+// windows, blocked site data); everything still works, it just is not remembered.
+const STORE_KEY = 'labpotato-colony-counter-v2';
+let restoring = false;
+function saveState() {
+  if (restoring) return;
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      rows, rowSeq, method, title: $('rowTitle').value, dil: $('dilution').value, vol: $('volume').value
+    }));
+  } catch (e) { /* not remembered, still usable */ }
+}
+function loadState() {
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { o = null; }
+  if (!o) return;
+  restoring = true;
+  if (Array.isArray(o.rows)) rows = o.rows.filter(r => r && parseCount(r.n) != null).map(r => Object.assign({}, r, { n: parseCount(r.n) }));
+  rowSeq = Math.max(+o.rowSeq || 0, rows.reduce((m, r) => Math.max(m, +r.id || 0), 0));
+  if (typeof o.title === 'string') $('rowTitle').value = o.title;
+  if (o.dil != null && o.dil !== '') $('dilution').value = o.dil;
+  if (o.vol != null && o.vol !== '') $('volume').value = o.vol;
+  setMethod(o.method, false);
+  restoring = false;
+  renderRows();
+}
 
 $('btnPng').onclick = () => {
   if (!img || !colonies.length) { setHint('Nothing marked to export yet.'); return; }
@@ -3975,6 +4366,7 @@ function refreshUI() {
   const has = !!roi;
   $('mAdd').disabled = !has; $('mRemove').disabled = !has;
   $('btnRecountStage').disabled = !has;
+  $('btnClearStage').disabled = !has;
   $('roiTag').textContent = !roi ? '' :
     (roi.shape === 'circle' ? 'circle r=' + Math.round(roi.r) + ' px' :
      roi.shape === 'lasso' ? 'freehand (' + roi.points.length + ' pts)' :
@@ -4056,6 +4448,7 @@ window.addEventListener('keydown', e => {
   else if (k === '+' || k === '=') zoomAt(1.25, viewport.clientWidth / 2, viewport.clientHeight / 2);
   else if (k === '-') zoomAt(1 / 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2);
   else if (e.key === 'Enter' && roi) forceRecount();
+  else if (e.key === 'Delete' && roi) clearSelection();
 });
 window.addEventListener('keyup', e => { if (e.code === 'Space') spaceDown = false; });
 
@@ -4078,9 +4471,9 @@ single colony on this plate. An object cut out of a cluster, counted as a clump,
 edge of the selection is marked down. <b>It is a way of directing your attention, not a
 probability</b> — 0.8 does not mean eight in ten such objects are colonies, and no calibration
 against real plates has been done. On the synthetic suite it separates usefully: mean score 0.93 for
-correct detections against 0.39 for mistakes, and at the default cut-off of 0.60 it flagged every
-object the detector got wrong on the hard plates while flagging none at all on the plates it got
-right. Changing the cut-off changes only the colour, never the count.</p>
+correct detections against 0.31 for the four mistakes left, and at the default cut-off of 0.60 it
+flagged three of those four while flagging none of the 675 correct ones. Changing the cut-off
+changes only the colour, never the count.</p>
 
 <p><b>Low-resolution boost.</b> <span class="tagi">INFERENCE</span> Below roughly three pixels of
 colony radius the distance transform has nothing to work with: the saddle between two touching
@@ -4093,7 +4486,22 @@ to four times slower while it is in use.</p>
 
 <p><b>CFU/mL.</b> count ÷ (dilution fraction × volume plated in mL), per the
 <a href="https://www.fda.gov/food/laboratory-methods-food/bam-chapter-3-aerobic-plate-count" target="_blank" rel="noopener">FDA Bacteriological Analytical Manual, ch. 3</a>.
-The 25–250 CFU/plate countable range from the same source is flagged, never enforced.</p>
+For spread and pour plates the 25–250 CFU/plate countable range from the same source is flagged,
+never enforced. For drop (spot) plates — the method of
+<a href="https://doi.org/10.1017/S002217240001158X" target="_blank" rel="noopener">Miles, Misra &amp; Irwin (1938)</a> —
+the flag uses 3–30 colonies per drop, after
+<a href="https://doi.org/10.1016/S0167-7012(00)00241-4" target="_blank" rel="noopener">Herigstad, Hamilton &amp; Heersink (2001)</a>.
+Replicates are summarised both as the arithmetic mean of CFU/mL and as the mean ± sample SD of
+log₁₀ CFU/mL; with more than one title in the table each title is summarised on its own.</p>
+
+<p><b>What counts as a colony at all.</b> <span class="tagi">INFERENCE</span> An object is seeded only
+where it stands at least five noise standard deviations clear of the agar, the noise being measured
+on the same map (1.4826 × median absolute deviation). Five is the Rose criterion for reliably seeing
+a feature against noise (<a href="https://doi.org/10.1364/JOSA.38.000196" target="_blank" rel="noopener">Rose, 1948</a>);
+the sensitivity control moves it between about 3 and 7. Without it a small, faint selection — one
+drop spot — was split by its own grain: the threshold landed inside the agar's noise and every speck
+was counted. A pale colony must also be paler than the agar round it, which is what stops the paler
+parts of a handwritten label from counting.</p>
 
 <p><b>Uneven lighting.</b> Removed by a morphological top-hat: a grayscale opening with a
 structuring element larger than the largest colony estimates the background and is subtracted
@@ -4147,12 +4555,35 @@ element sweep, the rejection of rims and scratches, the re-merging of watershed 
 clump-area estimate and the learning-from-examples step are procedures put together for this tool.
 They are described in the source, which is one readable file.</p>
 
+<p><b>Checked on real spot plates.</b> <span class="tagi">EMERGING</span> Nine circles on two real
+drop-plate photographs were counted by hand at 3–4× zoom: faint 3–4 px colonies, spots overlapping
+handwritten labels, a fibre, a marker line, air bubbles and empty drop footprints. Summed over the
+nine, the count beyond the hand count's own uncertainty fell from 1,335 colonies with the previous
+build to 47 with this one — for example 421 → 15 where there were 17, and 636 → 1 on an empty
+footprint. Four of the nine are within that uncertainty. The rest over-count: glare from the dish
+wall inside the circle (+14), an empty footprint beside the wall (+14), air bubbles (+9), and the
+edges of handwritten labels (+4, +6). Two of those got worse than before — the footprint beside the
+wall (6 → 16) and one label-edge spot (16 → 22 against 13) — because the finer threshold that finds
+faint colonies also finds reflections and ink edges. <b>Keep spot circles clear of the dish wall and
+of labels</b>, and check amber marks. Nine circles from one laboratory are a sanity check, not a
+validation.</p>
+
+<p><b>Dense spots of very faint colonies.</b> <span class="tagi">INFERENCE</span> Where small, faint
+colonies fill most of a spot, they inflate the noise estimate that the five-sigma rule is measured
+against, and most of them fall just under it: on the densest spots tested, dozens of colonies were
+counted as 0–9. No threshold fixes this without bringing the agar's grain back in on every other
+plate, so the tool says so instead. Peaks that rise three sigmas above the agar but not to the
+cut-off, away from anything counted, are ringed in grey and reported next to the count whenever
+there are fifteen or more and at least as many as were counted. They are never added to the count.
+Agar texture and dust also produce them; you decide. For such a spot, count at higher sensitivity
+(<b>More</b>), or type the number yourself.</p>
+
 <p><b>How it was checked.</b> <span class="tagi">EMERGING</span> Against 17 synthetic plates with
 known colony counts — pale-on-dark, dark-on-pale, faint, strong illumination gradient, chromogenic,
 isoluminant, 5 px and 16 px colonies, 12 touching pairs, 8 touching triples, 220 crowded colonies,
 12 sparse colonies, a scratch and a marker stroke, sensor noise, and 600 / 1800 / 2600 px
-resolutions — the mean absolute count error was 0.6 per cent, with precision 100 per cent and
-recall 99.5 per cent against the known colony positions. The previous build scored 48.3 per cent
+resolutions — the mean absolute count error was 0.3 per cent, with precision 100 per cent and
+recall 99.7 per cent against the known colony positions. The previous build scored 48.3 per cent
 mean error, 61.6 per cent precision and 54.2 per cent recall on the same plates. Synthetic plates
 are not photographs: they have no agar bubbles, no lid condensation, no motion blur and no
 handwriting. <b>This tool has not yet been benchmarked against a manually counted reference
@@ -4161,7 +4592,7 @@ roughly half their radius leave no waist for any distance-based method to cut, a
 physically touching a scratch is absorbed into it.</p>
 `;
 
-// A read-only hook for the browser test harness; it exposes no state and changes no behaviour.
+// Hooks for the browser test harness. __setRoi and __setView drive the same paths a drag and a zoom do.
 window.__seq = () => runSeq;
 window.__picks = () => teachPicks;
 window.__view = () => view;
@@ -4172,11 +4603,14 @@ window.__teachMode = (v) => { teachMode = v; };
 window.__learned = () => learned;
 window.__roi = () => roi;
 window.__roiShape = () => roiShape;
+window.__setRoi = r => { roi = r; roiShape = r.shape; refreshUI(); runDetect({ redecide: true }); };
+window.__setView = v => { view.s = v.s; view.x = v.x; view.y = v.y; draw(); };
 
 // ============================================================
 // boot
 // ============================================================
 syncSeg(50);
+loadState();
 refreshUI();
 setTool('pan');
 setHint('Upload a plate photo to begin. You can also paste one with Ctrl+V, or drop it anywhere on this page.');

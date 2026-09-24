@@ -872,8 +872,6 @@ kbd.key { font: inherit; font-size: 11px; font-weight: 660; background: var(--su
       <div class="row" style="margin-top:10px;">
         <button class="btn btn-primary" id="btnAddRow" type="button" disabled>Add to table</button>
       </div>
-      <label class="check"><input type="checkbox" id="stepDil"><span>Then step the dilution on by one
-        <span class="note">For a dilution series counted spot by spot, or plate by plate.</span></span></label>
 
       <div class="tablewrap">
         <table id="tbl">
@@ -4110,7 +4108,6 @@ $('btnUseDetected').onclick = () => { countDirty = false; refreshCount(); };
 $('dilution').addEventListener('input', () => { updateCfuPreview(); saveState(); });
 $('volume').addEventListener('input', () => { updateCfuPreview(); saveState(); });
 $('rowTitle').addEventListener('input', saveState);
-$('stepDil').addEventListener('change', saveState);
 
 function setMethod(m, fromUser) {
   method = m === 'drop' ? 'drop' : 'spread';
@@ -4140,10 +4137,9 @@ $('btnAddRow').onclick = () => {
   const title = $('rowTitle').value.trim();
   rows.push({ id: ++rowSeq, title, n, dil, vol, use: true, entered: countDirty,
               manual: manualAdd.length, removed: suppress.length, clumps: colonies.filter(c => c.clump).length });
-  if ($('stepDil').checked) $('dilution').value = dil + 1;
   renderRows();
   updateCfuPreview();
-  setHint('Added as row ' + rowSeq + (title ? ' (' + title + ')' : '') + '.' + ($('stepDil').checked ? ' Dilution stepped on to 10⁻' + (dil + 1) + '.' : ''));
+  setHint('Added as row ' + rowSeq + (title ? ' (' + title + ')' : '') + '.');
 };
 
 function stats(vals) {
@@ -4289,7 +4285,7 @@ function saveState() {
   if (restoring) return;
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      rows, rowSeq, method, title: $('rowTitle').value, dil: $('dilution').value, vol: $('volume').value, stepDil: $('stepDil').checked
+      rows, rowSeq, method, title: $('rowTitle').value, dil: $('dilution').value, vol: $('volume').value
     }));
   } catch (e) { /* not remembered, still usable */ }
 }
@@ -4303,7 +4299,6 @@ function loadState() {
   if (typeof o.title === 'string') $('rowTitle').value = o.title;
   if (o.dil != null && o.dil !== '') $('dilution').value = o.dil;
   if (o.vol != null && o.vol !== '') $('volume').value = o.vol;
-  $('stepDil').checked = !!o.stepDil;
   setMethod(o.method, false);
   restoring = false;
   renderRows();

@@ -1,0 +1,3043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Gibson Assembly Designer — Lab Potato</title>
+<meta name="description" content="Design Gibson / NEBuilder / ClonExpress primers in the browser. Build a construct part by part, or paste the finished sequence and let it work out which region to PCR from which plasmid. Live plasmid map, off-target screening, success scorecard. Nothing is uploaded." />
+<meta name="author" content="Dongmin Byun" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='20 44 212 148'%3E%3Cpath d='M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z' fill='%23cd9050'/%3E%3Cellipse cx='96' cy='114' rx='11' ry='13' fill='%232a2018'/%3E%3Cellipse cx='152' cy='111' rx='11' ry='13' fill='%232a2018'/%3E%3Cpath d='M110 143Q126 157 142 140' stroke='%232a2018' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   LAB POTATO — Gibson Assembly Designer v10
+   Design tokens mirror assets/styles.css on labpotato.github.io so the
+   tool reads as part of the same site. Data colours are kept separate and
+   come from the Okabe & Ito colourblind-safe palette.
+   ============================================================ */
+:root{
+  --bg:#fcfbf9; --bg-tint:#f2f4f8; --surface:#ffffff; --surface-2:#f7f8fa;
+  --border:#e6e5e1; --border-soft:#efeeea;
+  --text:#14161a; --text-muted:#3d424b; --text-faint:#5a606b;
+  --brand-ink:#1d2433;
+  --accent:#0a5fd0; --accent-hover:#0850b1; --accent-soft:#e8f0fc;
+  --potato:#c58d52; --potato-deep:#9d6a2e; --gold:#d9a441;
+
+  --ok:#0f9d76; --ok-soft:#e5f5f0;
+  --warn:#b7791f; --warn-soft:#fdf3e2;
+  --bad:#d1495b; --bad-soft:#fbeaec;
+
+  --radius-xl:22px; --radius:16px; --radius-sm:11px;
+  --shadow-sm:0 1px 2px rgba(22,24,29,.05),0 2px 8px rgba(22,24,29,.035);
+  --shadow-md:0 10px 30px -12px rgba(22,24,29,.2);
+  --shadow-lg:0 26px 60px -24px rgba(22,24,29,.3);
+  --header-h:54px; --maxw:1400px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  /* instrument surfaces: a faint graticule, the way plotting paper and sequence viewers read */
+  --grid-line:rgba(20,22,26,.045);
+  --grid-line-2:rgba(20,22,26,.085);
+  --rule:color-mix(in srgb,var(--text) 14%,transparent);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1115; --bg-tint:#14171d; --surface:#181b21; --surface-2:#1d2027;
+    --border:#272b33; --border-soft:#21242b;
+    --text:#f3f4f6; --text-muted:#c6cad2; --text-faint:#a7adb7;
+    --brand-ink:#eceef2;
+    --accent:#4d9bff; --accent-hover:#74b2ff; --accent-soft:#14243a;
+    --ok:#3fbf9a; --ok-soft:#0f2a24; --warn:#e0a758; --warn-soft:#2b2214;
+    --bad:#f0768a; --bad-soft:#2e1519;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.45);
+    --shadow-md:0 10px 30px -12px rgba(0,0,0,.65);
+    --shadow-lg:0 26px 60px -24px rgba(0,0,0,.75);
+    --grid-line:rgba(255,255,255,.035);
+    --grid-line-2:rgba(255,255,255,.07);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.6;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4{letter-spacing:-.03em;line-height:1.15;margin:0;font-weight:660}
+p{margin:0}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+.mono{font-family:var(--mono)}
+
+/* ---------------- header ---------------- */
+.site-header{
+  position:sticky;top:0;z-index:60;height:var(--header-h);display:flex;align-items:center;gap:12px;
+  padding:0 18px;background:color-mix(in srgb,var(--bg) 84%,transparent);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid color-mix(in srgb,var(--border) 75%,transparent);
+}
+.brand{display:flex;align-items:center;gap:9px;white-space:nowrap;color:inherit}
+.brand:hover{text-decoration:none}
+.brand-mark{width:26px;height:26px;display:block;overflow:visible;transition:transform .45s var(--ease)}
+.brand:hover .brand-mark{transform:rotate(-8deg) scale(1.08)}
+.brand-word{font-size:15px;font-weight:680;letter-spacing:-.035em;color:var(--brand-ink)}
+.brand-sep{color:var(--text-faint);font-size:15px}
+.brand-tool{font-size:15px;font-weight:620;letter-spacing:-.025em}
+.ver-chip{font-size:10.5px;font-weight:680;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 7px}
+/* live status, in the idiom of an instrument readout rather than a sentence */
+.hdr-readout{
+  display:none;align-items:center;gap:10px;margin-left:6px;padding:4px 10px;border-radius:7px;
+  background:var(--bg-tint);border:1px solid var(--border);
+  font-family:var(--mono);font-size:11px;color:var(--text-muted);white-space:nowrap
+}
+.hdr-readout.on{display:inline-flex}
+.hdr-readout b{color:var(--text);font-weight:700}
+.hdr-readout .sep{width:1px;height:11px;background:var(--border);display:inline-block}
+@media (max-width:900px){.hdr-readout{display:none !important}}
+.header-spacer{flex:1}
+.header-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:560;color:var(--text-muted);
+  background:none;border:none;border-radius:9px;padding:7px 10px;cursor:pointer;font-family:inherit;
+  transition:background .2s var(--ease),color .2s var(--ease);
+}
+.header-link:hover{background:var(--bg-tint);color:var(--text);text-decoration:none}
+.header-link svg{width:16px;height:16px}
+
+/* ---------------- hero ---------------- */
+.hero{position:relative;overflow:hidden;padding:44px 0 10px}
+/* graph-paper graticule, fading out downward — the page reads as a working surface, not a brochure */
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px),
+    linear-gradient(var(--grid-line-2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line-2) 1px,transparent 1px);
+  background-size:22px 22px,22px 22px,110px 110px,110px 110px;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.55) 55%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.55) 55%,transparent 100%);
+}
+.hero-mesh{
+  position:absolute;inset:-180px 0 auto;height:520px;pointer-events:none;filter:blur(16px);
+  background:
+    radial-gradient(36% 44% at 16% 30%,rgba(214,156,92,.28),transparent 70%),
+    radial-gradient(32% 40% at 84% 24%,rgba(110,130,245,.22),transparent 70%),
+    radial-gradient(38% 38% at 64% 70%,rgba(88,186,168,.18),transparent 72%);
+}
+@media (prefers-color-scheme:dark){.hero-mesh{opacity:.42}}
+.hero-inner{position:relative}
+.eyebrow{font-size:11px;font-weight:660;letter-spacing:.1em;text-transform:uppercase;color:var(--potato-deep);margin-bottom:10px}
+.hero h1{font-size:clamp(30px,4.2vw,44px);font-weight:700;margin-bottom:14px}
+.hero-lede{font-size:17px;line-height:1.6;color:var(--text-muted);max-width:68ch}
+
+/* ---------------- mode picker ---------------- */
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px;margin:22px 0 4px}
+.mode-card{
+  position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-xl);padding:22px 22px 20px;cursor:pointer;font-family:inherit;color:inherit;
+  box-shadow:var(--shadow-sm);overflow:hidden;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease);
+}
+.mode-card::before{content:"";position:absolute;inset:0 0 auto;height:3px;
+  background:linear-gradient(90deg,var(--card),color-mix(in srgb,var(--card) 30%,transparent));opacity:0}
+.mode-card.on::before{opacity:1}
+.mode-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--card) 40%,var(--border))}
+.mode-card.on{border-color:var(--card);box-shadow:0 0 0 3px color-mix(in srgb,var(--card) 16%,transparent),var(--shadow-md)}
+.mode-top{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.mode-ico{
+  width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--card) 13%,transparent);color:var(--card);
+}
+.mode-ico svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mode-card h3{font-size:16px;font-weight:660}
+.mode-kicker{font-size:11.5px;font-weight:650;color:var(--card);letter-spacing:.02em}
+.mode-card p{font-size:13.5px;line-height:1.5;color:var(--text-muted)}
+.mode-for{margin-top:10px;font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.mode-tick{
+  position:absolute;top:16px;right:16px;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px;
+  transition:background .2s var(--ease),color .2s var(--ease)
+}
+.mode-card.on .mode-tick{background:var(--card);border-color:var(--card);color:#fff}
+
+/* ---------------- stepper ---------------- */
+.stepper{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;margin:30px 0 24px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:7px;box-shadow:var(--shadow-sm)}
+.step{
+  flex:1 1 150px;display:flex;align-items:center;gap:9px;background:none;border:none;border-radius:11px;
+  padding:9px 12px;cursor:pointer;font-family:inherit;color:var(--text-muted);text-align:left;
+  transition:background .2s var(--ease),color .2s var(--ease);
+}
+.step:hover{background:var(--bg-tint);color:var(--text)}
+.step.on{background:var(--accent-soft);color:var(--accent)}
+.step-n{
+  width:24px;height:24px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11.5px;font-weight:700;background:var(--bg-tint);color:var(--text-muted);
+  border:1px solid var(--border);transition:background .2s var(--ease),color .2s var(--ease)
+}
+.step.on .step-n{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step.done .step-n{background:var(--ok);color:#fff;border-color:var(--ok)}
+.step-l{font-size:14px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+.step-s{font-family:var(--mono);font-size:11px;color:var(--text-muted);font-weight:520;display:block;margin-top:1px}
+.step.on .step-s{color:color-mix(in srgb,var(--accent) 70%,var(--text-muted))}
+
+/* ---------------- workspace layout ---------------- */
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start;padding-bottom:90px}
+@media (max-width:1080px){.workspace{grid-template-columns:minmax(0,1fr)}}
+.rail{position:sticky;top:calc(var(--header-h) + 14px);display:flex;flex-direction:column;gap:14px}
+@media (max-width:1080px){.rail{position:static}}
+
+/* ---------------- cards ---------------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);margin-bottom:24px;overflow:hidden}
+.card-h{
+  display:flex;align-items:center;gap:12px;padding:20px 26px 18px;flex-wrap:wrap;position:relative;
+  border-bottom:1px solid var(--border-soft);background:linear-gradient(180deg,var(--surface-2),transparent)
+}
+.card-h h2{font-size:19px;font-weight:660;margin-top:3px}
+.card-h .sub{font-size:13px;color:var(--text-muted);margin-left:auto;text-align:right;font-family:var(--mono);line-height:1.5}
+.card-b{padding:24px 26px}
+.card-b.tight{padding:16px 18px}
+.section-tag{
+  display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent)
+}
+.section-tag::before{content:"";width:14px;height:2px;background:currentColor;border-radius:1px;opacity:.75}
+.hint{font-size:13.5px;color:var(--text-muted);line-height:1.6}
+.hint b{color:var(--text)}
+
+/* ---------------- controls ---------------- */
+label.fld{display:block;font-size:13px;font-weight:620;color:var(--text);margin-bottom:7px;letter-spacing:-.005em}
+input[type=text],input[type=number],select,textarea{
+  width:100%;font-family:inherit;font-size:14.5px;color:var(--text);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{font-family:var(--mono);font-size:12.5px;line-height:1.7;min-height:86px;resize:vertical}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e929c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:14.5px;
+  font-weight:580;border-radius:11px;padding:11px 20px;cursor:pointer;border:1px solid transparent;
+  transition:transform .2s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease),border-color .2s var(--ease);
+}
+.btn:active{transform:scale(.98)}
+.btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--accent) 90%,transparent)}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);text-decoration:none}
+.btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--text-faint);transform:translateY(-1px);text-decoration:none}
+.btn-lg{font-size:15px;padding:12px 22px}
+.btn-sm{font-size:12.5px;padding:7px 12px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-row.between{justify-content:space-between}
+.icobtn{
+  display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-family:inherit;font-size:12px;
+  transition:border-color .2s var(--ease),color .2s var(--ease)
+}
+.icobtn:hover{border-color:var(--accent);color:var(--accent)}
+.icobtn:disabled{opacity:.35;cursor:default}
+.icobtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 11px}
+.chk input{accent-color:var(--accent)}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.seg button{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text-muted);background:none;border:none;border-radius:7px;padding:6px 13px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+
+/* ---------------- notes / flags ---------------- */
+.note{display:flex;gap:11px;font-size:14px;line-height:1.62;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px}
+.note:last-child{margin-bottom:0}
+.note .ic{flex:none;font-weight:700}
+.n-i{background:var(--accent-soft);color:color-mix(in srgb,var(--accent) 62%,var(--text))}
+.n-ok{background:var(--ok-soft);color:color-mix(in srgb,var(--ok) 58%,var(--text))}
+.n-w{background:var(--warn-soft);color:color-mix(in srgb,var(--warn) 55%,var(--text))}
+.n-b{background:var(--bad-soft);color:color-mix(in srgb,var(--bad) 58%,var(--text))}
+/* readouts rather than pills: squared off, mono, hairline-bounded, like an instrument legend */
+.flag{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:650;
+  letter-spacing:.01em;padding:3px 8px;border-radius:6px;white-space:nowrap;border:1px solid transparent
+}
+.f-ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 26%,transparent)}
+.f-w{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.f-b{background:var(--bad-soft);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+.f-n{background:var(--bg-tint);color:var(--text-muted);border-color:var(--border)}
+
+/* ---------------- part rows ---------------- */
+.part{
+  background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--pc,var(--accent));
+  border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease)
+}
+.part.focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 18%,transparent)}
+.part-top{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+.part-n{
+  width:24px;height:24px;flex:none;border-radius:8px;background:var(--pc,var(--accent));color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--mono)
+}
+.part-top input[type=text]{flex:1;min-width:140px}
+.part-stats{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap}
+.stat-chip{font-family:var(--mono);font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+.part-tools{display:flex;gap:5px}
+.src-line{margin-top:12px;padding-top:2px}
+.src-line summary{cursor:pointer;list-style:none;font-size:12px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:6px}
+.src-line summary::-webkit-details-marker{display:none}
+.src-line summary::before{content:"›";display:inline-block;transition:transform .2s var(--ease);font-size:14px}
+.src-line[open] summary::before{transform:rotate(90deg)}
+
+/* ---------------- rail: map ---------------- */
+.map-card .card-b{padding:8px 10px 14px}
+/* the map sits on a graticule with registration corners, the way a figure panel does */
+.map-wrap{
+  position:relative;border-radius:12px;padding:6px;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:18px 18px,18px 18px;
+}
+.map-wrap::before,.map-wrap::after{
+  content:"";position:absolute;width:11px;height:11px;border:1.5px solid var(--rule);pointer-events:none
+}
+.map-wrap::before{top:2px;left:2px;border-right:0;border-bottom:0;border-radius:3px 0 0 0}
+.map-wrap::after{bottom:2px;right:2px;border-left:0;border-top:0;border-radius:0 0 3px 0}
+.map-wrap svg{width:100%;height:auto;display:block;overflow:visible}
+.map-empty{text-align:center;padding:38px 16px;color:var(--text-muted);font-size:13px}
+.map-legend{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding:0 6px}
+.lg-row{display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 7px;border-radius:8px;cursor:pointer;transition:background .15s var(--ease)}
+.lg-row:hover{background:var(--bg-tint)}
+.lg-num{width:18px;height:18px;border-radius:5px;flex:none;color:#fff;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+.lg-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:560}
+.lg-bp{font-family:var(--mono);font-size:11.5px;color:var(--text-muted)}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding:0 4px}
+/* recessed, not raised: these are readouts you consult, not controls you press */
+.mini{
+  background:var(--bg-tint);border:1px solid var(--border-soft);border-radius:10px;padding:10px 10px 9px;
+  text-align:center;box-shadow:inset 0 1px 2px rgba(20,22,26,.04)
+}
+.mini .v{font-size:19px;font-weight:720;letter-spacing:-.035em;line-height:1.1;font-variant-numeric:tabular-nums}
+.mini .k{
+  font-family:var(--mono);font-size:9.5px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-muted);margin-top:4px
+}
+
+/* ---------------- scorecard ---------------- */
+.score-head{display:flex;align-items:center;gap:14px;padding:16px 18px 6px}
+.score-ring{position:relative;width:74px;height:74px;flex:none}
+.score-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score-val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-val b{font-size:22px;font-weight:720;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.score-val span{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--text-muted);margin-top:2px}
+.score-word{font-size:15.5px;font-weight:660}
+.score-sub{font-size:13px;color:var(--text-muted);line-height:1.45;margin-top:3px}
+.score-list{padding:6px 12px 14px}
+.score-row{display:flex;align-items:flex-start;gap:9px;padding:8px 8px;border-radius:10px;font-size:12.5px;line-height:1.45}
+.score-row+.score-row{border-top:1px solid var(--border-soft)}
+.score-ic{width:17px;height:17px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;margin-top:1px}
+.si-ok{background:var(--ok)}.si-w{background:var(--warn)}.si-b{background:var(--bad)}.si-n{background:var(--text-faint)}
+.score-txt b{font-weight:640}
+.score-fix{display:block;color:var(--text-muted);font-size:12.5px;margin-top:3px;line-height:1.45}
+
+/* ---------------- tables ---------------- */
+table.lab{width:100%;border-collapse:collapse;font-size:13px}
+table.lab th{
+  text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);
+  font-weight:700;padding:11px;border-bottom:1px solid var(--border);white-space:nowrap
+}
+table.lab td{padding:12px 11px;border-bottom:1px solid var(--border-soft);vertical-align:top;font-size:14px}
+/* measured values sit in mono and line up on the decimal, so columns can be scanned down */
+table.lab td.mono{font-variant-numeric:tabular-nums;color:var(--text)}
+table.lab tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+table.lab tbody tr:hover td{background:var(--surface-2)}
+table.lab tr:last-child td{border-bottom:none}
+table.lab tr:hover td{background:var(--surface-2)}
+td.seqcell,.seqcell{font-family:var(--mono);font-size:11.5px;word-break:break-all;min-width:200px}
+.scroll-x{overflow-x:auto;margin:0 -20px;padding:0 20px}
+
+/* ---------------- primer display ---------------- */
+.pcard{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.pcard-h{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface-2);border-left:4px solid var(--pc)}
+.pcard-h .nm{font-weight:640;font-size:14px}
+.pcard-h .meta{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--text-muted);text-align:right}
+.primer{padding:13px 14px}
+.primer+.primer{border-top:1px dashed var(--border)}
+.p-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:660;margin-bottom:8px}
+.dir-f{color:var(--accent)}.dir-r{color:#8C6BB1}
+.p-name{color:var(--text-muted);font-weight:520;font-family:var(--mono)}
+.pbar{display:flex;height:24px;border-radius:7px;overflow:hidden;border:1px solid var(--border);margin-bottom:8px;position:relative}
+.pb-tail{background:var(--warn-soft);display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px dashed var(--warn)}
+.pb-bind{background:var(--accent-soft);display:flex;align-items:center;justify-content:center;min-width:0}
+.pbar span{font-size:10px;font-weight:650;white-space:nowrap;overflow:hidden;padding:0 5px}
+.pb-tail span{color:var(--warn)}.pb-bind span{color:var(--accent)}
+.seqbox{font-family:var(--mono);font-size:12px;word-break:break-all;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:9px;padding:9px 11px;line-height:1.65}
+.s-tail{color:var(--warn);font-weight:650}
+.s-bind{color:var(--text);font-weight:700;background:var(--accent-soft);border-radius:3px;padding:1px 0}
+.pmeta{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-muted);margin-top:8px;align-items:center}
+.pmeta b{color:var(--text);font-weight:640}
+.pflags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.copy{font-family:inherit;font-size:11px;font-weight:620;color:var(--accent);background:var(--accent-soft);border:none;border-radius:7px;padding:4px 9px;cursor:pointer}
+.copy:hover{background:var(--accent);color:#fff}
+
+/* ---------------- junctions ---------------- */
+.jcard{border:1px solid var(--border);border-radius:var(--radius);padding:14px 15px;margin-bottom:11px;background:var(--surface)}
+.jcard.risk{border-color:color-mix(in srgb,var(--bad) 45%,var(--border));background:var(--bad-soft)}
+.jhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.jhead .jt{font-weight:640;font-size:14px}
+.jflow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;margin-bottom:10px}
+.jpill{color:#fff;border-radius:7px;padding:3px 9px;font-weight:620;font-size:11.5px}
+.joverlap{font-family:var(--mono);font-size:12px;word-break:break-all;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:9px;padding:9px 11px;line-height:1.7}
+.o-up{color:var(--accent);font-weight:700}
+.o-ins{color:var(--warn);font-weight:700}
+.o-down{color:#8C6BB1;font-weight:700}
+.jmeta{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-muted);margin-top:9px}
+.jmeta b{color:var(--text);font-weight:640}
+
+ /* ---------------- base-by-base alignment ---------------- */
+.aln-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.aln-pick{display:flex;gap:7px;flex-wrap:wrap}
+.aln-steer{display:flex;align-items:center;gap:4px;margin-left:auto}
+.aln-steer .icobtn{width:26px;height:26px;font-size:13px;font-weight:700;line-height:1}
+.aln-tab{
+  font-family:inherit;font-size:12.5px;font-weight:620;color:var(--text-muted);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;transition:border-color .15s var(--ease),color .15s var(--ease)
+}
+.aln-tab:hover{border-color:var(--accent);color:var(--accent)}
+.aln-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.aln-tab .dot{width:8px;height:8px;border-radius:3px;flex:none}
+.aln-wrap{
+  overflow-x:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 14px 12px;position:relative;
+  /* a column rule every tenth base, so you can count along the sequence by eye */
+  background-image:linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:130px 100%;background-position:14px 0;
+}
+table.aln{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;table-layout:fixed}
+table.aln td{width:13px;min-width:13px;height:21px;text-align:center;vertical-align:middle;padding:0;position:relative;color:var(--text)}
+.aln-ruler td{height:16px;font-size:9.5px;color:var(--text-muted);font-weight:700;vertical-align:bottom;position:relative}
+/* every tenth position gets a real tick, like a ruler rather than a row of numbers */
+.aln-ruler td:not(:empty)::after{
+  content:"";position:absolute;left:50%;bottom:-3px;width:1px;height:4px;background:var(--rule)
+}
+.aln-strand td{background:var(--surface);font-weight:700;letter-spacing:0}
+.aln-strand.aln-bottom td{border-top:1px solid var(--border)}
+/* the two strands read as one duplex block */
+.aln-strand:first-of-type td{border-top:1px solid var(--border)}
+.aln-ov{box-shadow:inset 0 0 0 99px color-mix(in srgb,var(--potato) 15%,transparent)}
+.aln-cell{font-weight:700;border-radius:2px}
+.aln-lab{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--sans);font-size:9px;font-weight:800;white-space:nowrap;pointer-events:none}
+.aln-arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;pointer-events:none}
+.aln-key{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--text-muted);align-items:center}
+.aln-key span{display:flex;align-items:center;gap:6px}
+.aln-sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.aln-scroll{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.aln-pos{font-family:var(--mono);font-size:12px;color:var(--text-muted)}
+.pstrip{border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;margin-top:10px;border-left:4px solid var(--pc)}
+.pstrip-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px;font-size:13px;font-weight:640}
+
+/* ---------------- primer walk-through ---------------- */
+.pw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.pw-count{font-family:var(--mono);font-size:12px;color:var(--text-muted);letter-spacing:.02em}
+.pw-count b{color:var(--text);font-size:15px;font-weight:720}
+.pw-name{font-size:16px;font-weight:650;letter-spacing:-.02em}
+.pw-nav{margin-left:auto;display:flex;gap:8px}
+/* "Check the design" is the one card meant to be read without scrolling: primer above, the same primer
+   on the construct below. Everything here is tightened; the rest of the page keeps its spacing. */
+.check-card .card-h{padding:14px 22px 12px}
+.check-card .card-h h2{font-size:17px}
+.check-card .card-b{padding:16px 22px 18px}
+.check-card .pw-head{margin-bottom:10px}
+.check-card label.fld{margin-bottom:5px}
+.check-card .pw-seq{padding:10px 12px}
+.check-card .pw-strip{margin-top:8px}
+.check-card .pw-item{padding:6px 12px}
+.check-card details.adv{margin-top:8px}
+.check-card details.adv>summary{padding:8px 14px;font-size:12.5px}
+.check-card .aln-wrap{padding:12px 12px 8px}
+.check-card table.aln td{height:19px}
+.check-card .pflags{margin-top:8px}
+.check-card .note{padding:9px 12px;margin-top:8px;font-size:13px}
+
+/* one short row of values, so the sequence and the sequence map stay on screen together */
+.pw-strip{
+  display:flex;flex-wrap:wrap;gap:0;margin-top:12px;border:1px solid var(--border);
+  border-radius:var(--radius-sm);background:var(--bg-tint);overflow:hidden
+}
+.pw-item{
+  display:flex;flex-direction:column;gap:1px;padding:8px 14px;flex:1 1 auto;min-width:92px;
+  border-right:1px solid var(--border)
+}
+.pw-item:last-child{border-right:0}
+.pw-item i{
+  font-style:normal;font-family:var(--mono);font-size:9.5px;font-weight:650;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-muted)
+}
+.pw-item b{font-size:14px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pw-seq{font-size:15px;padding:14px;letter-spacing:.06em;line-height:1.5}
+.pw-tm{
+  margin-top:9px;font-family:var(--mono);font-size:12.5px;color:var(--text-muted);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:20px
+}
+.pw-tm b{color:var(--text);font-weight:700}
+.pw-tm-live{
+  font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
+  background:var(--accent-soft);border-radius:5px;padding:2px 7px
+}
+/* the seam between "this primer" and "this primer on the sequence" */
+.pw-divider{display:flex;align-items:center;gap:10px;margin:12px 0 10px;color:var(--text-muted)}
+.pw-divider::before,.pw-divider::after{content:"";height:1px;background:var(--border);flex:1}
+.pw-divider span{
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap
+}
+
+.seqedit{
+  width:100%;font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;padding:9px 10px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:9px;color:var(--text)
+}
+.seqedit:focus{background:var(--surface)}
+.text-btn{font-family:inherit;font-size:11.5px;font-weight:620;color:var(--accent);background:none;border:none;cursor:pointer;padding:0 2px;text-decoration:underline}
+
+.proj-list{display:flex;flex-direction:column;gap:9px}
+.proj{
+  display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--border);
+  border-radius:var(--radius-sm);background:var(--surface-2);flex-wrap:wrap
+}
+.proj.pending{border-left:3px solid var(--warn)}
+.proj-main{flex:1;min-width:190px;display:flex;flex-direction:column;gap:2px}
+.proj-main b{font-size:14.5px;font-weight:620}
+.proj-meta{font-size:12.5px;color:var(--text-muted);font-family:var(--mono)}
+
+.modal-back{
+  position:fixed;inset:0;z-index:80;background:rgba(16,18,22,.5);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:24px
+}
+.modal-back.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-lg);max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column
+}
+.modal-h{display:flex;align-items:center;gap:12px;padding:20px 24px 16px;border-bottom:1px solid var(--border-soft)}
+.modal-h h2{font-size:18px;font-weight:660;flex:1}
+.modal-b{padding:20px 24px 26px;overflow-y:auto}
+
+/* ---------------- misc ---------------- */
+.why{
+  font-family:inherit;font-size:11px;font-weight:650;color:var(--text-muted);background:var(--bg-tint);
+  border:none;border-radius:7px;padding:4px 9px;cursor:pointer
+}
+.why:hover{color:var(--accent);background:var(--accent-soft)}
+.why-box{margin-top:10px;padding:11px 13px;background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;font-size:12.5px;line-height:1.6;color:var(--text-muted)}
+.why-box b{color:var(--text)}
+.hidden{display:none !important}
+details.adv{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);margin-top:14px}
+details.adv>summary{cursor:pointer;list-style:none;padding:12px 16px;font-size:13.5px;font-weight:620;color:var(--text-muted);display:flex;align-items:center;gap:8px}
+details.adv>summary::-webkit-details-marker{display:none}
+details.adv>summary::before{content:"›";color:var(--accent);font-size:16px;transition:transform .2s var(--ease)}
+details.adv[open]>summary::before{transform:rotate(90deg)}
+.adv-body{padding:0 16px 16px}
+.sub-tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:18px 0 9px}
+.sub-tag:first-child{margin-top:4px}
+.empty{text-align:center;padding:44px 20px;color:var(--text-muted)}
+.empty svg{width:42px;height:42px;stroke:currentColor;fill:none;stroke-width:1.4;opacity:.5;margin-bottom:12px}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:90;opacity:0;pointer-events:none;
+  background:var(--text);color:var(--bg);font-size:13px;font-weight:580;padding:10px 16px;border-radius:11px;
+  box-shadow:var(--shadow-lg);transition:opacity .25s var(--ease),transform .25s var(--ease)
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.site-footer{border-top:1px solid var(--border-soft);background:var(--surface);padding:24px 0;text-align:center}
+.site-footer p{font-size:13px;color:var(--text-muted);line-height:1.6}
+@media print{
+  .site-header,.stepper,.modes,.btn,.rail,.hero-mesh,.toast{display:none !important}
+  .workspace{grid-template-columns:1fr}
+  .card{break-inside:avoid;box-shadow:none}
+}
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .brand-word,.brand-sep{display:none}
+  .header-link span{display:none}
+  .mini-stats{grid-template-columns:repeat(3,1fr)}
+  .scroll-x{margin:0 -16px;padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="brand" href="https://labpotato.github.io/" title="Lab Potato home">
+    <svg class="brand-mark" viewBox="22 46 208 144" aria-hidden="true">
+      <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+      <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+    </svg>
+    <span class="brand-word">Lab&nbsp;Potato</span>
+  </a>
+  <span class="brand-sep">/</span>
+  <span class="brand-tool">Gibson Assembly</span>
+  <span class="ver-chip">v10</span>
+  <span class="hdr-readout" id="hdrReadout" aria-live="polite"></span>
+  <span class="header-spacer"></span>
+  <button class="header-link" type="button" onclick="loadDemo()" title="Load a worked example">
+    <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span>Example</span>
+  </button>
+  <button class="header-link" type="button" onclick="saveProjectFile()" title="Save this project to a file">
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg><span>Save</span>
+  </button>
+  <label class="header-link" title="Open a saved project">
+    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>Open</span>
+    <input type="file" accept=".json,application/json" style="display:none" onchange="openProjectFile(event)">
+  </label>
+  <a class="header-link" href="https://labpotato.github.io/#tools">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>All tools</span>
+  </a>
+</header>
+
+<section class="hero">
+  <div class="hero-mesh" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <p class="eyebrow">Construct design</p>
+    <h1>Gibson Assembly Designer</h1>
+    <p class="hero-lede" id="heroLede">
+      Primers with matched Tm, overlaps that clear the 50&nbsp;°C reaction, and every binding site checked
+      against the whole plasmid you are actually amplifying from — not just the piece you are keeping.
+      The map on the right redraws as you type. Nothing leaves your browser.
+    </p>
+
+    <div id="introBlock">
+    <div class="modes" id="modePicker">
+      <button class="mode-card on" id="modeCardA" style="--card:#0a5fd0" onclick="setMode('A')" type="button">
+        <span class="mode-tick">✓</span>
+        <div class="mode-top">
+          <span class="mode-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.6"/><rect x="3" y="14.5" width="18" height="5" rx="1.6"/><path d="M8 9v5.5M16 9v5.5"/></svg></span>
+          <div>
+            <span class="mode-kicker">Option 1 · edit each part</span>
+            <h3>Assemble from parts</h3>
+          </div>
+        </div>
+        <p>Paste each piece in the order it appears in the finished plasmid. Rename, reorder, trim or swap any
+           part by hand, and attach the plasmid each one is PCR'd from.</p>
+        <div class="mode-for">Best when you already know your parts and want full manual control.</div>
+      </button>
+
+      <button class="mode-card" id="modeCardB" style="--card:#0f9d76" onclick="setMode('B')" type="button">
+        <span class="mode-tick">✓</span>
+        <div class="mode-top">
+          <span class="mode-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v4M20.5 12h-4M12 20.5v-4M3.5 12h4"/></svg></span>
+          <div>
+            <span class="mode-kicker">Option 2 · from the finished sequence</span>
+            <h3>I have the final sequence</h3>
+          </div>
+        </div>
+        <p>Paste the plasmid you want to end up with, plus the templates you'll PCR from. It works out which
+           region comes out of which template, then checks each primer against that whole template for
+           anywhere else it could bind.</p>
+        <div class="mode-for">Best when you designed the construct elsewhere and need the cloning plan.</div>
+      </button>
+    </div></div>
+    <div id="modeCompact" class="hidden" style="margin:16px 0 0">
+      <div class="chk" style="display:inline-flex;gap:10px">
+        <span class="hint" style="margin:0">Working <b id="modeCompactLabel"></b></span>
+        <button class="btn btn-ghost btn-sm" onclick="goStep(1);showIntro()" type="button">Change approach</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <nav class="stepper" id="stepper">
+    <button class="step on" id="stepBtn1" onclick="goStep(1)" type="button">
+      <span class="step-n">1</span><span class="step-l">Build it<span class="step-s" id="stepSub1">nothing added yet</span></span>
+    </button>
+    <button class="step" id="stepBtn2" onclick="goStep(2)" type="button">
+      <span class="step-n">2</span><span class="step-l">Reaction<span class="step-s" id="stepSub2">enzyme &amp; kit</span></span>
+    </button>
+    <button class="step" id="stepBtn3" onclick="goStep(3)" type="button">
+      <span class="step-n">3</span><span class="step-l">Primers &amp; checks<span class="step-s" id="stepSub3">not run yet</span></span>
+    </button>
+    <button class="step" id="stepBtn4" onclick="goStep(4)" type="button">
+      <span class="step-n">4</span><span class="step-l">At the bench<span class="step-s" id="stepSub4">order, mix, verify</span></span>
+    </button>
+  </nav>
+
+  <div class="workspace">
+    <!-- ==================== LEFT: WORKSPACE ==================== -->
+    <main>
+
+      <!-- ---------- STEP 1 ---------- -->
+      <div id="pane1">
+
+        <div class="card hidden" id="libraryCard"></div>
+
+        <!-- MODE A -->
+        <div id="paneA">
+          <div class="card">
+            <div class="card-h">
+              <div><span class="section-tag">Step 1</span><h2>Parts, in assembly order</h2></div>
+              <span class="sub" id="subA"></span>
+            </div>
+            <div class="card-b">
+              <div class="grid-2" style="margin-bottom:14px">
+                <div><label class="fld" for="nameA">Construct name</label>
+                  <input type="text" id="nameA" placeholder="e.g. pBbA0k-EAAAK-sfGFP" oninput="touch()"></div>
+                <div><label class="fld">Final topology</label>
+                  <div class="seg" id="topoSeg">
+                    <button class="on" data-t="circular" onclick="setTopo('circular')" type="button">Circular plasmid</button>
+                    <button data-t="linear" onclick="setTopo('linear')" type="button">Linear</button>
+                  </div></div>
+              </div>
+              <div class="note n-i">
+                <span class="ic">🧬</span>
+                <div>Enter each part <b>5′→3′, in the order it appears in the finished construct</b>. A part shorter
+                  than the fold-in threshold (default 50&nbsp;bp) isn't PCR'd on its own — it gets built into the
+                  neighbouring primer's tail instead. Attach the <b>source plasmid</b> to any part you PCR out of a
+                  larger plasmid: that is what lets the off-target check see the whole template, not just your insert.</div>
+              </div>
+              <div id="partList" style="margin-top:14px"></div>
+              <div class="btn-row">
+                <button class="btn btn-ghost" onclick="addPart()" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add part</button>
+                <button class="btn btn-ghost btn-sm" onclick="loadDemo()" type="button">Load example</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODE B -->
+        <div id="paneB" class="hidden">
+          <div class="card">
+            <div class="card-h">
+              <div><span class="section-tag">Step 1a</span><h2>The plasmid you want to end up with</h2></div>
+              <span class="sub" id="subTarget"></span>
+            </div>
+            <div class="card-b">
+              <div class="grid-2" style="margin-bottom:12px">
+                <div><label class="fld" for="tgtName">Construct name</label>
+                  <input type="text" id="tgtName" placeholder="e.g. pFinal-EAAAK-His6" oninput="touch()"></div>
+                <div><label class="fld">Final topology</label>
+                  <div class="seg" id="topoSegB">
+                    <button class="on" data-t="circular" onclick="setTopo('circular')" type="button">Circular plasmid</button>
+                    <button data-t="linear" onclick="setTopo('linear')" type="button">Linear</button>
+                  </div></div>
+              </div>
+              <label class="fld" for="tgtSeq">Full sequence (5′→3′)</label>
+              <textarea id="tgtSeq" placeholder="paste the finished construct — FASTA or GenBank straight out of SnapGene/Benchling is fine, headers are stripped for you…" spellcheck="false" oninput="onTargetInput()"></textarea>
+              <div id="tgtFmt" style="margin-top:6px"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <div><span class="section-tag">Step 1b</span><h2>Templates you'll PCR from</h2></div>
+              <span class="sub">plasmids on your shelf, gBlocks, gDNA…</span>
+            </div>
+            <div class="card-b">
+              <div class="note n-i">
+                <span class="ic">🔍</span>
+                <div>Paste every plasmid that might contribute a piece. Each region of your target gets traced back
+                  to the template it came from, on either strand, wrapping the origin if needed — then the primers
+                  for that region are screened against <b>that entire template</b>, so a primer that would also stick
+                  somewhere else in the same plasmid is caught before you order it.</div>
+              </div>
+              <div id="tmplList" style="margin-top:14px"></div>
+              <div class="btn-row">
+                <button class="btn btn-ghost" onclick="addTemplate()" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add template</button>
+                <button class="btn btn-primary" onclick="runMatch()" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Work out the cloning plan</button>
+              </div>
+              <div id="matchReport"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row between" style="margin:18px 0 8px">
+          <span class="hint" id="step1Hint"></span>
+          <button class="btn btn-primary btn-lg" onclick="goStep(2)" type="button">Next: reaction setup
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- ---------- STEP 2 ---------- -->
+      <div id="pane2" class="hidden">
+        <div class="card">
+          <div class="card-h">
+            <div><span class="section-tag">Step 2</span><h2>Which enzyme and kit are you using?</h2></div>
+          </div>
+          <div class="card-b">
+            <div class="grid-2">
+              <div>
+                <label class="fld" for="poly">PCR polymerase</label>
+                <select id="poly" onchange="syncPoly()"></select>
+                <div class="hint" style="margin-top:6px" id="polyNote"></div>
+              </div>
+              <div>
+                <label class="fld" for="kit">Assembly kit</label>
+                <select id="kit" onchange="touch();renderRail()"></select>
+                <div class="hint" style="margin-top:6px" id="kitNote"></div>
+              </div>
+            </div>
+            <div class="note n-i" style="margin-top:16px" id="protocolNote"></div>
+            <div class="btn-row" style="margin-top:6px">
+              <button class="btn btn-ghost" onclick="openProtocol()" type="button">
+                <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/></svg>
+                Cycling programme &amp; reaction table</button>
+              <span class="hint">Opens on top — you rarely need it while designing.</span>
+            </div>
+            <details class="adv">
+              <summary>Fine-tune primer &amp; overlap rules (sensible defaults already set from the manual)</summary>
+              <div class="adv-body">
+                <div class="sub-tag">Primer binding region</div>
+                <div class="grid-3">
+                  <div><label class="fld">Target binding Tm (°C)</label><input type="number" id="bindTm" value="60" step="0.5" oninput="touch()">
+                    <div class="hint">Every primer aims here, so the whole set runs at one annealing temperature.</div></div>
+                  <div><label class="fld">Tm ceiling (°C)</label><input type="number" id="bindTmMax" value="68" step="0.5" oninput="touch()">
+                    <div class="hint">Never knowingly go above this; flagged honestly if the sequence can't avoid it.</div></div>
+                  <div><label class="fld">Max F/R Tm difference (°C)</label><input type="number" id="maxDtm" value="1" step="0.5" oninput="touch()">
+                    <div class="hint">A mismatched pair is the classic cause of one primer working and the other not.</div></div>
+                  <div><label class="fld">Binding length (nt)</label>
+                    <div class="grid-2"><input type="number" id="bindMin" value="18" oninput="touch()"><input type="number" id="bindMax" value="30" oninput="touch()"></div>
+                    <div class="hint">18–30 nt standard, 20 ideal. Tm match wins if they conflict.</div></div>
+                  <div><label class="fld">Preferred Tm band (°C)</label>
+                    <div class="grid-2"><input type="number" id="aimMin" value="58" step="0.5" oninput="touch()"><input type="number" id="aimMax" value="62" step="0.5" oninput="touch()"></div></div>
+                  <div><label class="fld">Primer GC% window</label>
+                    <div class="grid-2"><input type="number" id="gcMin" value="40" oninput="touch()"><input type="number" id="gcMax" value="60" oninput="touch()"></div></div>
+                </div>
+                <div class="sub-tag">Gibson overlap (homology arm)</div>
+                <div class="grid-3">
+                  <div><label class="fld">Overlap length (bp)</label>
+                    <div class="grid-2"><input type="number" id="ovMin" value="20" oninput="touch()"><input type="number" id="ovMax" value="30" oninput="touch()"></div>
+                    <div class="hint">20 bp is the accepted floor at 50 °C; it searches longer automatically to escape a repeat.</div></div>
+                  <div><label class="fld">Min overhang per primer (bp)</label><input type="number" id="ovSideMin" value="15" oninput="touch()">
+                    <div class="hint">Stops one primer getting a near-zero tail when the overlap is split.</div></div>
+                  <div><label class="fld">Min overlap Tm (°C)</label><input type="number" id="ovTm" value="48" step="0.5" oninput="touch()">
+                    <div class="hint">The arms must stay annealed at the 50 °C reaction temperature.</div></div>
+                </div>
+                <div class="sub-tag">Conditions &amp; specificity screen</div>
+                <div class="grid-3">
+                  <div><label class="fld">Primer conc. (µM)</label><input type="number" id="conc" value="0.5" step="0.05" oninput="touch()"></div>
+                  <div><label class="fld">Na⁺/K⁺ (mM)</label><input type="number" id="na" value="50" oninput="touch()"></div>
+                  <div><label class="fld">Mg²⁺ (mM)</label><input type="number" id="mg" value="2" step="0.5" oninput="touch()"></div>
+                  <div><label class="fld">Off-target mismatch tolerance</label><input type="number" id="mmLimit" value="2" oninput="touch()">
+                    <div class="hint">A site with this many mismatches or fewer still counts as a real risk, not just exact repeats.</div></div>
+                  <div><label class="fld">Fold-in threshold (bp)</label><input type="number" id="minAmp" value="50" oninput="touch();renderParts()">
+                    <div class="hint">Parts below this ride along in a primer tail instead of being PCR'd.</div></div>
+                  <div><label class="fld">Max primer length (nt)</label><input type="number" id="maxPrimer" value="60" oninput="touch()">
+                    <div class="hint">Above 60 nt, order PAGE/HPLC-purified.</div></div>
+                  <div><label class="fld">Max homopolymer run</label><input type="number" id="maxPolyX" value="5" oninput="touch()"></div>
+                  <div><label class="fld">Pin annealing temperature</label>
+                    <label class="chk"><input type="checkbox" id="fixTaOn" checked onchange="touch()"> Run at
+                      <input type="number" id="fixTa" value="56" step="0.5" style="width:70px" oninput="touch()"> °C</label></div>
+                </div>
+              </div>
+            </details>
+            <div class="btn-row between" style="margin-top:20px">
+              <button class="btn btn-ghost" onclick="goStep(1)" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Back</button>
+              <button class="btn btn-primary btn-lg" onclick="runDesign()" type="button">Design my primers
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- STEP 3 ---------- -->
+      <div id="pane3" class="hidden"><div id="results"></div></div>
+
+      <!-- ---------- STEP 4 ---------- -->
+      <div id="pane4" class="hidden"><div id="bench"></div></div>
+
+    </main>
+
+    <!-- ==================== RIGHT: LIVE RAIL ==================== -->
+    <aside class="rail">
+      <div class="card map-card" style="margin-bottom:0">
+        <div class="card-h" style="padding:13px 16px">
+          <div><span class="section-tag">Live map</span><h2 id="mapTitle" style="font-size:15px">Your construct</h2></div>
+          <span class="sub" id="mapSub"></span>
+        </div>
+        <div class="card-b" id="mapBody"></div>
+      </div>
+      <div class="card" id="scoreCard" style="margin-bottom:0"></div>
+    </aside>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Everything runs in your browser — no sequence is uploaded, stored or transmitted.<br>
+    Built by <a href="mailto:bdongmin10@gmail.com">Dongmin Byun</a> · <a href="https://labpotato.github.io/">Lab Potato</a></p>
+  </div>
+</footer>
+
+<div class="modal-back" id="protocolModal" onclick="if(event.target===this)closeProtocol()">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Cycling programme">
+    <div class="modal-h"><h2 id="protocolTitle">Cycling programme</h2>
+      <button class="icobtn" onclick="closeProtocol()" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-b" id="protocolTables"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   ENGINE — ported verbatim from v7 (validated). Thermodynamics, specificity
+   screening, overlap design and the assembler are unchanged; only the
+   interface around them was rebuilt for v8.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ===================== thermodynamics (validated: ΔG37 CGTTGA = −5.4) ===================== */
+const NN_H={AA:-7.9,AC:-8.4,AG:-7.8,AT:-7.2,CA:-8.5,CC:-8.0,CG:-10.6,CT:-7.8,GA:-8.2,GC:-9.8,GG:-8.0,GT:-8.4,TA:-7.2,TC:-8.2,TG:-8.5,TT:-7.9};
+const NN_S={AA:-22.2,AC:-22.4,AG:-21.0,AT:-20.4,CA:-22.7,CC:-19.9,CG:-27.2,CT:-21.0,GA:-22.2,GC:-24.4,GG:-19.9,GT:-22.4,TA:-21.3,TC:-22.2,TG:-22.7,TT:-22.2};
+const INIT_H={GC:0.1,AT:2.3}, INIT_S={GC:-2.8,AT:4.1}, R=1.9872;
+const COMP={A:'T',T:'A',G:'C',C:'G',N:'N'};
+// Strip FASTA/GenBank wrapper text BEFORE the sequence is reduced to ACGTN. Doing it in that order
+// matters: a bare ">pUC19 cloning vector 2686 bp" header line contains real A/C/G/T/N letters
+// (e.g. the C/T/N in "DESCRIPTION"), which the old character-filter alone would silently keep as if
+// they were bases — quietly corrupting the design with no visible sign anything was wrong. Stripping
+// whole header/annotation LINES first means only genuine sequence lines ever reach the filter.
+function stripSeqWrapper(raw){
+  if(!raw)return '';
+  if(/^\s*LOCUS\s/m.test(raw)){                       // GenBank/EMBL flat file: keep only ORIGIN…// block
+    const m=raw.match(/ORIGIN[^\n]*\n([\s\S]*?)(?:\n\/\/|\n?$)/i);
+    if(m)return m[1];
+  }
+  if(/^\s*>/m.test(raw)){                              // FASTA: drop header/comment lines; multi-FASTA
+    const lines=raw.split('\n');let out=[],headers=0;   // → keep only the FIRST record, never silently merge two
+    for(const line of lines){
+      if(/^\s*>/.test(line)){headers++;if(headers>1)break;continue;}
+      if(/^\s*;/.test(line))continue;
+      out.push(line);}
+    return out.join('\n');
+  }
+  return raw;
+}
+// true if the raw paste looked like FASTA/GenBank (i.e. stripSeqWrapper actually removed wrapper text)
+function looksWrapped(raw){return !!raw&&(/^\s*>/m.test(raw)||/^\s*LOCUS\s/m.test(raw));}
+function multiFastaCount(raw){return raw?(raw.match(/^\s*>/gm)||[]).length:0;}
+function clean(s){return stripSeqWrapper(s||'').toUpperCase().replace(/[^ACGTN]/g,'');}
+function rc(s){let o='';for(let i=s.length-1;i>=0;i--)o+=COMP[s[i]]||'N';return o;}
+function gcv(s){if(!s.length)return 0;let n=0;for(const b of s)if(b==='G'||b==='C')n++;return n/s.length*100;}
+function selfComp(s){return s.length%2===0&&rc(s)===s;}
+function nnParams(seq){let h=0,s=0;for(let i=0;i<seq.length-1;i++){const d=seq.slice(i,i+2);h+=NN_H[d]??-8.0;s+=NN_S[d]??-22.0;}
+  for(const b of [seq[0],seq[seq.length-1]]){const k=(b==='G'||b==='C')?'GC':'AT';h+=INIT_H[k];s+=INIT_S[k];}
+  if(selfComp(seq))s+=-1.4;return {h,s};}
+function calcTm(seq,conc,na,mg){seq=clean(seq);if(seq.length<2)return 0;
+  const {h,s}=nnParams(seq),N=seq.length;
+  const naEq=(na+120*Math.sqrt(Math.max(0,mg)))/1000;
+  const sSalt=s+0.368*(N-1)*Math.log(Math.max(1e-6,naEq));
+  const Ct=conc*1e-6, x=selfComp(seq)?1:4;
+  return (h*1000)/(sSalt+R*Math.log(Ct/x))-273.15;}
+// Wallace rule (Thein & Wallace 1986, The Lancet 327(8472):93) — Tm = 2(A+T) + 4(G+C). A simple count-
+// based estimate, standard for short (14-20 nt) oligos; used here for the OVERLAP/homology arm Tm check
+// specifically (the binding region keeps the full nearest-neighbour calculation above).
+function wallaceTm(seq){seq=clean(seq);let at=0,gc=0;for(const b of seq){if(b==='A'||b==='T')at++;else if(b==='G'||b==='C')gc++;}
+  return 2*at+4*gc;}
+function hairpin(seq){const r=rc(seq);let m=0;for(let k=4;k<=8;k++)for(let i=0;i+k<=r.length;i++)if(seq.includes(r.slice(i,i+k)))m=Math.max(m,k);return m;}
+function dimer3(a,b){const rb=rc(b);let m=0;for(let k=3;k<=Math.min(8,a.length);k++)if(rb.includes(a.slice(-k)))m=k;return m;}
+// longest single-base run (Primer3 PRIMER_MAX_POLY_X — long homopolymers cause slippage/mispriming)
+function polyXRun(seq){let best=1,cur=1;for(let i=1;i<seq.length;i++){if(seq[i]===seq[i-1]){cur++;if(cur>best)best=cur;}else cur=1;}return seq.length?best:0;}
+// count of G/C bases in the terminal 5 nt (Primer3 PRIMER_MAX_END_GC concept): 0 = unstable 3' end
+// (no clamp); 4-5 = an over-stable, all-GC 3' end that itself raises mis-priming/dimer risk.
+function endGC(seq){const t=seq.slice(-5);let n=0;for(const b of t)if(b==='G'||b==='C')n++;return n;}
+// number of non-ACGT characters in a raw (pre-clean) sequence, for a data-quality note
+function countAmbiguous(raw){return ((raw||'').toUpperCase().match(/[^ACGT\s]/g)||[]).length;}
+
+/* ===================== homology / specificity primitives ===================== */
+// count exact occurrences of probe on BOTH strands of seq
+function occAll(probe,seq){if(!probe||probe.length>seq.length)return 0;let n=0,i;
+  for(i=0;(i=seq.indexOf(probe,i))!==-1;i++)n++;const r=rc(seq);for(i=0;(i=r.indexOf(probe,i))!==-1;i++)n++;return n;}
+// ===================== per-reagent profiles, taken from the actual manufacturer manuals =====================
+// Every number below is from the cited manual, not a generic assumption. Tm targets and the annealing
+// rule differ per vendor because each calculates Tm differently — Vazyme recommends Primer Premier 5,
+// NEB recommends its own Tm Calculator — so the SAME primer will read a few °C apart between vendors.
+// We compute Tm by nearest-neighbour (SantaLucia) and apply each vendor's own annealing rule to it.
+const POLY_PROFILE={
+  PhantaFlash:{
+    label:'2× Phanta Flash Master Mix (Dye Plus) · Vazyme P520',
+    src:'Vazyme P520 manual v24.1',
+    // Tm computed the way VAZYME'S OWN CALCULATOR does (crm.vazyme.com/cetool tmcal):
+    // nearest-neighbour, 250 pM nucleic acid, 50 mM K+, 1.5 mM Mg2+. Those conditions read ~10 °C
+    // below a standard 0.25-0.5 µM calculation, which is why the target below looks low.
+    // Tm is reported at the STANDARD PCR condition (0.5 µM primer, 50 mM monovalent, 2 mM Mg) —
+    // the basis NEB's calculator uses — so an ordinary 20-mer reads ~58-62 °C as expected. Vazyme's
+    // own tool quotes 250 pM, which reads about 10 °C lower for the very same oligo; that is a
+    // reporting convention, not a colder primer, and it was making good primers look alarming.
+    tmMode:'standard', conc:0.5, na:50, mg:2,
+    tmMin:55, tmMax:68, tmTarget:60, maxDtm:1,           // manual 4d: ΔTm ≤ 1 °C
+    aimMin:58, aimMax:62,
+    fixedTa:56,                                          // Vazyme's annealing temp for this enzyme, pinned by default
+    taOff:-5, taMax:68,
+    extRate:5, extRateLong:10,                           // 5 sec/kb ≤10 kb; 10 sec/kb >10 kb
+    gcMin:40, gcMax:60,                                  // manual 4f
+    lenMin:18, lenMax:30,
+    // NOTE: conc/na/mg are set ABOVE to Vazyme's calculator conditions (250 pM, 50 mM K+, 1.5 mM Mg).
+    // The physical reaction is still 0.4 µM primer (2 µl of 10 µM in 50 µl) — the calculator conditions
+    // are only for making our Tm numbers match the ones Vazyme's own tool reports.
+    reactionPrimerConc:0.4,
+    selfComp:4, endComp:2,                               // 4h: avoid ≥5 complementary; ≥3 at 3′ ends
+    tmUrl:'https://crm.vazyme.com/cetool/en-us/tmcal.html',
+    tmNote:'Tm is nearest-neighbour at 0.5 µM primer, 50 mM monovalent, 2 mM Mg — the standard basis, so it matches NEB\u2019s calculator. Vazyme\u2019s own tool quotes 250 pM, which reads ~10 °C lower for the same oligo. The Gibson overhang is excluded from Tm either way (manual 4e).',
+    cycles:'28–35',
+    program:[['Initial denaturation','98 °C','30 sec'],['Denaturation','98 °C','10 sec'],
+             ['Annealing','Tm + 5 °C (≤68 °C)','5 sec'],['Extension','72 °C','5–10 sec/kb'],
+             ['Final extension','72 °C','1 min']],
+    system:[['2× Phanta Flash Master Mix (Dye Plus)','25 µl'],['Primer 1 (10 µM)','2 µl'],
+            ['Primer 2 (10 µM)','2 µl'],['Template DNA','x µl'],['ddH₂O','up to 50 µl']],
+    template:[['Genomic DNA','10–500 ng'],['Plasmid / virus DNA','10 pg – 20 ng'],['cDNA','1–5 µl (≤1/10 rxn vol)']]
+  },
+  Q5:{
+    label:'Q5 High-Fidelity DNA Polymerase · NEB M0491',
+    src:'NEB M0491 protocol',
+    tmMin:55, tmMax:72, tmTarget:64, maxDtm:3,
+    taOff:3, taMax:72,                                   // NEB: Ta = 3 °C above the LOWER primer Tm
+    extRate:20, extRateLong:30,                          // 20–30 s/kb genomic; 10 s/kb simple templates
+    gcMin:40, gcMax:60,                                  // NEB: primers 20–40 nt, 40–60% GC
+    lenMin:20, lenMax:40,
+    conc:0.5, na:50, mg:2,                               // 0.5 µM final; 1X Q5 buffer ≈ 2.0 mM Mg²⁺
+    selfComp:5, endComp:3,
+    tmUrl:'https://tmcalculator.neb.com/',
+    tmNote:'NEB strongly recommends its own Tm Calculator for Q5 — its buffer chemistry makes optimal Ta higher than for other enzymes, so NEB values read above a plain nearest-neighbour Tm.',
+    cycles:'25–35 (30–35 for genomic)',
+    program:[['Initial denaturation','98 °C','30 sec'],['Denaturation','98 °C','5–10 sec'],
+             ['Annealing','Tm + 3 °C','10–30 sec'],['Extension','72 °C','20–30 sec/kb'],
+             ['Final extension','72 °C','2 min']],
+    system:[['5× Q5 Reaction Buffer','10 µl'],['10 mM dNTPs','1 µl'],['Primer 1 (10 µM)','2.5 µl'],
+            ['Primer 2 (10 µM)','2.5 µl'],['Template DNA','x µl'],['Q5 Polymerase','0.5 µl'],['ddH₂O','up to 50 µl']],
+    template:[['Genomic DNA','1 ng – 1 µg'],['Plasmid / simple DNA','1 pg – 1 ng']]
+  },
+  Phusion:{
+    label:'Phusion High-Fidelity DNA Polymerase',
+    src:'Thermo/NEB Phusion protocol',
+    tmMin:55, tmMax:72, tmTarget:62, maxDtm:3,
+    taOff:3, taMax:72,                                   // Ta = Tm + 3 °C for primers > 20 nt
+    extRate:15, extRateLong:30,                          // 15 s/kb low-complexity; 30 s/kb genomic
+    gcMin:40, gcMax:60,                                  // 18–35-mers, 40–60% GC
+    lenMin:18, lenMax:35,
+    conc:0.5, na:50, mg:1.5,
+    selfComp:5, endComp:3,
+    tmUrl:'https://tmcalculator.neb.com/',
+    tmNote:'Thermo/NEB advise their own Tm calculators for Phusion; avoid primer pairs differing by >10 °C.',
+    cycles:'25–35',
+    program:[['Initial denaturation','98 °C','30 sec'],['Denaturation','98 °C','5–10 sec'],
+             ['Annealing','Tm + 3 °C','10–30 sec'],['Extension','72 °C','15–30 sec/kb'],
+             ['Final extension','72 °C','5–10 min']],
+    system:[['5× Phusion HF Buffer','10 µl'],['10 mM dNTPs','1 µl'],['Primer 1 (10 µM)','2.5 µl'],
+            ['Primer 2 (10 µM)','2.5 µl'],['Template DNA','x µl'],['Phusion Polymerase','0.5 µl'],['ddH₂O','up to 50 µl']],
+    template:[['Genomic DNA','50–250 ng'],['Plasmid / simple DNA','1 pg – 10 ng']]
+  },
+  OneTaq:{
+    label:'OneTaq DNA Polymerase · NEB M0480',
+    src:'NEB general Taq guidance (not manual-verified in this session)',
+    tmMin:50, tmMax:68, tmTarget:58, maxDtm:3,
+    taOff:-5, taMax:68,                                  // Taq-family: Ta ≈ Tm − 5 °C
+    extRate:60, extRateLong:60,
+    gcMin:40, gcMax:60, lenMin:18, lenMax:30,
+    conc:0.2, na:50, mg:1.8,
+    selfComp:5, endComp:3,
+    tmUrl:'https://tmcalculator.neb.com/',
+    tmNote:'Taq-family guidance (Ta ≈ Tm − 5 °C) — I did not verify this against the OneTaq manual in this session; check before relying on it.',
+    cycles:'30–35',
+    program:[['Initial denaturation','94 °C','30 sec'],['Denaturation','94 °C','30 sec'],
+             ['Annealing','Tm − 5 °C','30–60 sec'],['Extension','68 °C','1 min/kb'],
+             ['Final extension','68 °C','5 min']],
+    system:[['5× OneTaq Reaction Buffer','10 µl'],['10 mM dNTPs','1 µl'],['Primer 1 (10 µM)','1 µl'],
+            ['Primer 2 (10 µM)','1 µl'],['Template DNA','x µl'],['OneTaq Polymerase','0.25 µl'],['ddH₂O','up to 50 µl']],
+    template:[['Genomic DNA','1 ng – 1 µg'],['Plasmid / simple DNA','1 pg – 1 ng']]
+  },
+  Taq:{
+    label:'Taq DNA Polymerase',
+    src:'general Taq guidance (not manual-verified in this session)',
+    tmMin:50, tmMax:65, tmTarget:55, maxDtm:3,
+    taOff:-5, taMax:65,
+    extRate:60, extRateLong:60,
+    gcMin:40, gcMax:60, lenMin:18, lenMax:30,
+    conc:0.2, na:50, mg:1.5,
+    selfComp:5, endComp:3,
+    tmUrl:'https://tmcalculator.neb.com/',
+    tmNote:'Generic Taq guidance (Ta ≈ Tm − 5 °C) — not verified against a specific manual in this session.',
+    cycles:'30–35',
+    program:[['Initial denaturation','95 °C','30 sec'],['Denaturation','95 °C','30 sec'],
+             ['Annealing','Tm − 5 °C','30–60 sec'],['Extension','68 °C','1 min/kb'],
+             ['Final extension','68 °C','5 min']],
+    system:[['10× Standard Taq Buffer','5 µl'],['10 mM dNTPs','1 µl'],['Primer 1 (10 µM)','1 µl'],
+            ['Primer 2 (10 µM)','1 µl'],['Template DNA','x µl'],['Taq Polymerase','0.25 µl'],['ddH₂O','up to 50 µl']],
+    template:[['Genomic DNA','1 ng – 1 µg'],['Plasmid / simple DNA','1 pg – 1 ng']]
+  }
+};
+function prof(poly){return POLY_PROFILE[poly]||POLY_PROFILE.PhantaFlash;}
+function extTime(bp,poly){const p=prof(poly);const r=bp>10000?p.extRateLong:p.extRate;
+  let sec=Math.max(p.extRate<=10?1:10,Math.round(bp/1000*r));
+  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
+
+
+/* ---- template matching: which region of the target comes from which plasmid ---- */
+const LIB_K=20;
+function kmerSeed(seq,k){const idx=new Map();for(let i=0;i+k<=seq.length;i++){const km=seq.substr(i,k);let a=idx.get(km);if(!a){a=[];idx.set(km,a);}a.push(i);}return idx;}
+function extendExact(target,tPos,src,sPos,srcLen,circular){let len=0;const tN=target.length;
+  while(tPos+len<tN){let sIdx=sPos+len;if(circular)sIdx=sIdx%srcLen;else if(sIdx>=srcLen)break;
+    if(target[tPos+len]!==src[sIdx])break;len++;}
+  return len;}
+function buildLibIndex(plasmids){
+  return plasmids.map(p=>{const seq=clean(p.seq);if(!seq.length)return null;const rcs=rc(seq);
+    return {name:(p.name||'').trim()||'(unnamed plasmid)',seq,rcs,circular:true,
+      idxF:seq.length>=LIB_K?kmerSeed(seq,LIB_K):new Map(),
+      idxR:rcs.length>=LIB_K?kmerSeed(rcs,LIB_K):new Map()};}).filter(Boolean);
+}
+// partitions targetSeq (0..N) into contiguous {type:'match',...}/{type:'novel',...} segments
+function matchTargetToLibrary(targetSeq,plasmids){
+  const lib=buildLibIndex(plasmids);const N=targetSeq.length;const segs=[];let p=0;
+  const hasSeed=seed=>lib.some(pl=>pl.idxF.has(seed)||pl.idxR.has(seed));
+  while(p<N){
+    let best=null;
+    if(p+LIB_K<=N){
+      const seed=targetSeq.substr(p,LIB_K);
+      for(const pl of lib){
+        for(const rec of [[pl.idxF,pl.seq,'+'],[pl.idxR,pl.rcs,'-']]){
+          const [idx,strandSeq,strandName]=rec;const cands=idx.get(seed);if(!cands)continue;
+          for(const sPos of cands){
+            const len=extendExact(targetSeq,p,strandSeq,sPos,strandSeq.length,pl.circular);
+            if(!best||len>best.len)best={len,plasmid:pl,strand:strandName,srcStart:sPos};
+            else if(len===best.len&&(pl!==best.plasmid||strandName!==best.strand||sPos!==best.srcStart))
+              (best.ties=best.ties||[]).push({name:pl.name,strand:strandName});
+          }
+        }
+      }
+    }
+    if(best&&best.len>=LIB_K){
+      const plLen=best.plasmid.seq.length;let origStart,origEndExcl;
+      if(best.strand==='+'){origStart=best.srcStart;origEndExcl=best.srcStart+best.len;}
+      else{origEndExcl=plLen-best.srcStart;origStart=origEndExcl-best.len;}
+      segs.push({type:'match',start:p,end:p+best.len,seq:targetSeq.slice(p,p+best.len),
+        plasmidName:best.plasmid.name,templateSeq:best.plasmid.seq,strand:best.strand,
+        srcLen:plLen,origStart,origEndExcl,ambiguous:!!best.ties,ties:best.ties});
+      p+=best.len;
+    } else {
+      let q=p+1;
+      while(q<N){if(q+LIB_K<=N&&hasSeed(targetSeq.substr(q,LIB_K)))break;q++;}
+      segs.push({type:'novel',start:p,end:q,seq:targetSeq.slice(p,q)});
+      p=q;
+    }
+  }
+  return segs;
+}
+
+// Expert practice (SnapGene/NEB/MIT protocol): the overlap can be taken wholly from ONE flanking
+// fragment (simplest — only the downstream primer needs a tail) or split between both. We try, in
+// order: (1) whole overlap from upstream's own tail, (2) whole overlap from downstream's own head,
+// (3) a centered split, (4) any split ratio (sliding) — at increasing length from the 20 bp floor.
+// Each candidate is screened for homology against BOTH flanking templates and every other fragment/
+// template using the same mismatch-tolerant model as primer specificity (near-repeats count, not
+// just exact ones). If nothing within the normal max length is unique, we try a longer overlap drawn
+// ENTIRELY from one fragment's own real sequence (always physically valid, unlike borrowing sequence
+// across two different templates) before giving up and flagging the junction as homology-blocked.
+function mmHits(arm,template,mm,expected){if(!template||!arm.length)return 0;
+  const win=arm.length;const strands=[template,rc(template)];let hits=0;
+  for(const st of strands){const n=st.length;for(let i=0;i+win<=n;i++){let d=0,k;
+    for(k=0;k<win&&d<=mm;k++)if(arm[k]!==st[i+k])d++;if(d<=mm)hits++;}}
+  return Math.max(0,hits-expected);}
+
+// ===================== overlap design: every primer gets a real, minimum-length overhang =====================
+// Each fragment's contribution to the overlap becomes the TAIL added to one specific primer (the
+// upstream fragment's a-bp contribution lands on the downstream primer's tail; the downstream
+// fragment's c-bp contribution lands on the upstream primer's tail, reverse-complemented). So
+// "per-primer overhang" = a and c respectively — both must independently clear S.ovSideMin. This is
+// stricter than NEBuilder's own minimum (which allows the whole arm from one side, giving one primer
+// a 0 bp tail); enforced here because a lopsided split is what produced near-zero overhangs before.
+function designOverlap(U,D,insert,S,otherTemplates){
+  const uT=U.template||U.seq, dT=D.template||D.seq, insLen=insert.length;
+  const totalFloor=Math.max(20,S.ovMin);                     // NEBuilder-style total overlap floor
+  const sideMin=Math.max(0,S.ovSideMin-insLen);              // each fragment's own contribution floor
+  const minL=Math.max(totalFloor,insLen+2*sideMin);
+  function screen(arm){const hU=mmHits(arm,uT,S.mm,0),hD=mmHits(arm,dT,S.mm,0);
+    const hOther=otherTemplates.some(t=>mmHits(arm,t,S.mm,0)>0);
+    return {hU,hD,hOther,unique:hU===0&&hD===0&&!hOther};}
+  function mk(a,c){if(a>U.seq.length||c>D.seq.length)return null;
+    const upPart=a>0?U.seq.slice(-a):'',downPart=c>0?D.seq.slice(0,c):'';const seq=upPart+insert+downPart;
+    const tm=wallaceTm(seq);const s=screen(seq);
+    return {seq,upPart,insert,downPart,a,c,L:seq.length,tm,gc:gcv(seq),hp:hairpin(seq),
+      fwdTail:upPart+insert,revTail:rc(insert+downPart),cleared:tm>=S.ovTm,
+      hU:s.hU,hD:s.hD,hOther:s.hOther,unique:s.unique,source:'split'};}
+  function ladder(maxL){const cands=[];
+    for(let L=minL;L<=maxL;L++){const extra=L-insLen;if(extra<2*sideMin)continue;
+      const aCenter=Math.max(sideMin,Math.min(extra-sideMin,Math.round(extra/2)));
+      const cc=mk(aCenter,extra-aCenter);if(cc)cands.push(cc);}
+    for(let L=minL;L<=maxL;L++){const extra=L-insLen;if(extra<2*sideMin)continue;
+      for(let a=sideMin;a<=extra-sideMin;a++){const cc=mk(a,extra-a);if(cc)cands.push(cc);}}
+    return cands;}
+  const score=x=>(x.unique?0:1000)+(x.cleared?0:120)+x.L*0.15+Math.abs(x.a-x.c)*0.05+Math.max(0,55-x.gc)*0.05;
+  let cands=ladder(Math.max(S.ovMax,minL));
+  cands.sort((p,q)=>score(p)-score(q));
+  let best=cands[0],extendedSearch=false;
+  if(!best||!best.unique){
+    const extMax=Math.min(80,Math.max(U.seq.length,D.seq.length));
+    const wide=ladder(extMax).filter(c=>c.unique);
+    if(wide.length){wide.sort((p,q)=>score(p)-score(q));best=wide[0];extendedSearch=best.L>Math.max(S.ovMax,minL);}
+  }
+  if(!best){const seq=insert||U.seq.slice(-Math.min(minL,U.seq.length));
+    best={seq,upPart:'',insert,downPart:'',a:0,c:0,L:seq.length,tm:wallaceTm(seq),gc:gcv(seq),hp:hairpin(seq),
+      fwdTail:insert,revTail:rc(insert),cleared:false,hU:0,hD:0,hOther:false,unique:false,source:'fallback'};}
+  best.extended=insLen>0&&(best.a>0||best.c>0);
+  best.blocked=!best.unique;
+  best.extendedSearch=extendedSearch;
+  best.sideShort=best.a<S.ovSideMin-insLen||best.c<S.ovSideMin-insLen; // flags the rare fallback that couldn't meet the floor
+  return best;}
+
+// highlight positions of `a` that differ from `b` (equal-length compare)
+function diffHTML(a,b){let h='';for(let i=0;i<a.length;i++)h+=(b[i]!==undefined&&a[i]!==b[i])?`<mark class="diffc">${a[i]}</mark>`:a[i];return h;}
+// generate a unique random spacer (for homology-blocked junctions) — screened against every template
+function randomSpacer(L,templates){const B='ACGT';for(let t=0;t<500;t++){let s='';for(let i=0;i<L;i++)s+=B[Math.floor(Math.random()*4)];
+    const g=gcv(s);if(g<40||g>65)continue;if(/(.)\1{3,}/.test(s))continue;
+    if(templates.every(tp=>mmHits(s,tp,1,0)===0))return s;}return null;}
+
+// mismatch-tolerant, 3'-weighted mis-priming site count (Primer-BLAST-style). A primer can extend at an
+// off-target site only if its 3' region matches with few mismatches AND its 3'-terminal bases pair. We scan
+// both strands for the primer's 3' window (≤16 nt), counting sites with ≤maxMM mismatches in the window and
+// ≤max3p mismatches in the terminal 5 nt. The intended site (0 mismatches) is included, so >1 ⇒ off-target.
+function misprimeSites(bindSeq,template,maxMM,max3p){if(!template)return 1;
+  const win=Math.min(bindSeq.length,16);const p=bindSeq.slice(-win);const strands=[template,rc(template)];let sites=0;
+  for(const st of strands){const n=st.length;for(let i=0;i+win<=n;i++){let mm=0,k;
+    for(k=0;k<win&&mm<=maxMM;k++)if(p[k]!==st[i+k])mm++;
+    if(mm>maxMM)continue;
+    let mm5=0;for(k=win-5;k<win;k++)if(k>=0&&p[k]!==st[i+k])mm5++;
+    if(mm5<=max3p)sites++;}}
+  return sites;}
+function finishBind(b,S){b.tmOk=b.tm>=S.bindTm;b.unique=(b.sites<=1);b.clamp=/[GC]$/.test(b.seq);
+  b.polyX=polyXRun(b.seq);b.polyXBad=b.polyX>S.maxPolyX;b.endGC=endGC(b.seq);b.gcOk=b.gc>=S.gcMin&&b.gc<=S.gcMax;
+  b.selfDimer=dimer3(b.seq,b.seq);b.lenOk=b.len>=S.bindMin&&b.len<=S.bindMax;
+  b.overCeiling=b.tm>S.bindTmMax;
+  // Tm takes priority over length; when even the best candidate can't reach the target, say by how much
+  b.tmShort=(S.bindTm-b.tm)>0.5?+(S.bindTm-b.tm).toFixed(1):0;
+  return b;}
+// enumerate candidate binding lengths for one end of the fragment. Standard design range is 18–25 nt
+// (20 ideal); we allow a wider window so a difficult end can still be solved, but score toward 20.
+function bindCandidates(region,template,S,which,cap){
+  const mk=which==='F'?(L=>region.slice(0,L)):(L=>rc(region.slice(-L)));
+  const out=[];const floor=Math.max(15,Math.min(S.bindMin,18));
+  for(let L=floor;L<=cap&&L<=region.length;L++){const seq=mk(L);
+    out.push({seq,len:L,tm:calcTm(seq,S.conc,S.na,S.mg),sites:template?misprimeSites(seq,template,S.mm,1):1,
+      gc:gcv(seq),hp:hairpin(seq),clamp:/[GC]$/.test(seq),polyX:polyXRun(seq),
+      selfDimer:dimer3(seq,seq),endGC:endGC(seq)});}
+  return out;}
+// Choose the F/R length PAIR by joint scoring, in the priority order used in standard primer design:
+//   1. F/R Tm matched to each other (heaviest weight — target is within S.maxDtm, default 3 °C)
+//   2. both near the target Tm
+//   3. length near the 20 nt ideal, inside the 18–30 nt standard window (soft preference — Tm match wins on conflict)
+//   4. GC% inside 40–60%
+//   5. secondary structure: hairpin, self-dimer, and F/R cross-dimer all actively penalised (not
+//      merely reported afterwards, so a structurally cleaner pair is chosen when one exists)
+//   6. 3′ G/C clamp present but not an over-stable all-GC 3′ end
+function designBindPair(a,tmpl,S,fwdTailLen,revTailLen){
+  const target=S.bindTm, IDEAL_LEN=20;
+  // how far from TARGET a primer is ever allowed to be pulled purely to chase its partner. Without
+  // this cap, if one end is naturally forced far from target (e.g. an 18 nt window that happens to be
+  // very GC-rich), "minimise the gap" alone will drag the OTHER primer just as far in pursuit of a
+  // match — producing two absurdly hot (or cold) primers instead of one honestly-flagged mismatch.
+  const CAP_DEV=Math.max(S.maxDtm*2,8);
+  const one=x=>
+    // LENGTH IS A SUGGESTION, Tm COMES FIRST — these two terms are deliberately light so that
+    // hitting the Tm target always outranks sitting at the "ideal" 20 nt or inside the length window.
+      Math.abs(x.len-IDEAL_LEN)*0.10                              // gentle pull toward 20 nt
+    + ((x.len<S.bindMin||x.len>S.bindMax)?0.8:0)                  // soft nudge to stay in the window
+    + ((x.gc<S.gcMin||x.gc>S.gcMax)?1.6:0)                        // outside 40–60% GC
+    + (x.clamp?0:3.8) + (x.endGC>=4?0.9:0)                        // 3′ clamp, but not all-GC
+    + (x.polyX>S.maxPolyX?1.5:0)                                  // homopolymer run
+    + Math.max(0,x.hp-7)*0.9                                      // hairpin
+    + Math.max(0,x.selfDimer-5)*0.9                               // self-dimer
+    + Math.max(0,x.tm-S.bindTmMax)*2.2                            // hard Tm ceiling — strongly avoided,
+    + (x.tm<S.aimMin?(S.aimMin-x.tm)*3.0:0)                       // preferred band — weighted above length
+    + (x.tm>S.aimMax?(x.tm-S.aimMax)*3.0:0);
+                                                                    // but never silently ignored if unavoidable
+  function pool(cap,which){
+    const c=bindCandidates(a.seq,tmpl,S,which,cap);
+    const u=c.filter(x=>x.sites<=1);
+    return u.length?u:c;}                                         // prefer specific; fall back if none
+  // Stage A — each primer independently seeks the closest achievable Tm to TARGET (no partner
+  // awareness at all). This is what a naturally-composed end lands on, and is never a "chase".
+  function bestToTarget(p,refTm){let best=null;
+    for(const c of p){const score=Math.abs(c.tm-(refTm!==undefined?refTm:target))*1.4+one(c);
+      if(!best||score<best.score)best={score,c};}return best.c;}
+  const cap1F=Math.max(15,Math.min(S.bindMax,S.maxPrimer-fwdTailLen));
+  const cap1R=Math.max(15,Math.min(S.bindMax,S.maxPrimer-revTailLen));
+  const wide=Math.max(S.bindMax,40);
+  const cap2F=Math.max(15,Math.min(wide,S.maxPrimer-fwdTailLen));
+  const cap2R=Math.max(15,Math.min(wide,S.maxPrimer-revTailLen));
+  const fPoolWide=pool(cap2F,'F'), rPoolWide=pool(cap2R,'R');
+  let f0=bestToTarget(pool(cap1F,'F')), r0=bestToTarget(pool(cap1R,'R'));
+  let gap0=Math.abs(f0.tm-r0.tm), widened=false;
+  if(gap0>S.maxDtm){
+    // Stage B — bounded JOINT search: consider every candidate pair where BOTH sides stay within
+    // CAP_DEV of target, and pick whichever minimises the gap. This keeps full matching power for
+    // ordinary cases (nothing here is more restrictive than before when both ends are flexible), while
+    // a side that's genuinely stuck beyond the cap on its own simply has no qualifying candidates —
+    // in which case it's left at its independent best and only the OTHER side is pulled toward it,
+    // itself never leaving the cap.
+    const fCapped=fPoolWide.filter(x=>Math.abs(x.tm-target)<=CAP_DEV);
+    const rCapped=rPoolWide.filter(x=>Math.abs(x.tm-target)<=CAP_DEV);
+    if(fCapped.length&&rCapped.length){
+      let best=null;
+      for(const f of fCapped)for(const r of rCapped){
+        const gap=Math.abs(f.tm-r.tm);
+        const score=gap*5+(gap>S.maxDtm?4:0)+one(f)+one(r)+(f.len+r.len)*0.02;
+        if(!best||score<best.score)best={score,f,r,gap};}
+      if(best&&best.gap<gap0){f0=best.f;r0=best.r;gap0=best.gap;}
+    } else if(fCapped.length&&!rCapped.length){
+      // R is the stuck side (or has no candidates within cap for other reasons) — pull F toward R
+      let best=null;for(const f of fCapped){const s=Math.abs(f.tm-r0.tm)*2+one(f);if(!best||s<best.s)best={s,f};}
+      if(best)f0=best.f;
+    } else if(rCapped.length&&!fCapped.length){
+      let best=null;for(const r of rCapped){const s=Math.abs(r.tm-f0.tm)*2+one(r);if(!best||s<best.s)best={s,r};}
+      if(best)r0=best.r;
+    }
+    // else: both sides stuck beyond the cap in their own right — nothing safe to adjust; keep the
+    // independent bests as-is and report the honest residual gap.
+    widened=(f0.len>S.bindMax)||(r0.len>S.bindMax);
+  }
+  const fb=finishBind(f0,S), rb=finishBind(r0,S);
+  fb.cross=rb.cross=dimer3(fb.seq,rb.seq);
+  fb.widened=rb.widened=widened;
+  return {fb,rb};}
+// Recommended starting annealing temperature, computed the way the vendor's own calculator does:
+// take the LOWER primer's Tm, apply that enzyme's buffer correction, then its Ta offset.
+// Always a starting point — run a gradient ±5 °C around it.
+function annealTemp(tmF,tmR,poly,S){
+  // user pin wins outright: run the PCR at this Ta no matter what the calculated Tm says
+  if(S&&S.fixTaOn)return S.fixTa;
+  const p=prof(poly);const lo=Math.min(tmF,tmR);
+  return Math.max(45,Math.min(p.taMax,Math.round(lo+p.taOff)));}
+
+/* ===================== assembler + screening ===================== */
+function assemble(items,circular,S){
+  // classify inserts (short) unless already flagged; default each amplified item's own template to
+  // its own sequence unless the user attached a real source plasmid for it
+  items.forEach(f=>{if(f.ins===undefined)f.ins=f.seq.length<S.minAmp; if(!f.ins&&f.template===undefined)f.template=f.seq;});
+  const amps=[];let lead=[],pend=[];
+  items.forEach(f=>{if(f.ins){(amps.length?pend:lead).push(f);}else{amps.push(Object.assign({},f,{insBefore:pend}));pend=[];}});
+  const trail=pend;
+  if(!amps.length)return{error:'Nothing to amplify — every fragment is below the insert threshold.'};
+  const m=amps.length;
+  amps.forEach((a,k)=>{a.color=COLORS[k%COLORS.length];a.fwdTail='';a.revTail='';});
+  const junctions=[];const insSeq=arr=>arr.map(x=>x.seq).join('');
+  function mk(U,D,insArr,wrap){const ins=insSeq(insArr);
+    // Gibson mis-assembly risk is scoped to what actually enters the tube: the OTHER AMPLICONS
+    // (a.seq), not their full source plasmids — most of a source plasmid (backbone, resistance
+    // marker, unrelated cassettes) is never carried into the reaction, so screening against it
+    // invites false extension from sequence that was never physically present.
+    const others=amps.filter(a=>a!==U&&a!==D).map(a=>a.seq);
+    const ov=designOverlap(U,D,ins,S,others);
+    D.fwdTail=ov.fwdTail;U.revTail=ov.revTail;junctions.push({U,D,ins,insArr,ov,wrap:!!wrap});}
+  if(circular){for(let k=1;k<m;k++)mk(amps[k-1],amps[k],amps[k].insBefore,false);mk(amps[m-1],amps[0],[...trail,...lead,...amps[0].insBefore],true);}
+  else{for(let k=1;k<m;k++)mk(amps[k-1],amps[k],amps[k].insBefore,false);
+    if(lead.length){amps[0].fwdTail=insSeq(lead)+amps[0].fwdTail;}if(trail.length){amps[m-1].revTail=rc(insSeq(trail))+amps[m-1].revTail;}}
+
+  // junction risk is already resolved by the ladder in designOverlap
+  junctions.forEach(j=>{
+    j.fwdTailHits=j.ov.hD||0;   // arm recurs in downstream template beyond the expected site
+    j.revTailHits=j.ov.hU||0;   // arm recurs in upstream template beyond the expected site
+    j.misassembly=!!j.ov.hOther;
+    j.risk=!j.ov.unique;        // true only if no unique arm was found anywhere in the search
+  });
+
+  // per-fragment primers with binding specificity screen (against its own source plasmid if given,
+  // else its own sequence), length budget, and F/R Tm balancing
+  const results=amps.map((a,k)=>{
+    const tmpl=a.template||a.seq;
+    const {fb,rb}=designBindPair(a,tmpl,S,a.fwdTail.length,a.revTail.length);
+    const fSeq=a.fwdTail+fb.seq, rSeq=a.revTail+rb.seq;
+    const amplicon=a.fwdTail.length+a.seq.length+a.revTail.length;
+    return {a,idx:k,fb,rb,fwdTail:a.fwdTail,revTail:a.revTail,fSeq,rSeq,amplicon,fTot:fSeq.length,rTot:rSeq.length,dimer:dimer3(fSeq,rSeq),
+      dTm:Math.abs(fb.tm-rb.tm), ta:annealTemp(fb.tm,rb.tm,S.poly,S), template:tmpl, hasOwnTemplate:!!a.hasTemplate};
+  });
+
+  // assembled sequence + reconstruction check
+  let asm;
+  if(circular)asm=amps.map((a,k)=>(k>0?insSeq(a.insBefore):'')+a.seq).join('')+insSeq([...trail,...lead,...amps[0].insBefore]);
+  else asm=insSeq(lead)+amps.map((a,k)=>(k>0?insSeq(a.insBefore):'')+a.seq).join('')+insSeq(trail);
+  const ref=items.map(f=>f.seq).join('');
+  const reconstructOk=circular?rotEq(asm,ref):(asm===ref);
+
+  // exact bp-level layout for the primer map — mirrors the asm-building order above exactly, so every
+  // segment's [start,end) lines up with the real position in the assembled sequence.
+  const layout=[];let pos=0;
+  const pushIns=(arr,label)=>{if(!arr||!arr.length)return;const s=insSeq(arr);if(!s.length)return;
+    layout.push({type:'ins',name:label||arr.map(x=>x.name).join(' + '),start:pos,end:pos+s.length});pos+=s.length;};
+  if(circular){
+    amps.forEach((a,k)=>{if(k>0)pushIns(a.insBefore);
+      layout.push({type:'amp',name:a.name,start:pos,end:pos+a.seq.length,color:a.color,amp:a});pos+=a.seq.length;});
+    const wrapJ=junctions.find(j=>j.wrap);if(wrapJ)pushIns(wrapJ.insArr);
+  } else {
+    pushIns(lead);
+    amps.forEach((a,k)=>{if(k>0)pushIns(a.insBefore);
+      layout.push({type:'amp',name:a.name,start:pos,end:pos+a.seq.length,color:a.color,amp:a});pos+=a.seq.length;});
+    pushIns(trail);
+  }
+  return {amps,results,junctions,circular,jCount:junctions.length,asm,reconstructOk,S,layout};
+}
+function rotEq(a,b){return a.length===b.length&&(a+a).includes(b);}
+
+
+/* ===================== assembly kit profiles + mix calculator =====================
+   All quantities below come from the manufacturers' own protocols, cited per kit.
+   pmol ↔ ng conversion uses the standard dsDNA relation: pmol = ng × 1000 / (bp × 650). */
+function pmolFromNg(ng,bp){return ng*1000/(bp*650);}
+function ngFromPmol(pmol,bp){return pmol*bp*650/1000;}
+
+const KITS={
+  hifi:{
+    label:'NEBuilder HiFi DNA Assembly Master Mix (NEB #E2621)',
+    src:'NEB #E2621 instruction manual / NEBuilder HiFi Assembly protocol',
+    rxnVol:20, mixVol:10, mixName:'NEBuilder HiFi Master Mix (2×)',
+    dnaBudget:10, transformVol:2, cells:'NEB 5-alpha (use 10-beta if assembly >15 kb; NEB Stable if repetitive)',
+    overlapNote:'15–20 bp overlaps for 2–3 fragments; 20–30 bp for 4–6.',
+    plan(n){
+      if(n<=3)return{rangeMin:0.03,rangeMax:0.2,mode:'ratio',totalTarget:0.15,ratio:2,
+        incub:'50 °C for 15 min',
+        why:`With ${n} fragments NEB specifies a total of 0.03–0.2 pmol at a 1:2 vector:insert molar ratio, and 15 min at 50 °C. The ratio is applied so the <b>total</b> lands mid-range (0.15 pmol) rather than per-fragment, which would overshoot NEB's ceiling as fragment count rises.`};
+      return{rangeMin:0.2,rangeMax:0.5,mode:'equimolar',eachPmol:0.05,
+        incub:'50 °C for 60 min',
+        why:`With ${n} fragments NEB switches its recommendation: 0.2–0.5 pmol total, <b>equimolar</b> (~0.05 pmol each, not 1:2), and a full <b>60 min</b> rather than 15. Assembly efficiency drops as fragment count rises, so every junction needs equal molar representation and more time.`};}
+  },
+  clonexpress:{
+    label:'ClonExpress Ultra One Step Cloning Kit V2 (Vazyme #C116)',
+    src:'Vazyme C116 / C115 ClonExpress Ultra instruction manual',
+    rxnVol:20, mixVol:10, mixName:'2× CE Mix',
+    dnaBudget:10, transformVol:10, cells:'chemically competent cells (~100 µl); confirm volume against your kit insert',
+    overlapNote:'15–20 bp homology arms standard; V2 tolerates 15–35 bp.',
+    plan(n){
+      if(n<=2)return{rangeMin:0.03,rangeMax:0.09,mode:'ratio',vectorPmol:0.03,insertPmol:0.06,
+        incub:'50 °C for 5 min (extend to 15 min if using 300–400 ng total DNA)',
+        why:`Single-fragment recombination: Vazyme specifies <b>0.03 pmol vector and 0.06 pmol insert</b> (1:2), which is their "0.02 × bp ng" rule of thumb. Ultra V2 needs only 5 min at 50 °C.`};
+      return{rangeMin:0.03,rangeMax:0.15,mode:'equimolar',eachPmol:0.03,
+        incub:n>=5?'50 °C for 30 min (may extend, but never beyond 1 h)':'50 °C for 15 min',
+        why:`Multi-fragment recombination: Vazyme switches to <b>0.03 pmol of every part, equimolar (1:1)</b> — not the 1:2 ratio used for a single insert — and lengthens incubation. ${n>=5?'At 4–5 fragments they explicitly allow up to 30 min (max 1 h).':'15 min is specified for multi-fragment reactions.'} Note this kit is validated for up to 5 fragments.`};}
+  }
+};
+// personal standing preference: more than 2 fragments -> always NEBuilder HiFi
+function preferredKit(nFrag){return nFrag>2?'hifi':'clonexpress';}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INTERFACE — v10
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// Okabe & Ito (2008) colourblind-safe categorical palette: distinguishable under
+// protanopia, deuteranopia and tritanopia, not merely "different hues" by eye.
+// tied to the site's own accents (about-cards on the homepage) rather than a raw data palette
+const COLORS=['#0f9d76','#dd4f75','#d9a441','#7c5cbf','#2aa5c7','#e2753a','#2f6fed','#6b8e23'];
+
+let MODE='A';                                   // 'A' = parts by hand, 'B' = from final sequence
+let topo='circular';
+let parts=[{name:'',seq:'',template:''},{name:'',seq:'',template:''}];
+let templates=[{name:'',seq:''}];
+let plan=null;                                  // result of the Mode B match
+let overrides={};                               // primer key -> hand-edited sequence
+let outcome={pcr:'',colonies:'',sequencing:'',notes:''};
+let projectId=null;
+const LIB_KEY='gibson_library_v1';
+// Where finished designs get collected. Point this at a dedicated repo once one exists — issues are
+// bulk-downloadable through the GitHub API, which makes them a serviceable collection bucket.
+const DATA_REPO='labpotato/labpotato.github.io';
+const DATA_LABEL='gibson-data';
+let D=null;                                     // last design result
+let stepNow=1;
+const PROJ_KEY='gibson_v10_project';
+
+/* ---- tiny helpers ---- */
+function $(id){return document.getElementById(id);}
+function v(id){const e=$(id);return e?e.value:'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function note(t,head,body){const c={i:'n-i',ok:'n-ok',w:'n-w',b:'n-b'}[t],ic={i:'ℹ',ok:'✓',w:'⚠',b:'✗'}[t];
+  return `<div class="note ${c}"><span class="ic">${ic}</span><div>${head?`<b>${head}.</b> `:''}${body}</div></div>`;}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.remove('show'),2200);}
+function cp(text,btn){const s=(text||'').replace(/&amp;/g,'&');
+  if(navigator.clipboard)navigator.clipboard.writeText(s);
+  if(btn){const o=btn.textContent;btn.textContent='copied ✓';setTimeout(()=>btn.textContent=o,1100);}else toast('Copied');}
+function dl(name,text){const b=new Blob([text],{type:'text/plain'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);toast('Downloaded '+name);}
+function nameStem(){const d=new Date();
+  return String(d.getFullYear()%10)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
+function fmtTag(raw){if(!looksWrapped(raw))return '';const n=multiFastaCount(raw);
+  return `<span class="flag f-ok">${n>1?'FASTA · used the 1st of '+n+' records':/^\s*LOCUS\s/m.test(raw)?'GenBank · header stripped':'FASTA · header stripped'}</span>`;}
+function pct(x){return Math.max(0,Math.min(100,x));}
+
+/* ---- mode + steps ---- */
+function setMode(m){
+  MODE=m;
+  $('modeCardA').classList.toggle('on',m==='A');
+  $('modeCardB').classList.toggle('on',m==='B');
+  $('paneA').classList.toggle('hidden',m!=='A');
+  $('paneB').classList.toggle('hidden',m!=='B');
+  D=null;renderAll();
+}
+function goStep(n){
+  if(n===3&&!D){runDesign();return;}
+  if(n===4&&!D){toast('Design the primers first');return;}
+  stepNow=n;
+  for(let i=1;i<=4;i++){
+    const p=$('pane'+i),b=$('stepBtn'+i);
+    if(p)p.classList.toggle('hidden',i!==n);
+    if(b)b.classList.toggle('on',i===n);
+  }
+  if(n===4)renderBench();
+  renderSteps();
+  if(n===3){
+    // Land on the review itself, not the page top. The hero and stepper would otherwise push the
+    // check card half off the bottom of the screen; parked just under the sticky header, the verdict
+    // and the whole check card fit one screen. Wait a frame so the collapsed intro has re-laid out.
+    requestAnimationFrame(()=>{
+      const el=$('results');
+      if(!el){window.scrollTo({top:0,behavior:'smooth'});return;}
+      const hdr=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h'))||54;
+      const y=el.getBoundingClientRect().top+window.scrollY-hdr-12;
+      window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+    });
+  }else window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderSteps(){
+  const segs=buildSegments();
+  const nAmp=segs.filter(s=>s.kind==='amp').length;
+  $('stepSub1').textContent = segs.length? `${segs.length} part${segs.length!==1?'s':''} · ${totalBp().toLocaleString()} bp` : 'nothing added yet';
+  $('stepSub2').textContent = prof(v('poly')).label.split('·')[0].trim();
+  $('stepSub3').textContent = D? `${D.results.length*2} primers designed` : 'not run yet';
+  $('stepSub4').textContent = D? 'order, mix, verify' : 'after designing';
+  const intro=stepNow===1;
+  $('introBlock').classList.toggle('hidden',!intro);
+  $('heroLede').classList.toggle('hidden',!intro);
+  $('modeCompact').classList.toggle('hidden',intro);
+  $('modeCompactLabel').textContent=MODE==='A'?'from parts you entered by hand':'from your finished sequence';
+  $('stepBtn1').classList.toggle('done',segs.length>0&&stepNow!==1);
+  $('stepBtn2').classList.toggle('done',!!D&&stepNow!==2);
+  $('stepBtn3').classList.toggle('done',!!D&&stepNow!==3);
+  const h=$('step1Hint');
+  if(h)h.textContent = MODE==='A'
+    ? (nAmp<2?'Add at least two parts (or one part for a re-circularisation) to continue.':`${nAmp} fragment${nAmp!==1?'s':''} will be PCR'd · ${segs.length-nAmp} folded into primer tails`)
+    : (plan?`Plan ready: ${plan.filter(s=>s.type==='match').length} region(s) traced to a template`:'Paste the target and at least one template, then work out the plan.');
+  renderReadout(segs,nAmp);
+}
+// header status line: length, fragment count, annealing temperature, score — the four numbers you
+// glance at while working, kept visible no matter which step you are on
+function renderReadout(segs,nAmp){
+  const el=$('hdrReadout');if(!el)return;
+  const bp=totalBp();
+  if(!bp){el.className='hdr-readout';el.innerHTML='';return;}
+  const sc=scoreConstruct();
+  const bits=[`<span><b>${bp.toLocaleString()}</b> bp</span>`,
+              `<span class="sep"></span><span><b>${nAmp}</b> PCR${nAmp===1?'':'s'}</span>`];
+  if(D)bits.push(`<span class="sep"></span><span>Ta <b>${D.results[0].ta}</b> °C</span>`);
+  if(sc.score!==null)bits.push(`<span class="sep"></span><span>score <b>${sc.score}</b></span>`);
+  el.innerHTML=bits.join('');
+  el.className='hdr-readout on';
+}
+function setTopo(t){
+  topo=t;
+  document.querySelectorAll('#topoSeg button,#topoSegB button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  D=null;renderAll();
+}
+// Typing must never rebuild the part/template lists: replacing the innerHTML of a list that holds
+// the focused input drops the caret after every keystroke. touch() therefore refreshes only the
+// derived, non-focusable bits (badges, map, score). Structural edits go through renderAll().
+function touch(){D&&(D=null);saveAuto();refreshLive();}
+function refreshLive(){updateBadges();renderRail();renderSteps();}
+function updateBadges(){
+  const thr=foldThreshold();
+  parts.forEach((p,i)=>{
+    const seq=clean(p.seq),len=seq.length,fold=len>0&&len<thr,tl=clean(p.template).length;
+    const st=$('pstats'+i);
+    if(st)st.innerHTML=`${len?`<span class="flag ${fold?'f-w':'f-ok'}">${fold?'rides on a primer tail':'PCR fragment'}</span>`:''}`+
+      `<span class="stat-chip">${len?len.toLocaleString()+' bp · '+gcv(seq).toFixed(0)+'% GC':'empty'}</span>${fmtTag(p.seq)}`;
+    const sm=$('psum'+i);
+    if(sm)sm.textContent=tl?`Source plasmid attached \u2014 ${tl.toLocaleString()} bp`
+      :'Add the plasmid this part is PCR\u2019d out of (recommended)';
+  });
+  templates.forEach((t,i)=>{const len=clean(t.seq).length,el=$('tstats'+i);
+    if(el)el.innerHTML=`<span class="stat-chip">${len?len.toLocaleString()+' bp':'empty'}</span>${fmtTag(t.seq)}`;});
+  const sa=$('subA');if(sa)sa.textContent=parts.filter(x=>clean(x.seq).length).length+' filled in';
+  const sb=$('subTarget');if(sb){const L=clean(v('tgtSeq')).length;sb.textContent=L?L.toLocaleString()+' bp pasted':'';}
+}
+// A part shorter than the overlap it would have to carry is not worth a PCR of its own: the whole
+// product would be homology arm. Those get built into the neighbouring primer's tail instead.
+function foldThreshold(){return Math.max(+v('minAmp')||50,(+v('ovMax')||30)+2*(+v('bindMin')||18));}
+
+/* ---- MODE A: parts ---- */
+function renderParts(){
+  const host=$('partList');if(!host)return;
+  const minAmp=foldThreshold();
+  host.innerHTML=parts.map((p,i)=>{
+    const col=COLORS[i%COLORS.length],len=clean(p.seq).length,gc=len?gcv(clean(p.seq)):0;
+    const fold=len>0&&len<minAmp, tl=clean(p.template).length;
+    return `<div class="part" id="part${i}" style="--pc:${col}">
+      <div class="part-top">
+        <span class="part-n">${i+1}</span>
+        <input type="text" value="${esc(p.name)}" placeholder="Part ${i+1} name — e.g. backbone, sfGFP, His6 linker"
+               oninput="parts[${i}].name=this.value;touch()">
+        <span class="part-stats" id="pstats${i}">
+          ${len?`<span class="flag ${fold?'f-w':'f-ok'}">${fold?'rides on a primer tail':'PCR fragment'}</span>`:''}
+          <span class="stat-chip">${len?len.toLocaleString()+' bp · '+gc.toFixed(0)+'% GC':'empty'}</span>
+          ${fmtTag(p.seq)}
+        </span>
+        <span class="part-tools">
+          <button class="icobtn" onclick="movePart(${i},-1)" ${i===0?'disabled':''} title="Move up" type="button"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <button class="icobtn" onclick="movePart(${i},1)" ${i===parts.length-1?'disabled':''} title="Move down" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+          <button class="icobtn" onclick="delPart(${i})" ${parts.length<=1?'disabled':''} title="Remove" type="button"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </span>
+      </div>
+      <textarea placeholder="paste this part's sequence 5′→3′ — FASTA/GenBank is fine…" spellcheck="false"
+                oninput="parts[${i}].seq=this.value;touch()">${esc(p.seq)}</textarea>
+      <details class="src-line" ${tl?'open':''}>
+        <summary id="psum${i}">${tl?`Source plasmid attached — ${tl.toLocaleString()} bp`:'Add the plasmid this part is PCR’d out of (recommended)'}</summary>
+        <textarea style="margin-top:8px" placeholder="paste the FULL source plasmid…" spellcheck="false"
+                  oninput="parts[${i}].template=this.value;touch()">${esc(p.template)}</textarea>
+        <div class="hint" style="margin-top:6px">Without this, primers are only checked against the part itself — a
+          primer that also binds elsewhere in the real plasmid would go unnoticed.</div>
+      </details>
+    </div>`;}).join('');
+  const s=$('subA');if(s)s.textContent=parts.filter(p=>clean(p.seq).length).length+' filled in';
+}
+function addPart(){parts.push({name:'',seq:'',template:''});D=null;renderAll();saveAuto();}
+function delPart(i){if(parts.length<=1)return;parts.splice(i,1);D=null;renderAll();saveAuto();}
+function movePart(i,d){const j=i+d;if(j<0||j>=parts.length)return;[parts[i],parts[j]]=[parts[j],parts[i]];D=null;renderAll();saveAuto();}
+function focusPart(i){const el=$('part'+i);if(!el)return;
+  if(MODE!=='A'){setMode('A');}
+  goStep(1);
+  setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.add('focus');setTimeout(()=>el.classList.remove('focus'),1400);},60);}
+
+/* ---- MODE B: target + templates ---- */
+function onTargetInput(){$('tgtFmt').innerHTML=fmtTag(v('tgtSeq'));plan=null;D=null;saveAuto();refreshLive();}
+function renderTemplates(){
+  const host=$('tmplList');if(!host)return;
+  host.innerHTML=templates.map((t,i)=>{
+    const len=clean(t.seq).length,col=COLORS[(i+2)%COLORS.length];
+    return `<div class="part" style="--pc:${col}">
+      <div class="part-top">
+        <span class="part-n">${String.fromCharCode(65+(i%26))}</span>
+        <input type="text" value="${esc(t.name)}" placeholder="Template ${i+1} name — e.g. pET28a, pDonor-sfGFP"
+               oninput="templates[${i}].name=this.value;plan=null;touch()">
+        <span class="part-stats" id="tstats${i}"><span class="stat-chip">${len?len.toLocaleString()+' bp':'empty'}</span>${fmtTag(t.seq)}</span>
+        <span class="part-tools">
+          <button class="icobtn" onclick="delTemplate(${i})" ${templates.length<=1?'disabled':''} title="Remove" type="button"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </span>
+      </div>
+      <textarea placeholder="paste this template's full sequence…" spellcheck="false"
+                oninput="templates[${i}].seq=this.value;plan=null;touch()">${esc(t.seq)}</textarea>
+    </div>`;}).join('');
+  const s=$('subTarget');if(s){const L=clean(v('tgtSeq')).length;s.textContent=L?L.toLocaleString()+' bp pasted':'';}
+}
+function addTemplate(){templates.push({name:'',seq:''});D=null;renderAll();saveAuto();}
+function delTemplate(i){if(templates.length<=1)return;templates.splice(i,1);plan=null;D=null;renderAll();saveAuto();}
+
+function runMatch(){
+  const tSeq=clean(v('tgtSeq')),out=$('matchReport');
+  if(!tSeq.length){out.innerHTML=note('b','Nothing to trace','Paste the finished construct above first.');return;}
+  const libs=templates.filter(t=>clean(t.seq).length>0);
+  if(!libs.length){out.innerHTML=note('b','No templates yet','Add at least one plasmid you would actually PCR from.');return;}
+  plan=matchTargetToLibrary(tSeq,libs);
+  D=null;
+  const novelBp=plan.filter(s=>s.type==='novel').reduce((a,s)=>a+s.seq.length,0);
+  const nMatch=plan.filter(s=>s.type==='match').length;
+  const nPcr=plan.filter(s=>s.seq.length>=foldThreshold()).length;
+  const nTail=plan.length-nPcr;
+  const minAmp=foldThreshold();
+  const rows=plan.map((s,i)=>{
+    const col=COLORS[i%COLORS.length];
+    if(s.type==='novel')return `<tr>
+      <td><span class="part-n" style="background:${col}">${i+1}</span></td>
+      <td><span class="flag f-w">not in any template</span></td>
+      <td class="mono">${(s.start+1).toLocaleString()}–${s.end.toLocaleString()}</td>
+      <td class="mono">${s.seq.length} bp</td>
+      <td>${s.seq.length<minAmp
+        ? `<span class="flag f-ok">no PCR needed</span> Only ${s.seq.length} bp, so it is written straight into the neighbouring primer as a longer tail — nothing extra to order.`
+        : 'Too long to carry on a primer. Order it as a gBlock/synthetic fragment, or add the plasmid it came from above and re-run.'}</td></tr>`;
+    const wraps=s.origEndExcl>s.srcLen;
+    const endD=wraps?s.origEndExcl-s.srcLen:s.origEndExcl;
+    return `<tr>
+      <td><span class="part-n" style="background:${col}">${i+1}</span></td>
+      <td><b>${esc(s.plasmidName)}</b><br><span class="hint">${s.strand==='+'?'same orientation':'reverse complement'}</span></td>
+      <td class="mono">${(s.start+1).toLocaleString()}–${s.end.toLocaleString()}</td>
+      <td class="mono">${s.seq.length.toLocaleString()} bp</td>
+      <td>${s.seq.length<minAmp
+        ? `<span class="flag f-ok">no PCR needed</span> At ${s.seq.length} bp this is shorter than the overlap a PCR would have to carry, so amplifying it would be pointless — it is written into the neighbouring primer as a longer tail instead.`
+        : `PCR positions <b class="mono">${(s.origStart+1).toLocaleString()}–${endD.toLocaleString()}</b> out of
+           <b>${esc(s.plasmidName)}</b>${wraps?' <span class="flag f-w">crosses position 1</span>':''}`}
+        ${s.ambiguous?`<br><span class="flag f-w">also an exact match in ${s.ties.map(t=>esc(t.name)).join(', ')}</span>`:''}</td></tr>`;
+  }).join('');
+  out.innerHTML=`
+    ${note(novelBp?'w':'ok',
+      `${nMatch} region${nMatch!==1?'s':''} traced`,
+      `Covering ${(tSeq.length-novelBp).toLocaleString()} of ${tSeq.length.toLocaleString()} bp.`+
+      (novelBp?` <b>${novelBp} bp</b> matched nothing you gave me — new sequence, a point mutation against your template, or a plasmid you haven't pasted yet.`:' Every base is accounted for.')+
+      ` You will run <b>${nPcr} PCR${nPcr!==1?'s':''}</b>${nTail?`; the other ${nTail} region${nTail!==1?'s are':' is'} too short to amplify and get written into the neighbouring primer as a longer tail`:''}.`)}
+    <div class="scroll-x"><table class="lab" style="margin-top:6px">
+      <thead><tr><th>#</th><th>Comes from</th><th>In the target</th><th>Size</th><th>What you do</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="adoptPlan()" type="button">Use this plan
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <span class="hint">Loads these regions as your parts, each with its template attached, ready to design.</span>
+    </div>`;
+  renderRail();renderSteps();
+}
+function adoptPlan(){
+  if(!plan)return;
+  parts=plan.map((s,i)=>{
+    if(s.type==='novel')return {name:'New sequence '+(i+1),seq:s.seq,template:''};
+    const wraps=s.origEndExcl>s.srcLen,endD=wraps?s.origEndExcl-s.srcLen:s.origEndExcl;
+    return {name:`${s.plasmidName} ${s.origStart+1}–${endD}${s.strand==='-'?' (rev)':''}`,seq:s.seq,template:s.templateSeq};
+  });
+  const n=v('tgtName');if(n)$('nameA').value=n;
+  toast('Plan loaded as '+parts.length+' parts');
+  goStep(2);renderAll();
+}
+
+/* ── thermodynamic specificity: a primer does not need a near-perfect match to cause trouble, it
+   needs a 3'-anchored duplex stable enough to extend at the annealing temperature. So instead of
+   counting mismatches, walk back from the 3' end at every position on both strands, take the
+   stretch that actually pairs, and compute its Tm. Anything within `margin` of Ta is a real risk. ── */
+function offTargets(primer,template,ta,S,skipBest){
+  if(!template||!primer)return [];
+  const n=primer.length,hits=[],margin=8;
+  const MIN_ANCHOR=3;          // the 3'-terminal bases must pair or the polymerase cannot extend
+  const MIN_LEN=10;            // shorter duplexes cannot reach a PCR annealing temperature anyway
+  [[template,'+'],[rc(template),'-']].forEach(function(rec){
+    const st=rec[0],strand=rec[1],L=st.length;
+    for(let end=n-1;end<L;end++){
+      let ok=true;
+      for(let k=0;k<MIN_ANCHOR;k++)if(primer[n-1-k]!==st[end-k]){ok=false;break;}
+      if(!ok)continue;
+      let mm=0,k=0;
+      for(;k<n;k++){ if(primer[n-1-k]!==st[end-k]){ mm++; if(mm>2)break; } }
+      const len=k;
+      if(len<MIN_LEN)continue;
+      const seg=primer.slice(n-len);
+      const tm=calcTm(seg,S.conc,S.na,S.mg);
+      if(tm>=ta-margin)hits.push({start:end-len+1,strand,tm:+tm.toFixed(1),len,mm});
+    }
+  });
+  hits.sort(function(a,b){return b.tm-a.tm;});
+  // the intended site is the strongest hit; drop it so what remains is genuinely off-target
+  return skipBest?hits.slice(1):hits;
+}
+function scoreOffTargets(r,S){
+  ['fb','rb'].forEach(function(key){
+    const b=r[key];
+    const hits=offTargets(b.seq,r.template,r.ta,S,true);
+    b.offTm=hits.length?hits[0].tm:null;
+    b.offN=hits.length;
+    b.offWorst=hits[0]||null;
+    // a second site annealing within a few degrees of Ta is the one that actually costs you a gel
+    b.offSerious=hits.filter(function(h){return h.tm>=r.ta-3;}).length;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LIVE MAP — redraws on every keystroke so the construct is always visible
+   ══════════════════════════════════════════════════════════════════════════ */
+function buildSegments(){
+  const thr=foldThreshold();
+  // In mode B the map must follow what is on screen: the traced plan once it exists, otherwise the
+  // pasted target as a single undivided block — never whichever parts happen to be left over.
+  let src;
+  if(MODE==='B'&&plan)
+    src=plan.map(s=>({name:s.type==='novel'?'new sequence':s.plasmidName,seq:s.seq,template:s.type==='novel'?'':s.templateSeq}));
+  else if(MODE==='B'){
+    const t=clean(v('tgtSeq'));
+    src=t.length?[{name:(v('tgtName')||'target').trim()+' — not traced yet',seq:t,template:''}]:[];
+  } else src=parts;
+  const out=[];
+  src.forEach((p,i)=>{
+    const seq=clean(p.seq);if(!seq.length)return;
+    out.push({idx:i,name:(p.name||'').trim()||('Part '+(i+1)),len:seq.length,gc:gcv(seq),
+      color:COLORS[i%COLORS.length],kind:seq.length<thr?'fold':'amp',hasTmpl:!!clean(p.template).length});
+  });
+  return out;
+}
+function totalBp(){return buildSegments().reduce((a,s)=>a+s.len,0);}
+
+function polar(cx,cy,r,deg){const a=deg*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};}
+function donutSlice(cx,cy,rO,rI,a0,a1){
+  const big=(a1-a0)>180?1:0;
+  const p1=polar(cx,cy,rO,a0),p2=polar(cx,cy,rO,a1),p3=polar(cx,cy,rI,a1),p4=polar(cx,cy,rI,a0);
+  return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${rO} ${rO} 0 ${big} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `+
+         `L ${p3.x.toFixed(2)} ${p3.y.toFixed(2)} A ${rI} ${rI} 0 ${big} 0 ${p4.x.toFixed(2)} ${p4.y.toFixed(2)} Z`;
+}
+function tri(cx,cy,r,deg,dir,size,color){
+  const a=deg*Math.PI/180,x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);
+  const ta=(deg+(dir>0?90:-90))*Math.PI/180;
+  const tx=x+size*Math.cos(ta),ty=y+size*Math.sin(ta),hw=size*.6;
+  return `<polygon points="${tx.toFixed(1)},${ty.toFixed(1)} ${(x+hw*Math.cos(a)).toFixed(1)},${(y+hw*Math.sin(a)).toFixed(1)} ${(x-hw*Math.cos(a)).toFixed(1)},${(y-hw*Math.sin(a)).toFixed(1)}" fill="${color}" stroke="var(--surface)" stroke-width=".8"/>`;
+}
+function mapSVG(segs){
+  const total=segs.reduce((a,x)=>a+x.len,0)||1;
+  const GAP=segs.length>1?1.0:0;
+  // Fragments are numbered, never named, inside the ring: a name long enough to matter will always
+  // escape a curved band, and the legend underneath carries the names anyway. Primers are drawn at a
+  // fixed visual size (they would otherwise be sub-degree slivers) with the overlap tail and the
+  // arrowhead both fully visible.
+  if(topo==='circular'){
+    const W=400,C=200,rO=140,rI=112,rP=rO+15;
+    let g=`<circle cx="${C}" cy="${C}" r="${(rO+rI)/2}" fill="none" stroke="var(--border)" stroke-width="${rO-rI}"/>`;
+    let pos=0;
+    const arcs=[];
+    segs.forEach((sg,n)=>{
+      const a0=-90+(pos/total)*360+GAP,a1=-90+((pos+sg.len)/total)*360-GAP,mid=(a0+a1)/2,sweep=a1-a0;
+      arcs.push({sg,a0,a1,mid,sweep,n});
+      if(sg.kind==='fold'){
+        g+=`<path d="${donutSlice(C,C,rO-8,rI+8,a0,Math.max(a1,a0+.35))}" fill="${sg.color}" opacity=".5"/>`;
+      }else{
+        g+=`<path d="${donutSlice(C,C,rO,rI,a0,Math.max(a1,a0+.35))}" fill="${sg.color}" opacity=".95"/>`;
+      }
+      if(sweep>11){
+        const lp=polar(C,C,(rO+rI)/2,mid);
+        g+=`<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" font-size="13" font-weight="800"
+              fill="#fff" text-anchor="middle" dominant-baseline="central">${n+1}</text>`;
+      }
+      pos+=sg.len;
+    });
+    if(segs.length>1){
+      let q=0;segs.forEach(sg=>{q+=sg.len;const a=-90+(q/total)*360;
+        const p1=polar(C,C,rI-4,a),p2=polar(C,C,rO+4,a);
+        g+=`<line x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"
+              stroke="var(--surface)" stroke-width="2"/>`;});
+    }
+    if(D){
+      // forward primer sits at the start of its fragment reading clockwise, reverse at the end
+      arcs.filter(x=>x.sg.kind==='amp').forEach(x=>{
+        g+=primerGlyph(C,C,rP,x.a0,+1,x.sg.color);
+        g+=primerGlyph(C,C,rP,x.a1,-1,x.sg.color);
+      });
+    }
+    g+=`<text x="${C}" y="${C-6}" text-anchor="middle" font-size="22" font-weight="720" fill="var(--text)" letter-spacing="-.03em">${total.toLocaleString()}</text>`;
+    g+=`<text x="${C}" y="${C+13}" text-anchor="middle" font-size="11" fill="var(--text-muted)">bp · circular</text>`;
+    return `<svg viewBox="0 0 ${W} ${W}" role="img" aria-label="Plasmid map">${g}</svg>`;
+  }
+  const W=400,H=170,x0=22,x1=W-22,y=74,h=30;
+  const X=bp=>x0+(bp/total)*(x1-x0);
+  let g=`<rect x="${x0}" y="${y}" width="${x1-x0}" height="${h}" rx="6" fill="var(--border)"/>`;
+  let pos=0;
+  segs.forEach((sg,n)=>{
+    const sx=X(pos),ex=X(pos+sg.len),w=Math.max(1.5,ex-sx-1.5);
+    const fold=sg.kind==='fold';
+    g+=`<rect x="${sx.toFixed(1)}" y="${fold?y+7:y}" width="${w.toFixed(1)}" height="${fold?h-14:h}" rx="4"
+          fill="${sg.color}" opacity="${fold?.5:.95}"/>`;
+    if(ex-sx>16)g+=`<text x="${((sx+ex)/2).toFixed(1)}" y="${(y+h/2).toFixed(1)}" font-size="12" font-weight="800"
+          fill="#fff" text-anchor="middle" dominant-baseline="central">${n+1}</text>`;
+    if(D&&!fold){
+      g+=linPrimer(sx,y-9,+1,sg.color);
+      g+=linPrimer(ex,y+h+9,-1,sg.color);
+    }
+    pos+=sg.len;
+  });
+  g+=`<text x="${x0}" y="32" font-size="19" font-weight="720" fill="var(--text)" letter-spacing="-.03em">${total.toLocaleString()} bp</text>`;
+  g+=`<text x="${x0}" y="50" font-size="11.5" fill="var(--text-muted)">linear · ${segs.length} part${segs.length!==1?'s':''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Construct map">${g}</svg>`;
+}
+// A primer drawn to be readable rather than to scale: a tail (the overlap being added, hollow) running
+// into a solid binding body that ends in an arrowhead pointing the way the polymerase extends.
+function primerGlyph(cx,cy,r,deg,dir,color){
+  const TAIL=7,BODY=9,HEAD=5;           // degrees
+  const s0=dir>0?deg:deg-(TAIL+BODY+HEAD)*0+0;
+  let tailA0,tailA1,bodyA0,bodyA1,tipA;
+  if(dir>0){tailA0=deg-TAIL;tailA1=deg;bodyA0=deg;bodyA1=deg+BODY;tipA=bodyA1+HEAD;}
+  else{tailA0=deg+TAIL;tailA1=deg;bodyA0=deg;bodyA1=deg-BODY;tipA=bodyA1-HEAD;}
+  const band=5;
+  const tail=donutSlice(cx,cy,r+band/2,r-band/2,Math.min(tailA0,tailA1),Math.max(tailA0,tailA1));
+  const body=donutSlice(cx,cy,r+band/2,r-band/2,Math.min(bodyA0,bodyA1),Math.max(bodyA0,bodyA1));
+  const tip=polar(cx,cy,r,tipA);
+  const b1=polar(cx,cy,r+band,bodyA1),b2=polar(cx,cy,r-band,bodyA1);
+  return `<path d="${tail}" fill="none" stroke="${color}" stroke-width="1.2" stroke-dasharray="2 1.6"/>`+
+         `<path d="${body}" fill="${color}"/>`+
+         `<polygon points="${tip.x.toFixed(1)},${tip.y.toFixed(1)} ${b1.x.toFixed(1)},${b1.y.toFixed(1)} ${b2.x.toFixed(1)},${b2.y.toFixed(1)}" fill="${color}"/>`;
+}
+function linPrimer(x,y,dir,color){
+  const T=13,B=16,H=7;
+  const x0=dir>0?x-T:x+T, xb=dir>0?x+B:x-B, xt=dir>0?xb+H:xb-H;
+  return `<line x1="${x0.toFixed(1)}" y1="${y}" x2="${x.toFixed(1)}" y2="${y}" stroke="${color}" stroke-width="2" stroke-dasharray="2.5 2"/>`+
+         `<line x1="${x.toFixed(1)}" y1="${y}" x2="${xb.toFixed(1)}" y2="${y}" stroke="${color}" stroke-width="4" stroke-linecap="butt"/>`+
+         `<polygon points="${xt.toFixed(1)},${y} ${xb.toFixed(1)},${(y-4.5).toFixed(1)} ${xb.toFixed(1)},${(y+4.5).toFixed(1)}" fill="${color}"/>`;
+}
+function renderRail(){
+  const segs=buildSegments(),body=$('mapBody'),sub=$('mapSub'),title=$('mapTitle');
+  const nm=(MODE==='B'?v('tgtName'):v('nameA'))||'Your construct';
+  title.textContent=nm.length>26?nm.slice(0,25)+'…':nm;
+  sub.textContent=D?'primers placed':'updates as you type';
+  if(!segs.length){
+    body.innerHTML=`<div class="map-empty">
+      <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.3;opacity:.45"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></svg>
+      <div style="margin-top:10px">Your map appears here as soon as you paste a sequence.</div></div>`;
+  }else{
+    const total=segs.reduce((a,s)=>a+s.len,0);
+    const gcAll=segs.reduce((a,s)=>a+s.gc*s.len,0)/total;
+    const nAmp=segs.filter(s=>s.kind==='amp').length;
+    body.innerHTML=`<div class="map-wrap">${mapSVG(segs)}</div>
+      <div class="map-legend">${segs.map((s,n)=>`
+        <div class="lg-row" onclick="focusPart(${s.idx})" title="Jump to this part">
+          <span class="lg-num" style="background:${s.color};${s.kind==='fold'?'opacity:.55':''}">${n+1}</span>
+          <span class="lg-name">${esc(s.name)}</span>
+          ${s.hasTmpl?'<span class="flag f-ok" style="padding:2px 6px;font-size:10px">tmpl</span>':''}
+          <span class="lg-bp">${s.len.toLocaleString()} bp</span>
+        </div>`).join('')}</div>
+      ${D?`<div class="aln-key" style="margin:10px 6px 0;font-size:11.5px">
+        <span><svg width="34" height="10" style="overflow:visible"><line x1="1" y1="5" x2="12" y2="5" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="2.5 2"/><line x1="12" y1="5" x2="26" y2="5" stroke="var(--text-muted)" stroke-width="4"/><polygon points="33,5 26,1 26,9" fill="var(--text-muted)"/></svg> primer: overlap tail, binding body, 3′ end</span>
+      </div>`:''}
+      <div class="mini-stats">
+        <div class="mini"><div class="v">${nAmp}</div><div class="k">PCRs</div></div>
+        <div class="mini"><div class="v">${D?D.jCount:(nAmp>1?(topo==='circular'?nAmp:nAmp-1):(topo==='circular'&&nAmp===1?1:0))}</div><div class="k">junctions</div></div>
+        <div class="mini"><div class="v">${gcAll.toFixed(0)}%</div><div class="k">GC</div></div>
+      </div>`;
+  }
+  renderScore();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SUCCESS SCORECARD — the things that actually decide whether you get colonies
+   ══════════════════════════════════════════════════════════════════════════ */
+function scoreConstruct(){
+  const segs=buildSegments(),rows=[];let penalty=0;
+  const amps=segs.filter(s=>s.kind==='amp');
+  const S=D?D.S:null;
+
+  if(!segs.length)return{score:null,word:'Nothing yet',sub:'Paste your first sequence to start scoring.',rows:[]};
+
+  // 1. fragment count — efficiency falls off steeply with pieces
+  const n=amps.length;
+  if(n<=3)rows.push({s:'ok',t:`${n} PCR fragment${n!==1?'s':''}`,fix:'2–3 pieces is where Gibson works best.'});
+  else if(n<=5){penalty+=8;rows.push({s:'w',t:`${n} fragments in one reaction`,
+    fix:'Still routine, but use a 1-hour 50 °C incubation and equimolar amounts rather than 1:2.'});}
+  else{penalty+=22;rows.push({s:'b',t:`${n} fragments in one reaction`,
+    fix:'Efficiency drops sharply past 5. Consider assembling in two rounds: join 3 pieces, transform, then add the rest.'});}
+
+  // 2. very small amplicons are hard to purify and assemble
+  const tiny=amps.filter(s=>s.len<200);
+  if(tiny.length){penalty+=7*tiny.length;rows.push({s:'w',t:`${tiny.length} fragment${tiny.length!==1?'s':''} under 200 bp`,
+    fix:`${tiny.map(t=>t.name).join(', ')} — small products purify badly and assemble inefficiently. Either order it as an oligo duplex/gBlock, or lower the fold-in threshold so it rides in a primer tail instead.`});}
+  else rows.push({s:'ok',t:'No awkwardly small fragments',fix:'Every PCR product is big enough to purify and quantify properly.'});
+
+  // 3. template coverage — the single biggest blind spot in primer specificity
+  const noTmpl=amps.filter(s=>!s.hasTmpl);
+  if(!amps.length){/* nothing */}
+  else if(!noTmpl.length)rows.push({s:'ok',t:'Every fragment has its source plasmid attached',
+    fix:'Primers are screened against the whole template, not just the region you keep.'});
+  else{penalty+=6*noTmpl.length;rows.push({s:'w',t:`${noTmpl.length} fragment${noTmpl.length!==1?'s':''} with no source plasmid`,
+    fix:`${noTmpl.map(t=>t.name).join(', ')} — without the full plasmid, a primer that also binds elsewhere in it cannot be detected. Paste the template on that part.`});}
+
+  // 4. construct size — strain choice
+  const total=segs.reduce((a,s)=>a+s.len,0);
+  if(total>15000){penalty+=4;rows.push({s:'w',t:`${(total/1000).toFixed(1)} kb final construct`,
+    fix:'Above ~15 kb, transform NEB 10-beta rather than 5-alpha and expect fewer colonies.'});}
+
+  if(!D){
+    rows.push({s:'n',t:'Primer-level checks pending',fix:'Run the design to score overlaps, specificity and Tm matching.'});
+    const sc=Math.max(25,100-penalty-18);
+    return{score:sc,word:scoreWord(sc),sub:'Partial score — design the primers for the full picture.',rows};
+  }
+
+  // ---- post-design, the things that decide the reaction ----
+  const blocked=D.junctions.filter(j=>j.risk);
+  if(blocked.length){penalty+=26;rows.push({s:'b',t:`${blocked.length} junction${blocked.length!==1?'s':''} with no unique overlap`,
+    fix:'The overlap repeats elsewhere, so fragments can join in the wrong order. Move that boundary, or insert a unique linker at the junction.'});}
+  else rows.push({s:'ok',t:'Every overlap is unique',fix:'No arm matches anywhere else in the templates or other fragments, so the pieces can only assemble one way.'});
+
+  const coldOv=D.junctions.filter(j=>!j.ov.cleared);
+  if(coldOv.length){penalty+=9;rows.push({s:'w',t:`${coldOv.length} overlap${coldOv.length!==1?'s':''} below ${S.ovTm} °C`,
+    fix:'AT-rich junction — the arms may not stay annealed at 50 °C. Lengthening the overlap usually fixes it.'});}
+  else rows.push({s:'ok',t:`All overlaps clear ${S.ovTm} °C`,fix:'The annealed arms hold together at the reaction temperature.'});
+
+  const mis=D.results.filter(r=>!r.fb.unique||!r.rb.unique||r.fb.offSerious||r.rb.offSerious);
+  if(mis.length){penalty+=20;
+    const worst=Math.max(...D.results.flatMap(r=>[r.fb.offTm||0,r.rb.offTm||0]));
+    rows.push({s:'b',t:`${mis.length} fragment${mis.length!==1?'s have':' has'} a primer that could bind elsewhere`,
+    fix:`A second site on the same template would anneal at up to ${worst.toFixed(0)} °C, against an annealing temperature of ${D.results[0].ta} °C — close enough to prime. Move that amplicon boundary.`});}
+  else rows.push({s:'ok',t:'No primer has a competitive second site',
+    fix:'Every other position on each template was scored for how stably the primer\u2019s 3\u2032 end could anneal there; none comes near the annealing temperature.'});
+
+  const dtm=D.results.filter(r=>r.dTm>S.maxDtm);
+  if(dtm.length){penalty+=8;rows.push({s:'w',t:`${dtm.length} pair${dtm.length!==1?'s':''} with mismatched F/R Tm`,
+    fix:'One primer will out-compete the other at a single annealing temperature. A gradient or touchdown PCR usually rescues it.'});}
+
+  const longP=D.results.filter(r=>r.fTot>S.maxPrimer||r.rTot>S.maxPrimer);
+  if(longP.length){penalty+=3;rows.push({s:'w',t:`${longP.length} primer${longP.length!==1?'s':''} over ${S.maxPrimer} nt`,
+    fix:'Order those PAGE- or HPLC-purified — standard desalted synthesis leaves too many truncated failures at this length.'});}
+
+  if(!D.reconstructOk){penalty+=15;rows.push({s:'b',t:'Assembled product does not match your parts',
+    fix:'A part may be reverse-complemented or out of order. Check the predicted sequence against your intended construct.'});}
+
+  const dpn=D.results.filter(r=>r.hasOwnTemplate);
+  if(dpn.length){penalty+=4;rows.push({s:'w',t:'DpnI-treat before assembling',
+    fix:`${dpn.length} fragment${dpn.length!==1?'s are':' is'} amplified off a plasmid. Leftover circular template transforms far better than your assembly — it is the usual reason colonies come back as the original plasmid.`});}
+
+  const sc=Math.max(5,100-penalty);
+  return{score:sc,word:scoreWord(sc),sub:sc>=85?'Nothing here should stop this working.'
+    :sc>=65?'Workable, with the flagged items handled.'
+    :'Fix the red items before ordering anything.',rows};
+}
+function scoreWord(s){return s>=85?'Looks solid':s>=65?'Should work':s>=45?'Risky':'Rework needed';}
+function renderScore(){
+  const host=$('scoreCard');if(!host)return;
+  const r=scoreConstruct();
+  if(r.score===null){
+    host.innerHTML=`<div class="card-h" style="padding:13px 16px"><div><span class="section-tag">Success check</span>
+      <h2 style="font-size:15px">Assembly scorecard</h2></div></div>
+      <div class="card-b tight"><div class="hint">${r.sub}</div></div>`;return;
+  }
+  const col=r.score>=85?'var(--ok)':r.score>=65?'var(--accent)':r.score>=45?'var(--warn)':'var(--bad)';
+  const C=2*Math.PI*30;
+  host.innerHTML=`
+    <div class="score-head">
+      <div class="score-ring">
+        <svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="30" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="37" cy="37" r="30" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round"
+            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-r.score/100)).toFixed(1)}"/></svg>
+        <div class="score-val"><b style="color:${col}">${r.score}</b><span>/ 100</span></div>
+      </div>
+      <div><div class="score-word">${r.word}</div><div class="score-sub">${r.sub}</div></div>
+    </div>
+    <div class="score-list">${r.rows.map(x=>`
+      <div class="score-row">
+        <span class="score-ic si-${x.s}">${x.s==='ok'?'✓':x.s==='w'?'!':x.s==='b'?'✕':'·'}</span>
+        <span class="score-txt"><b>${x.t}</b><span class="score-fix">${x.fix}</span></span>
+      </div>`).join('')}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SETTINGS + DESIGN RUN
+   ══════════════════════════════════════════════════════════════════════════ */
+function fillSelects(){
+  const p=$('poly');
+  p.innerHTML=Object.entries(POLY_PROFILE).map(([k,x])=>`<option value="${k}">${esc(x.label.split('·')[0].trim())}</option>`).join('');
+  const k=$('kit');
+  k.innerHTML=Object.entries(KITS).map(([id,x])=>`<option value="${id}">${esc(x.label)}</option>`).join('');
+}
+function syncPoly(){
+  const p=prof(v('poly')),set=(id,val)=>{const e=$(id);if(e&&val!==undefined)e.value=val;};
+  set('bindTm',p.tmTarget);set('bindTmMax',p.tmMax);set('maxDtm',p.maxDtm);
+  set('aimMin',p.aimMin||p.tmTarget-2);set('aimMax',p.aimMax||p.tmTarget+4);
+  set('gcMin',p.gcMin);set('gcMax',p.gcMax);set('bindMin',p.lenMin);set('bindMax',p.lenMax);
+  set('conc',p.conc);set('na',p.na);set('mg',p.mg);
+  const ft=$('fixTaOn');if(ft){ft.checked=!!p.fixedTa;if(p.fixedTa)set('fixTa',p.fixedTa);}
+  $('polyNote').innerHTML=`<b>${esc(p.label)}</b><br>${esc(p.tmNote)}`;
+  renderProtocol();touch();
+}
+function openProtocol(){renderProtocol();$('protocolModal').classList.add('open');}
+function closeProtocol(){$('protocolModal').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProtocol();});
+function renderProtocol(){
+  const p=prof(v('poly')),K=KITS[v('kit')]||KITS.hifi;
+  const t=$('protocolTitle');if(t)t.textContent=p.label.split('·')[0].trim()+' — cycling & reaction';
+  $('kitNote').innerHTML=`<b>${esc(K.overlapNote)}</b><br>Source: ${esc(K.src)}`;
+  $('protocolNote').innerHTML=`<span class="ic">🌡️</span><div><b>Annealing.</b> ${
+    p.fixedTa?`This enzyme's own rule is Ta = Tm + ${p.taOff} °C; with the pinned setting every fragment runs at one temperature, which is what makes a multi-fragment PCR day practical.`
+             :`Ta = ${p.taOff>=0?'Tm + '+p.taOff:'Tm − '+Math.abs(p.taOff)} °C (capped at ${p.taMax} °C), taken from ${esc(p.src)}.`}
+    Extension ${p.extRate} s/kb up to 10 kb. Always a starting point — a ±3 °C gradient on the first run costs nothing.</div>`;
+  $('protocolTables').innerHTML=`
+    <div class="sub-tag">Cycling programme</div>
+    <table class="lab"><thead><tr><th>Step</th><th>Temperature</th><th>Time</th></tr></thead><tbody>
+      ${p.program.map(r=>`<tr><td>${esc(r[0])}</td><td class="mono">${esc(r[1])}</td><td class="mono">${esc(r[2])}</td></tr>`).join('')}
+    </tbody></table><div class="hint" style="margin-top:8px">Cycles: <b>${esc(p.cycles)}</b></div>
+    <div class="sub-tag">50 µl reaction</div>
+    <table class="lab"><thead><tr><th>Component</th><th>Volume</th></tr></thead><tbody>
+      ${p.system.map(r=>`<tr><td>${esc(r[0])}</td><td class="mono">${esc(r[1])}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="sub-tag">Template amount</div>
+    <table class="lab"><tbody>${p.template.map(r=>`<tr><td>${esc(r[0])}</td><td class="mono">${esc(r[1])}</td></tr>`).join('')}</tbody></table>`;
+}
+function readS(){return{
+  poly:v('poly'),bindTm:+v('bindTm')||60,bindTmMax:+v('bindTmMax')||70,bindMin:+v('bindMin')||18,bindMax:+v('bindMax')||30,
+  ovMin:Math.max(20,+v('ovMin')||20),ovMax:Math.max(20,+v('ovMax')||30),ovTm:+v('ovTm')||48,maxPrimer:+v('maxPrimer')||60,
+  conc:+v('conc')||0.5,na:+v('na')||50,mg:+v('mg')||2,mm:(v('mmLimit')===''?2:+v('mmLimit')),
+  minAmp:+v('minAmp')||50,maxPolyX:+v('maxPolyX')||5,gcMin:+v('gcMin')||40,gcMax:+v('gcMax')||60,
+  ovSideMin:+v('ovSideMin')||15,maxDtm:+v('maxDtm')||1,aimMin:+v('aimMin')||58,aimMax:+v('aimMax')||62,
+  fixTaOn:($('fixTaOn')?$('fixTaOn').checked:false),fixTa:+v('fixTa')||56};}
+
+function runDesign(){
+  const S=readS();
+  const items=parts.map((p,i)=>({name:(p.name||'').trim()||('Part '+(i+1)),seq:clean(p.seq),
+    template:clean(p.template)||undefined,hasTemplate:!!clean(p.template),orig:i})).filter(f=>f.seq.length>0);
+  if(!items.length){toast('Add at least one part with a sequence');goStep(1);return;}
+  const thr=foldThreshold();items.forEach(f=>f.ins=f.seq.length<thr);
+  const amb=parts.reduce((a,p)=>a+countAmbiguous(p.seq)+countAmbiguous(p.template),0);
+  const d=assemble(items,topo==='circular',S);
+  if(d.error){$('results').innerHTML=note('b','Cannot design yet',d.error);stepNow=3;goStep(3);return;}
+  d.ambCount=amb;D=d;window.__vec=undefined;mixConc={};
+  d.results.forEach(function(r){scoreOffTargets(r,S);});
+  $('results').innerHTML=renderResults(d);
+  stepNow=3;goStep(3);renderRail();
+  // Register the project the moment it is designed, not only when someone remembers to press save.
+  // Otherwise the recent-projects list on step 1 stays empty for anyone who designs and walks away —
+  // which is exactly the person we most want to come back and record an outcome.
+  libRemember();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESULTS
+   ══════════════════════════════════════════════════════════════════════════ */
+function renderResults(d){
+  const S=d.S,nm=(v('nameA')||v('tgtName')||'Assembled construct');
+  const mis=d.results.filter(r=>!r.fb.unique||!r.rb.unique).length;
+  const off=d.results.filter(r=>r.fb.offSerious||r.rb.offSerious).length;
+  const blocked=d.junctions.filter(j=>j.risk).length;
+  const lowOv=d.junctions.filter(j=>!j.ov.cleared).length;
+  const dtm=d.results.filter(r=>r.dTm>S.maxDtm).length;
+  const hot=d.results.filter(r=>r.fb.overCeiling||r.rb.overCeiling).length;
+  const tas=d.results.map(r=>r.ta),taMin=Math.min(...tas),taMax=Math.max(...tas);
+  const taLabel=taMin===taMax?taMin+' °C':taMin+'–'+taMax+' °C';
+
+  /* ── verdict strip: only what needs a decision ── */
+  let notes='';
+  if(blocked)notes+=note('b','A junction has no unique overlap',
+    `${blocked} junction${blocked!==1?'s sit':' sits'} inside a repeat, so the same arm occurs more than once and the pieces could join in the wrong order. Move that boundary, add a short unique linker, or recode one copy of the repeat.`);
+  if(mis||off)notes+=note('b','A primer can bind somewhere else',
+    `${Math.max(mis,off)} primer${Math.max(mis,off)!==1?'s have':' has'} a second site on its own template that could anneal near ${taLabel}. That is what turns a clean gel into extra bands — see the <b>Off-target</b> column below.`);
+  if(hot)notes+=note('w','Some primers run hot',`${hot} primer${hot!==1?'s exceed':' exceeds'} the ${S.bindTmMax} °C ceiling even at the ${S.bindMin} nt floor — that end is simply GC-rich. Accept it and verify by gradient, or move the boundary.`);
+  if(lowOv)notes+=note('w','Overlap below target Tm',`${lowOv} junction${lowOv!==1?'s':''} could not reach ${S.ovTm} °C within the searched length. HiFi usually still assembles these; raising the maximum overlap length is the clean fix.`);
+  if(dtm)notes+=note('w','Forward and reverse Tm differ',`${dtm} fragment${dtm!==1?'s':''} have F/R Tm more than ${S.maxDtm} °C apart. The design will not chase an extreme end with the other primer — that gives you two bad primers instead of one. A touchdown or gradient run covers both.`);
+  if(!d.reconstructOk)notes+=note('w','Order or orientation looks wrong','The primers rebuild a sequence that does not match your parts in order — a part may be reverse-complemented or out of sequence.');
+  if(d.ambCount)notes+=note('w','Non-ACGT characters were stripped',`${d.ambCount} character${d.ambCount!==1?'s':''} outside A/C/G/T were removed before designing. A dropped base shifts everything after it.`);
+  if(!notes)notes=note('ok','Nothing flagged','primers specific, overlaps unique and stable, F/R Tm matched, product rebuilds your target.');
+
+  let h=`<div style="margin-bottom:14px">${notes}</div>`;
+
+  // open both views on the same primer, otherwise the alignment below contradicts the card above
+  window.__pw=window.__pw||{i:0};
+  if(window.__pw.i>=d.results.length*2)window.__pw.i=0;
+  pwSyncAlignment();
+
+  /* ══ SECTION 1 — one primer at a time, sitting directly above the same primer on the sequence ══ */
+  // This card is sized to fit one screen: primer, then that primer on the construct, nothing else.
+  // Reference material (overlap table, full product) lives with the order table below.
+  h+=`<div class="card check-card"><div class="card-h">
+      <div><span class="section-tag">Section 1 of 2</span><h2>Check the design</h2></div>
+      <span class="sub">one primer at a time,<br>then that primer on the construct</span></div>
+    <div class="card-b">
+      <div id="pwBox">${pwInner(d,S)}</div>
+      <div class="pw-divider"><span>the same primer, on the construct</span></div>
+      ${alnBody(d,S)}
+    </div></div>`;
+
+  const refBlock=`
+      <details class="adv"><summary>Junction overlaps in full</summary><div class="adv-body">
+        <div class="scroll-x"><table class="lab">
+          <thead><tr><th>Junction</th><th>Overlap sequence</th><th>Length</th><th>Tm</th><th>GC</th><th>Unique?</th></tr></thead>
+          <tbody>${d.junctions.map((j,i)=>`<tr>
+            <td><b>${i+1}</b> ${esc(j.U.name)} → ${esc(j.D.name)}${j.wrap?' <span class="flag f-n">wrap</span>':''}</td>
+            <td class="seqcell"><span class="o-up">${j.ov.upPart}</span><span class="o-ins">${j.ov.insert}</span><span class="o-down">${j.ov.downPart}</span></td>
+            <td class="mono">${j.ov.L} bp</td>
+            <td class="mono">${j.ov.tm.toFixed(0)} °C</td>
+            <td class="mono">${j.ov.gc.toFixed(0)}%</td>
+            <td>${j.risk?'<span class="flag f-b">no</span>':j.ov.extendedSearch?`<span class="flag f-w">yes, after extending to ${j.ov.L} bp</span>`:'<span class="flag f-ok">yes</span>'}</td></tr>`).join('')}
+          </tbody></table></div></div></details>
+      <details class="adv"><summary>Predicted assembled sequence (${d.asm.length.toLocaleString()} bp)</summary><div class="adv-body">
+        <div class="seqbox" style="max-height:200px;overflow:auto">${d.asm}</div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="cp(window.__fasta,this)" type="button">Copy FASTA</button>
+          <button class="btn btn-ghost btn-sm" onclick="dl('${nm.replace(/[^A-Za-z0-9]/g,'_')}.fasta',window.__fasta)" type="button">Download FASTA</button>
+          <span class="hint">Use this as the reference when sequencing comes back.</span></div>
+      </div></details>`;
+
+  /* ══ SECTION 2 — one table with everything about every primer ══ */
+  h+=`<div class="card"><div class="card-h">
+      <div><span class="section-tag">Section 2 of 2</span><h2>All primers to order</h2></div>
+      <span class="sub">${esc(nm)} · ${d.circular?'circular':'linear'} ${d.asm.length.toLocaleString()} bp<br>
+        anneal ${taLabel} · ${prof(S.poly).label.split('·')[0].trim()}</span></div>
+    <div class="card-b">
+      <div class="scroll-x"><table class="lab" id="primerTable">${primerTableInner(d,S)}</table></div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn btn-primary" onclick="goStep(4)" type="button">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export &amp; save</button>
+        <button class="btn btn-ghost" onclick="downloadExcel()" type="button">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>
+          Edit in Excel</button>
+        <label class="btn btn-ghost" title="Re-import a table you edited in Excel">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Import edited table
+          <input type="file" accept=".csv,text/csv" style="display:none" onchange="importExcel(event)"></label>
+        <button class="btn btn-ghost" onclick="cp(window.__tsv,this)" type="button">Copy table</button>
+        <button class="btn btn-ghost" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">Download FASTA</button>
+      </div>
+      <div class="hint" style="margin-top:12px">
+        <b class="mono">lower case</b> = the overlap tail you are adding (it does not bind the template, so it is
+        excluded from Tm); <b class="mono">UPPER CASE</b> = the binding region that sets your annealing temperature.
+        Any sequence here can be overwritten — click it, paste your own oligo, and every number in its row is
+        recalculated against the real template.</div>
+      ${refBlock}
+    </div></div>`;
+
+  window.__fasta='>'+nm.replace(/\s+/g,'_')+' '+d.asm.length+'bp '+(d.circular?'circular':'linear')+'\n'+(d.asm.match(/.{1,70}/g)||[]).join('\n');
+
+  h+=`<div class="btn-row between" style="margin:22px 0 8px">
+    <button class="btn btn-ghost" onclick="goStep(2)" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Adjust settings</button>
+    <button class="btn btn-primary btn-lg" onclick="goStep(4)" type="button">Next: export &amp; bench
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`;
+  return h;
+}
+
+/* ── the one primer table. Every number a reader might want to check is in this row. ── */
+function primerRows(d,S){
+  const stem=nameStem(),out=[];let nF=0,nR=0;
+  d.results.forEach(r=>{
+    [['F',r.fb,r.fwdTail,r.fSeq,r.fTot],['R',r.rb,r.revTail,r.rSeq,r.rTot]].forEach(rec=>{
+      const [dir,b,tail,full,tot]=rec;
+      const key=dir+r.idx;
+      const man=overrides[key];
+      const a=man?analyzeManual(man,dir,r,S):null;
+      out.push({key,dir,r,amp:r.a,bind:b,tail,full:man||full,tot:man?man.length:tot,
+        manual:!!man,an:a,name:man?'(yours)':stem+'/'+dir+(dir==='F'?++nF:++nR),
+        tm:a?a.tm:b.tm,bindLen:a?a.bindLen:b.len,tailLen:a?a.tailLen:tail.length,
+        gc:a?a.gc:b.gc,offN:a?a.offN:(b.offSerious||0),offTm:a?a.offTm:b.offTm});
+    });
+  });
+  return out;
+}
+// A hand-edited primer is measured the same way as a designed one: find how much of its 3' end really
+// matches the template, treat that as the binding region, and recompute everything from it.
+function analyzeManual(seq,dir,r,S){
+  seq=clean(seq);
+  const body=r.a.seq;let k=0;
+  for(let n=Math.min(seq.length,body.length);n>=8;n--){
+    const cand=seq.slice(-n);
+    if(dir==='F'? body.slice(0,n)===cand : rc(body.slice(-n))===cand){k=n;break;}
+  }
+  const bind=k?seq.slice(-k):'';
+  const tm=k?calcTm(bind,S.conc,S.na,S.mg):0;
+  const hits=k?offTargets(bind,r.template,r.ta,S,true):[];
+  return {bindLen:k,tailLen:seq.length-k,tm,gc:k?gcv(bind):0,
+    offN:hits.filter(x=>x.tm>=r.ta-3).length,offTm:hits.length?hits[0].tm:null,
+    noMatch:k===0};
+}
+/* The field convention: the overlap tail in lower case, the template-binding region in UPPER CASE.
+   One glance tells you which half of the oligo is doing which job. */
+function casedSeq(p){
+  const t=p.full.slice(0,p.tailLen).toLowerCase(),b=p.full.slice(p.tailLen).toUpperCase();
+  return t+b;
+}
+/* Live Tm under the sequence box: the binding region by default, or whatever you highlight. */
+function pwLiveTm(){
+  const el=$('pwSeq'),out=$('pwTm');
+  if(!el||!out||!D)return;
+  const S=D.S,rows=primerRows(D,S),p=rows[(window.__pw||{i:0}).i];
+  if(!p){out.innerHTML='';return;}
+  const raw=el.value;
+  let a=el.selectionStart,b=el.selectionEnd;
+  if(a!=null&&b!=null&&b-a>=6){
+    const sel=clean(raw.slice(a,b));
+    if(sel.length>=6){
+      out.innerHTML=`<span class="pw-tm-live">highlighted ${sel.length} nt</span>
+        Tm <b>${calcTm(sel,S.conc,S.na,S.mg).toFixed(1)} °C</b> ·
+        GC <b>${gcv(sel).toFixed(0)}%</b> ·
+        <span class="mono" style="opacity:.75">${sel.length>30?sel.slice(0,30)+'…':sel}</span>`;
+      return;
+    }
+  }
+  // nothing highlighted: report the part that actually anneals
+  const typed=clean(raw);
+  if(p&&typed===clean(p.full)){
+    out.innerHTML=p.bindLen
+      ? `<span class="pw-tm-live">binding region, ${p.bindLen} nt</span> Tm <b>${p.tm.toFixed(1)} °C</b> · GC <b>${p.gc.toFixed(0)}%</b>`
+      : `<span class="pw-tm-live" style="color:var(--bad)">no part of this oligo matches the template</span>`;
+  }else{
+    // mid-edit: measure the 3' end against the template so the number keeps up with typing
+    const probe=analyzeManual(typed,p.dir,p.r,S);
+    out.innerHTML=probe.bindLen
+      ? `<span class="pw-tm-live">binding region, ${probe.bindLen} nt</span> Tm <b>${probe.tm.toFixed(1)} °C</b> · GC <b>${probe.gc.toFixed(0)}%</b> <span style="opacity:.7">(unsaved — press Enter or click away)</span>`
+      : `<span class="pw-tm-live" style="color:var(--bad)">3′ end does not match the template yet</span>`;
+  }
+}
+
+/* Flags live in one place so the walk-through and the table can never disagree about a primer. */
+function primerFlags(p,S){
+  const f=[];
+  if(p.an&&p.an.noMatch)f.push({s:'b',t:'3′ end does not match the template'});
+  if(p.bind.overCeiling&&!p.manual)f.push({s:'w',t:`over the ${S.bindTmMax} °C ceiling`});
+  if(p.bind.tmShort&&!p.manual)f.push({s:'w',t:`${p.bind.tmShort} °C under target`});
+  if(!p.manual&&!p.bind.clamp)f.push({s:'w',t:'no 3′ G/C clamp'});
+  else if(!p.manual&&p.bind.endGC>=4)f.push({s:'w',t:`3′ end all G/C (${p.bind.endGC}/5)`});
+  if(!p.manual&&p.bind.selfDimer>=6)f.push({s:'w',t:`self-dimer ${p.bind.selfDimer} bp`});
+  if(!p.manual&&p.bind.cross>=6)f.push({s:'w',t:`F/R cross-dimer ${p.bind.cross} bp`});
+  if(!p.manual&&p.bind.hp>=8)f.push({s:'w',t:`hairpin ${p.bind.hp} bp`});
+  if(!p.manual&&p.bind.polyXBad)f.push({s:'w',t:`${p.bind.polyX} bp homopolymer run`});
+  if(p.offN)f.push({s:'b',t:`${p.offN} competing site${p.offN>1?'s':''} at ${p.offTm} °C`});
+  if(p.full.length>S.maxPrimer)f.push({s:'w',t:`${p.full.length} nt — order PAGE/HPLC`});
+  return f;
+}
+/* ── one primer, full width, with somewhere to go next ── */
+function pwInner(d,S){
+  const rows=primerRows(d,S);
+  window.__pw=window.__pw||{i:0};
+  if(window.__pw.i>=rows.length)window.__pw.i=0;
+  const i=window.__pw.i,p=rows[i];
+  if(!p)return '<div class="hint">No primers.</div>';
+  const flags=primerFlags(p,S);
+  const ok=!flags.length;
+  return `
+    <div class="pw-head">
+      <span class="pw-count">Primer <b>${i+1}</b> of ${rows.length}</span>
+      <span class="lg-num" style="background:${p.amp.color}">${p.r.idx+1}</span>
+      <span class="pw-name">${esc(p.amp.name)}</span>
+      <span class="flag f-n" style="color:${p.dir==='F'?'var(--accent)':'#8C6BB1'}">${p.dir==='F'?'▶ forward':'◀ reverse'}</span>
+      ${p.manual?'<span class="flag f-w">your sequence</span>':''}
+      <span class="flag ${ok?'f-ok':flags.some(x=>x.s==='b')?'f-b':'f-w'}">${ok?'✓ good to order':flags.length+' to look at'}</span>
+      <span class="pw-nav">
+        <button class="btn btn-ghost btn-sm" onclick="pwGo(-1)" type="button">← Previous</button>
+        <button class="btn btn-primary btn-sm" onclick="pwGo(1)" type="button">Next primer →</button>
+      </span>
+    </div>
+    <label class="fld">Sequence 5′→3′ — edit it if you want your own oligo</label>
+    <input class="seqedit pw-seq" id="pwSeq" value="${casedSeq(p)}" spellcheck="false"
+           oninput="pwLiveTm()" onkeyup="pwLiveTm()" onmouseup="pwLiveTm()" onselect="pwLiveTm()"
+           onchange="setPrimer('${p.key}',this.value)">
+    <div class="pw-tm" id="pwTm"></div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="copy" onclick="cp('${p.full}',this)" type="button">copy</button>
+      ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset</button>`:''}
+      <span class="hint" style="margin:0;font-size:12.5px"><b class="mono" style="text-transform:lowercase">lower</b> = overlap tail ·
+        <b class="mono">UPPER</b> = binds template · highlight any stretch for its Tm ·
+        <b class="mono">${esc(p.name)}</b></span>
+    </div>
+    <div class="pw-strip">
+      ${[['Binding Tm',p.bindLen?p.tm.toFixed(1)+' °C':'—'],
+         ['GC',p.bindLen?p.gc.toFixed(0)+'%':'—'],
+         ['Length',`${p.full.length} nt${p.tailLen?` (${p.tailLen}+${p.bindLen})`:''}`],
+         ['Product',p.r.amplicon.toLocaleString()+' bp'],
+         ['Run at',p.r.ta+' °C'],
+         ['Extension',extTime(p.r.amplicon,S.poly)]]
+        .map(m=>`<span class="pw-item"><i>${m[0]}</i><b>${m[1]}</b></span>`).join('')}
+      <span class="pw-item"><i>Binds elsewhere</i>
+        ${p.offN?`<b style="color:var(--bad)">${p.offN} site${p.offN>1?'s':''} @ ${p.offTm} °C</b>`
+                :`<b style="color:var(--ok)">no${p.offTm!=null?` · next best ${p.offTm} °C`:''}</b>`}</span>
+    </div>
+    ${flags.length?`<div class="pflags" style="margin-top:10px">${flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:''}
+    ${p.offN?`<div class="note n-b" style="margin-top:10px"><span class="ic">✗</span><div>This primer's 3′ end could also
+      anneal at <b>${p.offTm} °C</b> elsewhere in ${p.r.hasOwnTemplate?'its source plasmid':'the fragment'} — close enough to the
+      ${p.r.ta} °C annealing temperature to prime and give a second band. Move this amplicon boundary.</div></div>`:''}
+    <details class="adv"><summary>Why is the binding Tm not the temperature I run the PCR at?</summary>
+      <div class="adv-body">
+        <p class="hint" style="margin-bottom:10px"><b>They are two different things, and they are meant to differ.</b></p>
+        <p class="hint" style="margin-bottom:10px"><b>Binding Tm (${p.bindLen?p.tm.toFixed(1)+' °C':'—'})</b> describes
+          <i>this one primer</i>: the temperature at which half of it would be stuck to its template. It is computed from
+          the <b>UPPER CASE binding region only</b> — the lower-case tail is new sequence with nothing to pair with on the
+          template, so counting it would inflate the number and mislead you.</p>
+        <p class="hint" style="margin-bottom:10px"><b>Run at (${p.r.ta} °C)</b> is a setting on the thermocycler, shared by
+          both primers of the pair and, here, by every fragment so they can go in one block. It comes from
+          ${S.fixTaOn?`your pinned value`:`${esc(prof(S.poly).label.split('·')[0].trim())}'s own rule applied to the lower Tm of the pair`},
+          and it is deliberately not equal to Tm: set it at or above Tm and the primers barely bind, set it far below and
+          they bind in the wrong places too.</p>
+        <p class="hint">So the number to match between a <b>forward and reverse pair</b> is the Tm
+          (they are ${p.r.dTm!==undefined?p.r.dTm.toFixed(1):Math.abs(p.r.fb.tm-p.r.rb.tm).toFixed(1)} °C apart here).
+          The number you dial into the machine is the one labelled <b>Run at</b>.</p>
+      </div></details>
+  `;
+}
+function pwGo(n){
+  if(!D)return;
+  const rows=primerRows(D,D.S);
+  window.__pw=window.__pw||{i:0};
+  window.__pw.i=((window.__pw.i+n)%rows.length+rows.length)%rows.length;
+  pwSyncAlignment();
+  const box=$('pwBox');if(box){box.innerHTML=pwInner(D,D.S);pwLiveTm();}
+  const ab=$('alnBox');if(ab)ab.innerHTML=alnInner(D,D.S);
+}
+// keep the alignment showing whichever primer the walk-through is on
+function pwSyncAlignment(){
+  if(!D)return;
+  const rows=primerRows(D,D.S),p=rows[window.__pw.i];if(!p)return;
+  const units=alnUnits(D);
+  const ui=units.findIndex(u=>u.primers.some(x=>x.dir===p.dir&&x.r&&x.r.idx===p.r.idx));
+  if(ui>=0&&ui!==(window.__aln&&window.__aln.i))window.__aln={i:ui,from:null};
+}
+function primerTableInner(d,S){
+  const rows=primerRows(d,S);
+  let tsv='Name\tFragment\tDirection\tSequence\tLength\tBindingTm\tGC\tOffTargetSites\tProduct\tAnnealTa\tExtension\n';
+  let fa='';
+  rows.forEach(p=>{
+    // case carries meaning here too: lower = overlap tail, UPPER = binds the template
+    tsv+=`${p.name}\t${p.amp.name}\t${p.dir==='F'?'Forward':'Reverse'}\t${casedSeq(p)}\t${p.full.length}\t${p.tm.toFixed(1)}\t${p.gc.toFixed(0)}\t${p.offN}\t${p.r.amplicon}\t${p.r.ta}\t${extTime(p.r.amplicon,S.poly)}\n`;
+    fa+='>'+p.name.replace(/[^A-Za-z0-9/]/g,'_')+' '+p.amp.name.replace(/\s+/g,'_')+'_'+(p.dir==='F'?'fwd':'rev')+'\n'+casedSeq(p)+'\n';
+  });
+  window.__tsv=tsv; window.__pfasta=fa;
+  const body=rows.map(p=>{
+    // the off-target verdict gets its own column, so leave it out of the inline flag list here
+    const warn=primerFlags(p,S).filter(x=>!/competing site/.test(x.t))
+      .map(x=>`<span class="flag f-${x.s}">${x.t}</span>`);
+    const offCell=p.offN
+      ? `<span class="flag f-b">${p.offN} site${p.offN>1?'s':''} @ ${p.offTm} °C</span>`
+      : (p.offTm!==null&&p.offTm!==undefined
+         ? `<span class="flag f-ok">clear</span><div class="hint" style="font-size:11.5px">next best ${p.offTm} °C</div>`
+         : '<span class="flag f-ok">clear</span>');
+    return `<tr>
+      <td class="mono" style="white-space:nowrap"><b style="color:var(--accent)">${esc(p.name)}</b>
+        ${p.manual?'<div><span class="flag f-w">edited</span></div>':''}</td>
+      <td style="white-space:nowrap"><span class="lg-num" style="background:${p.amp.color};display:inline-flex;vertical-align:middle;margin-right:6px">${p.r.idx+1}</span>
+        <b>${esc(p.amp.name)}</b><div class="hint" style="font-size:11.5px">${p.dir==='F'?'▶ forward':'◀ reverse'}</div></td>
+      <td style="min-width:260px">
+        <input class="seqedit" id="pe_${p.key}" value="${casedSeq(p)}" spellcheck="false"
+               onchange="setPrimer('${p.key}',this.value)" title="Edit this primer — lower case is the overlap tail">
+        <div class="hint" style="font-size:11.5px;margin-top:4px">
+          <b>${p.full.length} nt</b> = ${p.tailLen?`<span style="color:var(--warn);font-weight:700">${p.tailLen} tail</span> + `:''}${p.bindLen} binding
+          ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset to designed</button>`:''}</div>
+        ${warn.length?`<div class="pflags" style="margin-top:6px">${warn.join('')}</div>`:''}</td>
+      <td class="mono" style="white-space:nowrap"><b style="font-size:15px">${p.tm.toFixed(1)}</b> °C
+        <div class="hint" style="font-size:11.5px">${p.gc.toFixed(0)}% GC</div></td>
+      <td>${offCell}</td>
+      <td class="mono" style="white-space:nowrap">${p.r.amplicon.toLocaleString()} bp
+        <div class="hint" style="font-size:11.5px">${p.r.ta} °C · ${extTime(p.r.amplicon,S.poly)}</div></td>
+    </tr>`;}).join('');
+  return `<thead><tr>
+      <th>Primer</th><th>Fragment</th><th>Sequence 5′→3′ · click to edit</th>
+      <th>Binding Tm</th><th>Binds elsewhere?</th><th>PCR product</th></tr></thead><tbody>${body}</tbody>`;
+}
+function setPrimer(key,val){
+  const v2=clean(val);
+  if(!v2){delete overrides[key];}else{overrides[key]=v2;}
+  saveAuto();
+  const t=$('primerTable');if(t)t.innerHTML=primerTableInner(D,D.S);
+  const pw=$('pwBox');if(pw){pw.innerHTML=pwInner(D,D.S);pwLiveTm();}
+  const box=$('alnBox');if(box)box.innerHTML=alnInner(D,D.S);
+  renderRail();
+}
+
+function alnUnits(d){
+  const lay=a=>d.layout.find(x=>x.type==='amp'&&x.amp===a);
+  const res=a=>d.results.find(r=>r.a===a);
+  const units=[];
+  d.junctions.forEach((j,i)=>{
+    const L0=lay(j.D);if(!L0)return;
+    const sD=L0.start,insLen=(j.ins||'').length,uEnd=sD-insLen;
+    const rD=res(j.D),rU=res(j.U);if(!rD||!rU)return;
+    units.push({kind:'junction',label:`Junction ${i+1}`,
+      sub:`${j.U.name} → ${j.D.name}${j.wrap?' · closes the circle':''}`,
+      color:j.D.color,j,
+      ovStart:sD-insLen-j.ov.a,ovEnd:sD+j.ov.c,
+      center:sD-insLen-j.ov.a+Math.round(j.ov.L/2),
+      primers:[alnPrimer('R',j.U,rU,uEnd),alnPrimer('F',j.D,rD,sD)]});
+  });
+  if(!d.circular&&d.amps.length){
+    const a0=d.amps[0],r0=res(a0),l0=lay(a0);
+    if(r0&&l0)units.push({kind:'end',label:'Construct start',sub:`forward primer of ${a0.name}`,color:a0.color,
+      center:l0.start,ovStart:0,ovEnd:0,
+      primers:[alnPrimer('F',a0,r0,l0.start)]});
+    const aN=d.amps[d.amps.length-1],rN=res(aN),lN=lay(aN);
+    if(rN&&lN)units.push({kind:'end',label:'Construct end',sub:`reverse primer of ${aN.name}`,color:aN.color,
+      center:lN.end,ovStart:0,ovEnd:0,
+      primers:[alnPrimer('R',aN,rN,lN.end)]});
+  }
+  return units;
+}
+// One primer, as it will actually be ordered: the designed oligo unless the user replaced it, in
+// which case the drawn extent follows THEIR sequence — that is the whole point of letting them edit.
+function alnPrimer(dir,amp,r,anchor){
+  const S=D?D.S:readS(),key=dir+r.idx,man=overrides[key];
+  const designedTail=dir==='F'?r.fwdTail:r.revTail;
+  const designedBind=dir==='F'?r.fb:r.rb;
+  let full,tailLen,bindLen,manual=false,tm=designedBind.tm,noMatch=false;
+  if(man){
+    const a=analyzeManual(man,dir,r,S);
+    full=man;tailLen=a.tailLen;bindLen=a.bindLen;manual=true;tm=a.tm;noMatch=a.noMatch;
+    if(a.noMatch){bindLen=0;tailLen=man.length;}
+  }else{
+    full=dir==='F'?r.fSeq:r.rSeq;tailLen=designedTail.length;bindLen=designedBind.len;
+  }
+  // anchor is where the binding region meets the rest of the construct
+  const spans = dir==='F'
+    ? {tailStart:anchor-tailLen,tailEnd:anchor,bindStart:anchor,bindEnd:anchor+bindLen}
+    : {bindStart:anchor-bindLen,bindEnd:anchor,tailStart:anchor,tailEnd:anchor+tailLen};
+  return Object.assign({dir,name:`${amp.name} · ${dir==='F'?'forward':'reverse'}`,color:amp.color,
+    bind:designedBind,full,tot:full.length,tail:full.slice(0,tailLen),partner:(dir==='F'?r.rb:r.fb).tm,
+    manual,tm,noMatch,r},spans);
+}
+function alnTable(d,u,from,W){
+  const L=d.asm.length;
+  const at=k=>d.asm[((k%L)+L)%L];
+  const inSpan=(k,a,b)=>{const len=b-a;if(len<=0||len>=L)return false;return (((k-a)%L)+L)%L<len;};
+  const cols=Array.from({length:W},(_,c)=>from+c);
+  const ovCell=k=>inSpan(k,u.ovStart,u.ovEnd)?' aln-ov':'';
+
+  const ruler=cols.map(k=>{const pos=(((k%L)+L)%L)+1;
+    return `<td class="${ovCell(k)}">${pos%10===0?pos:(pos%5===0?'·':'')}</td>`;}).join('');
+  const top=cols.map(k=>`<td class="${ovCell(k)}">${at(k)}</td>`).join('');
+  const bot=cols.map(k=>`<td class="${ovCell(k)}">${COMP[at(k)]||'N'}</td>`).join('');
+
+  const pRow=p=>{
+    const fwd=p.dir==='F';
+    const fiveCol=fwd?(p.tail.length?p.tailStart:p.bindStart):p.tailEnd-1;
+    const threeCol=fwd?p.bindEnd-1:p.bindStart;
+    return '<tr>'+cols.map(k=>{
+      const tail=inSpan(k,p.tailStart,p.tailEnd),bind=inSpan(k,p.bindStart,p.bindEnd);
+      if(!tail&&!bind)return '<td></td>';
+      const tmplCh=fwd?at(k):(COMP[at(k)]||'N');
+      // index into the primer as ordered, 5'->3'
+      const idx=fwd?(k-p.tailStart):(p.tailEnd-1-k);
+      const ch=(p.full&&idx>=0&&idx<p.full.length)?p.full[idx]:tmplCh;
+      const bad=ch!==tmplCh;
+      const style=bad
+        ? `background:var(--bad-soft);color:var(--bad);font-weight:800`
+        : bind
+        ? `background:color-mix(in srgb,${p.color} 24%,transparent);color:var(--text)`
+        : `background:var(--warn-soft);color:var(--warn)`;
+      let extra='';
+      if(k===fiveCol)extra+=`<span class="aln-lab" style="color:${p.color}">5′</span>`;
+      if(k===threeCol)extra+=`<span class="aln-arrow" style="color:${p.color};${fwd?'right:-7px':'left:-7px'}">${fwd?'▶':'◀'}</span>`;
+      return `<td class="aln-cell" style="${style}">${ch}${extra}</td>`;
+    }).join('')+'</tr>';
+  };
+  const fwdRows=u.primers.filter(p=>p.dir==='F').map(pRow).join('');
+  const revRows=u.primers.filter(p=>p.dir==='R').map(pRow).join('');
+  return `<div class="aln-wrap"><table class="aln">
+    <tr class="aln-ruler">${ruler}</tr>
+    ${fwdRows}
+    <tr class="aln-strand">${top}</tr>
+    <tr class="aln-strand aln-bottom">${bot}</tr>
+    ${revRows}
+  </table></div>`;
+}
+function alnBody(d,S){return `<div id="alnBox">${alnInner(d,S)}</div>`;}
+function alnInner(d,S){
+  const units=alnUnits(d);
+  if(!units.length)return '<div class="hint">No junctions to show.</div>';
+  window.__aln=window.__aln||{i:0,from:null};
+  if(window.__aln.i>=units.length)window.__aln.i=0;
+  const u=units[window.__aln.i];
+  const L=d.asm.length,W=Math.min(72,L);
+  if(window.__aln.from===null||window.__aln.key!==u.label){
+    window.__aln.from=u.center-Math.floor(W/2);window.__aln.key=u.label;}
+  const from=window.__aln.from;
+  const posLabel=`${((from%L)+L)%L+1}–${(((from+W-1)%L)+L)%L+1} of ${L.toLocaleString()} bp`;
+  const edited=u.primers.filter(x=>x.manual);
+  // one control row instead of three stacked blocks, so this whole section fits a screen
+  return `
+    <div class="aln-bar">
+      <span class="aln-pick">${units.map((x,i)=>`
+        <button class="aln-tab ${i===window.__aln.i?'on':''}" onclick="alnPick(${i})" type="button">
+          <span class="dot" style="background:${x.color}"></span>${esc(x.label)}</button>`).join('')}</span>
+      <span class="aln-steer">
+        <button class="icobtn" onclick="alnScroll(-24)" title="Back 24 bp" type="button">«</button>
+        <button class="icobtn" onclick="alnScroll(-6)" title="Back 6 bp" type="button">‹</button>
+        <button class="icobtn" onclick="alnCentre()" title="Re-centre" type="button">⌖</button>
+        <button class="icobtn" onclick="alnScroll(6)" title="Forward 6 bp" type="button">›</button>
+        <button class="icobtn" onclick="alnScroll(24)" title="Forward 24 bp" type="button">»</button>
+        <span class="aln-pos">${posLabel}</span>
+      </span>
+    </div>
+    ${alnTable(d,u,from,W)}
+    <div class="aln-key">
+      <span><span class="aln-sw" style="background:color-mix(in srgb,${u.color} 24%,transparent)"></span>binds template</span>
+      <span><span class="aln-sw" style="background:var(--warn-soft);border:1px solid var(--warn)"></span>overlap tail</span>
+      <span><span class="aln-sw" style="background:color-mix(in srgb,var(--potato) 22%,transparent)"></span>shared overlap${u.kind==='junction'?` (${u.j.ov.L} bp)`:''}</span>
+      <span><span class="aln-sw" style="background:var(--bad-soft);border:1px solid var(--bad)"></span>differs from construct</span>
+      ${edited.length?`<span style="color:var(--warn);font-weight:650">✎ ${edited.map(x=>esc(x.name)).join(', ')} ${edited.length>1?'are':'is'} yours — red in the tail is normal, red in the binding region is not</span>`:''}
+    </div>`;
+}
+function alnPick(i){window.__aln={i,from:null};$('alnBox').innerHTML=alnInner(D,D.S);}
+function alnScroll(n){window.__aln.from+=n;$('alnBox').innerHTML=alnInner(D,D.S);}
+function alnCentre(){window.__aln.from=null;$('alnBox').innerHTML=alnInner(D,D.S);}
+
+/* compact per-primer strip: the numbers and flags, without repeating the sequence diagram */
+function renderBench(){
+  if(!D){$('bench').innerHTML=note('i','Nothing to plan yet','Design the primers first.');return;}
+  const d=D,S=d.S,K=KITS[v('kit')]||KITS[preferredKit(d.amps.length)];
+  const plan=K.plan(d.amps.length);
+  const needDpn=d.results.filter(r=>r.hasOwnTemplate).length;
+  let h='';
+
+  /* ---- 1. the record file ---- */
+  h+=`<div class="card"><div class="card-h">
+      <div><span class="section-tag">Step 4</span><h2>Save your design</h2></div>
+      <span class="sub">one file · everything in it</span></div>
+    <div class="card-b">
+      ${note('i','One file holds the whole experiment',
+        'The design file records every sequence you entered, every setting, every primer (including any you edited by hand) and — once you fill it in below — what actually happened at the bench. Re-open it any time to pick up where you left off, or to come back weeks later and record the outcome.')}
+      <div class="btn-row">
+        <button class="btn btn-primary btn-lg" onclick="saveProjectFile()" type="button">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download the design file</button>
+        <label class="btn btn-ghost btn-lg">
+          <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Re-open a design file
+          <input type="file" accept=".json,application/json" style="display:none" onchange="openProjectFile(event)"></label>
+      </div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-ghost" onclick="downloadExcel()" type="button">Primer table for Excel (.csv)</button>
+        <label class="btn btn-ghost" title="Re-import a table you edited in Excel">Import edited table
+          <input type="file" accept=".csv,text/csv" style="display:none" onchange="importExcel(event)"></label>
+        <button class="btn btn-ghost" onclick="cp(window.__tsv,this)" type="button">Copy primer table</button>
+        <button class="btn btn-ghost" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">Primers as FASTA</button>
+        <button class="btn btn-ghost" onclick="dl((v('nameA')||v('tgtName')||'construct').replace(/[^A-Za-z0-9]/g,'_')+'.fasta',window.__fasta)" type="button">Product as FASTA</button>
+      </div>
+    </div></div>`;
+
+  /* ---- 2. assembly mix ---- */
+  h+=`<div class="card"><div class="card-h"><div><span class="section-tag">At the bench</span><h2>Assembly mix</h2></div>
+      <span class="sub">${esc(K.label.split('(')[0])}</span></div>
+    <div class="card-b">
+      ${note('i','How much of each',plan.why)}
+      ${needDpn?note('w','DpnI first',`${needDpn} fragment${needDpn!==1?'s are':' is'} amplified off a circular plasmid. Add 1 µl DpnI straight to the PCR, 37 °C for 1 h, before clean-up. Leftover parental plasmid transforms far better than your assembly — it is the usual reason colonies sequence back as the original.`):''}
+      <div class="scroll-x"><table class="lab">
+        <thead><tr><th>Backbone</th><th>Fragment</th><th>Product</th><th>Your conc. (ng/µl)</th></tr></thead>
+        <tbody>${d.results.map((r,i)=>`<tr>
+          <td><input type="radio" name="vec" ${i===defaultVector(d)?'checked':''} onchange="window.__vec=${i};calcMixNow()"></td>
+          <td><span class="lg-num" style="background:${r.a.color};display:inline-flex;vertical-align:middle;margin-right:7px">${i+1}</span><b>${esc(r.a.name)}</b></td>
+          <td class="mono">${r.amplicon.toLocaleString()} bp</td>
+          <td><input type="number" step="0.1" min="0" placeholder="e.g. 42.5" style="width:120px"
+                value="${mixConc[i]!==undefined?mixConc[i]:''}"
+                oninput="mixConc[${i}]=this.value===''?undefined:+this.value"></td></tr>`).join('')}
+        </tbody></table></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="calcMixNow()" type="button">Calculate volumes</button>
+        <span class="hint">Mark the backbone — the molar ratio is applied around it.</span></div>
+      <div id="mixOut"></div>
+    </div></div>`;
+
+  /* ---- 3. outcome ---- */
+  const o=outcome;
+  const sel=(k,opts)=>`<select onchange="setOutcome('${k}',this.value)">${
+    opts.map(x=>`<option value="${x}" ${o[k]===x?'selected':''}>${x||'— not yet —'}</option>`).join('')}</select>`;
+  h+=`<div class="card"><div class="card-h">
+      <div><span class="section-tag">Afterwards</span><h2>What actually happened</h2></div>
+      <span class="sub">come back and fill this in</span></div>
+    <div class="card-b">
+      ${note('i','Why this matters',
+        'Designs that worked and designs that failed are equally informative — arguably the failures more so. Recording the outcome turns this file into a labelled training example, and enough of them make it possible to predict whether a Gibson will work <i>before</i> you pay for the primers. Nothing is sent anywhere until you choose to send it.')}
+      <div class="grid-3">
+        <div><label class="fld">Did the PCRs give clean bands?</label>${sel('pcr',['','all clean','some clean','none worked','not run yet'])}</div>
+        <div><label class="fld">Colonies after transformation</label>${sel('colonies',['','plenty','a few','none','not done yet'])}</div>
+        <div><label class="fld">Sequencing</label>${sel('sequencing',['','correct','wrong junction','mutations','not done yet'])}</div>
+      </div>
+      <div style="margin-top:16px"><label class="fld">Anything worth noting — what went wrong, what you changed, what the tool got wrong</label>
+        <textarea id="outNotes" style="min-height:96px" placeholder="e.g. fragment 2 gave a double band, re-ran at 61 °C and it was clean…"
+                  oninput="outcome.notes=this.value;saveAuto()">${esc(o.notes||'')}</textarea></div>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn btn-primary" onclick="submitToGithub()" type="button">
+          <svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M12 2C6.48 2 2 6.58 2 12.19c0 4.49 2.87 8.3 6.84 9.65.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.21-3.37-1.21-.46-1.19-1.11-1.51-1.11-1.51-.91-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.72 0 0 .84-.27 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.19C22 6.58 17.52 2 12 2Z"/></svg>
+          Contribute this design</button>
+        <button class="btn btn-ghost" onclick="downloadML()" type="button">Download the record (.jsonl)</button>
+        <button class="btn btn-ghost" onclick="sendReport()" type="button">Email it instead</button>
+      </div>
+      <div class="hint" style="margin-top:12px"><b>Contribute</b> copies the record as a single JSON line, saves it as a
+        <code>.txt</code> file (GitHub rejects <code>.json</code> attachments), and opens a pre-filled issue on the
+        collection repo — paste or attach it there. The record holds the <b>whole experiment</b>: every sequence you
+        entered including source plasmids, the full settings, the designed primers and overlaps, the final plasmid
+        sequence, and whatever outcome you recorded. One line per design is the shape a training set wants, and issues
+        can be pulled in bulk through the GitHub API later. Nothing is transmitted until you press it, and you can read
+        the whole record first.</div>
+    </div></div>`;
+
+  h+=`<div class="btn-row between" style="margin:22px 0 8px">
+    <button class="btn btn-ghost" onclick="goStep(3)" type="button"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Back to primers</button>
+    <button class="btn btn-ghost" onclick="window.print()" type="button">Print this plan</button></div>`;
+  $('bench').innerHTML=h;
+  if(Object.keys(mixConc).length)calcMixNow();
+}
+function setOutcome(k,val){outcome[k]=val;saveAuto();libRemember();}
+function sendReport(){
+  saveProjectFile();
+  const nm=v('nameA')||v('tgtName')||'Gibson design';
+  const body=[
+    'Design: '+nm,
+    'Fragments: '+(D?D.amps.length:'—')+'   Junctions: '+(D?D.jCount:'—'),
+    'PCR: '+(outcome.pcr||'—'),
+    'Colonies: '+(outcome.colonies||'—'),
+    'Sequencing: '+(outcome.sequencing||'—'),
+    '',
+    'Notes:',outcome.notes||'(none)','',
+    'The design file has just been downloaded to this machine — please attach it to this email.'
+  ].join('\n');
+  window.location.href='mailto:bdongmin10@gmail.com?subject='+
+    encodeURIComponent('Gibson design report — '+nm)+'&body='+encodeURIComponent(body);
+}
+function defaultVector(d){let bi=0,bl=0;d.results.forEach((r,i)=>{if(r.amplicon>bl){bl=r.amplicon;bi=i;}});
+  return window.__vec!==undefined?window.__vec:bi;}
+function calcMixNow(){
+  const d=D;if(!d)return;
+  const K=KITS[v('kit')]||KITS[preferredKit(d.amps.length)],n=d.amps.length,plan=K.plan(n);
+  const vec=defaultVector(d),out=$('mixOut');if(!out)return;
+  const missing=d.results.filter((r,i)=>!mixConc[i]||mixConc[i]<=0);
+  if(missing.length){out.innerHTML=note('w','Concentrations needed',`Enter ng/µl for: <b>${missing.map(r=>esc(r.a.name)).join(', ')}</b>.`);return;}
+  let vecPmol=0,insPmol=0;
+  if(plan.mode==='ratio'){
+    if(plan.totalTarget!==undefined){const R=plan.ratio||2,nIns=Math.max(1,n-1);
+      vecPmol=plan.totalTarget/(1+R*nIns);insPmol=R*vecPmol;}
+    else{vecPmol=plan.vectorPmol;insPmol=plan.insertPmol;}
+  }
+  const items=d.results.map((r,i)=>{
+    const isVec=i===vec,pmol=(plan.mode==='ratio')?(isVec?vecPmol:insPmol):plan.eachPmol;
+    const ng=ngFromPmol(pmol,r.amplicon),c=+mixConc[i];
+    return{name:r.a.name,color:r.a.color,bp:r.amplicon,isVec,pmol,ng,conc:c,ul:ng/c};});
+  const totalUl=items.reduce((a,x)=>a+x.ul,0),totalPmol=items.reduce((a,x)=>a+x.pmol,0);
+  const water=Math.max(0,K.rxnVol-K.mixVol-totalUl);
+  const warn=[];
+  if(totalUl>K.dnaBudget)warn.push(note('b','Too dilute for this reaction',
+    `Your fragments need <b>${totalUl.toFixed(1)} µl</b> but only <b>${K.dnaBudget} µl</b> of the ${K.rxnVol} µl reaction is free for DNA. Concentrate ~${(totalUl/K.dnaBudget).toFixed(1)}× (smaller elution or SpeedVac), or scale the whole reaction up.`));
+  items.filter(x=>x.ul<0.5).forEach(x=>{const f=1/x.ul;
+    warn.push(note('w',`${esc(x.name)}: ${x.ul.toFixed(2)} µl is not pipettable`,
+      `Dilute it <b>${f.toFixed(1)}×</b> (1 µl + ${(f-1).toFixed(1)} µl water → ${(x.conc/f).toFixed(1)} ng/µl) and add <b>1.0 µl</b> of that. Pipetting under ~0.5 µl is an invisible, very common cause of dead assemblies.`));});
+  out.innerHTML=`
+    <div class="scroll-x"><table class="lab" style="margin-top:14px">
+      <thead><tr><th>Component</th><th>Size</th><th>pmol</th><th>Mass</th><th>Volume</th></tr></thead><tbody>
+      ${items.map(x=>`<tr><td style="font-weight:600;color:${x.color}">${esc(x.name)}${x.isVec?' <span class="flag f-ok">backbone</span>':''}</td>
+        <td class="mono">${x.bp.toLocaleString()} bp</td><td class="mono">${x.pmol.toFixed(3)}</td>
+        <td class="mono">${x.ng.toFixed(1)} ng</td><td class="mono"><b>${x.ul<0.5?x.ul.toFixed(2):x.ul.toFixed(1)} µl</b></td></tr>`).join('')}
+      <tr><td colspan="4"><b>${esc(K.mixName)}</b></td><td class="mono"><b>${K.mixVol} µl</b></td></tr>
+      <tr><td colspan="4">Nuclease-free water</td><td class="mono"><b>${water.toFixed(1)} µl</b></td></tr>
+      <tr style="background:var(--surface-2)"><td colspan="4"><b>Total</b></td><td class="mono"><b>${K.rxnVol} µl</b></td></tr>
+      </tbody></table></div>
+    <div class="hint" style="margin-top:8px">Total DNA <b>${totalPmol.toFixed(3)} pmol</b> — kit range for ${n} fragments is ${plan.rangeMin}–${plan.rangeMax} pmol${totalPmol<plan.rangeMin||totalPmol>plan.rangeMax?' <span style="color:var(--bad)">(outside the stated range — check which fragment you marked as backbone)</span>':' ✓'}.</div>
+    ${warn.join('')}
+    ${note('ok','Then',`Incubate <b>${plan.incub}</b>, chill on ice, and transform <b>${K.transformVol} µl</b> into ${esc(K.cells)}. Source: ${esc(K.src)}.`)}`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PROJECT SAVE / OPEN / AUTOSAVE
+   ══════════════════════════════════════════════════════════════════════════ */
+function newProjectId(){return 'gib-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,7);}
+function libLoad(){try{return JSON.parse(localStorage.getItem(LIB_KEY)||'[]');}catch(e){return [];}}
+// Whole plasmids are bulky, so the list can outgrow the browser's storage quota. Drop the oldest
+// entries until it fits rather than failing silently and losing the save the user just made.
+function libWrite(a){
+  let list=a.slice(0,40);
+  while(list.length){
+    try{localStorage.setItem(LIB_KEY,JSON.stringify(list));return true;}
+    catch(e){list=list.slice(0,-1);}
+  }
+  try{localStorage.removeItem(LIB_KEY);}catch(e){}
+  toast('Browser storage is full — download the design file to keep it');
+  return false;
+}
+function libRemember(){
+  if(!projectId)projectId=newProjectId();
+  const snap=snapshot(),lib=libLoad();
+  const entry={id:projectId,name:snap.name||snap.targetName||'untitled',savedAt:snap.savedAt,
+    fragments:snap.design?snap.design.fragments:null,
+    outcomeRecorded:!!(outcome.pcr||outcome.colonies||outcome.sequencing||outcome.notes),
+    snapshot:snap};
+  const i=lib.findIndex(x=>x.id===projectId);
+  if(i>=0)lib[i]=entry;else lib.unshift(entry);
+  libWrite(lib);renderLibrary();
+}
+function libOpen(id){
+  const e=libLoad().find(x=>x.id===id);if(!e)return;
+  if(applySnapshot(e.snapshot)){projectId=e.id;toast('Opened “'+e.name+'”');goStep(1);}
+}
+function libDelete(id){
+  if(!confirm('Remove this project from the list on this browser? The downloaded file, if you saved one, is untouched.'))return;
+  libWrite(libLoad().filter(x=>x.id!==id));renderLibrary();
+}
+function renderLibrary(){
+  const host=$('libraryCard');if(!host)return;
+  const lib=libLoad();
+  if(!lib.length){host.classList.add('hidden');return;}
+  host.classList.remove('hidden');
+  const pending=lib.filter(x=>!x.outcomeRecorded);
+  host.innerHTML=`<div class="card-h">
+      <div><span class="section-tag">Your projects</span><h2>Pick up where you left off</h2></div>
+      <span class="sub">${lib.length} saved on this browser${pending.length?` · <b style="color:var(--warn)">${pending.length} awaiting an outcome</b>`:''}</span></div>
+    <div class="card-b">
+      ${pending.length?note('w','Some designs never got their result recorded',
+        'A design with no outcome is the one case that teaches nothing. If any of these reached the bench, open it and fill in what happened — it takes a few seconds and it is the whole point of the record.'):''}
+      <div class="proj-list">${lib.map(e=>`
+        <div class="proj ${e.outcomeRecorded?'':'pending'}">
+          <div class="proj-main">
+            <b>${esc(e.name)}</b>
+            <span class="proj-meta">${new Date(e.savedAt).toLocaleDateString()} · ${e.fragments?e.fragments+' fragments':'not yet designed'}</span>
+          </div>
+          ${e.outcomeRecorded?'<span class="flag f-ok">outcome recorded</span>':'<span class="flag f-w">outcome missing</span>'}
+          <button class="btn btn-ghost btn-sm" onclick="libOpen('${e.id}')" type="button">Open</button>
+          <button class="icobtn" onclick="libDelete('${e.id}')" title="Remove from this list" type="button">
+            <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
+function snapshot(){return{kind:'gibson-project',v:10,id:projectId,savedAt:new Date().toISOString(),
+  tool:'labpotato gibson-assembly v10',
+  mode:MODE,topo,name:v('nameA'),targetName:v('tgtName'),targetSeq:v('tgtSeq'),
+  parts:parts.map(p=>({name:p.name,seq:p.seq,template:p.template})),
+  templates:templates.map(t=>({name:t.name,seq:t.seq})),
+  settings:readS(),kit:v('kit'),overrides:Object.assign({},overrides),outcome:Object.assign({},outcome),
+  design:D?{
+    length:D.asm.length,circular:D.circular,fragments:D.amps.length,junctions:D.jCount,
+    reconstructOk:D.reconstructOk,score:scoreConstruct().score,
+    primers:primerRows(D,D.S).map(x=>({name:x.name,fragment:x.amp.name,direction:x.dir==='F'?'forward':'reverse',
+      sequence:x.full,length:x.full.length,bindingTm:+x.tm.toFixed(2),bindingLength:x.bindLen,tailLength:x.tailLen,
+      gc:+x.gc.toFixed(1),offTargetSites:x.offN,nextBestSiteTm:x.offTm,edited:x.manual,
+      amplicon:x.r.amplicon,annealTa:x.r.ta})),
+    overlaps:D.junctions.map((j,n)=>({index:n+1,upstream:j.U.name,downstream:j.D.name,wrap:!!j.wrap,
+      sequence:j.ov.seq,length:j.ov.L,tm:+j.ov.tm.toFixed(1),gc:+j.ov.gc.toFixed(1),
+      fromUpstream:j.ov.a,fromDownstream:j.ov.c,unique:!!j.ov.unique,extended:!!j.ov.extendedSearch,blocked:!!j.risk})),
+    assembledSequence:D.asm
+  }:null};}
+function saveAuto(){try{localStorage.setItem(PROJ_KEY,JSON.stringify(snapshot()));}catch(e){}}
+function saveProjectFile(){
+  libRemember();
+  const s=snapshot();
+  dl('gibson_'+((s.name||s.targetName||'project').replace(/[^A-Za-z0-9]/g,'_'))+'_'+nameStem()+'.json',JSON.stringify(s,null,2));}
+
+/* ── the machine-readable record: one JSON object per design, written as a single line so a pile of
+   them concatenates straight into a JSONL training set. It carries the whole experiment — every
+   sequence the user supplied, every setting in force, the designed primers, the overlaps, the final
+   plasmid, and the bench outcome — because a label without its inputs teaches nothing. ── */
+function mlRecord(){
+  const s=snapshot(),d=D,S=d?d.S:readS();
+  const rec={
+    record_id:projectId||newProjectId(),
+    tool:'labpotato-gibson-v10',
+    recorded_at:new Date().toISOString(),
+    construct_name:s.name||s.targetName||'',
+    topology:s.topo,
+    entry_mode:s.mode==='A'?'manual_parts':'from_final_sequence',
+    total_length_bp:d?d.asm.length:null,
+    n_fragments:d?d.amps.length:null,
+    n_junctions:d?d.jCount:null,
+    polymerase:S.poly, kit:s.kit,
+    anneal_ta_c:d?d.results[0].ta:null,
+    target_tm_c:S.bindTm, tm_ceiling_c:S.bindTmMax, max_dtm_c:S.maxDtm,
+    primer_conc_um:S.conc, na_mm:S.na, mg_mm:S.mg,
+    overlap_min_bp:S.ovMin, overlap_max_bp:S.ovMax, overlap_tm_min_c:S.ovTm,
+    design_score:d?scoreConstruct().score:null,
+    reconstruct_ok:d?d.reconstructOk:null,
+    any_primer_edited:Object.keys(overrides).length>0,
+
+    /* Everything the user actually supplied, verbatim. A model cannot learn what makes an assembly
+       work from summary statistics alone — it needs the sequences the statistics were derived from,
+       and the settings in force when they were derived. */
+    inputs:{
+      parts:parts.filter(p=>clean(p.seq).length).map(p=>({
+        name:(p.name||'').trim(),
+        sequence:clean(p.seq),
+        length_bp:clean(p.seq).length,
+        gc:+gcv(clean(p.seq)).toFixed(1),
+        source_plasmid:clean(p.template)||null,
+        source_plasmid_bp:clean(p.template).length||null})),
+      template_library:templates.filter(t=>clean(t.seq).length).map(t=>({
+        name:(t.name||'').trim(),sequence:clean(t.seq),length_bp:clean(t.seq).length})),
+      target_sequence:clean(s.targetSeq)||null,
+      target_sequence_bp:clean(s.targetSeq).length||null,
+      trace_plan:plan?plan.map(x=>({type:x.type,target_from:x.start+1,target_to:x.end,
+        length_bp:x.seq.length,source:x.type==='match'?x.plasmidName:null,
+        strand:x.type==='match'?x.strand:null,
+        source_from:x.type==='match'?x.origStart+1:null,
+        source_to:x.type==='match'?x.origEndExcl:null,
+        ambiguous:!!x.ambiguous})):null,
+      primer_overrides:Object.assign({},overrides)
+    },
+    /* the complete settings block, so a record can be replayed exactly */
+    settings:Object.assign({},S,{kit:s.kit,fold_in_threshold_bp:foldThreshold()}),
+
+    final_plasmid_sequence:d?d.asm:null,
+    final_plasmid_bp:d?d.asm.length:null,
+
+    fragments:d?d.results.map(r=>({name:r.a.name,
+      sequence:r.a.seq,                       // the region that ends up in the construct
+      body_bp:r.a.seq.length,amplicon_bp:r.amplicon,
+      gc:+gcv(r.a.seq).toFixed(1),has_source_plasmid:!!r.hasOwnTemplate,
+      source_plasmid_sequence:r.hasOwnTemplate?r.template:null,
+      template_bp:r.template?r.template.length:null,delta_tm:+r.dTm.toFixed(2),
+      anneal_ta_c:r.ta,extension:extTime(r.amplicon,S.poly)})):[],
+    primers:d?primerRows(d,S).map(x=>({name:x.name,fragment:x.amp.name,direction:x.dir==='F'?'fwd':'rev',
+      sequence:x.full,length_nt:x.full.length,binding_nt:x.bindLen,tail_nt:x.tailLen,
+      binding_tm_c:+x.tm.toFixed(2),gc:+x.gc.toFixed(1),
+      offtarget_sites:x.offN,offtarget_best_tm_c:x.offTm,edited_by_user:x.manual,
+      hairpin:x.bind.hp,self_dimer:x.bind.selfDimer,cross_dimer:x.bind.cross,
+      three_prime_clamp:!!x.bind.clamp,homopolymer:x.bind.polyX})):[],
+    junctions:d?d.junctions.map((j,n)=>({index:n+1,
+      upstream:j.U.name,downstream:j.D.name,wrap:!!j.wrap,
+      overlap_sequence:j.ov.seq,
+      overlap_bp:j.ov.L,overlap_tm_c:+j.ov.tm.toFixed(1),
+      overlap_gc:+j.ov.gc.toFixed(1),from_upstream_bp:j.ov.a,from_downstream_bp:j.ov.c,
+      folded_in_sequence:j.ins||null,
+      insert_bp:(j.ins||'').length,unique:!!j.ov.unique,extended:!!j.ov.extendedSearch,
+      blocked:!!j.risk,hairpin:j.ov.hp})):[],
+    outcome:{pcr:outcome.pcr||null,colonies:outcome.colonies||null,
+      sequencing:outcome.sequencing||null,notes:outcome.notes||null,
+      recorded:!!(outcome.pcr||outcome.colonies||outcome.sequencing||outcome.notes)}
+  };
+  return rec;
+}
+// GitHub's attachment allowlist takes .txt but rejects .json and .jsonl, so the record ships as
+// .txt with one JSON object on the line — still a valid JSONL row, just an extension that uploads.
+function downloadML(){
+  libRemember();
+  dl('gibson_record_'+(projectId||nameStem())+'.txt',JSON.stringify(mlRecord())+'\n');
+}
+function submitToGithub(){
+  libRemember();
+  const rec=mlRecord();
+  const line=JSON.stringify(rec);
+  cp(line);
+  downloadML();
+  const title='Gibson record — '+(rec.construct_name||'untitled')+' — '+(rec.outcome.recorded?'outcome recorded':'no outcome yet');
+  const body=[
+    'The full record is one JSON line. It has been copied to my clipboard and saved as a .txt file',
+    '(GitHub does not accept .json attachments, so the record ships as .txt).',
+    'Paste it inside the code fence below, or drag the downloaded .txt onto this box to attach it.',
+    '','```json','','```','',
+    '---','',
+    '| field | value |','|---|---|',
+    '| fragments | '+(rec.n_fragments||'—')+' |',
+    '| junctions | '+(rec.n_junctions||'—')+' |',
+    '| design score | '+(rec.design_score||'—')+' |',
+    '| PCR | '+(rec.outcome.pcr||'not recorded')+' |',
+    '| colonies | '+(rec.outcome.colonies||'not recorded')+' |',
+    '| sequencing | '+(rec.outcome.sequencing||'not recorded')+' |'
+  ].join('\n');
+  const url='https://github.com/'+DATA_REPO+'/issues/new?labels='+encodeURIComponent(DATA_LABEL)+
+    '&title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
+  window.open(url,'_blank','noopener');
+  toast('Record copied and downloaded — paste it into the issue');
+}
+/* Excel-friendly export: UTF-8 CSV with a BOM opens straight into Excel on every platform, with no
+   file-format warning and no library. */
+function csvCell(x){const t=String(x==null?'':x);return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}
+function downloadExcel(){
+  if(!D)return;
+  const S=D.S,rows=primerRows(D,S);
+  const out=[];
+  out.push(['Construct',v('nameA')||v('tgtName')||'untitled']);
+  out.push(['Topology',D.circular?'circular':'linear']);
+  out.push(['Total length (bp)',D.asm.length]);
+  out.push(['Polymerase',prof(S.poly).label]);
+  out.push(['Annealing temperature (C)',D.results[0].ta]);
+  out.push([]);
+  out.push(['Edit the Sequence column and re-import this file to update the design. Keep the Key column as it is.']);
+  out.push([]);
+  // "Key" is what lets an edited row find its primer again on re-import; primer names carry the date
+  // and would not survive a round trip made on a different day.
+  out.push(['Key','Primer','Fragment','Direction','Sequence 5-3','Length (nt)','Tail (nt)','Binding (nt)',
+            'Binding Tm (C)','GC (%)','Off-target sites','Next best site Tm (C)','Edited by hand',
+            'Amplicon (bp)','Anneal Ta (C)','Extension']);
+  rows.forEach(x=>out.push([x.key,x.name,x.amp.name,x.dir==='F'?'Forward':'Reverse',casedSeq(x),x.full.length,
+    x.tailLen,x.bindLen,x.tm.toFixed(1),x.gc.toFixed(0),x.offN,x.offTm==null?'':x.offTm,
+    x.manual?'yes':'no',x.r.amplicon,x.r.ta,extTime(x.r.amplicon,S.poly)]));
+  out.push([]);
+  out.push(['Junction','Upstream','Downstream','Overlap sequence','Overlap (bp)','Tm (C)','GC (%)','Unique']);
+  D.junctions.forEach((j,n)=>out.push([n+1,j.U.name,j.D.name,j.ov.seq,j.ov.L,j.ov.tm.toFixed(1),
+    j.ov.gc.toFixed(0),j.risk?'no':'yes']));
+  const csv='\ufeff'+out.map(r=>r.map(csvCell).join(',')).join('\r\n');
+  dl('gibson_'+((v('nameA')||v('tgtName')||'design').replace(/[^A-Za-z0-9]/g,'_'))+'.csv',csv);
+}
+/* Minimal RFC-4180 reader: quoted fields, doubled quotes, commas and line breaks inside quotes.
+   Excel re-saves CSV in exactly this dialect, so nothing heavier is needed. */
+function parseCsv(text){
+  text=text.replace(/^\ufeff/,'');
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}
+      else f+=c;
+    }else if(c==='"')q=true;
+    else if(c===','){row.push(f);f='';}
+    else if(c==='\n'||c==='\r'){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      row.push(f);rows.push(row);row=[];f='';
+    }else f+=c;
+  }
+  if(f.length||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+/* Round trip: whatever sequences were changed in Excel become overrides, exactly as if typed into
+   the table here \u2014 so they are re-measured against the real template, redrawn on the alignment,
+   and carried into every export. A sequence put back to the designed one clears its override. */
+function importExcel(ev){
+  const file=ev.target.files&&ev.target.files[0];ev.target.value='';
+  if(!file)return;
+  if(!D){toast('Design the primers first, then import the edited table');return;}
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const rows=parseCsv(String(fr.result));
+    const hi=rows.findIndex(r=>(r[0]||'').trim()==='Key');
+    if(hi<0){toast('No primer table found \u2014 was this exported from here?');return;}
+    const head=rows[hi].map(x=>x.trim());
+    const kCol=0,sCol=head.findIndex(x=>/^Sequence/i.test(x));
+    if(sCol<0){toast('The Sequence column is missing');return;}
+    const designed={};
+    primerRows(D,D.S).forEach(p=>{designed[p.key]=clean(p.dir==='F'?p.r.fSeq:p.r.rSeq);});
+    let changed=0,reset=0,unknown=0;
+    for(let i=hi+1;i<rows.length;i++){
+      const key=(rows[i][kCol]||'').trim();
+      if(!key)break;                       // the blank row that ends the primer block
+      if(!(key in designed)){unknown++;continue;}
+      const seq=clean(rows[i][sCol]||'');
+      if(!seq)continue;
+      if(seq===designed[key]){if(overrides[key]){delete overrides[key];reset++;}}
+      else if(overrides[key]!==seq){overrides[key]=seq;changed++;}
+    }
+    saveAuto();
+    const t=$('primerTable');if(t)t.innerHTML=primerTableInner(D,D.S);
+    const pw=$('pwBox');if(pw){pw.innerHTML=pwInner(D,D.S);pwLiveTm();}
+    const ab=$('alnBox');if(ab)ab.innerHTML=alnInner(D,D.S);
+    renderRail();libRemember();
+    toast(changed||reset
+      ? `Imported: ${changed} primer${changed!==1?'s':''} changed${reset?`, ${reset} reset to designed`:''}${unknown?`, ${unknown} unrecognised row${unknown!==1?'s':''} skipped`:''}`
+      : 'No sequence changes found in that file');
+  };
+  fr.readAsText(file);
+}
+function applySnapshot(s){
+  if(!s||s.kind!=='gibson-project')return false;
+  if(s.parts&&s.parts.length)parts=s.parts.map(p=>({name:p.name||'',seq:p.seq||'',template:p.template||''}));
+  if(s.templates&&s.templates.length)templates=s.templates.map(t=>({name:t.name||'',seq:t.seq||''}));
+  const set=(id,val)=>{const e=$(id);if(e&&val!==undefined&&val!==null)e.value=val;};
+  set('nameA',s.name);set('tgtName',s.targetName);set('tgtSeq',s.targetSeq);set('kit',s.kit);
+  const S=s.settings||{};
+  ['bindTm','bindTmMax','bindMin','bindMax','ovMin','ovMax','ovTm','maxPrimer','conc','na','mg','minAmp','maxPolyX','gcMin','gcMax','ovSideMin','maxDtm','aimMin','aimMax','fixTa'].forEach(k=>set(k,S[k]));
+  set('mmLimit',S.mm);set('poly',S.poly);
+  const ft=$('fixTaOn');if(ft)ft.checked=!!S.fixTaOn;
+  if(s.topo)topo=s.topo;
+  overrides=s.overrides||{};
+  projectId=s.id||projectId;
+  outcome=Object.assign({pcr:'',colonies:'',sequencing:'',notes:''},s.outcome||{});
+  D=null;plan=null;setMode(s.mode||'A');
+  document.querySelectorAll('#topoSeg button,#topoSegB button').forEach(b=>b.classList.toggle('on',b.dataset.t===topo));
+  renderAll();return true;
+}
+function openProjectFile(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{let s;try{s=JSON.parse(fr.result);}catch(e){toast('That file is not valid JSON');return;}
+    if(applySnapshot(s))toast('Project restored');else toast('Not a saved Gibson project');};
+  fr.readAsText(f);ev.target.value='';
+}
+
+/* ---- worked example ---- */
+function loadDemo(){
+  const backbone='ATGCGTCAGGTACCGAGCTCGAATTCACTGGCCGTCGTTTTACAACGTCGTGACTGGGAAAACCCTGGCGTTACCCAACTTAATCGCCTTGCAGCACATCCCCCTTTCGCCAGCTGGCGTAATAGCGAAGAGGCCCGCACCGATCGCCCTTCCCAACAGTTGCGCAGCCTGAATGGCGAATGGCGCCTGATGCGGTATTTTCTCCTTACGCATCTGTGCGGTATTTCACACCGCATATGGTGCACTCTCAGTACAATCTGCTCTGATGCCGCATAGTTAAGCCAGCCCCGACACCCGCCAACACCCGCTGACGCGCCCTGACGGGCTTGTCTGCTCCCGGCATCCGCTTACAGACAAGCTGTGACCGTCTCCGGGAGCTGCATGTGTCAGAGGTTTTCACCGTCATCACCGAAACGCGCGA';
+  const gfp='ATGAGTAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGTGATGTTAATGGGCACAAATTTTCTGTCAGTGGAGAGGGTGAAGGTGATGCAACATACGGAAAACTTACCCTTAAATTTATTTGCACTACTGGAAAACTACCTGTTCCATGGCCAACACTTGTCACTACTTTCTCTTATGGTGTTCAATGCTTTTCAAGATACCCAGATCATATGAAACGGCATGACTTTTTCAAGAGTGCCATGCCCGAAGGTTATGTACAGGAAAGAACTATATTTTTCAAAGATGACGGGAACTACAAGACACGTGCTGAAGTCAAGTTTGAAGGTGATACCCTTGTTAATAGAATCGAGTTAAAAGGTATTGATTTTAAAGAAGATGGAAACATTCTTGGACACAAATTGGAATACAACTATAACTCACACAATGTATACATCATGGCAGACAAACAAAAGAATGGAATCAAAGTTAACTTCAAAATTAGACACAACATTGAAGATGGAAGCGTTCAACTAGCAGACCATTATCAACAAAATACTCCAATTGGCGATGGCCCTGTCCTTTTACCAGACAACCATTACCTGTCCACACAATCTGCCCTTTCGAAAGATCCCAACGAAAAGAGAGACCACATGGTCCTTCTTGAGTTTGTAACAGCTGCTGGGATTACACATGGCATGGATGAACTATACAAATAA';
+  parts=[
+    {name:'pUC-style backbone',seq:backbone,template:backbone},
+    {name:'EAAAK linker',seq:'GAAGCTGCTGCTAAAGAAGCTGCTGCTAAA',template:''},
+    {name:'sfGFP',seq:gfp,template:gfp}
+  ];
+  templates=[{name:'pUC-backbone donor',seq:backbone},{name:'pGFP donor',seq:gfp}];
+  $('nameA').value='pUC-EAAAK-sfGFP (example)';
+  $('tgtName').value='pUC-EAAAK-sfGFP (example)';
+  $('tgtSeq').value=backbone+'GAAGCTGCTGCTAAAGAAGCTGCTGCTAAA'+gfp;
+  topo='circular';plan=null;D=null;
+  document.querySelectorAll('#topoSeg button,#topoSegB button').forEach(b=>b.classList.toggle('on',b.dataset.t==='circular'));
+  goStep(1);renderAll();
+  toast('Example loaded — hit “Design my primers”');
+}
+
+function showIntro(){stepNow=1;renderSteps();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ---- master render ---- */
+function renderAll(){
+  renderParts();renderTemplates();renderRail();renderSteps();renderLibrary();
+  $('tgtFmt').innerHTML=fmtTag(v('tgtSeq'));
+}
+
+/* ---- init ---- */
+fillSelects();
+$('kit').value=preferredKit(3);
+syncPoly();
+(function(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');}catch(e){}
+  if(s&&s.parts&&s.parts.some(p=>clean(p.seq).length)){applySnapshot(s);toast('Restored your last session');}
+  else renderAll();
+})();
+window.addEventListener('beforeunload',saveAuto);
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/gibson-assembly"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

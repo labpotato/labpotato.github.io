@@ -76,7 +76,8 @@ const TOOLS = [
       { v: "v3", file: "gibson-assembly-v3.html" },
       { v: "v4", file: "gibson-assembly-v4.html" },
       { v: "v5", file: "gibson-assembly-v5.html" },
-      { v: "v8", file: "gibson-assembly-v8.html" }
+      { v: "v6", file: "gibson-assembly-v6.html" },
+      { v: "v7", file: "gibson-assembly-v7.html" }
     ]
   },
 

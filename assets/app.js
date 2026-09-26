@@ -42,6 +42,25 @@ function iconSvg(name) {
   return `<svg viewBox="0 0 24 24" stroke="currentColor"><use href="#icon-${key}"></use></svg>`;
 }
 
+// "2026-09-26" -> "26 Sep 2026". Parsed as a local date so it never slips a day.
+function fmtDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+// Released within the last two weeks?
+function isFresh(iso) {
+  if (!iso) return false;
+  const [y, m, d] = iso.split("-").map(Number);
+  const age = (Date.now() - new Date(y, m - 1, d).getTime()) / 86400000;
+  return age >= 0 && age <= 14;
+}
+
+const checkSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
 const arrowSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>`;
 
 function renderTools() {
@@ -51,12 +70,15 @@ function renderTools() {
   grid.innerHTML = TOOLS.map((tool) => {
     const latest = latestOf(tool);
     const older = tool.versions.slice(0, -1).reverse();
+    const features = (tool.features || []).length
+      ? `<ul class="tool-features">${tool.features.map((f, i) => `<li style="--i:${i}">${checkSvg}<span>${f}</span></li>`).join("")}</ul>`
+      : "";
 
     const olderBlock = older.length
       ? `<details class="versions-detail">
            <summary>${older.length} legacy release${older.length > 1 ? "s" : ""}</summary>
            <ul>
-             ${older.map((v) => `<li><a href="${toolPath(tool, v)}" target="_blank" rel="noopener">${v.v}</a></li>`).join("")}
+             ${older.map((v) => `<li><a href="${toolPath(tool, v)}" target="_blank" rel="noopener"${v.date ? ` title="Released ${fmtDate(v.date)}"` : ""}>${v.v}</a></li>`).join("")}
            </ul>
          </details>`
       : "";
@@ -67,8 +89,10 @@ function renderTools() {
         <h3>${tool.name}</h3>
         <p class="tool-tagline">${tool.tagline}</p>
         <p class="tool-desc">${tool.description}</p>
+        ${features}
         <div class="tool-meta">
-          <span class="version-pill">${latest.v} · stable</span>
+          <span class="version-pill">${latest.v} · latest release</span>
+          ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}
         </div>
         ${olderBlock}
         <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Launch module ${arrowSvg}</a>

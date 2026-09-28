@@ -162,20 +162,20 @@ const TOOLS = [
     name: "Lab Journal",
     tagline: "Write it down, or it did not happen",
     description:
-      "A step by step lab journal entry: objective, success criterion written before the data, methods with units, observations, figures, results, outcome and next steps. Exports Markdown an AI can read and a Notion ready zip. Finalized entries lock, so nobody (you) quietly edits history.",
+      "One page lab entry: date and code, then per experiment the identifiers, status, a quick table, Result, Issue and Solution built from fill-in template sentences, and images with crop and their own caption. Ends with Next / Tomorrow. Exports Markdown or a zip with the images.",
     icon: "flask",
     accent: "indigo",
     folder: "tools/lab-journal",
     features: [
-      "Nine guided steps with autosave, including every image",
-      "Versions grouped by experiment, with parent entries and change tables",
-      "Figure editor: crop, rotate, brightness, scale bars, panel letters",
-      "Figure references like {{fig:2B}} renumber themselves",
-      "Markdown with YAML front matter, plus a Notion zip with PNG figures",
-      "Finalize to lock the entry; later changes become dated addenda"
+      "One page, no wizard: fill it top to bottom",
+      "Template sentences with blanks for Result, Issue, Solution and Next",
+      "Images: crop only, one caption each, numbered automatically",
+      "Autosaves in the browser, images included",
+      "Markdown, zip with images, or print to PDF"
     ],
     versions: [
-      { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" }
+      { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" },
+      { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" }
     ]
   }
 

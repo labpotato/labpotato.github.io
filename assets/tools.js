@@ -155,6 +155,28 @@ const TOOLS = [
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" }
     ]
+  },
+
+  {
+    id: "lab-journal",
+    name: "Lab Journal",
+    tagline: "Write it down, or it did not happen",
+    description:
+      "A step by step lab journal entry: objective, success criterion written before the data, methods with units, observations, figures, results, outcome and next steps. Exports Markdown an AI can read and a Notion ready zip. Finalized entries lock, so nobody (you) quietly edits history.",
+    icon: "flask",
+    accent: "indigo",
+    folder: "tools/lab-journal",
+    features: [
+      "Nine guided steps with autosave, including every image",
+      "Versions grouped by experiment, with parent entries and change tables",
+      "Figure editor: crop, rotate, brightness, scale bars, panel letters",
+      "Figure references like {{fig:2B}} renumber themselves",
+      "Markdown with YAML front matter, plus a Notion zip with PNG figures",
+      "Finalize to lock the entry; later changes become dated addenda"
+    ],
+    versions: [
+      { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" }
+    ]
   }
 
   /* ---------- TEMPLATE: copy this block for a new tool ----------

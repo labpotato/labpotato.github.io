@@ -162,21 +162,22 @@ const TOOLS = [
     name: "Lab Journal",
     tagline: "Write it down, or it did not happen",
     description:
-      "One page lab entry. Pick the experiment performed and the filler sentences change to match: what it is about, how it was done, changes from the normal protocol, Result, Issue and Potential fix / follow up. Save any line as a new filler for next time. Codes and identifier tags are remembered; images get crop and a caption each.",
+      "A lab report for the day. Experiments sit side by side and new ones are added to the right. Each has clearly coloured sections: what it is about, samples, how it was done with steps and bullets, changes from the normal protocol (before and this time), figures three across, results, issue and follow up. Save your own filler sentences with _ blanks.",
     icon: "flask",
     accent: "indigo",
     folder: "tools/lab-journal",
     features: [
-      "Choose the experiment first; fillers follow that choice",
-      "Save any line as a filler for future entries",
-      "Changes from the normal protocol: optimizations, new steps, deviations",
-      "Saved project codes and identifier tags",
-      "Images: crop only, one caption each; Markdown, zip or PDF out"
+      "One day per page; experiments added as columns to the right",
+      "Steps and bullet points that continue when you press Enter",
+      "Protocol changes recorded as before and this time",
+      "Figures three across above the results, crop only, one caption each",
+      "Your own filler sentences with _ blanks; codes and samples remembered"
     ],
     versions: [
       { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" },
       { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" },
-      { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" }
+      { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" },
+      { v: "v4", file: "lab-journal-v4.html", date: "2026-09-28" }
     ]
   }
 

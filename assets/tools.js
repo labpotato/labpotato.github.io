@@ -162,22 +162,23 @@ const TOOLS = [
     name: "Lab Journal",
     tagline: "Write it down, or it did not happen",
     description:
-      "A lab report for the day. Experiments sit side by side and new ones are added to the right. Each has clearly coloured sections: what it is about, samples, how it was done with steps and bullets, changes from the normal protocol (before and this time), figures three across, results, issue and follow up. Save your own filler sentences with _ blanks.",
+      "A lab report for the day in a calm notebook layout. Experiments sit side by side and new ones are added to the right. Each starts with its figures, then what it is about, a table of strains, plasmids and constructs, how it was done with steps and sub steps, changes from the normal protocol, results, issue and follow up. Names from the table are suggested as you type.",
     icon: "flask",
     accent: "indigo",
     folder: "tools/lab-journal",
     features: [
-      "One day per page; experiments added as columns to the right",
-      "Steps and bullet points that continue when you press Enter",
+      "Figures first, three across; crop only, one caption each",
+      "Strains, plasmids and constructs table; names suggested as you type (Tab to accept)",
+      "Steps 1., 1.1., 1.1.1. and sub bullets with Tab and Shift+Tab",
       "Protocol changes recorded as before and this time",
-      "Figures three across above the results, crop only, one caption each",
-      "Your own filler sentences with _ blanks; codes and samples remembered"
+      "Your own filler sentences with _ blanks; everything saved offline"
     ],
     versions: [
       { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" },
       { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" },
       { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" },
-      { v: "v4", file: "lab-journal-v4.html", date: "2026-09-28" }
+      { v: "v4", file: "lab-journal-v4.html", date: "2026-09-28" },
+      { v: "v5", file: "lab-journal-v5.html", date: "2026-09-28" }
     ]
   }
 

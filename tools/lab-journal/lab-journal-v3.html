@@ -90,6 +90,20 @@ dialog::backdrop{background:rgba(20,30,50,.5)}
 #print-root{display:none}
 @media (max-width:640px){.head-grid,.exp-head{grid-template-columns:1fr}}
 @media print{body>*:not(#print-root){display:none!important}#print-root{display:block}body{background:#fff;color:#000}.md img{max-height:14cm;break-inside:avoid}}
+.sec.aim{border-color:#8a7fd0}.sec.method{border-color:var(--muted)}.sec.change{border-color:var(--warn)}
+.blk-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.blk-top select{width:auto;min-width:200px;font-weight:650}
+.tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;min-height:38px}
+.tags:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tag{display:inline-flex;align-items:center;gap:3px;background:var(--accent-soft);color:var(--accent-strong);border-radius:999px;padding:2px 4px 2px 10px;font-size:13px;font-weight:600}
+.tag button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 4px}
+.tags input{border:0!important;box-shadow:none!important;background:transparent!important;flex:1;min-width:140px;padding:4px!important}
+.chg{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:6px;align-items:start;margin-bottom:6px}
+.chg select{font-size:13px}
+.chg .fill{grid-column:2/3}
+.subhint{font-size:12.5px;color:var(--muted);margin:2px 0 6px}
+.lib-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.chg{grid-template-columns:1fr}.chg .fill{grid-column:auto}.lib-grid{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -100,7 +114,7 @@ dialog::backdrop{background:rgba(20,30,50,.5)}
   <button class="btn" data-act="newEntry">New entry</button>
   <span class="grow"></span>
   <span id="saved" class="saved" role="status" aria-live="polite"></span>
-  <button class="btn" data-act="editTemplates">Edit templates</button>
+  <button class="btn" data-act="editLib">Fillers and saved lists</button>
   <button class="btn" data-act="theme" id="themeBtn">Theme</button>
 </div></div>
 <main id="app"></main>
@@ -112,11 +126,12 @@ dialog::backdrop{background:rgba(20,30,50,.5)}
   <p class="hint">The original is kept; only the crop rectangle is stored.</p>
 </dialog>
 
-<dialog id="tplDlg" aria-labelledby="tplTitle">
-  <div class="row between"><b id="tplTitle">Template sentences (one per line, ___ marks a blank)</b>
-    <div class="row"><button class="btn" data-act="tplDefaults">Restore defaults</button><button class="btn" data-act="tplCancel">Cancel</button><button class="btn pri" data-act="tplSave">Save</button></div></div>
-  <div id="tplBody"></div>
+<dialog id="libDlg" aria-labelledby="libTitle">
+  <div class="row between"><b id="libTitle">Fillers and saved lists</b>
+    <div class="row"><button class="btn" data-act="libExport">Back up library</button><button class="btn" data-act="libImport">Restore library</button><button class="btn" data-act="libClose">Cancel</button><button class="btn pri" data-act="libSave">Save</button></div></div>
+  <div id="libBody"></div>
 </dialog>
+<input type="file" id="fileLib" accept=".json,application/json" hidden>
 
 <input type="file" id="fileImg" accept="image/*,.tif,.tiff" multiple hidden>
 <input type="file" id="fileDraft" accept=".json,application/json" hidden>
@@ -1789,9 +1804,141 @@ dialog::backdrop{background:rgba(20,30,50,.5)}
 </script>
 <script>
 'use strict';
-/* Lab Entry v2: one page template. Date, experiment code, then per experiment:
-   identifiers, status, optional table, Result / Issue / Solution, images (crop only,
-   one caption each). Then Next / Tomorrow. Autosave to IndexedDB, images included. */
+/* Default filler library. ___ marks a blank. Every list is editable in the page and
+   saved in this browser; "Back up library" writes it to a file. */
+const SECTIONS = [
+  ['aim', 'What this experiment is about'], ['method', 'How it was done'], ['change', 'Changes from normal protocol'],
+  ['result', 'Result'], ['issue', 'Issue'], ['fix', 'Potential fix / follow up'], ['caption', 'Image captions'], ['next', 'Next / Tomorrow']
+];
+const GENERAL = {
+  aim: ['Test whether ___ gives ___.', 'Repeat ___ from ___ to confirm ___.', 'Troubleshoot ___ (previous result: ___).'],
+  method: ['Followed ___ protocol (version ___).', '___ µL reaction: ___.', 'Incubated ___ at ___ °C for ___.'],
+  change: ['___ changed from ___ to ___.', 'Added ___ step: ___.', 'Used ___ instead of ___.', 'Skipped ___ because ___.'],
+  result: ['Negative control clean; positive control ___.', '___ worked as expected.'],
+  issue: ['Result differs from previous run (___).', 'Contamination suspected in ___.', 'Controls did not behave as expected: ___.'],
+  fix: ['Repeat ___ with ___.', 'Increase ___ from ___ to ___.', 'Decrease ___ from ___ to ___.', 'Use fresh ___ (new lot ___).'],
+  caption: ['___ of ___. ___.'],
+  next: ['Repeat ___ with ___.', 'Prepare ___.', 'Order ___.']
+};
+const T = (name, o) => ({ id: name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), name, t: Object.assign({ aim: [], method: [], change: [], result: [], issue: [], fix: [], caption: [], next: [] }, o) });
+const DEFAULT_TYPES = [
+  T('PCR', {
+    aim: ['Amplify ___ from ___ for ___.'],
+    method: ['Polymerase ___, ___ µL reaction, ___ ng template.', 'Cycling: ___ °C ___ s, ___ cycles of (___ °C ___ s, ___ °C ___ s, ___ °C ___ s).'],
+    change: ['Annealing temperature changed from ___ to ___ °C.', 'Extension time changed from ___ to ___ s.', 'Added ___% DMSO.', 'Template amount changed from ___ to ___ ng.'],
+    result: ['Band at ___ bp in lanes ___ (expected ___ bp).', 'No band in lanes ___.'],
+    issue: ['No product for ___.', 'Unspecific bands at ___ bp.', 'Primer dimer at ___ bp.', 'Smear in lanes ___.'],
+    fix: ['Gradient PCR from ___ to ___ °C.', 'Redesign primers for ___.', 'Gel purify the ___ bp band.', 'DpnI digest the product before assembly.'],
+    caption: ['PCR of ___. Lane 1: ladder; lanes ___: ___. Expected ___ bp.'],
+    next: ['Gel purify ___.', 'Run PCR for ___.']
+  }),
+  T('Colony PCR', {
+    aim: ['Screen ___ colonies from ___ for ___.'],
+    method: ['Picked ___ colonies, primers ___ and ___, expected ___ bp.'],
+    change: ['Colony lysis changed to ___.', 'Number of cycles changed from ___ to ___.'],
+    result: ['___ of ___ colonies showed the expected band at ___ bp.', 'Positive colonies: ___.'],
+    issue: ['No colonies showed the expected band.', 'Band at ___ bp suggests ___.'],
+    fix: ['Screen more colonies (___).', 'Miniprep colonies ___ and sequence.'],
+    caption: ['Colony PCR of ___. Lane 1: ladder; lanes ___: colonies ___. Expected ___ bp.'],
+    next: ['Pick ___ colonies for colony PCR.', 'Inoculate positive colonies ___ overnight.']
+  }),
+  T('Gibson assembly', {
+    aim: ['Assemble ___ from fragments ___ into ___.'],
+    method: ['Vector ___ ng, insert ___ ng (ratio ___), ___ min at 50 °C.', 'Transformed ___ µL into ___.'],
+    change: ['Vector to insert ratio changed from ___ to ___.', 'Incubation changed from ___ to ___ min.', 'Used ___ master mix instead of ___.'],
+    result: ['___ colonies on assembly plate; ___ on vector only control.'],
+    issue: ['No colonies on the assembly plate.', 'High background on the vector only control (___ colonies).'],
+    fix: ['DpnI digest the vector.', 'Gel purify fragments before assembly.', 'Check overlaps (___ bp) and redesign.'],
+    caption: ['Transformation plates of ___ assembly after ___ h at 37 °C.'],
+    next: ['Colony PCR of ___ colonies.']
+  }),
+  T('Transformation', {
+    aim: ['Transform ___ into ___.'],
+    method: ['___ µL DNA into ___ µL ___ competent cells, heat shock ___ s at 42 °C, recovered ___ min.', 'Plated ___ µL on ___ with ___.'],
+    change: ['Recovery time changed from ___ to ___ min.', 'Plated ___ µL instead of ___ µL.', 'Used electroporation instead of heat shock.'],
+    result: ['___ colonies on ___ plate after ___ h at ___ °C.', 'Transformation efficiency ___ CFU/µg.'],
+    issue: ['No colonies on ___ plate.', 'Satellite colonies on ___ plate.'],
+    fix: ['Use fresh competent cells.', 'Check antibiotic concentration (___ µg/mL).'],
+    caption: ['___ plate after ___ h at ___ °C.'],
+    next: ['Transform ___ into ___.', 'Pick ___ colonies.']
+  }),
+  T('Miniprep', {
+    aim: ['Isolate plasmid ___ from ___.'],
+    method: ['___ mL overnight culture, ___ kit, eluted in ___ µL.'],
+    change: ['Culture volume changed from ___ to ___ mL.', 'Elution volume changed from ___ to ___ µL.'],
+    result: ['Yield: ___ ng/µL (A260/A280 ___, A260/A230 ___).'],
+    issue: ['Low yield: ___ ng/µL.', 'Low A260/A230 (___).'],
+    fix: ['Use more culture volume (___ mL).', 'Add an extra wash.'],
+    caption: ['Restriction digest of ___ with ___. Expected ___ bp.'],
+    next: ['Send ___ for sequencing.', 'Glycerol stock ___.']
+  }),
+  T('Sequencing', {
+    aim: ['Confirm the sequence of ___ in clone ___.'],
+    method: ['Sent ___ with primers ___ to ___.'],
+    change: [],
+    result: ['Sequencing confirmed ___ in clone ___.', 'Mutation ___ at position ___ in clone ___.'],
+    issue: ['Sequencing failed or low quality for ___.', 'Read stopped at ___.'],
+    fix: ['Resend ___ with primer ___.', 'Sequence the other strand.'],
+    caption: ['Alignment of clone ___ to reference ___.'],
+    next: ['Glycerol stock the verified clone ___.']
+  }),
+  T('Gel electrophoresis', {
+    aim: ['Check ___ on a gel.'],
+    method: ['___% agarose, ___ V for ___ min, ladder ___.'],
+    change: ['Gel percentage changed from ___ to ___%.'],
+    result: ['Band at ___ bp in lanes ___; no band in lanes ___.'],
+    issue: ['Smear in lanes ___.', 'Ladder not resolved.'],
+    fix: ['Load less DNA (___ ng).', 'Run longer at lower voltage.'],
+    caption: ['Agarose gel of ___. Lane 1: ladder; lanes ___: ___.'],
+    next: []
+  }),
+  T('Phage plaque assay', {
+    aim: ['Test infection of ___ by phage ___.', 'Titer phage lysate ___.'],
+    method: ['Top agar ___% with ___ µL host ___, spotted ___ µL of dilutions ___.'],
+    change: ['Top agar changed from ___ to ___%.', 'Host OD600 changed from ___ to ___.', 'Added ___ mM CaCl2 and MgSO4.'],
+    result: ['Plaques at dilution ___; titer ___ PFU/mL.', 'Clearing at ___ but no single plaques.'],
+    issue: ['No plaques on ___ lawn.', 'Lawn uneven or too thin.'],
+    fix: ['Use host at OD600 ___.', 'Test lower dilutions (___).'],
+    caption: ['Plaque assay of ___ on ___ lawn, dilutions ___.'],
+    next: ['Amplify phage ___ on ___.', 'Titer ___ phage lysate.']
+  }),
+  T('Growth curve', {
+    aim: ['Measure growth of ___ under ___.'],
+    method: ['OD600 read every ___ min at ___ °C in ___, ___ replicates.'],
+    change: ['Starting OD600 changed from ___ to ___.', 'Medium changed from ___ to ___.'],
+    result: ['OD600 reached ___ after ___ h.', 'Lag phase ___ h; doubling time ___ min.'],
+    issue: ['High variation between replicates (___).', 'Evaporation in edge wells.'],
+    fix: ['Seal the plate with ___.', 'Leave edge wells empty.'],
+    caption: ['Growth curve of ___ at ___ °C (mean of ___ replicates).'],
+    next: []
+  }),
+  T('Protein expression', {
+    aim: ['Express ___ in ___.'],
+    method: ['Induced at OD600 ___ with ___ mM IPTG, ___ °C for ___ h.'],
+    change: ['Induction temperature changed from ___ to ___ °C.', 'IPTG changed from ___ to ___ mM.'],
+    result: ['Band at ___ kDa in ___ fraction (expected ___ kDa).'],
+    issue: ['Protein mostly insoluble.', 'No induced band at ___ kDa.'],
+    fix: ['Induce at lower temperature (___ °C).', 'Try ___ strain.'],
+    caption: ['SDS PAGE of ___ fractions. Expected band ___ kDa.'],
+    next: ['Purify ___.']
+  }),
+  T('Microscopy', {
+    aim: ['Image ___ to check ___.'],
+    method: ['___× objective, ___ channel, exposure ___ ms.'],
+    change: ['Exposure changed from ___ to ___ ms.'],
+    result: ['___ observed in ___% of cells (n = ___).'],
+    issue: ['Signal too weak in ___.', 'Out of focus in ___.'],
+    fix: ['Increase exposure to ___ ms.'],
+    caption: ['Microscopy of ___, ___× objective, ___ channel. Scale bar ___ µm.'],
+    next: []
+  }),
+  T('Other', {})
+];
+
+/* Lab Entry v3. Per experiment: type (loads its fillers), what it is about, identifier
+   tags, how it was done, changes from normal protocol, status, table, Result, Issue,
+   Potential fix / follow up, images (crop only, one caption each). Then Next / Tomorrow.
+   Entries, images, fillers, saved codes and tags live in IndexedDB in this browser. */
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const $ = (s, r = document) => r.querySelector(s);
@@ -1806,6 +1953,8 @@ const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
 const lines = s => String(s || '').replace(/\r/g, '').split('\n').map(x => x.trim()).filter(Boolean);
 const slug = s => String(s || '').replace(/[µμ]/g, 'u').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 const clamp = (v, a, b) => Math.min(b, Math.max(a, Number(v) || 0));
+const clone = o => JSON.parse(JSON.stringify(o));
+const uniq = a => [...new Set(a.map(clean).filter(Boolean))];
 let _tt; function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 3500); }
 function download(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 const readDataUrl = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
@@ -1813,69 +1962,7 @@ const loadEl = src => new Promise((res, rej) => { const i = new Image(); i.onloa
 const getPath = (o, p) => p.split('.').reduce((a, k) => a == null ? undefined : a[k], o);
 function setPath(o, p, v){ const k = p.split('.'); let a = o; for (let i = 0; i < k.length - 1; i++) a = a[k[i]]; a[k[k.length - 1]] = v; }
 
-// ── Template sentences (editable, stored in this browser) ────────────────────
-const DEFAULT_TPL = {
-  result: [
-    '___ colonies on ___ plate after ___ h at ___ °C.',
-    'Colony PCR: ___ of ___ colonies showed the expected band at ___ bp.',
-    'Gel: band at ___ bp in lanes ___; no band in lanes ___.',
-    'Sequencing confirmed ___ in clone ___.',
-    'Sequencing showed ___ at position ___ in clone ___.',
-    'Miniprep yield: ___ ng/µL (A260/A280 ___).',
-    'Plaques at dilution ___; titer ___ PFU/mL.',
-    'No plaques on ___ lawn.',
-    'OD600 reached ___ after ___ h at ___ °C.',
-    'Protein band at ___ kDa in ___ fraction.',
-    'Negative control clean; positive control ___.'
-  ],
-  issue: [
-    'No colonies on ___ plate.',
-    'Colonies on the negative control plate (___ colonies).',
-    'Unexpected band at ___ bp in lanes ___.',
-    'Smear in lanes ___.',
-    'No band for ___.',
-    'Primer dimer at ___ bp.',
-    'Sequencing failed or low quality for ___.',
-    'Low yield: ___ ng/µL.',
-    'Contamination suspected in ___.',
-    'Result differs from previous run (___).'
-  ],
-  solution: [
-    'Repeat ___ with ___.',
-    'Increase ___ from ___ to ___.',
-    'Decrease ___ from ___ to ___.',
-    'Use fresh ___ (new lot ___).',
-    'Redesign primers for ___.',
-    'Gel purify ___ before ___.',
-    'DpnI digest the template before transformation.',
-    'Screen more colonies (___).',
-    'Send ___ for sequencing.',
-    'Check ___ on a gel before continuing.'
-  ],
-  next: [
-    'Pick ___ colonies for colony PCR.',
-    'Miniprep ___ and send for sequencing.',
-    'Inoculate ___ overnight in ___ with ___.',
-    'Transform ___ into ___.',
-    'Run a gel for ___.',
-    'Titer ___ phage lysate.',
-    'Prepare ___ plates or media.',
-    'Glycerol stock ___.'
-  ],
-  caption: [
-    'Agarose gel of ___. Lane 1: ladder; lanes ___: ___.',
-    'Colony PCR of ___. Expected band ___ bp.',
-    '___ plate after ___ h at ___ °C.',
-    'Plaque assay of ___ on ___ lawn, dilution ___.',
-    'SDS PAGE of ___ fractions. Expected band ___ kDa.',
-    'Microscopy of ___, ___× magnification.'
-  ]
-};
-const TPL_LABELS = { result: 'Result', issue: 'Issue', solution: 'Solution', next: 'Next / Tomorrow', caption: 'Image captions' };
-let TPL = JSON.parse(JSON.stringify(DEFAULT_TPL));
-const STATUS = [['worked', 'Worked'], ['partly', 'Partly worked'], ['failed', 'Failed'], ['pending', 'Pending']];
-
-// ── Storage ──────────────────────────────────────────────────────────────────
+// ── Storage (same database as v2, so v2 entries carry over) ──────────────────
 const DB = { db: null, ok: false,
   open(){ return new Promise(res => { let r; try { r = indexedDB.open('lab-entry-v2', 1); } catch (e){ return res(false); }
     r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('entries', { keyPath: 'id' }); const s = d.createObjectStore('images', { keyPath: 'id' }); s.createIndex('entryId', 'entryId'); d.createObjectStore('settings', { keyPath: 'key' }); };
@@ -1889,13 +1976,48 @@ const DB = { db: null, ok: false,
   all: s => DB.req(s, 'readonly', st => st.getAll()),
   imagesFor: id => DB.req('images', 'readonly', st => st.index('entryId').getAll(id))
 };
+const setting = async (k, def) => { if (!DB.ok) return def; try { const r = await DB.get('settings', k); return r ? r.value : def; } catch (e){ return def; } };
+const saveSetting = (k, v) => DB.ok ? DB.put('settings', { key: k, value: v }).catch(() => {}) : Promise.resolve();
 
-// ── State ────────────────────────────────────────────────────────────────────
-let E = null, ALL = [];
-const IMG = new Map();            // image id -> { id, name, dataUrl, el, w, h }
-let activeBlock = null;           // block that receives pasted images
-const newBlock = () => ({ id: uid(), title: '', ids: '', status: '', table: null, result: '', issue: '', solution: '', images: [] });
+// ── Library: fillers per experiment type, saved codes, saved tags ────────────
+let LIB = { general: clone(GENERAL), types: clone(DEFAULT_TYPES) };
+let CODES = [], TAGS = [];
+const typeOf = id => LIB.types.find(t => t.id === id) || null;
+const saveLib = () => saveSetting('library', LIB);
+function rememberCode(c){ c = clean(c); if (c && !CODES.includes(c)){ CODES.push(c); CODES.sort(); saveSetting('codes', CODES); } }
+function rememberTag(t){ t = clean(t); if (t && !TAGS.includes(t)){ TAGS.push(t); TAGS.sort(); saveSetting('tags', TAGS); } }
+function fillersFor(sec, typeIds){
+  const own = uniq(typeIds.flatMap(id => (typeOf(id) || { t: {} }).t[sec] || []));
+  return { own, general: (LIB.general[sec] || []).filter(x => !own.includes(x)) };
+}
+function addFiller(sec, typeId, text){
+  text = clean(text); if (!text){ toast('Nothing to save: put the cursor on a line first.'); return; }
+  const tgt = typeOf(typeId), list = tgt ? tgt.t[sec] : LIB.general[sec];
+  if (list.includes(text)){ toast('That filler is already saved.'); return; }
+  list.push(text); saveLib(); render();
+  toast(`Saved as a ${SEC_NAME[sec]} filler for ${tgt ? tgt.name : 'every experiment type'}.`);
+}
+const SEC_NAME = Object.fromEntries(SECTIONS);
+
+// ── Entry model ──────────────────────────────────────────────────────────────
+const CHANGE_KINDS = [['optimization', 'Optimization'], ['new', 'New, not in protocol'], ['deviation', 'Deviation']];
+const STATUS = [['worked', 'Worked'], ['partly', 'Partly worked'], ['failed', 'Failed'], ['pending', 'Pending']];
+const newBlock = () => ({ id: uid(), type: '', aim: '', tags: [], protocol: '', method: '', standard: false, changes: [], status: '', table: null, result: '', issue: '', fix: '', images: [] });
 const newEntry = () => ({ id: uid(), date: localDate(), code: '', blocks: [newBlock()], next: '', updatedAt: '' });
+function migrate(e){
+  e.blocks = (e.blocks || []).map(b => {
+    const nb = Object.assign(newBlock(), b);
+    if (b.title && !b.aim) nb.aim = b.title;
+    if (typeof b.ids === 'string' && !b.tags) nb.tags = uniq(b.ids.split(','));
+    if (b.solution && !b.fix) nb.fix = b.solution;
+    delete nb.title; delete nb.ids; delete nb.solution; return nb;
+  });
+  if (!e.blocks.length) e.blocks.push(newBlock());
+  return e;
+}
+let E = null, ALL = [];
+const IMG = new Map();
+let activeBlock = null;
 const entryLabel = x => `${x.date} ${clean(x.code) || 'untitled'}`;
 const fileBase = () => `${E.date}_${slug(E.code) || 'lab_entry'}`;
 
@@ -1906,19 +2028,22 @@ function scheduleSave(){ saved('saving'); clearTimeout(saveT); saveT = setTimeou
 async function saveNow(){ clearTimeout(saveT); saveT = null; if (!E) return; if (!DB.ok){ saved('bad'); return; }
   E.updatedAt = new Date().toISOString(); try { await DB.put('entries', E); saved('ok'); fillPicker(); } catch (e){ saved('bad'); } }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveT) saveNow(); });
-
-// ── Figure numbering (automatic, across the whole entry) ─────────────────────
 function figNumbers(){ const m = {}; let n = 0; E.blocks.forEach(b => b.images.forEach(im => { m[im.id] = ++n; })); return m; }
 
 // ── Render ───────────────────────────────────────────────────────────────────
-function tplSelect(kind, target){
-  return `<select aria-label="Insert a ${TPL_LABELS[kind]} template sentence" data-tpl="${kind}" data-target="${target}">
-    <option value="">Insert template sentence</option>${TPL[kind].map((t, i) => `<option value="${i}">${esc(t)}</option>`).join('')}</select>`;
+function fillerSelect(sec, target, typeIds){
+  const f = fillersFor(sec, typeIds);
+  const opt = (arr, g) => arr.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  return `<select aria-label="Insert a ${SEC_NAME[sec]} filler" data-fill="${target}">
+    <option value="">Insert filler sentence</option>
+    ${f.own.length ? `<optgroup label="${esc(typeIds.map(id => (typeOf(id) || {}).name).filter(Boolean).join(', ') || 'This type')}">${opt(f.own)}</optgroup>` : ''}
+    ${f.general.length ? `<optgroup label="Any experiment">${opt(f.general)}</optgroup>` : ''}</select>`;
 }
-function sec(kind, path, label, val){
-  return `<div class="sec ${kind}"><div class="sec-top"><b>${label}</b>${tplSelect(kind, path)}
-    <button class="btn sm" data-act="nextBlank" data-arg="${path}" title="Select the next ___ blank">Next blank</button></div>
-    <textarea data-bind="${path}" rows="3" aria-label="${label}">${esc(val)}</textarea></div>`;
+function sec(secKey, path, typeIds, typeId, val, rows){
+  return `<div class="sec ${secKey}"><div class="sec-top"><b>${SEC_NAME[secKey]}</b>${fillerSelect(secKey, path, typeIds)}
+    <button class="btn sm" data-act="nextBlank" data-arg="${path}" title="Select the next ___ blank">Next blank</button>
+    <button class="btn sm" data-act="saveFiller" data-arg="${secKey}|${typeId}|${path}" title="Save the line at the cursor as a filler for future entries">Save line as filler</button></div>
+    <textarea data-bind="${path}" rows="${rows || 3}" aria-label="${SEC_NAME[secKey]}">${esc(val)}</textarea></div>`;
 }
 function tableHtml(b, bi){
   const t = b.table; if (!t) return '';
@@ -1929,32 +2054,65 @@ function tableHtml(b, bi){
     <button class="btn sm" data-act="tDelRow" data-arg="${bi}">Remove last row</button><button class="btn sm" data-act="tDelCol" data-arg="${bi}">Remove last column</button>
     <button class="btn sm x" data-act="tRemove" data-arg="${bi}">Remove table</button></div>`;
 }
+function changesHtml(b, bi){
+  const tids = [b.type];
+  return `<div class="sec change"><div class="sec-top"><b>${SEC_NAME.change}</b>
+      <label class="row" style="font-size:13.5px;gap:6px"><input type="checkbox" data-check="blocks.${bi}.standard" ${b.standard ? 'checked' : ''}> Standard protocol, no changes</label></div>
+    ${b.standard ? '' : `${b.changes.map((c, ci) => `<div class="chg">
+        <select data-bind="blocks.${bi}.changes.${ci}.kind" aria-label="Change ${ci + 1} kind">${CHANGE_KINDS.map(([v, t]) => `<option value="${v}" ${c.kind === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+        <input type="text" data-bind="blocks.${bi}.changes.${ci}.text" value="${esc(c.text)}" aria-label="Change ${ci + 1} description">
+        <div class="row"><button class="btn sm" data-act="saveFiller" data-arg="change|${b.type}|blocks.${bi}.changes.${ci}.text" title="Save as a filler for future entries">Save as filler</button>
+          <button class="btn sm x" data-act="delChange" data-arg="${bi}.${ci}" aria-label="Remove change ${ci + 1}">Remove</button></div>
+        <div class="fill">${fillerSelect('change', `blocks.${bi}.changes.${ci}.text`, tids)}</div></div>`).join('')}
+      <div class="row">${CHANGE_KINDS.map(([v, t]) => `<button class="btn sm" data-act="addChange" data-arg="${bi}.${v}">Add ${t.split(',')[0].toLowerCase()}</button>`).join('')}</div>`}
+  </div>`;
+}
+function tagsHtml(b, bi){
+  return `<label class="f">Identifiers (tags)<div class="tags" data-tags="${bi}">
+    ${b.tags.map((t, ti) => `<span class="tag">${esc(t)}<button data-act="delTag" data-arg="${bi}.${ti}" aria-label="Remove tag ${esc(t)}">×</button></span>`).join('')}
+    <input type="text" data-taginput="${bi}" list="dlTags" placeholder="Type, then Enter or comma" aria-label="Add identifier tag"></div></label>`;
+}
 function render(){
   if (!E) return;
   const nums = figNumbers();
-  const known = [...new Set(ALL.flatMap(x => x.blocks.flatMap(b => String(b.ids || '').split(',').map(clean))).filter(Boolean))].sort();
-  const codes = [...new Set(ALL.map(x => clean(x.code)).filter(Boolean))].sort();
+  const codes = uniq([...CODES, ...ALL.map(x => x.code)]).sort();
+  const tagList = uniq([...TAGS, ...ALL.flatMap(x => x.blocks.flatMap(b => b.tags || []))]).sort();
+  const protos = uniq(ALL.flatMap(x => x.blocks.map(b => b.protocol || ''))).sort();
+  const usedTypes = uniq(E.blocks.map(b => b.type));
   $('#app').innerHTML = `
   <div class="card"><div class="head-grid">
     <label class="f">Date<input type="date" id="fDate" data-bind="date" value="${esc(E.date)}"></label>
-    <label class="f">Experiment or project code<input type="text" id="fCode" data-bind="code" value="${esc(E.code)}" list="dlCodes" autocomplete="off"></label>
-  </div></div>
+    <label class="f">Experiment or project code<input type="text" id="fCode" data-bind="code" value="${esc(E.code)}" list="dlCodes" autocomplete="off" placeholder="Pick a saved code or type a new one"></label>
+  </div>${codes.length ? `<div class="row" style="margin-top:8px"><span class="hint">Saved codes:</span>${codes.slice(0, 12).map(c => `<button class="btn sm" data-act="useCode" data-arg="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}</div>
   <datalist id="dlCodes">${codes.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
-  <datalist id="dlIds">${known.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
-  ${E.blocks.map((b, bi) => `
+  <datalist id="dlTags">${tagList.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+  <datalist id="dlProtocols">${protos.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+  ${E.blocks.map((b, bi) => { const P = `blocks.${bi}`, tids = [b.type]; return `
   <section class="card" data-block="${bi}" aria-label="Experiment ${bi + 1}">
-    <div class="exp-head">
-      <label class="f"><span class="exp-num">Experiment ${bi + 1}</span><input type="text" data-bind="blocks.${bi}.title" value="${esc(b.title)}" aria-label="Experiment ${bi + 1} short title" placeholder="Short title"></label>
-      <label class="f">Identifiers (constructs, strains, plasmids, samples)<input type="text" data-bind="blocks.${bi}.ids" value="${esc(b.ids)}" list="dlIds" autocomplete="off" placeholder="Separate with commas"></label>
-      <div class="row">${bi > 0 ? `<button class="btn sm" data-act="moveUp" data-arg="${bi}" aria-label="Move experiment ${bi + 1} up">Up</button>` : ''}
-        <button class="btn sm x" data-act="delBlock" data-arg="${bi}" aria-label="Delete experiment ${bi + 1}">Delete</button></div>
+    <div class="blk-top"><span class="exp-num">Experiment ${bi + 1}</span>
+      <select data-bind="${P}.type" aria-label="Experiment ${bi + 1}: which experiment was performed">
+        <option value="">Choose the experiment performed</option>${LIB.types.map(t => `<option value="${t.id}" ${b.type === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
+        <option value="__new">Add a new experiment type</option></select>
+      ${b.status ? '' : ''}<span class="grow" style="flex:1"></span>
+      ${bi > 0 ? `<button class="btn sm" data-act="moveUp" data-arg="${bi}" aria-label="Move experiment ${bi + 1} up">Up</button>` : ''}
+      <button class="btn sm x" data-act="delBlock" data-arg="${bi}" aria-label="Delete experiment ${bi + 1}">Delete</button></div>
+    ${b.type ? '' : '<p class="subhint">Choose the experiment first; the filler sentences below follow that choice.</p>'}
+    <div class="ris">
+      ${sec('aim', P + '.aim', tids, b.type, b.aim, 2)}
+      ${tagsHtml(b, bi)}
+      <div class="sec method"><div class="sec-top"><b>${SEC_NAME.method}</b>${fillerSelect('method', P + '.method', tids)}
+        <button class="btn sm" data-act="nextBlank" data-arg="${P}.method">Next blank</button>
+        <button class="btn sm" data-act="saveFiller" data-arg="method|${b.type}|${P}.method">Save line as filler</button></div>
+        <input type="text" data-bind="${P}.protocol" value="${esc(b.protocol)}" list="dlProtocols" placeholder="Protocol followed (name or version)" aria-label="Protocol followed" style="margin-bottom:6px">
+        <textarea data-bind="${P}.method" rows="3" aria-label="How it was done, steps">${esc(b.method)}</textarea></div>
+      ${changesHtml(b, bi)}
     </div>
-    <div class="status" role="radiogroup" aria-label="Experiment ${bi + 1} status">${STATUS.map(([v, t]) => `<label><input type="radio" name="st${b.id}" data-bind="blocks.${bi}.status" value="${v}" ${b.status === v ? 'checked' : ''}><span class="s-${v}">${t}</span></label>`).join('')}</div>
+    <div class="status" role="radiogroup" aria-label="Experiment ${bi + 1} status" style="margin-top:10px">${STATUS.map(([v, t]) => `<label><input type="radio" name="st${b.id}" data-bind="${P}.status" value="${v}" ${b.status === v ? 'checked' : ''}><span class="s-${v}">${t}</span></label>`).join('')}</div>
     ${b.table ? tableHtml(b, bi) : `<button class="btn sm" data-act="tAdd" data-arg="${bi}">Add table</button>`}
     <div class="ris" style="margin-top:10px">
-      ${sec('result', `blocks.${bi}.result`, 'Result', b.result)}
-      ${sec('issue', `blocks.${bi}.issue`, 'Issue', b.issue)}
-      ${sec('solution', `blocks.${bi}.solution`, 'Solution', b.solution)}
+      ${sec('result', P + '.result', tids, b.type, b.result)}
+      ${sec('issue', P + '.issue', tids, b.type, b.issue)}
+      ${sec('fix', P + '.fix', tids, b.type, b.fix)}
     </div>
     ${b.images.length ? `<div class="imgs">${b.images.map((im, ii) => { const I = IMG.get(im.imageId); return `
       <div class="img"><span class="fig">Figure ${nums[im.id]}${I ? '' : ' (image missing)'}</span>
@@ -1962,13 +2120,14 @@ function render(){
         <div class="row"><button class="btn sm" data-act="crop" data-arg="${bi}.${ii}">Crop</button>
           <button class="btn sm x" data-act="delImg" data-arg="${bi}.${ii}" aria-label="Remove Figure ${nums[im.id]}">Remove</button>
           <span class="hint">${I ? esc(I.name) : ''}</span></div>
-        ${tplSelect('caption', `blocks.${bi}.images.${ii}.caption`)}
-        <textarea data-bind="blocks.${bi}.images.${ii}.caption" rows="2" aria-label="Caption for Figure ${nums[im.id]}" placeholder="Caption">${esc(im.caption)}</textarea>
+        ${fillerSelect('caption', `${P}.images.${ii}.caption`, tids)}
+        <textarea data-bind="${P}.images.${ii}.caption" rows="2" aria-label="Caption for Figure ${nums[im.id]}" placeholder="Caption">${esc(im.caption)}</textarea>
+        <button class="btn sm" data-act="saveFiller" data-arg="caption|${b.type}|${P}.images.${ii}.caption">Save caption as filler</button>
       </div>`; }).join('')}</div>` : ''}
     <div class="drop" data-drop="${bi}" data-act="pick" data-arg="${bi}" role="button" tabindex="0">Add images: click, drop, or paste (Control V)</div>
-  </section>`).join('')}
+  </section>`; }).join('')}
   <div class="row" style="margin-bottom:14px"><button class="btn pri" data-act="addBlock">Add experiment</button></div>
-  <section class="card">${sec('next', 'next', 'Next / Tomorrow', E.next)}</section>
+  <section class="card">${sec('next', 'next', usedTypes, usedTypes.length === 1 ? usedTypes[0] : '', E.next)}</section>
   <section class="card"><div class="row">
     <button class="btn pri" data-act="copyMd">Copy Markdown</button>
     <button class="btn" data-act="dlMd">Download Markdown</button>
@@ -1997,40 +2156,88 @@ function fillPicker(){
   const list = ALL.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
   $('#entryPick').innerHTML = list.map(x => `<option value="${x.id}" ${x.id === E.id ? 'selected' : ''}>${esc(entryLabel(x))}</option>`).join('');
 }
+/* Re-render but keep the cursor where it was. */
+function rerender(){
+  const a = document.activeElement, key = a && (a.dataset.bind || a.dataset.taginput);
+  const sel = a && a.selectionStart != null ? [a.selectionStart, a.selectionEnd] : null;
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+  if (key){ const n = $(`[data-bind="${key}"]`) || $(`[data-taginput="${key}"]`); if (n){ n.focus({ preventScroll: true }); if (sel) try { n.setSelectionRange(sel[0], sel[1]); } catch (e){} } }
+}
 
 // ── Binding ──────────────────────────────────────────────────────────────────
 const app = $('#app');
 app.addEventListener('input', e => {
   const el = e.target;
-  if (el.dataset.bind && !(el.type === 'radio')){ setPath(E, el.dataset.bind, el.value); scheduleSave();
-    if (el.dataset.bind === 'date' || el.dataset.bind === 'code'){ $('#fname').textContent = fileBase() + '.md'; } }
+  if (el.dataset.bind && el.type !== 'radio' && el.tagName !== 'SELECT'){ setPath(E, el.dataset.bind, el.value); scheduleSave();
+    if (el.dataset.bind === 'date' || el.dataset.bind === 'code') $('#fname').textContent = fileBase() + '.md'; }
+  if (el.dataset.taginput != null && e.inputType === 'insertReplacementText') addTag(+el.dataset.taginput, el.value);
 });
 app.addEventListener('change', e => {
   const el = e.target;
-  if (el.type === 'radio' && el.checked && el.dataset.bind){ setPath(E, el.dataset.bind, el.value); scheduleSave(); }
-  if (el.dataset.tpl && el.value !== ''){ insertTemplate(el.dataset.target, TPL[el.dataset.tpl][+el.value]); el.value = ''; }
+  if (el.type === 'radio' && el.checked && el.dataset.bind){ setPath(E, el.dataset.bind, el.value); scheduleSave(); return; }
+  if (el.dataset.check){ setPath(E, el.dataset.check, el.checked); scheduleSave(); rerender(); return; }
+  if (el.dataset.fill && el.value !== ''){ insertFiller(el.dataset.fill, el.value); el.value = ''; return; }
+  if (el.tagName === 'SELECT' && el.dataset.bind){
+    if (/^blocks\.\d+\.type$/.test(el.dataset.bind) && el.value === '__new'){ newType(el); return; }
+    setPath(E, el.dataset.bind, el.value); scheduleSave(); if (/\.type$/.test(el.dataset.bind)) rerender(); return;
+  }
+  if (el.id === 'fCode'){ rememberCode(el.value); }
+  if (el.dataset.bind === 'code' || el.dataset.bind === 'date') fillPicker();
 });
 app.addEventListener('focusin', e => { const b = e.target.closest('[data-block]'); if (b) activeBlock = +b.dataset.block; });
-function insertTemplate(path, text){
-  const ta = $(`textarea[data-bind="${path}"]`); if (!ta) return;
-  const v = ta.value, pre = v && !v.endsWith('\n') ? '\n' : '';
-  const start = v.length + pre.length;
-  ta.value = v + pre + text; setPath(E, path, ta.value); scheduleSave();
-  ta.focus(); const k = ta.value.indexOf('___', start);
-  if (k >= 0) ta.setSelectionRange(k, k + 3); else ta.setSelectionRange(ta.value.length, ta.value.length);
+app.addEventListener('keydown', e => {
+  const el = e.target; if (el.dataset.taginput == null) return;
+  const bi = +el.dataset.taginput;
+  if (e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTag(bi, el.value); }
+  else if (e.key === 'Backspace' && !el.value && E.blocks[bi].tags.length){ E.blocks[bi].tags.pop(); scheduleSave(); rerender(); }
+});
+app.addEventListener('focusout', e => { const el = e.target; if (el.dataset.taginput != null && clean(el.value)) addTag(+el.dataset.taginput, el.value, true); });
+function addTag(bi, v, noFocus){
+  const parts = uniq(String(v).split(',')); if (!parts.length) return;
+  const b = E.blocks[bi]; parts.forEach(t => { if (!b.tags.includes(t)) b.tags.push(t); rememberTag(t); });
+  scheduleSave(); if (noFocus) render(); else { render(); const n = $(`[data-taginput="${bi}"]`); if (n) n.focus(); }
+}
+function insertFiller(path, text){
+  const el = $(`[data-bind="${path}"]`); if (!el) return;
+  if (el.tagName === 'INPUT'){ el.value = el.value ? el.value + ' ' + text : text; }
+  else { const v = el.value; el.value = v + (v && !v.endsWith('\n') ? '\n' : '') + text; }
+  const start = el.value.length - text.length;
+  setPath(E, path, el.value); scheduleSave();
+  el.focus(); const k = el.value.indexOf('___', start);
+  if (k >= 0) el.setSelectionRange(k, k + 3); else el.setSelectionRange(el.value.length, el.value.length);
 }
 function nextBlank(path){
-  const ta = $(`textarea[data-bind="${path}"]`); if (!ta) return;
-  let k = ta.value.indexOf('___', ta.selectionEnd); if (k < 0) k = ta.value.indexOf('___');
-  ta.focus(); if (k >= 0) ta.setSelectionRange(k, k + 3); else toast('No blanks left.');
+  const el = $(`[data-bind="${path}"]`); if (!el) return;
+  let k = el.value.indexOf('___', el.selectionEnd); if (k < 0) k = el.value.indexOf('___');
+  el.focus(); if (k >= 0) el.setSelectionRange(k, k + 3); else toast('No blanks left.');
 }
+/* The line at the cursor (or the selected text) becomes a filler for this experiment type. */
+function lineAtCursor(el){
+  const v = el.value; if (el.tagName === 'INPUT') return v;
+  if (el.selectionStart !== el.selectionEnd) return v.slice(el.selectionStart, el.selectionEnd);
+  const p = el.selectionStart != null ? el.selectionStart : v.length;
+  const s = v.lastIndexOf('\n', p - 1) + 1, e = v.indexOf('\n', p);
+  const line = v.slice(s, e < 0 ? v.length : e);
+  return clean(line) ? line : lines(v).pop() || '';
+}
+const lastCaret = new WeakMap();
+app.addEventListener('focusout', e => { const el = e.target; if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') lastCaret.set(el, [el.selectionStart, el.selectionEnd]); });
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 const A = {};
+document.addEventListener('mousedown', e => { if (e.target.closest('[data-act="saveFiller"]')) e.preventDefault(); });
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || !A[el.dataset.act]) return; e.preventDefault(); A[el.dataset.act](el.dataset.arg, el); });
 document.addEventListener('keydown', e => { const el = e.target; if ((e.key === 'Enter' || e.key === ' ') && el.matches && el.matches('.drop,canvas[data-act]')){ e.preventDefault(); el.click(); } });
 A.nextBlank = p => nextBlank(p);
-A.addBlock = () => { E.blocks.push(newBlock()); scheduleSave(); render(); const s = $$('[data-block]').pop(); s && s.querySelector('input').focus(); };
+A.saveFiller = arg => { const [secKey, typeId, path] = arg.split('|'); const el = $(`[data-bind="${path}"]`); if (!el) return;
+  const c = lastCaret.get(el); if (c && document.activeElement !== el){ try { el.setSelectionRange(c[0], c[1]); } catch (x){} }
+  addFiller(secKey, typeId, lineAtCursor(el)); };
+A.useCode = c => { E.code = c; scheduleSave(); render(); fillPicker(); };
+A.delTag = arg => { const [bi, ti] = arg.split('.').map(Number); E.blocks[bi].tags.splice(ti, 1); scheduleSave(); render(); };
+A.addChange = arg => { const [bi, kind] = arg.split('.'); E.blocks[+bi].changes.push({ id: uid(), kind, text: '' }); scheduleSave(); render();
+  const ins = $$(`[data-block="${bi}"] .chg input`); ins.length && ins[ins.length - 1].focus(); };
+A.delChange = arg => { const [bi, ci] = arg.split('.').map(Number); E.blocks[bi].changes.splice(ci, 1); scheduleSave(); render(); };
+A.addBlock = () => { const prev = E.blocks[E.blocks.length - 1]; const nb = newBlock(); E.blocks.push(nb); scheduleSave(); render(); const s = $$('[data-block]').pop(); s && s.querySelector('select').focus(); };
 A.delBlock = i => { if (!confirm(`Delete Experiment ${+i + 1}?`)) return; E.blocks.splice(+i, 1); if (!E.blocks.length) E.blocks.push(newBlock()); scheduleSave(); render(); };
 A.moveUp = i => { i = +i; const [b] = E.blocks.splice(i, 1); E.blocks.splice(i - 1, 0, b); scheduleSave(); render(); };
 A.tAdd = i => { E.blocks[+i].table = { cols: ['Sample', 'Value', 'Note'], rows: [['', '', ''], ['', '', '']] }; scheduleSave(); render(); };
@@ -2051,6 +2258,15 @@ A.theme = () => { const o = ['system', 'light', 'dark'], cur = document.document
   try { localStorage.setItem('lab-entry-theme', nx); } catch (x){} $('#themeBtn').textContent = 'Theme: ' + nx; };
 A.newEntry = async () => { await saveNow(); const e = newEntry(); ALL.push(e); await openEntry(e); scheduleSave(); toast('New entry.'); };
 $('#entryPick').addEventListener('change', async e => { const id = e.target.value; await saveNow(); const x = ALL.find(y => y.id === id); if (x) openEntry(x); });
+function newType(sel){
+  const name = clean(prompt('Name of the new experiment type (for example Western blot):') || '');
+  if (!name){ sel.value = getPath(E, sel.dataset.bind) || ''; return; }
+  let t = LIB.types.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if (!t){ t = { id: slug(name) + '_' + uid().slice(-3), name, t: { aim: [], method: [], change: [], result: [], issue: [], fix: [], caption: [], next: [] } };
+    const other = LIB.types.findIndex(x => x.id === 'other'); LIB.types.splice(other < 0 ? LIB.types.length : other, 0, t); saveLib(); }
+  setPath(E, sel.dataset.bind, t.id); scheduleSave(); rerender();
+  toast(`${name} added. Use "Save line as filler" to build its fillers as you write.`);
+}
 
 // ── Images ───────────────────────────────────────────────────────────────────
 const OK_EXT = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'heic', 'heif'];
@@ -2070,9 +2286,7 @@ async function addImages(files, bi){
   for (const f of list){
     const name = f.name || `pasted_${localDate()}_${localTime().replace(/:/g, '')}.png`, x = extOf(name);
     try {
-      let dataUrl;
-      if (x === 'tif' || x === 'tiff' || /tiff/.test(f.type)) dataUrl = await tiffToDataUrl(await f.arrayBuffer());
-      else dataUrl = await readDataUrl(f);
+      const dataUrl = (x === 'tif' || x === 'tiff' || /tiff/.test(f.type)) ? await tiffToDataUrl(await f.arrayBuffer()) : await readDataUrl(f);
       let el;
       try { el = await loadEl(dataUrl); }
       catch (err){
@@ -2098,12 +2312,11 @@ document.addEventListener('paste', e => {
 // ── Crop (the only image edit) ───────────────────────────────────────────────
 let CR = null;
 A.crop = arg => { const [bi, ii] = arg.split('.').map(Number), im = E.blocks[bi].images[ii], I = IMG.get(im.imageId); if (!I) return;
-  CR = { im, I, c: Object.assign({}, im.crop || { x: 0, y: 0, w: 1, h: 1 }), drag: null };
-  $('#cropDlg').showModal(); drawCrop(); };
+  CR = { im, I, c: Object.assign({}, im.crop || { x: 0, y: 0, w: 1, h: 1 }), drag: null }; $('#cropDlg').showModal(); drawCrop(); };
 function drawCrop(){
   const cv = $('#cropCanvas'), { I, c } = CR, maxW = Math.min(860, window.innerWidth - 60), maxH = window.innerHeight * 0.68;
-  const s = Math.min(maxW / I.w, maxH / I.h, 1e9), w = Math.round(I.w * s), h = Math.round(I.h * s);
-  cv.width = w; cv.height = h; CR.w = w; CR.h = h;
+  const s = Math.min(maxW / I.w, maxH / I.h), w = Math.round(I.w * s), h = Math.round(I.h * s);
+  cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d'); ctx.drawImage(I.el, 0, 0, w, h);
   ctx.fillStyle = 'rgba(10,20,40,.6)';
   ctx.fillRect(0, 0, w, c.y * h); ctx.fillRect(0, (c.y + c.h) * h, w, h); ctx.fillRect(0, c.y * h, c.x * w, c.h * h); ctx.fillRect((c.x + c.w) * w, c.y * h, w, c.h * h);
@@ -2119,30 +2332,70 @@ A.cropReset = () => { CR.c = { x: 0, y: 0, w: 1, h: 1 }; drawCrop(); };
 A.cropCancel = () => { CR = null; $('#cropDlg').close(); };
 A.cropApply = () => { const r = v => Math.round(v * 10000) / 10000; CR.im.crop = { x: r(CR.c.x), y: r(CR.c.y), w: r(CR.c.w), h: r(CR.c.h) }; CR = null; $('#cropDlg').close(); scheduleSave(); render(); };
 
-// ── Template editor ──────────────────────────────────────────────────────────
-A.editTemplates = () => { $('#tplBody').innerHTML = Object.keys(TPL_LABELS).map(k => `<label class="f" style="margin-top:8px">${TPL_LABELS[k]}<textarea data-tplk="${k}" rows="6">${esc(TPL[k].join('\n'))}</textarea></label>`).join(''); $('#tplDlg').showModal(); };
-A.tplCancel = () => $('#tplDlg').close();
-A.tplDefaults = () => { $$('[data-tplk]').forEach(t => { t.value = DEFAULT_TPL[t.dataset.tplk].join('\n'); }); };
-A.tplSave = async () => { $$('[data-tplk]').forEach(t => { TPL[t.dataset.tplk] = lines(t.value); }); if (DB.ok) await DB.put('settings', { key: 'templates', value: TPL }).catch(() => {}); $('#tplDlg').close(); render(); toast('Templates saved.'); };
+// ── Library editor ───────────────────────────────────────────────────────────
+let LD = null, ldSel = 'general';
+function libRead(){ if (!LD) return; const tgt = ldSel === 'general' ? LD.general : (LD.types.find(t => t.id === ldSel) || {}).t;
+  $$('[data-libsec]').forEach(t => { if (tgt) tgt[t.dataset.libsec] = lines(t.value); });
+  const c = $('#libCodes'), g = $('#libTags'); if (c) LD.codes = uniq(lines(c.value)); if (g) LD.tags = uniq(lines(g.value)); }
+function libRender(){
+  const tgt = ldSel === 'general' ? LD.general : LD.types.find(t => t.id === ldSel).t;
+  $('#libBody').innerHTML = `<p class="hint">Stored in this browser (IndexedDB) and shared by every entry. Use Back up library to keep a copy or move it to another computer or browser.</p>
+    <div class="row" style="margin:8px 0"><select id="libType" aria-label="Experiment type to edit" style="width:auto">
+      <option value="general" ${ldSel === 'general' ? 'selected' : ''}>Any experiment (shown for every type)</option>
+      ${LD.types.map(t => `<option value="${t.id}" ${ldSel === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>
+      <input type="text" id="libNewType" placeholder="New experiment type" style="width:200px" aria-label="New experiment type name"><button class="btn sm" data-act="libAddType">Add type</button>
+      ${ldSel !== 'general' ? `<button class="btn sm x" data-act="libDelType">Delete this type</button>` : ''}</div>
+    <p class="hint">One filler per line; ___ marks a blank.</p>
+    <div class="lib-grid">${SECTIONS.map(([k, n]) => `<label class="f">${n}<textarea data-libsec="${k}" rows="5">${esc((tgt[k] || []).join('\n'))}</textarea></label>`).join('')}</div>
+    <div class="lib-grid" style="margin-top:10px"><label class="f">Saved experiment or project codes<textarea id="libCodes" rows="4">${esc((LD.codes || []).join('\n'))}</textarea></label>
+      <label class="f">Saved identifier tags<textarea id="libTags" rows="4">${esc((LD.tags || []).join('\n'))}</textarea></label></div>`;
+  $('#libType').onchange = e => { libRead(); ldSel = e.target.value; libRender(); };
+}
+A.editLib = () => { LD = Object.assign(clone(LIB), { codes: CODES.slice(), tags: TAGS.slice() }); const b = E.blocks[activeBlock == null ? 0 : activeBlock];
+  ldSel = b && typeOf(b.type) ? b.type : 'general'; libRender(); $('#libDlg').showModal(); };
+A.libClose = () => { LD = null; $('#libDlg').close(); };
+A.libAddType = () => { libRead(); const n = clean($('#libNewType').value); if (!n) return;
+  if (LD.types.some(t => t.name.toLowerCase() === n.toLowerCase())){ toast('That type exists.'); return; }
+  const t = { id: slug(n) + '_' + uid().slice(-3), name: n, t: { aim: [], method: [], change: [], result: [], issue: [], fix: [], caption: [], next: [] } };
+  LD.types.push(t); ldSel = t.id; libRender(); };
+A.libDelType = () => { const t = LD.types.find(x => x.id === ldSel); if (!t || !confirm(`Delete the ${t.name} type and its fillers? Entries keep their text.`)) return;
+  LD.types = LD.types.filter(x => x.id !== ldSel); ldSel = 'general'; libRender(); };
+A.libSave = async () => { libRead(); LIB = { general: LD.general, types: LD.types }; CODES = LD.codes; TAGS = LD.tags;
+  await Promise.all([saveLib(), saveSetting('codes', CODES), saveSetting('tags', TAGS)]); LD = null; $('#libDlg').close(); render(); toast('Library saved.'); };
+A.libExport = () => { libRead(); download(new Blob([JSON.stringify({ format: 'lab-entry-library', library: { general: LD.general, types: LD.types }, codes: LD.codes, tags: LD.tags }, null, 1)], { type: 'application/json' }), `lab_entry_library_${localDate()}.json`); };
+A.libImport = () => $('#fileLib').click();
+$('#fileLib').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  let d; try { d = JSON.parse(await f.text()); } catch (x){}
+  if (!d || d.format !== 'lab-entry-library'){ toast('That is not a library backup file.'); return; }
+  if (!confirm('Replace the fillers, codes and tags with the backup? Entries are not affected.')) return;
+  LD = Object.assign(clone(d.library), { codes: d.codes || [], tags: d.tags || [] }); ldSel = 'general'; libRender(); toast('Backup loaded. Press Save to keep it.'); });
 
 // ── Export ───────────────────────────────────────────────────────────────────
-const STATUS_TXT = Object.fromEntries(STATUS);
+const STATUS_TXT = Object.fromEntries(STATUS), KIND_TXT = Object.fromEntries(CHANGE_KINDS);
 const cellMd = s => clean(s).replace(/\|/g, '\\|') || ' ';
+const typeName = id => (typeOf(id) || {}).name || '';
 function buildMd(){
   const nums = figNumbers(), L = [];
+  const allTags = uniq(E.blocks.flatMap(b => b.tags || []));
   L.push('---', `date: ${E.date}`, `code: ${clean(E.code) ? JSON.stringify(clean(E.code)) : 'null'}`,
-    `identifiers: [${[...new Set(E.blocks.flatMap(b => String(b.ids || '').split(',').map(clean)).filter(Boolean))].map(x => JSON.stringify(x)).join(', ')}]`, '---', '');
+    `experiments: [${E.blocks.map(b => JSON.stringify(typeName(b.type) || 'Unspecified')).join(', ')}]`,
+    `identifiers: [${allTags.map(x => JSON.stringify(x)).join(', ')}]`, '---', '');
   L.push(`# Lab Entry ${E.date}${clean(E.code) ? ' | ' + clean(E.code) : ''}`, '');
   E.blocks.forEach((b, bi) => {
-    L.push(`## Experiment ${bi + 1}${clean(b.title) ? ': ' + clean(b.title) : ''}`, '');
-    if (clean(b.ids)) L.push(`- Identifiers: ${String(b.ids).split(',').map(clean).filter(Boolean).join(', ')}`);
+    L.push(`## Experiment ${bi + 1}: ${typeName(b.type) || 'Unspecified'}`, '');
+    const aim = lines(b.aim); aim.forEach(x => L.push(`- Aim: ${x}`));
+    if (b.tags.length) L.push(`- Identifiers: ${b.tags.join(', ')}`);
     if (b.status) L.push(`- Status: ${STATUS_TXT[b.status]}`);
     L.push('');
+    const m = lines(b.method);
+    if (clean(b.protocol) || m.length){ L.push('**How it was done**', ''); if (clean(b.protocol)) L.push(`- Protocol: ${clean(b.protocol)}`); m.forEach(x => L.push(`- ${x}`)); L.push(''); }
+    const ch = b.changes.filter(c => clean(c.text));
+    if (b.standard || ch.length){ L.push('**Changes from normal protocol**', ''); if (b.standard) L.push('- None: standard protocol.'); else ch.forEach(c => L.push(`- ${KIND_TXT[c.kind]}: ${clean(c.text)}`)); L.push(''); }
     if (b.table && b.table.cols.length){
       L.push('| ' + b.table.cols.map(cellMd).join(' | ') + ' |', '| ' + b.table.cols.map(() => '---').join(' | ') + ' |');
       b.table.rows.filter(r => r.some(clean)).forEach(r => L.push('| ' + r.map(cellMd).join(' | ') + ' |')); L.push('');
     }
-    [['Result', b.result], ['Issue', b.issue], ['Solution', b.solution]].forEach(([h, v]) => {
+    [['Result', b.result], ['Issue', b.issue], ['Potential fix / follow up', b.fix]].forEach(([h, v]) => {
       const ls = lines(v); if (!ls.length) return; L.push(`**${h}**`, '', ...ls.map(x => `- ${x}`), '');
     });
     b.images.forEach(im => { const n = nums[im.id], cap = clean(im.caption);
@@ -2151,13 +2404,14 @@ function buildMd(){
   const nx = lines(E.next); L.push('## Next / Tomorrow', '', ...(nx.length ? nx.map(x => `- ${x}`) : ['- Not recorded.']), '');
   return L.join('\n');
 }
+function blankWarn(md){ const n = (md.match(/___/g) || []).length; if (n) setTimeout(() => toast(`Exported. Note: ${n} blank${n > 1 ? 's' : ''} (___) still unfilled.`), 50); }
 async function imageBlobs(){ const nums = figNumbers(), out = {};
   for (const b of E.blocks) for (const im of b.images){ const cv = croppedCanvas(im); if (cv) out[`images/figure_${nums[im.id]}.png`] = await new Promise(r => cv.toBlob(r, 'image/png')); }
   return out; }
-A.copyMd = async () => { const t = buildMd(); try { await navigator.clipboard.writeText(t); toast('Markdown copied.'); }
+A.copyMd = async () => { const t = buildMd(); try { await navigator.clipboard.writeText(t); toast('Markdown copied.'); blankWarn(t); }
   catch (e){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Markdown copied.'); } };
-A.dlMd = () => download(new Blob([buildMd()], { type: 'text/markdown;charset=utf-8' }), fileBase() + '.md');
-A.dlZip = async () => { const z = new JSZip(); z.file(fileBase() + '.md', buildMd()); const bl = await imageBlobs(); Object.keys(bl).forEach(k => z.file(k, bl[k]));
+A.dlMd = () => { const md = buildMd(); download(new Blob([md], { type: 'text/markdown;charset=utf-8' }), fileBase() + '.md'); blankWarn(md); };
+A.dlZip = async () => { const z = new JSZip(), md = buildMd(); blankWarn(md); z.file(fileBase() + '.md', md); const bl = await imageBlobs(); Object.keys(bl).forEach(k => z.file(k, bl[k]));
   download(await z.generateAsync({ type: 'blob', compression: 'DEFLATE' }), fileBase() + '.zip'); };
 function mdHtml(md, map){
   let fm = ''; if (md.startsWith('---\n')){ const e = md.indexOf('\n---\n', 4); fm = `<pre>${esc(md.slice(4, e))}</pre>`; md = md.slice(e + 5); }
@@ -2183,7 +2437,7 @@ A.importDraft = () => $('#fileDraft').click();
 $('#fileDraft').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   let d; try { d = JSON.parse(await f.text()); } catch (x){} if (!d || d.format !== 'lab-entry-v2' || !d.entry){ toast('That is not a Lab Entry draft file.'); return; }
-  await saveNow(); const entry = d.entry; entry.id = uid();
+  await saveNow(); const entry = migrate(d.entry); entry.id = uid();
   const map = {}; for (const im of d.images || []){ const nid = uid(); map[im.id] = nid; const rec = { id: nid, entryId: entry.id, name: im.name, dataUrl: im.dataUrl, w: im.w, h: im.h }; if (DB.ok) await DB.put('images', rec).catch(() => {}); else PENDING.push(rec); }
   entry.blocks.forEach(b => b.images.forEach(i => { i.imageId = map[i.imageId] || i.imageId; }));
   ALL.push(entry); await openEntry(entry); await saveNow(); toast('Draft imported.');
@@ -2192,7 +2446,7 @@ const PENDING = [];
 
 // ── Open and start ───────────────────────────────────────────────────────────
 async function openEntry(x){
-  E = x; IMG.clear(); activeBlock = null;
+  E = migrate(x); IMG.clear(); activeBlock = null;
   let recs = []; if (DB.ok){ try { recs = await DB.imagesFor(E.id); } catch (e){} }
   recs = recs.concat(PENDING.filter(r => r.entryId === E.id));
   await Promise.all(recs.map(async r => { try { IMG.set(r.id, Object.assign({ el: await loadEl(r.dataUrl) }, r)); } catch (e){} }));
@@ -2202,12 +2456,17 @@ async function openEntry(x){
 (async function init(){
   try { const t = localStorage.getItem('lab-entry-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; $('#themeBtn').textContent = 'Theme: ' + (t || 'system'); } catch (x){}
   await DB.open();
-  if (DB.ok){ ALL = await DB.all('entries').catch(() => []); const t = await DB.get('settings', 'templates').catch(() => null); if (t && t.value) TPL = Object.assign(JSON.parse(JSON.stringify(DEFAULT_TPL)), t.value); }
-  const last = DB.ok ? await DB.get('settings', 'last').catch(() => null) : null;
-  let e = ALL.find(x => last && x.id === last.value) || ALL.slice().sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
+  if (DB.ok){
+    ALL = (await DB.all('entries').catch(() => [])).map(migrate);
+    const lib = await setting('library', null); if (lib && lib.types) LIB = lib;
+    CODES = await setting('codes', null) || uniq(ALL.map(x => x.code));
+    TAGS = await setting('tags', null) || uniq(ALL.flatMap(x => x.blocks.flatMap(b => b.tags)));
+  }
+  const last = await setting('last', null);
+  let e = ALL.find(x => x.id === last) || ALL.slice().sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
   if (!e){ e = newEntry(); ALL.push(e); }
   await openEntry(e);
-  window.LE = { get entry(){ return E; }, buildMd, saveNow };
+  window.LE = { get entry(){ return E; }, get lib(){ return LIB; }, buildMd, saveNow };
 })();
 
 </script>

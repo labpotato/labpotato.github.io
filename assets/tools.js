@@ -162,20 +162,21 @@ const TOOLS = [
     name: "Lab Journal",
     tagline: "Write it down, or it did not happen",
     description:
-      "One page lab entry: date and code, then per experiment the identifiers, status, a quick table, Result, Issue and Solution built from fill-in template sentences, and images with crop and their own caption. Ends with Next / Tomorrow. Exports Markdown or a zip with the images.",
+      "One page lab entry. Pick the experiment performed and the filler sentences change to match: what it is about, how it was done, changes from the normal protocol, Result, Issue and Potential fix / follow up. Save any line as a new filler for next time. Codes and identifier tags are remembered; images get crop and a caption each.",
     icon: "flask",
     accent: "indigo",
     folder: "tools/lab-journal",
     features: [
-      "One page, no wizard: fill it top to bottom",
-      "Template sentences with blanks for Result, Issue, Solution and Next",
-      "Images: crop only, one caption each, numbered automatically",
-      "Autosaves in the browser, images included",
-      "Markdown, zip with images, or print to PDF"
+      "Choose the experiment first; fillers follow that choice",
+      "Save any line as a filler for future entries",
+      "Changes from the normal protocol: optimizations, new steps, deviations",
+      "Saved project codes and identifier tags",
+      "Images: crop only, one caption each; Markdown, zip or PDF out"
     ],
     versions: [
       { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" },
-      { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" }
+      { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" },
+      { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" }
     ]
   }
 

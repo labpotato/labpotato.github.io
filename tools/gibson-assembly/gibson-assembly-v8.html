@@ -668,6 +668,27 @@ details.pcard.st-b .pc-prob{color:var(--bad);font-weight:650}
 .pchip.st-b.dim,.pchip.st-w.dim{opacity:.85;filter:none}
 details.adv>summary .flag{white-space:normal}
 .pcard .pw-head{flex-wrap:wrap}
+/* readability pass: colour only on the status mark and a left edge, never behind text */
+#primerTable tr.row-b td,#primerTable tr.row-w td{background:transparent}
+#primerTable tr.row-b td:first-child{box-shadow:inset 4px 0 0 var(--bad)}
+#primerTable tr.row-w td:first-child{box-shadow:inset 4px 0 0 var(--warn)}
+#primerTable tr.cur-row td{background:color-mix(in srgb,var(--accent) 7%,transparent)!important}
+details.pcard.st-b{background:var(--surface);border-color:var(--border);border-left-color:var(--bad)}
+details.pcard.st-w{border-left-color:var(--warn)}
+details.pcard.st-b .pc-prob{color:var(--text);font-weight:600}
+.fl{color:var(--text-muted);font-style:italic}
+.pc-prob,.pc-frag,.pc-tm{color:var(--text)}
+.pc-body{background:var(--surface)}
+.ov-verdict{background:var(--surface-2);border:1px solid var(--border);border-left:5px solid var(--ok);color:var(--text)}
+.ov-verdict.st-w{border-left-color:var(--warn);background:var(--surface-2)}.ov-verdict.st-b{border-left-color:var(--bad);background:var(--surface-2)}
+.ov-j{margin:10px 0;font-size:13.5px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.ov-jc{padding:2px 9px;border-radius:99px;border:1px solid var(--border);background:var(--surface)}
+.ov-jc.b{border-color:var(--bad);font-weight:650}
+.flapctl{background:var(--surface-2);color:var(--text)}
+.note{color:var(--text)}
+.st{background:#1f8a6b}.st-w{background:#a8620a}.st-b{background:#c0303f}
+.pdot{background:#1f8a6b}.pdot.w{background:#a8620a}.pdot.b{background:#c0303f}
+.hb.h0,.hb.h1,.hb.h2{color:var(--text)}
 </style>
 </head>
 <body>
@@ -2744,18 +2765,12 @@ function renderResults(d){
         </div></details>`;
 
 
-  let h=`<div class="card"><div class="card-h">
-      <div><span class="section-tag">Step 3 · the whole picture</span><h2>Your primers at a glance</h2></div>
-      <span class="sub">${esc(nm)} · ${d.circular?'circular':'linear'} ${d.asm.length.toLocaleString()} bp<br>anneal ${taLabel} · ${prof(S.poly).label.split('·')[0].trim()}</span></div>
-    <div class="card-b">
-      <div id="ovBox">${overviewInner(d,S)}</div>
-      <details class="adv" ${blocking?'open':''}><summary>Design notes (${nNotes})</summary><div class="adv-body">${notes}</div></details>
-    </div></div>`;
-
+  let h='';
   h+=`<div class="card"><div class="card-h">
-      <div><span class="section-tag">Compare and change</span><h2>All primers</h2></div>
+      <div><span class="section-tag">Step 3 · ${esc(nm)} · ${d.circular?'circular':'linear'} ${d.asm.length.toLocaleString()} bp · anneal ${taLabel}</span><h2>Your primers</h2></div>
       <span class="sub" id="tblFilter">${filterSeg('setTableFilter',TBLF,'All primers','Needs attention')}</span></div>
     <div class="card-b">
+      <div id="ovBox">${overviewInner(d,S)}</div>
       <div class="st-legend"><span class="st st-ok">✓</span> no problems <span class="st st-w">!</span> worth a look <span class="st st-b">✕</span> needs fixing
         <span class="hint" style="margin-left:12px">Edit any sequence in place; every number is recalculated against the real template. Lower case = overlap flap.</span></div>
       <div class="scroll-x"><table class="lab" id="primerTable">${primerTableInner(d,S)}</table></div>
@@ -2773,6 +2788,7 @@ function renderResults(d){
         <button class="btn btn-ghost" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">Download FASTA</button>
       </div>
       ${refBlock}
+      <details class="adv" ${blocking?'open':''}><summary>Design notes (${nNotes})</summary><div class="adv-body">${notes}</div></details>
     </div></div>`;
 
   h+=`<div class="card"><div class="card-h">
@@ -3023,7 +3039,7 @@ function propStrip(d,S,rows,p){
 function primerCard(d,S,k,rows){
   const p=rows[k],st=primerStatus(d,p,S),ts=tmplStatus(p.r),j=st.ji>=0?d.junctions[st.ji]:null;
   const cur=curPrimerIndex()===k,open=!!OPEN[p.key];
-  const cs=casedSeq(p),seqShort=`<span style="color:var(--warn)">${cs.slice(0,p.tailLen)}</span>${cs.slice(p.tailLen)}`;
+  const cs=casedSeq(p),seqShort=`<span class="fl">${cs.slice(0,p.tailLen)}</span>${cs.slice(p.tailLen)}`;
   const was=(window.__chg&&window.__chg.before&&window.__chg.before[p.key]);
   const changed=was&&was.full!==p.full;
   const flagList=st.flags.length?`<div class="pflags" style="margin-top:10px">${st.flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:
@@ -3132,7 +3148,7 @@ function jumpPrimer(k,where){
 function showOnMap(k){
   if(!D)return;
   setCurrent(k);
-  const m=$('bigMap');if(m){m.scrollIntoView({behavior:'smooth',block:'center'});m.classList.remove('flash');void m.offsetWidth;m.classList.add('flash');}
+  const m=$('mapBody');if(m){m.scrollIntoView({behavior:'smooth',block:'center'});m.classList.remove('flash');void m.offsetWidth;m.classList.add('flash');}
 }
 function observeCards(){}      // cards are chosen by clicking, not by scrolling past
 function setAllCards(open){
@@ -3282,34 +3298,17 @@ function changeReport(d,S,rows){
 function overviewInner(d,S){
   const rows=primerRows(d,S),sts=rows.map(p=>primerStatus(d,p,S));
   const nBad=sts.filter(x=>x.s==='b').length,nWarn=sts.filter(x=>x.s==='w').length,nOk=rows.length-nBad-nWarn;
+  const jv=d.junctions.map(j=>({v:verifyOverlap(d,j),j}));
   const verdict=nBad?['b','✕',`${nBad} primer${nBad!==1?'s':''} need${nBad===1?'s':''} fixing`]
     :nWarn?['w','!',`${nWarn} primer${nWarn!==1?'s':''} worth a look`]:['ok','✓',`All ${rows.length} primers look good to order`];
-  const att=rows.map((p,k)=>({p,k,st:sts[k]})).filter(x=>x.st.s!=='ok').sort((a,b)=>(a.st.s==='b'?0:1)-(b.st.s==='b'?0:1));
-  const jv=d.junctions.map(j=>verifyOverlap(d,j));
-  const tiles=d.results.map(r=>{
-    const a=2*r.idx,b=2*r.idx+1;
-    const tile=k=>{const p=rows[k],st=sts[k];
-      return `<button type="button" class="ovt st-${st.s} ${curPrimerIndex()===k?'cur':''}" data-k="${k}" onclick="jumpPrimer(${k},'aln')" title="${esc(p.name)}: ${st.short?esc(st.short):'no problems'}. Click to see it on the sequence map.">
-        <span class="st st-${st.s}">${st.glyph}</span><b>${p.dir==='F'?'▶ F':'◀ R'}${r.idx+1}</b>
-        <span class="mono">${p.tm.toFixed(1)} °C</span><span class="mono ovt-n">${p.full.length} nt${p.tailLen?'':' · no flap'}</span></button>`;};
-    return `<div class="ovf" style="--pc:${r.a.color}"><div class="ovf-h"><span class="lg-num" style="background:${r.a.color}">${r.idx+1}</span><b>${esc(r.a.name)}</b>
-      <span class="hint" style="margin:0">${r.amplicon.toLocaleString()} bp product · run at ${r.ta} °C</span></div><div class="ovf-t">${tile(a)}${tile(b)}</div></div>`;}).join('');
-  return `<div class="ov-grid">
-    <div class="ov-left">
-      <div class="ov-verdict st-${verdict[0]}"><span class="st st-${verdict[0]}">${verdict[1]}</span>
-        <div><div class="ov-v1">${verdict[2]}</div>
-        <div class="hint" style="margin:0">${nOk} clear · ${nWarn} to look at · ${nBad} to fix · ${d.junctions.length} junction${d.junctions.length!==1?'s':''}${jv.length?(jv.every(x=>x.ok)?', overlaps verified':', <b style="color:var(--bad)">an overlap is too short</b>'):''}</div></div></div>
-      ${att.length?`<div class="ov-att"><div class="ov-att-h">Needs your attention</div>${att.map(x=>`<div class="ov-att-r st-${x.st.s}">
-          <span class="st st-${x.st.s}">${x.st.glyph}</span><b class="mono">${esc(x.p.name)}</b><span class="ov-att-t">${esc(x.st.short)}</span>
-          <button class="btn btn-ghost btn-sm" onclick="jumpPrimer(${x.k},'aln')" type="button">Open</button></div>`).join('')}</div>`:''}
-      <div class="ov-tiles">${tiles}</div>
-      ${flapControl(d,S)}
-      ${changeReport(d,S,rows)}
-    </div>
-    <div class="ov-right">
-      <div id="bigMap" class="map-wrap big">${mapSVG(buildSegments())}</div>
-      <div class="hint" style="text-align:center;margin-top:6px"><b>Forward</b> primers on the outer ring, <b>reverse</b> on the inner ring. Click a primer for its sequence map. Red = a problem, amber = worth a look.</div>
-    </div></div>`;
+  const need=Math.max(20,S.ovMin);
+  const jl=jv.length?`<div class="ov-j"><b>Gibson overlap</b> (required ≥ ${need} bp): `+jv.map((x,i)=>{
+    const j=x.j;return `<span class="ov-jc ${x.v.ok?'ok':'b'}">junction ${i+1}: <b>${x.v.k} bp</b> ${x.v.ok?'✓':'✕ too short'}${j.ov.assumed?' · assumed':j.ov.native?(j.ov.flapless?' · no flaps':' · short flaps'):''}</span>`;}).join('')+'</div>':'';
+  return `<div class="ov-verdict st-${verdict[0]}"><span class="st st-${verdict[0]}">${verdict[1]}</span>
+      <div><b>${verdict[2]}</b><span class="hint" style="margin:0 0 0 10px">${nOk} clear · ${nWarn} to look at · ${nBad} to fix</span></div></div>
+    ${flapControl(d,S)}
+    ${jl}
+    ${changeReport(d,S,rows)}`;
 }
 /* ── Step 3, part 2: compare and change: every primer in one table, sequences editable in place ── */
 function rowLive(k){

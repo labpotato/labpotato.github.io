@@ -605,7 +605,7 @@ details.adv.homol>summary,details.adv.alts>summary{font-weight:650}
 table.loc th{width:190px;text-align:left;font-weight:650;color:var(--text-muted);vertical-align:top;white-space:nowrap}
 table.loc td{padding:6px 10px}
 .st{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-weight:800;font-size:14px;color:#fff;background:var(--ok)}
-.st-w{background:var(--warn)}.st-b{background:var(--bad)}
+.st.st-w{background:var(--warn)}.st.st-b{background:var(--bad)}
 .st-cell{text-align:center}
 .st-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;margin:0 0 10px}
 .st-legend .st{width:20px;height:20px;font-size:12px;margin-left:8px}
@@ -686,9 +686,46 @@ details.pcard.st-b .pc-prob{color:var(--text);font-weight:600}
 .ov-jc.b{border-color:var(--bad);font-weight:650}
 .flapctl{background:var(--surface-2);color:var(--text)}
 .note{color:var(--text)}
-.st{background:#1f8a6b}.st-w{background:#a8620a}.st-b{background:#c0303f}
+span.st{background:#1f8a6b}span.st.st-w{background:#a8620a}span.st.st-b{background:#c0303f}
 .pdot{background:#1f8a6b}.pdot.w{background:#a8620a}.pdot.b{background:#c0303f}
 .hb.h0,.hb.h1,.hb.h2{color:var(--text)}
+/* compact pass */
+.card-b{padding:14px 16px}.card-h{padding:12px 16px}
+.ov-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px}
+.ov-chip{display:inline-flex;align-items:center;gap:6px;font-weight:650;font-size:13.5px}
+.ov-chip .st{width:20px;height:20px;font-size:11px}
+.ov-sep{flex:1 1 20px}
+.ov-jc{font-size:12.5px;padding:2px 8px}
+#primerTable{width:100%;table-layout:auto}
+#primerTable th,#primerTable td{padding:6px 8px;vertical-align:top}
+#primerTable th{font-size:11px}
+#primerTable td.pn{min-width:96px}.pn-f{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.pn-f .lg-num{width:16px;height:16px;font-size:10px}
+#primerTable td.sq{width:40%;min-width:220px}
+#primerTable textarea.seqedit{min-height:0;height:auto;display:block;width:100%;resize:none;font-size:12px;line-height:1.35;padding:5px 7px;word-break:break-all;overflow:hidden;letter-spacing:.02em}
+#primerTable .hint,.pc-body .hint{font-size:11.5px;margin:2px 0 0}
+#primerTable td.prob{font-size:12.5px;min-width:120px}
+.nw{white-space:nowrap}
+.fl-tick{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600}
+.fl-tick input{width:15px;height:15px;margin:0}
+.pchips{margin-bottom:8px;padding:6px 10px}
+details.pcard{margin:8px 0;border-radius:10px}
+details.pcard>summary.pc-sum{padding:7px 12px;gap:6px 12px}
+.pc-body{padding:2px 12px 10px}
+.pc-tools{margin:8px 0 4px;gap:10px}
+.pc-body details.adv{margin-top:6px}
+.pc-body details.adv>summary{padding:6px 12px;font-size:13px}
+.pc-body .adv-body{padding:8px 12px}
+.pc-body .note{margin:8px 0 0;padding:8px 12px;font-size:13px}
+.aln-host .aln-bar{margin-bottom:6px}
+.aln-now{font-size:12.5px;color:var(--text);margin-left:10px}.aln-now i{color:var(--text-muted);font-style:normal}
+.aln-now b.bad,.sel-m.bad b{color:var(--bad)}
+.aln-drag{cursor:crosshair;touch-action:pan-y;user-select:none}
+.aln-drag td.aln-sel{background:color-mix(in srgb,var(--accent) 32%,transparent)!important;box-shadow:inset 0 -2px 0 var(--accent)}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:8px 0 2px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;font-size:13px;background:var(--surface-2)}
+.sel-m i{color:var(--text-muted);font-style:normal;font-size:12px}
+.aln-key{margin-top:6px;font-size:11.5px}
+.pflags{margin:0}
 </style>
 </head>
 <body>
@@ -2771,8 +2808,6 @@ function renderResults(d){
       <span class="sub" id="tblFilter">${filterSeg('setTableFilter',TBLF,'All primers','Needs attention')}</span></div>
     <div class="card-b">
       <div id="ovBox">${overviewInner(d,S)}</div>
-      <div class="st-legend"><span class="st st-ok">✓</span> no problems <span class="st st-w">!</span> worth a look <span class="st st-b">✕</span> needs fixing
-        <span class="hint" style="margin-left:12px">Edit any sequence in place; every number is recalculated against the real template. Lower case = overlap flap.</span></div>
       <div class="scroll-x"><table class="lab" id="primerTable">${primerTableInner(d,S)}</table></div>
       <div class="btn-row" style="margin-top:18px">
         <button class="btn btn-primary" onclick="goStep(4)" type="button">
@@ -3042,53 +3077,33 @@ function primerCard(d,S,k,rows){
   const cs=casedSeq(p),seqShort=`<span class="fl">${cs.slice(0,p.tailLen)}</span>${cs.slice(p.tailLen)}`;
   const was=(window.__chg&&window.__chg.before&&window.__chg.before[p.key]);
   const changed=was&&was.full!==p.full;
-  const flagList=st.flags.length?`<div class="pflags" style="margin-top:10px">${st.flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:
-    `<div class="pflags" style="margin-top:10px"><span class="flag f-ok">✓ no problems found for this primer</span></div>`;
-  const assumedNote=st.assumed?`<div class="note n-w" style="margin-top:10px"><span class="ic">⚠</span><div><b>Overlap assumed, not verified.</b>
+  const flagList=st.flags.length?`<div class="pflags">${st.flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:
+    `<div class="pflags"><span class="flag f-ok">✓ no problems found for this primer</span></div>`;
+  const assumedNote=st.assumed?`<div class="note n-w"><span class="ic">⚠</span><div><b>Overlap assumed, not verified.</b>
       ${p.r.hasOwnTemplate?`The plasmid attached to ${esc(p.amp.name)} does not carry the neighbouring sequence, so`:`No source plasmid is attached to ${esc(p.amp.name)}, so`}
-      this primer was built on the assumption that its source continues into the neighbour
-      (${p.dir==='F'?'the last '+p.r.fwdExt.length+' bp of '+esc(j.U.name):'the first '+p.r.revExt.length+' bp of '+esc(j.D.name)}). If your source does not, use standard flaps.
-      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="setOvMode('tails')" type="button">Use standard flaps</button></div></div>`:'';
-  const homoHelp=p.sum&&(p.sum.sev!=='low'||p.sum.tailHit)&&j?`<div class="note n-w" style="margin-top:10px"><span class="ic">⚠</span><div>High homology at this primer can often be fixed at the junction:
-      move or resize the overlap, use the template's own sequence so the primer needs no flap, or add a unique spacer.
-      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="openJunctionOptions('${p.key}')" type="button">Show junction options ↓</button></div></div>`:'';
+      this primer assumes its source continues into the neighbour. Untick <b>flapless</b> in the table to use ordinary flaps.</div></div>`:'';
+  const homoHelp=p.sum&&(p.sum.sev!=='low'||p.sum.tailHit)&&j?`<div class="note n-w"><span class="ic">⚠</span><div>A junction change can often fix this: move or resize the overlap, go flapless, or add a unique spacer.
+      <button class="btn btn-ghost btn-sm" onclick="openJunctionOptions('${p.key}')" type="button">Junction options ↓</button></div></div>`:'';
   return `<details class="pcard st-${st.s} ${cur?'cur':''}" id="pc_${p.key}" data-k="${k}" data-key="${p.key}" ${open?'open':''} ontoggle="pcToggle(this)" style="--pc:${p.amp.color}">
     <summary class="pc-sum">
-      <span class="st st-${st.s}" title="${st.s==='ok'?'no problems':st.s==='b'?'needs fixing':'worth a look'}">${st.glyph}</span>
+      <span class="st st-${st.s}">${st.glyph}</span>
       <span class="pc-name mono">${esc(p.name)}</span>
-      <span class="pc-frag"><span class="lg-num" style="background:${p.amp.color}">${p.r.idx+1}</span>${esc(p.amp.name)} <i>${p.dir==='F'?'▶ fwd':'◀ rev'}</i></span>
+      <span class="pc-frag"><span class="lg-num" style="background:${p.amp.color}">${p.r.idx+1}</span>${esc(p.amp.name)} <i>${p.dir==='F'?'▶':'◀'}</i></span>
       <span class="pc-seq mono">${seqShort}</span>
       <span class="pc-tm mono"><b>${p.tm.toFixed(1)}</b> °C · ${p.full.length} nt</span>
-      <span class="pc-prob">${st.short?esc(st.short):'<span class="tmpl-ok">no problems</span>'}${changed?' <span class="flag f-w">changed</span>':''}${p.manual?' <span class="flag f-w">edited</span>':''}</span>
+      <span class="pc-prob">${st.short?esc(st.short):'no problems'}${changed?' <span class="flag f-w">changed</span>':''}${p.manual?' <span class="flag f-w">edited</span>':''}</span>
     </summary>
     <div class="pc-body">
-      <div class="pc-grid">
-        <div>
-          <label class="fld">Sequence 5′→3′ · edit it to use your own oligo</label>
-          <input class="seqedit pw-seq" id="pe_${p.key}" value="${cs}" spellcheck="false"
-                 oninput="pwLiveTm(${k})" onkeyup="pwLiveTm(${k})" onmouseup="pwLiveTm(${k})" onselect="pwLiveTm(${k})"
-                 onchange="setPrimer('${p.key}',this.value)">
-          <div class="pw-tm" id="tm_${p.key}"></div>
-          ${changed?`<div class="was">was <span class="mono">${was.full}</span> (${was.full.length} nt, Tm ${was.tm.toFixed(1)} °C)</div>`:''}
-          <div class="btn-row" style="margin-top:8px">
-            <button class="copy" onclick="cp('${p.full}',this)" type="button">copy</button>
-            ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset to designed</button>`:''}
-            <button class="text-btn" onclick="showOnMap(${k})" type="button">show on the plasmid map ↑</button>
-            <span class="hint" style="margin:0;font-size:12.5px"><b class="mono" style="text-transform:lowercase">lower</b> = overlap flap · <b class="mono">UPPER</b> = binds template</span>
-          </div>
-          <h3 class="pc-sub">Properties</h3>
-          ${propStrip(d,S,rows,p)}
-          ${ts?`<div class="hint tmpl-${ts.s}" style="margin-top:8px"><b>Template:</b> ${ts.t}</div>`:''}
-        </div>
-        <div>
-          <h3 class="pc-sub" style="margin-top:0;border-top:0;padding-top:0">Location</h3>
-          ${locTable(d,S,rows,p,st)}
-        </div>
+      <div class="btn-row pc-tools">
+        <button class="copy" onclick="cp('${p.full}',this)" type="button">copy sequence</button>
+        ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset to designed</button>`:''}
+        <button class="text-btn" onclick="showOnMap(${k})" type="button">show on plasmid map ↑</button>
+        ${changed?`<span class="was">was <span class="mono">${was.full}</span> (Tm ${was.tm.toFixed(1)} °C)</span>`:''}
       </div>
-      <h3 class="pc-sub">Checks</h3>
-      ${flagList}${assumedNote}${homoHelp}
-      <h3 class="pc-sub" id="alnh_${p.key}">Sequence map: this primer on the construct</h3>
-      <div id="aln_${p.key}">${alnCardInner(k)}</div>
+      <div id="aln_${p.key}" class="aln-host">${alnCardInner(k)}</div>
+      <details class="adv"><summary>Properties and location</summary><div class="adv-body">${propStrip(d,S,rows,p)}
+        ${ts?`<div class="hint tmpl-${ts.s}"><b>Template:</b> ${ts.t}</div>`:''}${locTable(d,S,rows,p,st)}</div></details>
+      <details class="adv" ${(st.flags.length||st.assumed)?'open':''}><summary>Checks${st.flags.length?` (${st.flags.length})`:''}</summary><div class="adv-body">${flagList}${assumedNote}${homoHelp}</div></details>
       ${pwAlternatives(p,S)}
       ${pwHomology(p,S)}
       ${j?juncCard(d,S,p,st.ji):''}
@@ -3140,7 +3155,7 @@ function jumpPrimer(k,where){
   OPEN[p.key]=true;
   const el=$('pc_'+p.key);if(el)el.open=true;
   setCurrent(k);
-  const tgt=(where==='aln'?$('alnh_'+p.key):el)||el;
+  const tgt=(where==='aln'?$('aln_'+p.key):el)||el;
   if(tgt){tgt.scrollIntoView({behavior:'smooth',block:'start'});
     const f=where==='aln'?$('aln_'+p.key):el;if(f){f.classList.remove('flash');void f.offsetWidth;f.classList.add('flash');}}
 }
@@ -3197,8 +3212,12 @@ function alnCardInner(k){
   const L=d.asm.length,W=Math.min(72,L);
   const from=ALNPOS[p.key]!=null?ALNPOS[p.key]:u.center-Math.floor(W/2);
   const posLabel=`${((from%L)+L)%L+1}–${(((from+W-1)%L)+L)%L+1} of ${L.toLocaleString()} bp`;
-  return `<div class="aln-bar"><span class="aln-pick"><span class="aln-tab on"><span class="dot" style="background:${u.color}"></span>${esc(u.label)}</span>
-      <span class="hint" style="margin:0">${esc(u.sub)}</span></span>
+  const need=Math.max(20,S.ovMin);
+  let now='';
+  if(u.kind==='junction'){const v=verifyOverlap(d,u.j);
+    now=`<span class="aln-now">Overlap now <b class="${v.ok?'':'bad'}">${v.k} bp</b> <i>(need ≥ ${need})</i> · overlap Tm <b>${u.j.ov.tm.toFixed(0)} °C</b> · <b>${esc(p.name)}</b> Tm <b>${p.tm.toFixed(1)} °C</b>, ${p.full.length} nt${u.j.ov.native?` · ${u.j.ov.flapless?'flapless':'short flaps'}${u.j.ov.assumed?' (assumed)':''}`:''}</span>`;}
+  else now=`<span class="aln-now"><b>${esc(p.name)}</b> Tm <b>${p.tm.toFixed(1)} °C</b>, ${p.full.length} nt</span>`;
+  return `<div class="aln-bar"><span class="aln-pick"><span class="aln-tab on"><span class="dot" style="background:${u.color}"></span>${esc(u.label)}</span>${now}</span>
     <span class="aln-steer">
       <button class="icobtn" onclick="alnMove(${k},-24)" title="Back 24 bp" type="button">«</button>
       <button class="icobtn" onclick="alnMove(${k},-6)" title="Back 6 bp" type="button">‹</button>
@@ -3206,15 +3225,99 @@ function alnCardInner(k){
       <button class="icobtn" onclick="alnMove(${k},6)" title="Forward 6 bp" type="button">›</button>
       <button class="icobtn" onclick="alnMove(${k},24)" title="Forward 24 bp" type="button">»</button>
       <span class="aln-pos">${posLabel}</span></span></div>
-    ${alnTable(d,u,from,W,p)}
+    <div class="aln-drag" onpointerdown="selStart(event,${k})" onpointermove="selMove(event,${k})">${alnTable(d,u,from,W,p)}</div>
+    <div class="selbar" id="sel_${p.key}">${selPanel(k)}</div>
     <div class="aln-key">
       <span><span class="aln-sw" style="background:color-mix(in srgb,${u.color} 24%,transparent)"></span>binds template</span>
       <span><span class="aln-sw" style="background:var(--warn-soft);border:1px solid var(--warn)"></span>overlap flap</span>
       <span><span class="aln-sw" style="background:color-mix(in srgb,var(--potato) 22%,transparent)"></span>shared overlap${u.kind==='junction'?` (${u.j.ov.L} bp)`:''}</span>
-      <span><span class="aln-sw" style="background:var(--bad-soft);border:1px solid var(--bad)"></span>differs from construct</span>
-      <span><b style="color:var(--text)">Bright</b> = ${esc(p.name)}; <b>grey</b> = the neighbouring primer, for context</span>
-      ${p.manual?`<span style="color:var(--warn);font-weight:650">✎ your sequence: red in the flap is normal, red in the binding region is not</span>`:''}
+      <span><span class="aln-sw" style="background:var(--bad-soft);border:1px solid var(--bad)"></span>differs</span>
+      <span>bright = ${esc(p.name)}, grey = neighbour</span>
     </div>`;
+}
+/* drag across the construct to try a different primer: Tm, length and the resulting overlap, then one button to use it */
+const ALNSEL={};let SELDRAG=null;
+document.addEventListener('pointerup',()=>{SELDRAG=null;});
+function selCol(e){
+  const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest?el.closest('td[data-col]'):null;
+  return td?+td.dataset.col:null;
+}
+function selStart(e,k){
+  const c=selCol(e);if(c==null)return;
+  e.preventDefault();SELDRAG={k,a:c};setSel(k,c,c);
+}
+function selMove(e,k){
+  if(!SELDRAG||SELDRAG.k!==k)return;
+  const c=selCol(e);if(c==null)return;
+  setSel(k,SELDRAG.a,c);
+}
+function setSel(k,a,b){
+  const p=primerRows(D,D.S)[k];if(!p)return;
+  const lo=Math.min(a,b),hi=Math.max(a,b);
+  ALNSEL[p.key]={lo,hi};
+  const host=$('aln_'+p.key);
+  if(host)host.querySelectorAll('td[data-col]').forEach(td=>{const c=+td.dataset.col;td.classList.toggle('aln-sel',c>=lo&&c<=hi);});
+  const box=$('sel_'+p.key);if(box)box.innerHTML=selPanel(k);
+}
+function selSeq(p,sel){
+  const L=D.asm.length;let s='';
+  for(let i=sel.lo;i<=sel.hi;i++)s+=D.asm[((i%L)+L)%L];
+  return p.dir==='F'?s:rc(s);
+}
+/* the overlap the two PCR products would have if this primer were replaced */
+function hypoOverlap(d,p,seq,a){
+  const ji=primerJunction(d,p);if(ji<0)return null;
+  const j=d.junctions[ji],rU=d.results.find(r=>r.a===j.U),rD=d.results.find(r=>r.a===j.D),r=p.r;
+  let pu=productOf(rU),pd=productOf(rD);
+  if(p.dir==='F')pd=seq+r.region.slice(a.bindLen)+rc(r.revTail);
+  else pu=r.fwdTail+r.region.slice(0,r.region.length-a.bindLen)+rc(seq);
+  let k=0;for(let n=Math.min(pu.length,pd.length,160);n>=8;n--){if(pu.endsWith(pd.slice(0,n))){k=n;break;}}
+  return k;
+}
+function selPanel(k){
+  const S=D.S,p=primerRows(D,S)[k];if(!p)return '';
+  const sel=ALNSEL[p.key];
+  if(!sel)return `<span class="hint">Drag across the top sequence to try another primer: you get its Tm, length and the resulting overlap, then one button to use it.</span>`;
+  const len=sel.hi-sel.lo+1;
+  if(len<15)return `<span class="hint">${len} bp selected. Drag over at least 15 bases.</span>`;
+  const seq=selSeq(p,sel),a=analyzeManual(seq,p.dir,p.r,S),need=Math.max(20,S.ovMin);
+  if(!a.bindLen||a.bindLen<13)return `<span class="hint"><b>${len} bp</b> selected: not usable. A ${p.dir==='F'?'forward':'reverse'} primer must ${p.dir==='F'?'start':'end'} at the fragment boundary and its ${p.dir==='F'?'right':'left'} end must lie inside the fragment (at least 13 bases).</span>`;
+  const ov=hypoOverlap(D,p,seq,a);
+  const okTm=Math.abs(a.tm-S.bindTm)<=tmWindow(S).tol&&a.tm<=S.bindTmMax,okOv=ov==null||ov>=need;
+  return `<span class="sel-n"><b>${len} bp</b> selected</span>
+    <span class="sel-m">binding <b>${a.bindLen} bp</b></span>
+    <span class="sel-m ${okTm?'':'bad'}">Tm <b>${a.tm.toFixed(1)} °C</b> <i>(target ${S.bindTm})</i></span>
+    <span class="sel-m">flap ${a.tailLen} nt</span>
+    ${ov!=null?`<span class="sel-m ${okOv?'':'bad'}">overlap <b>${ov} bp</b> <i>(need ≥ ${need})</i></span>`:''}
+    <button class="btn btn-primary btn-sm" onclick="useSelection(${k})" type="button">Use this sequence for ${esc(p.name)}</button>
+    <button class="text-btn" onclick="clearSel(${k})" type="button">clear</button>`;
+}
+function useSelection(k){
+  const p=primerRows(D,D.S)[k],sel=p&&ALNSEL[p.key];if(!sel)return;
+  const seq=selSeq(p,sel);delete ALNSEL[p.key];
+  setPrimer(p.key,seq);
+}
+function clearSel(k){
+  const p=primerRows(D,D.S)[k];if(!p)return;delete ALNSEL[p.key];
+  const host=$('aln_'+p.key);if(host)host.querySelectorAll('td.aln-sel').forEach(td=>td.classList.remove('aln-sel'));
+  const box=$('sel_'+p.key);if(box)box.innerHTML=selPanel(k);
+}
+/* the flapless tick: one junction, or all */
+function flaplessSet(ji,on){
+  const j=D.junctions[ji],key=j.key;
+  if(!on){FORCE.jm[key]='tails';delete FORCE.ov[key];return true;}
+  if((j.ins||'').length||j.U===j.D){toast('Sequence is inserted at this junction, so it cannot be built without flaps');return false;}
+  const nat=nativeExtent(j.U,j.D,j.ins,D.S);
+  FORCE.jm[key]=(nat.nU+nat.nD>=8)?'native':'assume';delete FORCE.ov[key];return true;
+}
+function toggleFlapless(ji,on){
+  if(!flaplessSet(ji,on)){refreshResults();return;}
+  saveAuto();redesign(on?'Short or no flaps':'Standard flaps');
+}
+function flaplessAll(on){
+  let any=false;D.junctions.forEach((j,i)=>{if(!(j.ins||'').length&&j.U!==j.D){if(flaplessSet(i,on))any=true;}});
+  if(!any){refreshResults();return;}
+  saveAuto();redesign(on?'Short or no flaps':'Standard flaps');
 }
 function alnMove(k,n){
   const p=primerRows(D,D.S)[k];if(!p)return;
@@ -3286,7 +3389,7 @@ function changeReport(d,S,rows){
     if(nat.whyD)bits.push(`${esc(j.D.name)}: ${esc(nat.whyD)}`);
     reasons.push(`<li><b>Junction ${i+1}</b> (${esc(j.U.name)} → ${esc(j.D.name)}) keeps its flaps. ${bits.join('; ')||'Its templates do not carry enough of the neighbouring sequence (at least 8 bp is needed).'}</li>`);});
   const kept=(flapAsk||c.label==='Standard flaps')?rows.filter(p=>p.manual):[];
-  const canAssume=flapAsk&&d.junctions.some(j=>!j.ov.native&&!(j.ins||'').length&&j.U!==j.D);
+  const canAssume=false;
   if(reasons.length||kept.length)h+=note('w',ch.length?'Some primers were left as they were':`${esc(c.label)}: ${ch.length?'':'no primer changed'}`,
     `${reasons.length?`<ul class="chg">${reasons.join('')}</ul>`:''}
      ${kept.length?`<div>Primers you edited by hand keep your sequence: <b>${kept.map(p=>esc(p.name)).join(', ')}</b>. Reset them to see the new design.</div>`:''}
@@ -3298,16 +3401,14 @@ function changeReport(d,S,rows){
 function overviewInner(d,S){
   const rows=primerRows(d,S),sts=rows.map(p=>primerStatus(d,p,S));
   const nBad=sts.filter(x=>x.s==='b').length,nWarn=sts.filter(x=>x.s==='w').length,nOk=rows.length-nBad-nWarn;
-  const jv=d.junctions.map(j=>({v:verifyOverlap(d,j),j}));
-  const verdict=nBad?['b','✕',`${nBad} primer${nBad!==1?'s':''} need${nBad===1?'s':''} fixing`]
-    :nWarn?['w','!',`${nWarn} primer${nWarn!==1?'s':''} worth a look`]:['ok','✓',`All ${rows.length} primers look good to order`];
   const need=Math.max(20,S.ovMin);
-  const jl=jv.length?`<div class="ov-j"><b>Gibson overlap</b> (required ≥ ${need} bp): `+jv.map((x,i)=>{
-    const j=x.j;return `<span class="ov-jc ${x.v.ok?'ok':'b'}">junction ${i+1}: <b>${x.v.k} bp</b> ${x.v.ok?'✓':'✕ too short'}${j.ov.assumed?' · assumed':j.ov.native?(j.ov.flapless?' · no flaps':' · short flaps'):''}</span>`;}).join('')+'</div>':'';
-  return `<div class="ov-verdict st-${verdict[0]}"><span class="st st-${verdict[0]}">${verdict[1]}</span>
-      <div><b>${verdict[2]}</b><span class="hint" style="margin:0 0 0 10px">${nOk} clear · ${nWarn} to look at · ${nBad} to fix</span></div></div>
-    ${flapControl(d,S)}
-    ${jl}
+  const jc=d.junctions.map((j,i)=>{const v=verifyOverlap(d,j);
+    return `<span class="ov-jc ${v.ok?'ok':'b'}">J${i+1} <b>${v.k} bp</b> ${v.ok?'✓':'✕ short'}${j.ov.assumed?' · assumed':j.ov.native?(j.ov.flapless?' · flapless':' · short flaps'):''}</span>`;}).join('');
+  return `<div class="ov-line">
+      ${nBad?`<span class="ov-chip st-b"><span class="st st-b">✕</span>${nBad} to fix</span>`:''}
+      ${nWarn?`<span class="ov-chip st-w"><span class="st st-w">!</span>${nWarn} to look at</span>`:''}
+      <span class="ov-chip st-ok"><span class="st st-ok">✓</span>${nOk} clear</span>
+      <span class="ov-sep"></span><span class="hint" style="margin:0">Gibson overlap, need ≥ ${need} bp:</span>${jc}</div>
     ${changeReport(d,S,rows)}`;
 }
 /* ── Step 3, part 2: compare and change: every primer in one table, sequences editable in place ── */
@@ -3330,26 +3431,33 @@ function primerTableInner(d,S){
   });
   window.__tsv=tsv; window.__pfasta=fa;
   const chg=window.__chg&&window.__chg.before;
+  const cand=d.junctions.filter(j=>!(j.ins||'').length&&j.U!==j.D);
+  const allNat=cand.length>0&&cand.every(j=>j.ov.native);
   const body=rows.map((p,k)=>({p,k,st:primerStatus(d,p,S)})).filter(x=>TBLF==='all'||x.st.s!=='ok').map(({p,k,st})=>{
     const was=chg&&chg[p.key],changed=was&&was.full!==p.full;
-    const partner=primerPartner(rows,p);
+    const partner=primerPartner(rows,p),j=st.ji>=0?d.junctions[st.ji]:null;
+    const can=j&&!(j.ins||'').length&&j.U!==j.D;
+    const v=j?verifyOverlap(d,j):null;
+    const flCell=can?`<label class="fl-tick" title="Build junction ${st.ji+1} without overlap flaps (the template or your source carries the overlap)"><input type="checkbox" ${j.ov.native?'checked':''} onchange="toggleFlapless(${st.ji},this.checked)">flapless</label>
+        <div class="hint">J${st.ji+1} · ${v.k} bp${j.ov.assumed?' · assumed':''}</div>`
+      :(j?`<span class="hint" title="sequence is inserted at this junction">J${st.ji+1} · ${v.k} bp</span>`:'<span class="hint">end</span>');
     return `<tr class="${k===cur?'cur-row':''} ${st.s==='b'?'row-b':st.s==='w'?'row-w':''}" data-k="${k}">
       <td class="st-cell"><span class="st st-${st.s}" title="${st.s==='ok'?'no problems':st.s==='b'?'needs fixing':'worth a look'}">${st.glyph}</span></td>
-      <td class="mono" style="white-space:nowrap"><button class="text-btn" onclick="jumpPrimer(${k})" type="button" title="Open the details for this primer" style="font-weight:700;color:var(--accent)">${esc(p.name)}</button>
-        <div class="hint" style="font-size:11.5px">${p.dir==='F'?'▶ forward':'◀ reverse'}</div></td>
-      <td style="white-space:nowrap"><span class="lg-num" style="background:${p.amp.color};display:inline-flex;vertical-align:middle;margin-right:6px">${p.r.idx+1}</span><b>${esc(p.amp.name)}</b></td>
-      <td style="min-width:270px"><input class="seqedit" id="te_${p.key}" value="${casedSeq(p)}" spellcheck="false" oninput="rowLive(${k})" onchange="setPrimer('${p.key}',this.value)"
-          title="Edit to use your own oligo. Lower case = overlap flap.">
-        <div class="hint" style="font-size:11.5px;margin-top:3px" id="tt_${p.key}"></div>
-        ${changed?`<div class="was">was <span class="mono">${was.full}</span> (${was.full.length} nt)</div>`:''}
-        ${p.manual?`<div class="hint" style="font-size:11.5px"><span class="flag f-w">edited</span> <button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset to designed</button></div>`:''}</td>
-      <td class="mono" style="white-space:nowrap">${p.full.length}<div class="hint" style="font-size:11.5px">${p.tailLen?p.tailLen+' flap + ':'no flap · '}${p.bindLen}</div></td>
-      <td class="mono" style="white-space:nowrap"><b>${p.tm.toFixed(1)}</b> °C<div class="hint" style="font-size:11.5px">${p.gc.toFixed(0)}% GC${partner?` · Δ ${Math.abs(p.tm-partner.tm).toFixed(1)}`:''}</div></td>
-      <td class="prob">${st.short?esc(st.short):'<span class="tmpl-ok">none</span>'}${st.assumed?'<div class="hint" style="font-size:11.5px">overlap assumed, not verified</div>':''}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="jumpPrimer(${k})" type="button">Details</button>
-        <button class="btn btn-ghost btn-sm" onclick="showOnMap(${k})" type="button">Map</button></td>
+      <td class="pn"><button class="text-btn mono" onclick="jumpPrimer(${k})" type="button" title="Open details" style="font-weight:750;color:var(--accent)">${esc(p.name)}</button>
+        <div class="pn-f"><span class="lg-num" style="background:${p.amp.color}">${p.r.idx+1}</span>${esc(p.amp.name)} ${p.dir==='F'?'▶':'◀'}</div></td>
+      <td class="sq"><textarea class="seqedit" rows="${Math.max(1,Math.ceil(p.full.length/46))}" id="te_${p.key}" spellcheck="false" oninput="rowLive(${k})" onchange="setPrimer('${p.key}',this.value)"
+          title="Edit to use your own oligo. Lower case = overlap flap.">${casedSeq(p)}</textarea>
+        <div class="hint" id="tt_${p.key}"></div>
+        ${changed?`<div class="was">was <span class="mono">${was.full}</span></div>`:''}
+        ${p.manual?`<div class="hint"><span class="flag f-w">edited</span> <button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset</button></div>`:''}</td>
+      <td class="mono nw">${p.full.length}<div class="hint">${p.tailLen?p.tailLen+'+':'0+'}${p.bindLen}</div></td>
+      <td class="mono nw"><b>${p.tm.toFixed(1)}</b>°C<div class="hint">${p.gc.toFixed(0)}%${partner?` · Δ${Math.abs(p.tm-partner.tm).toFixed(1)}`:''}</div></td>
+      <td class="nw">${flCell}</td>
+      <td class="prob">${st.short?esc(st.short):'<span class="tmpl-ok">none</span>'}</td>
+      <td class="nw"><button class="btn btn-ghost btn-sm" onclick="jumpPrimer(${k},'aln')" type="button" title="Sequence map and details">▸</button></td>
     </tr>`;}).join('');
-  return `<thead><tr><th style="width:44px">Status</th><th>Primer</th><th>Fragment</th><th>Sequence 5′→3′ · edit in place</th><th>nt</th><th>Tm · GC · Δ partner</th><th>Problems</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="8" class="hint" style="padding:14px">No primer has a problem.</td></tr>'}</tbody>`;
+  return `<thead><tr><th></th><th>Primer</th><th>Sequence 5′→3′ · edit in place</th><th>nt</th><th>Tm · GC · Δ</th>
+    <th class="nw"><label class="fl-tick" title="Tick to build every junction without flaps"><input type="checkbox" id="flAll" ${allNat?'checked':''} onchange="flaplessAll(this.checked)">flapless</label></th><th>Problems</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="8" class="hint" style="padding:12px">No primer has a problem.</td></tr>'}</tbody>`;
 }
 /* ── junction options: native overlap, shift or resize, spacer ── */
 function joPrimerCell(o){
@@ -3494,8 +3602,8 @@ function alnTable(d,u,from,W,crow){
 
   const ruler=cols.map(k=>{const pos=(((k%L)+L)%L)+1;
     return `<td class="${ovCell(k)}">${pos%10===0?pos:(pos%5===0?'·':'')}</td>`;}).join('');
-  const top=cols.map(k=>`<td class="${ovCell(k)}">${at(k)}</td>`).join('');
-  const bot=cols.map(k=>`<td class="${ovCell(k)}">${COMP[at(k)]||'N'}</td>`).join('');
+  const top=cols.map(k=>`<td data-col="${k}" class="${ovCell(k)}">${at(k)}</td>`).join('');
+  const bot=cols.map(k=>`<td data-col="${k}" class="${ovCell(k)}">${COMP[at(k)]||'N'}</td>`).join('');
 
   const isCur=p=>!crow||(p.dir===crow.dir&&p.r.idx===crow.r.idx);
   const pRow=p=>{

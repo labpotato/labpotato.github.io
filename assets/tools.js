@@ -94,6 +94,8 @@ const TOOLS = [
       "Tm first: every primer held near target, never knowingly above the ceiling",
       "Every substring of each primer, flap included, scanned against the whole template",
       "Homology report per primer, with alternative primers you can exchange in one click",
+      "Step 3 shows the whole primer table with status marks first, then a detailed card for every primer",
+      "Short or no flaps option in Step 3, also when no plasmid is attached (assumed, marked not verified)",
       "Primers with no flaps where the template already carries the overlap, verified to overlap",
       "Move or resize the overlap, or add a unique spacer for non-coding junctions",
       "Current primer highlighted on the alignment and map, the rest shaded"

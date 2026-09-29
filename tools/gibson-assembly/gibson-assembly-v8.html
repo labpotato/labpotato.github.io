@@ -598,6 +598,25 @@ table.alt tr.cur-alt td,table.jo tr.cur-alt td{background:color-mix(in srgb,var(
 .jo-list{margin:6px 0 10px 20px;font-size:14px;line-height:1.7}
 .sub-tag{margin-top:16px}
 details.adv.homol>summary,details.adv.alts>summary{font-weight:650}
+.pcard{border:1px solid var(--border);border-left:5px solid var(--pc,var(--accent));border-radius:var(--radius-sm);padding:16px 18px 18px;margin:14px 0;background:var(--surface);scroll-margin-top:130px;transition:box-shadow .15s}
+.pcard.cur{box-shadow:0 0 0 3px color-mix(in srgb,var(--pc,var(--accent)) 24%,transparent)}
+.pc-sub{font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin:18px 0 8px;padding-top:10px;border-top:1px dashed var(--border)}
+.pchips.sticky{position:sticky;top:58px;z-index:5;box-shadow:0 4px 10px -8px rgba(0,0,0,.4)}
+table.loc th{width:190px;text-align:left;font-weight:650;color:var(--text-muted);vertical-align:top;white-space:nowrap}
+table.loc td{padding:6px 10px}
+.st{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-weight:800;font-size:14px;color:#fff;background:var(--ok)}
+.st-w{background:var(--warn)}.st-b{background:var(--bad)}
+.st-cell{text-align:center}
+.st-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;margin:0 0 10px}
+.st-legend .st{width:20px;height:20px;font-size:12px;margin-left:8px}
+#primerTable tbody tr{cursor:default}
+#primerTable tr.row-b td{background:var(--bad-soft)}
+#primerTable tr.row-w td{background:var(--warn-soft)}
+#primerTable td.prob{font-size:13px;max-width:340px}
+.flapctl{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);padding:10px 14px;margin-bottom:14px}
+.flapctl-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+details.adv>summary .flag{white-space:normal}
+.pcard .pw-head{flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -814,15 +833,6 @@ details.adv.homol>summary,details.adv.alts>summary{font-weight:650}
               </div>
             </div>
             <div class="note n-i" style="margin-top:16px" id="protocolNote"></div>
-            <div class="note n-w" id="nativeBox" style="margin-top:4px">
-              <span class="ic">🧬</span>
-              <div><label class="chk" style="color:inherit;font-weight:650"><input type="checkbox" id="ovNative" onchange="touch()">
-                Where the source plasmid already carries the overlap, make primers with short or no flaps</label>
-                <div style="margin-top:6px">Sometimes the overlap between two fragments already exists in the template: the plasmid one fragment comes from
-                  continues into its neighbour. Then the PCR only needs to reach a little further along the template, and the primers need no overlap flap at all.
-                  This is checked against both templates, and the products are verified to overlap by at least the minimum overlap length.
-                  It needs the source plasmid attached to each part. Where the template does not carry the sequence, ordinary flaps are used.</div></div>
-            </div>
             <div class="btn-row" style="margin-top:6px">
               <button class="btn btn-ghost" onclick="openProtocol()" type="button">
                 <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/></svg>
@@ -1225,6 +1235,7 @@ function overlapCandidates(U,D,insert,S,otherTemplates,opt){
     const o={seq,upPart,insert,downPart,a,c,L:seq.length,tm,gc:gcv(seq),hp:hairpin(seq),
       fwdTail,revTail,fwdExt,revExt,eF,eR,tailF:fwdTail.length,tailR:revTail.length,
       native:(eF>0||eR>0),flapless:(fwdTail.length===0&&revTail.length===0),
+      assumed:!!((eF>0&&nat.assumedD)||(eR>0&&nat.assumedU)),
       cleared:tm>=S.ovTm,hU:s.hU,hD:s.hD,hOther:s.hOther,unique:s.unique,source:'split'};
     if(wantNative)o.endPen=fastEndPenalty(fwdExt+D.seq,'F',S)+fastEndPenalty(U.seq+revExt,'R',S);
     return o;}
@@ -1417,7 +1428,7 @@ function assemble(items,circular,S,F){
   // per-fragment primers with binding specificity screen (against its own source plasmid if given,
   // else its own sequence), length budget, and F/R Tm balancing
   const results=amps.map((a,k)=>{
-    const tmpl=a.template||a.seq;
+    const tmpl=a.hasTemplate&&a.template?a.template:((a.fwdExt||'')+a.seq+(a.revExt||''));
     const region=(a.fwdExt||'')+a.seq+(a.revExt||'');
     const {fb,rb}=designBindPair({seq:region},tmpl,S,a.fwdTail.length,a.revTail.length,
       {F:F.bind&&F.bind['F'+k],R:F.bind&&F.bind['R'+k]});
@@ -1692,7 +1703,13 @@ function nativeExtent(U,D,ins,S){
   const res={nU:0,nD:0,whyU:'',whyD:'',dupU:0,dupD:0};
   const cap=Math.max(S.ovMax,S.ovMin)+ins.length+4;
   const one=(X,which)=>{
-    if(!X.hasTemplate||!X.template)return {n:0,why:'no source plasmid attached'};
+    if(!X.hasTemplate||!X.template){
+      /* no plasmid attached: if the fragments are directly adjacent (nothing inserted between them), assume the
+         source carries the overlap, i.e. that each fragment continues into its neighbour. Not verified. */
+      if(ins.length||U===D)return {n:0,why:ins.length?'no source plasmid attached, and sequence is inserted between the fragments':'no source plasmid attached'};
+      const other=which==='down'?D:U;
+      return {n:Math.min(cap,other.seq.length),why:'',assumed:true};
+    }
     const info=tInfo(X.template),occ=findExact(X.seq,info);
     if(!occ.length)return {n:0,why:'this fragment is not found in the template you attached'};
     if(occ.length>1)return {n:0,why:`this fragment occurs ${occ.length} times in its template`,dup:occ.length};
@@ -1706,6 +1723,7 @@ function nativeExtent(U,D,ins,S){
   };
   const u=one(U,'down'),d=one(D,'up');
   res.nU=u.n;res.whyU=u.why;res.dupU=u.dup||0;res.nD=d.n;res.whyD=d.why;res.dupD=d.dup||0;
+  res.assumedU=!!u.assumed;res.assumedD=!!d.assumed;
   return res;
 }
 
@@ -1862,7 +1880,9 @@ let plan=null;                                  // result of the Mode B match
 let overrides={};                               // primer key -> hand-edited sequence
 let outcome={pcr:'',colonies:'',sequencing:'',notes:''};
 let FORCE={bind:{},ov:{},jm:{},sp:{}};           // choices made by hand from the alternatives lists
-function resetForce(){FORCE={bind:{},ov:{},jm:{},sp:{}};}
+function resetForce(){FORCE={bind:{},ov:{},jm:{},sp:{}};JOPEN={};}
+let OVMODE='tails';                               // 'tails' = ordinary flaps, 'native' = short or no flaps where the template carries the overlap
+let JOPEN={};window.__jo={spLen:12,salt:0};       // which junction-option panels are open
 /* The PCR product of one fragment as it will exist in the tube, read in the construct's direction:
    forward flap + template stretch + the reverse primer's flap turned back the right way round. */
 function productOf(r){return r.fwdTail+r.region+rc(r.revTail);}
@@ -2498,7 +2518,7 @@ function readS(){return{
   minAmp:+v('minAmp')||50,maxPolyX:+v('maxPolyX')||5,gcMin:+v('gcMin')||40,gcMax:+v('gcMax')||60,
   ovSideMin:+v('ovSideMin')||15,maxDtm:+v('maxDtm')||1,aimMin:+v('aimMin')||58,aimMax:+v('aimMax')||62,
   fixTaOn:($('fixTaOn')?$('fixTaOn').checked:false),fixTa:+v('fixTa')||56,
-  ovMode:($('ovNative')&&$('ovNative').checked)?'native':'tails'};}
+  ovMode:OVMODE};}
 
 /* A spacer chosen for a junction is added as one more short part between the two fragments, so the
    assembler, the map and the rebuilt-sequence check all treat it like any other folded-in insert. */
@@ -2526,6 +2546,7 @@ function runDesign(keep){
   d.ambCount=amb;D=d;window.__vec=undefined;mixConc={};
   d.results.forEach(function(r){scoreOffTargets(r,S);});
   $('results').innerHTML=renderResults(d);
+  observeCards();
   if(keep){renderSteps();}
   else{stepNow=3;goStep(3);}
   renderRail();
@@ -2537,7 +2558,6 @@ function runDesign(keep){
 /* re-run after a choice from an alternatives list, staying exactly where the reader is */
 function redesign(){
   const y=window.scrollY;D=null;runDesign(true);window.scrollTo(0,y);
-  const jo=window.__jo;if(jo&&jo.open){const el=$('juncOpts');if(el&&!el.open)el.open=true;}
 }
 /* ══════════════════════════════════════════════════════════════════════════
    RESULTS
@@ -2552,20 +2572,19 @@ function renderResults(d){
   const hot=d.results.filter(r=>r.fb.overCeiling||r.rb.overCeiling).length;
   const tas=d.results.map(r=>r.ta),taMin=Math.min(...tas),taMax=Math.max(...tas);
   const taLabel=taMin===taMax?taMin+' °C':taMin+'–'+taMax+' °C';
+  const rowsAll=primerRows(d,S),w=tmWindow(S);
 
   /* ── verdict strip: only what needs a decision ── */
   let notes='';
   if(blocked)notes+=note('b','A junction has no unique overlap',
     `${blocked} junction${blocked!==1?'s sit':' sits'} inside a repeat, so the same arm occurs more than once and the pieces could join in the wrong order. Move that boundary, add a short unique linker, or recode one copy of the repeat.`);
   if(mis||off)notes+=note('b','A primer can bind somewhere else',
-    `${Math.max(mis,off)} primer${Math.max(mis,off)!==1?'s have':' has'} a second site on its own template that could anneal near ${taLabel}. That is what turns a clean gel into extra bands — see the <b>Off-target</b> column below.`);
-  if(hot)notes+=note('w','Some primers run hot',`${hot} primer${hot!==1?'s exceed':' exceeds'} the ${S.bindTmMax} °C ceiling even at the ${S.bindMin} nt floor — that end is simply GC-rich. Accept it and verify by gradient, or move the boundary.`);
+    `${Math.max(mis,off)} primer${Math.max(mis,off)!==1?'s have':' has'} a second site on its own template that could anneal near ${taLabel}. That is what turns a clean gel into extra bands. See the <b>Problems</b> column below.`);
+  if(hot)notes+=note('w','Some primers run hot',`${hot} primer${hot!==1?'s exceed':' exceeds'} the ${S.bindTmMax} °C ceiling even at the ${S.bindMin} nt floor: that end is simply GC-rich. Accept it and verify by gradient, or move the boundary.`);
   if(lowOv)notes+=note('w','Overlap below target Tm',`${lowOv} junction${lowOv!==1?'s':''} could not reach ${S.ovTm} °C within the searched length. HiFi usually still assembles these; raising the maximum overlap length is the clean fix.`);
-  if(dtm)notes+=note('w','Forward and reverse Tm differ',`${dtm} fragment${dtm!==1?'s':''} have F/R Tm more than ${S.maxDtm} °C apart. The design will not chase an extreme end with the other primer — that gives you two bad primers instead of one. A touchdown or gradient run covers both.`);
-  if(!d.reconstructOk)notes+=note('w','Order or orientation looks wrong','The primers rebuild a sequence that does not match your parts in order — a part may be reverse-complemented or out of sequence.');
+  if(dtm)notes+=note('w','Forward and reverse Tm differ',`${dtm} fragment${dtm!==1?'s':''} have F/R Tm more than ${S.maxDtm} °C apart. The design will not chase an extreme end with the other primer, because that gives you two bad primers instead of one. A touchdown or gradient run covers both.`);
+  if(!d.reconstructOk)notes+=note('w','Order or orientation looks wrong','The primers rebuild a sequence that does not match your parts in order. A part may be reverse-complemented or out of sequence.');
   if(d.ambCount)notes+=note('w','Non-ACGT characters were stripped',`${d.ambCount} character${d.ambCount!==1?'s':''} outside A/C/G/T were removed before designing. A dropped base shifts everything after it.`);
-  /* Tm first: every primer against the target, the band and the ceiling */
-  const rowsAll=primerRows(d,S),w=tmWindow(S);
   const tms=rowsAll.filter(p=>p.bindLen).map(p=>p.tm),tmMin=Math.min(...tms),tmMax=Math.max(...tms);
   const offTm=rowsAll.filter(p=>p.bindLen&&(p.tm>S.bindTmMax||Math.abs(p.tm-S.bindTm)>w.tol));
   if(offTm.length){
@@ -2583,14 +2602,17 @@ function renderResults(d){
     `${noFrag.map(r=>`<b>${esc(r.a.name)}</b>`).join(', ')} ${noFrag.length>1?'are':'is'} not present, as written, in the plasmid attached. Check orientation, edits, or that it is the right plasmid.`);
   d.junctions.forEach((j,ji)=>{
     const nat=j.ov.natAvail;
-    if(nat&&nat.nU+nat.nD>=Math.max(20,S.ovMin)&&!j.ov.native&&(j.ov.modeAsked!=='native'))
-      notes+=note('i',`Junction ${ji+1} could be built without flaps`,
-        `The template of <b>${esc(j.U.name)}</b> already continues into ${esc(j.D.name)} for ${nat.nU} bp, and the template of ${esc(j.D.name)} carries ${nat.nD} bp of ${esc(j.U.name)}. Both primers could sit on template sequence with no flap. Open the junction options under the alignment.`);
-    if(j.ov.native)notes+=note('ok',`Junction ${ji+1} uses the template's own sequence`,
-      `${j.ov.flapless?'Neither primer carries a flap':`Flaps are shortened to ${j.ov.fwdTail.length} and ${j.ov.revTail.length} nt`}; the products still overlap by ${j.ov.L} bp.`);
+    if(nat&&nat.nU+nat.nD>=Math.max(20,S.ovMin)&&!j.ov.native&&(j.ov.modeAsked!=='native')){
+      const asm=nat.assumedU||nat.assumedD;
+      notes+=note('i',`Junction ${ji+1} could be built without flaps`,asm
+        ?`No source plasmid is attached, so this only works if the source of <b>${esc(j.U.name)}</b> already continues into ${esc(j.D.name)}. Choose <b>Short or no flaps</b> above the table to make primers without flaps; they are marked as assumed, not verified.`
+        :`The template of <b>${esc(j.U.name)}</b> already continues into ${esc(j.D.name)} for ${nat.nU} bp, and the template of ${esc(j.D.name)} carries ${nat.nD} bp of ${esc(j.U.name)}. Both primers could sit on template sequence with no flap. Choose <b>Short or no flaps</b> above the table.`);
+    }
+    if(j.ov.native)notes+=note(j.ov.assumed?'w':'ok',`Junction ${ji+1} ${j.ov.assumed?'assumes the source carries the overlap':'uses the template\'s own sequence'}`,
+      `${j.ov.flapless?'Neither primer carries a flap':`Flaps are shortened to ${j.ov.fwdTail.length} and ${j.ov.revTail.length} nt`}; the products still overlap by ${j.ov.L} bp.${j.ov.assumed?' <b>This is not verified</b>: no source plasmid is attached to check it. If the source does not continue into the neighbour, the products will not overlap; use standard flaps.':''}`);
   });
-  d.junctions.forEach((j,ji)=>{const v=verifyOverlap(d,j);
-    if(!v.ok)notes+=note('b',`Junction ${ji+1}: the products do not overlap enough`,`Rebuilt from the primers, ${esc(j.U.name)} and ${esc(j.D.name)} overlap by only ${v.k} bp; ${v.need} bp is the minimum. Change the overlap in the junction options.`);});
+  d.junctions.forEach((j,ji)=>{const vv=verifyOverlap(d,j);
+    if(!vv.ok)notes+=note('b',`Junction ${ji+1}: the products do not overlap enough`,`Rebuilt from the primers, ${esc(j.U.name)} and ${esc(j.D.name)} overlap by only ${vv.k} bp; ${vv.need} bp is the minimum. Change the overlap in the junction options.`);});
   const spac=Object.keys(FORCE.sp||{}).filter(k=>FORCE.sp[k]);
   if(spac.length)notes+=note('w','A spacer was added to the construct',
     `${spac.map(k=>`junction ${+k.slice(1)+1}: <span class="mono">${FORCE.sp[k]}</span> (${FORCE.sp[k].length} bp)`).join('; ')}. The assembled construct is ${spac.reduce((a,k)=>a+FORCE.sp[k].length,0)} bp longer than the parts you entered.`);
@@ -2598,23 +2620,20 @@ function renderResults(d){
   else if(!notes.includes('n-b')&&!offTm.length)notes=note('ok',`Tm check: all ${rowsAll.length} primers between ${tmMin.toFixed(1)} and ${tmMax.toFixed(1)} °C`,`Spread ${(tmMax-tmMin).toFixed(1)} °C, inside the ${(S.bindTm-w.tol).toFixed(0)}–${(S.bindTm+w.tol).toFixed(0)} °C band and under the ${S.bindTmMax} °C ceiling.`)+notes;
 
   let h=`<div style="margin-bottom:14px">${notes}</div>`;
-
-  // open both views on the same primer, otherwise the alignment below contradicts the card above
   window.__pw=window.__pw||{i:0};
-  if(window.__pw.i>=d.results.length*2)window.__pw.i=0;
-  pwSyncAlignment();
+  if(window.__pw.i>=rowsAll.length)window.__pw.i=0;
 
-  /* ══ SECTION 1 — one primer at a time, sitting directly above the same primer on the sequence ══ */
-  // This card is sized to fit one screen: primer, then that primer on the construct, nothing else.
-  // Reference material (overlap table, full product) lives with the order table below.
-  h+=`<div class="card check-card"><div class="card-h">
-      <div><span class="section-tag">Section 1 of 2</span><h2>Check the design</h2></div>
-      <span class="sub">one primer at a time,<br>then that primer on the construct</span></div>
-    <div class="card-b">
-      <div id="pwBox">${pwInner(d,S)}</div>
-      <div class="pw-divider"><span>the same primer, on the construct</span></div>
-      ${alnBody(d,S)}
-    </div></div>`;
+  /* ── the flap option: standard flaps, or short / no flaps where the template carries the overlap ── */
+  const nNat=d.junctions.filter(j=>j.ov.native).length,nAss=d.junctions.filter(j=>j.ov.assumed).length,nJ=d.junctions.length;
+  const flapMsg=OVMODE==='native'
+    ?(nNat?`<b>${nNat} of ${nJ}</b> junction${nJ!==1?'s':''} built with short or no flaps${nAss?`; <b>${nAss}</b> of them assume the source carries the overlap (no plasmid attached, <b>not verified</b>)`:', checked against the attached template'}. Where a junction cannot be built this way, standard flaps are used.`
+      :'No junction could be built this way: it needs each fragment\'s template to continue into its neighbour, or no plasmid attached with the fragments directly adjacent (no insert between them). Standard flaps are used.')
+    :'Each primer carries a flap that copies the end of its neighbour. Choose <b>short or no flaps</b> when the source plasmid already carries the overlap, or when you are making primers without attaching a template.';
+  const flapCtl=`<div class="flapctl"><div class="flapctl-h"><b>Overlap flaps</b>
+      <span class="seg" id="ovSeg" role="group" aria-label="Overlap flaps">
+        <button type="button" class="${OVMODE==='tails'?'on':''}" onclick="setOvMode('tails')">Standard flaps</button>
+        <button type="button" class="${OVMODE==='native'?'on':''}" onclick="setOvMode('native')">Short or no flaps</button></span></div>
+      <div class="hint" style="margin-top:6px">${flapMsg}</div></div>`;
 
   const refBlock=`
       <details class="adv"><summary>Junction overlaps in full</summary><div class="adv-body">
@@ -2634,14 +2653,23 @@ function renderResults(d){
           <button class="btn btn-ghost btn-sm" onclick="cp(window.__fasta,this)" type="button">Copy FASTA</button>
           <button class="btn btn-ghost btn-sm" onclick="dl('${nm.replace(/[^A-Za-z0-9]/g,'_')}.fasta',window.__fasta)" type="button">Download FASTA</button>
           <span class="hint">Use this as the reference when sequencing comes back.</span></div>
-      </div></details>`;
+      </div></details>
+      <details class="adv"><summary>Why is the binding Tm not the temperature I run the PCR at?</summary>
+        <div class="adv-body">
+          <p class="hint" style="margin-bottom:10px"><b>Binding Tm</b> describes <i>one primer</i>: the temperature at which half of it would be stuck to its template. It is computed from the <b>UPPER CASE binding region only</b>; the lower-case flap has nothing to pair with on the template, so counting it would inflate the number.</p>
+          <p class="hint"><b>Run at</b> is a setting on the thermocycler, shared by both primers of a pair (${taLabel} here). It comes from ${S.fixTaOn?'your pinned value':`${esc(prof(S.poly).label.split('·')[0].trim())}'s own rule applied to the lower Tm of the pair`}, and it is deliberately not equal to Tm. The number to match between a forward and reverse pair is the Tm; the number you dial into the machine is <b>Run at</b>.</p>
+        </div></details>`;
 
-  /* ══ SECTION 2 — one table with everything about every primer ══ */
+  const bad=rowsAll.filter(p=>primerStatus(d,p,S).s==='b').length,warn=rowsAll.filter(p=>primerStatus(d,p,S).s==='w').length;
+  /* ══ SECTION 1: the whole table first, with a plain indication of problems ══ */
   h+=`<div class="card"><div class="card-h">
-      <div><span class="section-tag">Section 2 of 2</span><h2>All primers to order</h2></div>
+      <div><span class="section-tag">Section 1 of 2</span><h2>All primers</h2></div>
       <span class="sub">${esc(nm)} · ${d.circular?'circular':'linear'} ${d.asm.length.toLocaleString()} bp<br>
         anneal ${taLabel} · ${prof(S.poly).label.split('·')[0].trim()}</span></div>
     <div class="card-b">
+      ${flapCtl}
+      <div class="st-legend"><span class="st st-ok">✓</span> no problems <span class="st st-w">!</span> worth a look <span class="st st-b">✕</span> needs fixing
+        <span class="hint" style="margin-left:12px"><b>${rowsAll.length-bad-warn}</b> clear · <b>${warn}</b> to look at · <b>${bad}</b> to fix. Click a primer name for its details below.</span></div>
       <div class="scroll-x"><table class="lab" id="primerTable">${primerTableInner(d,S)}</table></div>
       <div class="btn-row" style="margin-top:18px">
         <button class="btn btn-primary" onclick="goStep(4)" type="button">
@@ -2657,12 +2685,17 @@ function renderResults(d){
         <button class="btn btn-ghost" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">Download FASTA</button>
       </div>
       <div class="hint" style="margin-top:12px">
-        <b class="mono">lower case</b> = the overlap tail you are adding (it does not bind the template, so it is
-        excluded from Tm); <b class="mono">UPPER CASE</b> = the binding region that sets your annealing temperature.
-        Any sequence here can be overwritten — click it, paste your own oligo, and every number in its row is
-        recalculated against the real template.</div>
+        <b class="mono">lower case</b> = the overlap flap you are adding (it does not bind the template, so it is excluded from Tm);
+        <b class="mono">UPPER CASE</b> = the binding region that sets your annealing temperature. To use your own oligo, edit the sequence in that primer's card below;
+        every number for it is recalculated against the real template.</div>
       ${refBlock}
     </div></div>`;
+
+  /* ══ SECTION 2: every primer in detail ══ */
+  h+=`<div class="card"><div class="card-h">
+      <div><span class="section-tag">Section 2 of 2</span><h2>Each primer in detail</h2></div>
+      <span class="sub">sequence, properties, location,<br>checks, alternatives, alignment</span></div>
+    <div class="card-b"><div id="cardsBox">${cardsInner(d,S)}</div></div></div>`;
 
   window.__fasta='>'+nm.replace(/\s+/g,'_')+' '+d.asm.length+'bp '+(d.circular?'circular':'linear')+'\n'+(d.asm.match(/.{1,70}/g)||[]).join('\n');
 
@@ -2672,7 +2705,6 @@ function renderResults(d){
       <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`;
   return h;
 }
-
 /* ── the one primer table. Every number a reader might want to check is in this row. ── */
 function primerRows(d,S){
   const stem=nameStem(),out=[];let nF=0,nR=0;
@@ -2713,37 +2745,6 @@ function casedSeq(p){
   return t+b;
 }
 /* Live Tm under the sequence box: the binding region by default, or whatever you highlight. */
-function pwLiveTm(){
-  const el=$('pwSeq'),out=$('pwTm');
-  if(!el||!out||!D)return;
-  const S=D.S,rows=primerRows(D,S),p=rows[(window.__pw||{i:0}).i];
-  if(!p){out.innerHTML='';return;}
-  const raw=el.value;
-  let a=el.selectionStart,b=el.selectionEnd;
-  if(a!=null&&b!=null&&b-a>=6){
-    const sel=clean(raw.slice(a,b));
-    if(sel.length>=6){
-      out.innerHTML=`<span class="pw-tm-live">highlighted ${sel.length} nt</span>
-        Tm <b>${calcTm(sel,S.conc,S.na,S.mg).toFixed(1)} °C</b> ·
-        GC <b>${gcv(sel).toFixed(0)}%</b> ·
-        <span class="mono" style="opacity:.75">${sel.length>30?sel.slice(0,30)+'…':sel}</span>`;
-      return;
-    }
-  }
-  // nothing highlighted: report the part that actually anneals
-  const typed=clean(raw);
-  if(p&&typed===clean(p.full)){
-    out.innerHTML=p.bindLen
-      ? `<span class="pw-tm-live">binding region, ${p.bindLen} nt</span> Tm <b>${p.tm.toFixed(1)} °C</b> · GC <b>${p.gc.toFixed(0)}%</b>`
-      : `<span class="pw-tm-live" style="color:var(--bad)">no part of this oligo matches the template</span>`;
-  }else{
-    // mid-edit: measure the 3' end against the template so the number keeps up with typing
-    const probe=analyzeManual(typed,p.dir,p.r,S);
-    out.innerHTML=probe.bindLen
-      ? `<span class="pw-tm-live">binding region, ${probe.bindLen} nt</span> Tm <b>${probe.tm.toFixed(1)} °C</b> · GC <b>${probe.gc.toFixed(0)}%</b> <span style="opacity:.7">(unsaved — press Enter or click away)</span>`
-      : `<span class="pw-tm-live" style="color:var(--bad)">3′ end does not match the template yet</span>`;
-  }
-}
 
 /* Flags live in one place so the walk-through and the table can never disagree about a primer. */
 function primerFlags(p,S){
@@ -2770,20 +2771,7 @@ function primerFlags(p,S){
   return f;
 }
 /* ── one primer, full width, with somewhere to go next ── */
-/* the strip of every primer: the one being described is solid, the rest are shaded but stay clickable */
 function curPrimerIndex(){return (D&&window.__pw&&window.__pw.i>=0)?window.__pw.i:-1;}
-function pwChips(rows,i){
-  let h='<div class="pchips" role="group" aria-label="All primers. The highlighted one is the primer described below.">',last=-1;
-  rows.forEach((p,k)=>{
-    if(p.r.idx!==last){if(last>=0)h+='</span>';
-      h+=`<span class="pgrp"><span class="lg-num" style="background:${p.amp.color}" title="${esc(p.amp.name)}">${p.r.idx+1}</span>`;last=p.r.idx;}
-    const fl=primerFlags(p,D.S),bad=fl.some(x=>x.s==='b'),warn=fl.length&&!bad;
-    h+=`<button type="button" class="pchip ${k===i?'cur':'dim'}" style="--pc:${p.amp.color}" onclick="pwPick(${k})"
-      title="${esc(p.amp.name)} · ${p.dir==='F'?'forward':'reverse'}${fl.length?' · '+fl.length+' to look at':''}" aria-pressed="${k===i}">
-      <b>${p.dir}${p.r.idx+1}</b><span class="pdot ${bad?'b':warn?'w':'ok'}"></span></button>`;
-  });
-  return h+'</span></div>';
-}
 function heatStrip(p,sum){
   const full=p.full,tl=p.tailLen,ta=sum.ta;let h='<div class="heat" aria-label="Where each base of this primer could pair with the template elsewhere">';
   for(let i=0;i<full.length;i++){
@@ -2872,161 +2860,366 @@ function pwAlternatives(p,S){
       ${forced?`<div class="btn-row" style="margin-top:10px"><span class="hint">You chose ${forced} nt for this primer.</span><button class="btn btn-ghost btn-sm" onclick="clearForce('bind','${p.key}')" type="button">Back to automatic</button></div>`:''}
     </div></details>`;
 }
-function pwInner(d,S){
-  const rows=primerRows(d,S);
-  window.__pw=window.__pw||{i:0};
-  if(window.__pw.i>=rows.length)window.__pw.i=0;
-  const i=window.__pw.i,p=rows[i];
-  if(!p)return '<div class="hint">No primers.</div>';
-  const flags=primerFlags(p,S);
-  const ok=!flags.length;
-  const ts=tmplStatus(p.r);
-  const jn=d.junctions.findIndex(j=>(p.dir==='F'?j.D:j.U)===p.amp);
-  return `
-    ${pwChips(rows,i)}
+/* ── Step 3, part 2: one detailed card per primer ── */
+function primerJunction(d,p){return d.junctions.findIndex(j=>(p.dir==='F'?j.D:j.U)===p.amp);}
+/* ✓ / ! / ✕ plus the problems in plain words. One place, so the table and the cards can never disagree. */
+function primerStatus(d,p,S){
+  const fl=primerFlags(p,S).slice(),ji=primerJunction(d,p);
+  let assumed=false;
+  if(ji>=0){
+    const j=d.junctions[ji],v=verifyOverlap(d,j);
+    if(j.risk)fl.unshift({s:'b',t:`junction ${ji+1} overlap repeats elsewhere`});
+    else if(!v.ok)fl.unshift({s:'b',t:`junction ${ji+1} products overlap only ${v.k} bp`});
+    else if(!j.ov.cleared)fl.push({s:'w',t:`junction ${ji+1} overlap Tm below ${S.ovTm} °C`});
+    assumed=!!(j.ov.assumed&&((p.dir==='F'&&j.ov.eF)||(p.dir==='R'&&j.ov.eR)));
+  }
+  const bad=fl.some(x=>x.s==='b'),warn=fl.length>0&&!bad;
+  const s=bad?'b':warn?'w':'ok';
+  const short=fl.length?fl.slice(0,2).map(x=>x.t).join('; ')+(fl.length>2?` (+${fl.length-2} more)`:''):'';
+  return {s,glyph:bad?'✕':warn?'!':'✓',flags:fl,short,assumed,ji};
+}
+/* where the whole oligo sits on the assembled construct (1-based, wraps on a circle) */
+function primerConstructPos(d,p){
+  const L=d.asm.length,lay=d.layout.find(x=>x.type==='amp'&&x.amp===p.amp);
+  if(!lay)return null;
+  let a0,a1,b0,b1;
+  if(p.dir==='F'){const an=lay.start-(p.r.fwdExt||'').length;a0=an-p.tailLen;a1=an+p.bindLen;b0=an;b1=an+p.bindLen;}
+  else{const an=lay.end+(p.r.revExt||'').length;a0=an-p.bindLen;a1=an+p.tailLen;b0=an-p.bindLen;b1=an;}
+  if(!d.circular){a0=Math.max(0,a0);a1=Math.min(L,a1);b0=Math.max(0,b0);b1=Math.min(L,b1);}
+  const w=x=>(((x%L)+L)%L)+1;
+  return {L,from:w(a0),to:w(a1-1),bFrom:w(b0),bTo:w(b1-1),tail:p.tailLen,bind:p.bindLen};
+}
+/* where the binding region sits on the source plasmid, if one was attached */
+function primerTemplatePos(p){
+  const r=p.r;
+  if(!r.hasOwnTemplate)return {attached:false};
+  const bind=p.bindLen?p.full.slice(p.full.length-p.bindLen):'';
+  if(bind.length<8)return {attached:true,found:false,n:0};
+  const info=tInfo(r.template),occ=findExact(bind,info),L=info.L;
+  if(!occ.length)return {attached:true,found:false,n:0,L};
+  const o=occ[0];
+  const from=o.strand==='+'?o.d+1:L-(o.d+bind.length)+1,to=o.strand==='+'?o.d+bind.length:L-o.d;
+  const w=x=>(((x-1)%L)+L)%L+1;
+  return {attached:true,found:true,n:occ.length,strand:o.strand,from:w(from),to:w(to),L,len:bind.length};
+}
+function primerPartner(rows,p){return rows.find(q=>q.r.idx===p.r.idx&&q.dir!==p.dir);}
+function locTable(d,S,rows,p,st){
+  const cp=primerConstructPos(d,p),tp=primerTemplatePos(p),j=st.ji>=0?d.junctions[st.ji]:null;
+  const ext=(p.dir==='F'?p.r.fwdExt:p.r.revExt)||'';
+  const R=[];
+  if(cp)R.push(['On the assembled construct',`nt <b>${cp.from.toLocaleString()}–${cp.to.toLocaleString()}</b> of ${cp.L.toLocaleString()} bp, ${p.dir==='F'?'reading forward (top strand)':'reading backward (bottom strand)'}`,
+    `binding region nt ${cp.bFrom.toLocaleString()}–${cp.bTo.toLocaleString()}${p.tailLen?`; ${p.tailLen} nt of overlap flap lies ${p.dir==='F'?'upstream':'downstream'} of it`:''}`]);
+  if(!tp.attached)R.push(['On the source plasmid','<span class="tmpl-w">no source plasmid attached</span>','attach one to this part in Step 1 to check where the primer really binds and whether it binds anywhere else']);
+  else if(!tp.found)R.push(['On the source plasmid','<span class="tmpl-b">binding region not found</span>','check orientation, edits, or that this is the right plasmid']);
+  else R.push(['On the source plasmid',`nt <b>${tp.from.toLocaleString()}–${tp.to.toLocaleString()}</b> of ${tp.L.toLocaleString()} bp (top-strand numbering), primer anneals to the ${tp.strand==='+'?'bottom':'top'} strand`,
+    tp.n>1?`<span class="tmpl-w">this stretch occurs ${tp.n} times in the plasmid</span>`:'one site only']);
+  R.push(['On its fragment',`${esc(p.amp.name)}, ${p.dir==='F'?'5′ end':'3′ end'}`,ext.length?`the primer starts ${ext.length} bp ${p.dir==='F'?'before':'after'} the fragment, on the neighbouring sequence`:'binding region starts exactly at the fragment boundary']);
+  const partner=primerPartner(rows,p);
+  if(partner)R.push(['Partner primer',`<b>${esc(partner.name)}</b> (${partner.dir==='F'?'forward':'reverse'}) · ${partner.tm.toFixed(1)} °C`,`Tm differs by ${Math.abs(p.tm-partner.tm).toFixed(1)} °C; product ${p.r.amplicon.toLocaleString()} bp`]);
+  if(j){const v=verifyOverlap(d,j);
+    R.push([`Junction ${st.ji+1}`,`${esc(j.U.name)} → ${esc(j.D.name)}: overlap <b>${j.ov.L} bp</b> (${j.ov.tm.toFixed(0)} °C); this primer carries ${p.tailLen?`a <b>${p.tailLen} nt</b> flap`:'<b>no flap</b>'}`,
+      `${v.ok?'verified':'<span class="tmpl-b">too short</span>'}: the two PCR products rebuilt from the primers overlap by ${v.k} bp (minimum ${v.need})${j.ov.native?'; the template supplies part of the overlap':''}`]);}
+  return `<div class="scroll-x"><table class="lab loc"><tbody>${R.map(x=>`<tr><th>${x[0]}</th><td>${x[1]}<div class="hint">${x[2]}</div></td></tr>`).join('')}</tbody></table></div>`;
+}
+function propStrip(d,S,rows,p){
+  const partner=primerPartner(rows,p);
+  const items=[['Binding Tm',p.bindLen?p.tm.toFixed(1)+' °C':'—'],['Target',`${S.bindTm} °C`],['GC (binding)',p.bindLen?p.gc.toFixed(0)+'%':'—'],
+    ['Length',`${p.full.length} nt${p.tailLen?` (${p.tailLen} flap + ${p.bindLen})`:''}`],
+    ['3′ end',p.bindLen?(p.full.slice(-1)+(p.manual?'':p.bind.clamp?' · G/C clamp':' · no clamp')):'—'],
+    ['Partner Tm',partner?partner.tm.toFixed(1)+' °C':'—'],['Product',p.r.amplicon.toLocaleString()+' bp'],
+    ['Run at',p.r.ta+' °C'],['Extension',extTime(p.r.amplicon,S.poly)]];
+  if(!p.manual&&p.bindLen)items.push(['Hairpin / self-dimer',`${p.bind.hp} / ${p.bind.selfDimer} bp`]);
+  return `<div class="pw-strip">${items.map(m=>`<span class="pw-item"><i>${m[0]}</i><b>${m[1]}</b></span>`).join('')}
+    <span class="pw-item"><i>Binds elsewhere</i>${p.offN?`<b style="color:var(--bad)">${p.offN} site${p.offN>1?'s':''} @ ${p.offTm} °C</b>`:`<b style="color:var(--ok)">no${p.offTm!=null?` · next best ${p.offTm} °C`:''}</b>`}</span></div>`;
+}
+function primerCard(d,S,k,rows){
+  const p=rows[k],st=primerStatus(d,p,S),ts=tmplStatus(p.r),j=st.ji>=0?d.junctions[st.ji]:null;
+  const cur=curPrimerIndex()===k;
+  const flagList=st.flags.length?`<div class="pflags" style="margin-top:10px">${st.flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:
+    `<div class="pflags" style="margin-top:10px"><span class="flag f-ok">✓ no problems found for this primer</span></div>`;
+  const assumedNote=st.assumed?`<div class="note n-w" style="margin-top:10px"><span class="ic">⚠</span><div><b>Overlap assumed, not verified.</b> No source plasmid is attached to
+      ${esc(p.amp.name)}, so this primer was built on the assumption that its source already continues into the neighbouring fragment
+      (${p.dir==='F'?'the last '+p.r.fwdExt.length+' bp of '+esc(j.U.name):'the first '+p.r.revExt.length+' bp of '+esc(j.D.name)}). If your source does not, use standard flaps.
+      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="setOvMode('tails')" type="button">Use standard flaps</button></div></div>`:'';
+  const homoHelp=p.sum&&(p.sum.sev!=='low'||p.sum.tailHit)&&j?`<div class="note n-w" style="margin-top:10px"><span class="ic">⚠</span><div>High homology at this primer can often be fixed at the junction:
+      move or resize the overlap, use the template's own sequence so the primer needs no flap, or add a unique spacer.
+      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="openJunctionOptions('${p.key}')" type="button">Show junction options ↓</button></div></div>`:'';
+  return `<section class="pcard ${cur?'cur':''}" id="pc_${p.key}" data-k="${k}" style="--pc:${p.amp.color}">
     <div class="pw-head" style="--pc:${p.amp.color}">
-      <span class="pw-count">Primer <b>${i+1}</b> of ${rows.length}</span>
+      <span class="pw-count">Primer <b>${k+1}</b> of ${rows.length}</span>
       <span class="lg-num" style="background:${p.amp.color}">${p.r.idx+1}</span>
-      <span class="pw-name">${esc(p.amp.name)}</span>
+      <span class="pw-name">${esc(p.name)}</span>
+      <span class="hint" style="margin:0">${esc(p.amp.name)}</span>
       <span class="flag f-n" style="color:${p.dir==='F'?'var(--accent)':'#8C6BB1'}">${p.dir==='F'?'▶ forward':'◀ reverse'}</span>
       ${p.manual?'<span class="flag f-w">your sequence</span>':''}
       ${FORCE.bind&&FORCE.bind[p.key]?'<span class="flag f-w">length chosen by you</span>':''}
-      <span class="flag ${ok?'f-ok':flags.some(x=>x.s==='b')?'f-b':'f-w'}">${ok?'✓ good to order':flags.length+' to look at'}</span>
-      <span class="pw-nav">
-        <button class="btn btn-ghost btn-sm" onclick="pwGo(-1)" type="button">← Previous</button>
-        <button class="btn btn-primary btn-sm" onclick="pwGo(1)" type="button">Next primer →</button>
-      </span>
+      <span class="flag ${st.s==='ok'?'f-ok':st.s==='b'?'f-b':'f-w'}">${st.glyph} ${st.s==='ok'?'good to order':st.flags.length+' to look at'}</span>
+      <span class="pw-nav"><button class="text-btn" onclick="$('primerTable').scrollIntoView({behavior:'smooth',block:'start'})" type="button">↑ back to table</button></span>
     </div>
-    <label class="fld">Sequence 5′→3′ — edit it if you want your own oligo</label>
-    <input class="seqedit pw-seq" id="pwSeq" value="${casedSeq(p)}" spellcheck="false"
-           oninput="pwLiveTm()" onkeyup="pwLiveTm()" onmouseup="pwLiveTm()" onselect="pwLiveTm()"
+    <label class="fld">Sequence 5′→3′ · edit it if you want your own oligo</label>
+    <input class="seqedit pw-seq" id="pe_${p.key}" value="${casedSeq(p)}" spellcheck="false"
+           oninput="pwLiveTm(${k})" onkeyup="pwLiveTm(${k})" onmouseup="pwLiveTm(${k})" onselect="pwLiveTm(${k})"
            onchange="setPrimer('${p.key}',this.value)">
-    <div class="pw-tm" id="pwTm"></div>
+    <div class="pw-tm" id="tm_${p.key}"></div>
     <div class="btn-row" style="margin-top:8px">
       <button class="copy" onclick="cp('${p.full}',this)" type="button">copy</button>
       ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset</button>`:''}
-      <span class="hint" style="margin:0;font-size:12.5px"><b class="mono" style="text-transform:lowercase">lower</b> = overlap tail ·
-        <b class="mono">UPPER</b> = binds template · highlight any stretch for its Tm ·
-        <b class="mono">${esc(p.name)}</b></span>
+      <span class="hint" style="margin:0;font-size:12.5px"><b class="mono" style="text-transform:lowercase">lower</b> = overlap flap · <b class="mono">UPPER</b> = binds template · highlight any stretch for its Tm</span>
     </div>
-    <div class="pw-strip">
-      ${[['Binding Tm',p.bindLen?p.tm.toFixed(1)+' °C':'—'],
-         ['Target',`${S.bindTm} °C`],
-         ['GC',p.bindLen?p.gc.toFixed(0)+'%':'—'],
-         ['Length',`${p.full.length} nt${p.tailLen?` (${p.tailLen}+${p.bindLen})`:''}`],
-         ['Product',p.r.amplicon.toLocaleString()+' bp'],
-         ['Run at',p.r.ta+' °C'],
-         ['Extension',extTime(p.r.amplicon,S.poly)]]
-        .map(m=>`<span class="pw-item"><i>${m[0]}</i><b>${m[1]}</b></span>`).join('')}
-      <span class="pw-item"><i>Binds elsewhere</i>
-        ${p.offN?`<b style="color:var(--bad)">${p.offN} site${p.offN>1?'s':''} @ ${p.offTm} °C</b>`
-                :`<b style="color:var(--ok)">no${p.offTm!=null?` · next best ${p.offTm} °C`:''}</b>`}</span>
-    </div>
+    <h3 class="pc-sub">Properties</h3>
+    ${propStrip(d,S,rows,p)}
     ${ts?`<div class="hint tmpl-${ts.s}" style="margin-top:8px"><b>Template:</b> ${ts.t}</div>`:''}
-    ${p.r.fwdExt&&p.dir==='F'||p.r.revExt&&p.dir==='R'?`<div class="hint" style="margin-top:6px"><b>No flap needed here:</b> this primer starts ${(p.dir==='F'?p.r.fwdExt:p.r.revExt).length} bp ${p.dir==='F'?'before':'after'} the fragment on the template's own sequence, which already carries the overlap.</div>`:''}
-    ${flags.length?`<div class="pflags" style="margin-top:10px">${flags.map(x=>`<span class="flag f-${x.s}">${x.t}</span>`).join('')}</div>`:''}
-    ${p.sum&&(p.sum.sev!=='low'||p.sum.tailHit)&&jn>=0?`<div class="note n-w" style="margin-top:10px"><span class="ic">⚠</span><div>High homology at this primer can often be fixed at the junction:
-      move or resize the overlap, use the template's own sequence so the primer needs no flap, or add a unique spacer.
-      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="openJunctionOptions()" type="button">Show junction options ↓</button></div></div>`:''}
+    <h3 class="pc-sub">Location</h3>
+    ${locTable(d,S,rows,p,st)}
+    <h3 class="pc-sub">Checks</h3>
+    ${flagList}${assumedNote}${homoHelp}
     ${pwHomology(p,S)}
     ${pwAlternatives(p,S)}
-    <details class="adv"><summary>Why is the binding Tm not the temperature I run the PCR at?</summary>
-      <div class="adv-body">
-        <p class="hint" style="margin-bottom:10px"><b>They are two different things, and they are meant to differ.</b></p>
-        <p class="hint" style="margin-bottom:10px"><b>Binding Tm (${p.bindLen?p.tm.toFixed(1)+' °C':'—'})</b> describes
-          <i>this one primer</i>: the temperature at which half of it would be stuck to its template. It is computed from
-          the <b>UPPER CASE binding region only</b> — the lower-case tail is new sequence with nothing to pair with on the
-          template, so counting it would inflate the number and mislead you.</p>
-        <p class="hint" style="margin-bottom:10px"><b>Run at (${p.r.ta} °C)</b> is a setting on the thermocycler, shared by
-          both primers of the pair and, here, by every fragment so they can go in one block. It comes from
-          ${S.fixTaOn?`your pinned value`:`${esc(prof(S.poly).label.split('·')[0].trim())}'s own rule applied to the lower Tm of the pair`},
-          and it is deliberately not equal to Tm: set it at or above Tm and the primers barely bind, set it far below and
-          they bind in the wrong places too.</p>
-        <p class="hint">So the number to match between a <b>forward and reverse pair</b> is the Tm
-          (they are ${p.r.dTm!==undefined?p.r.dTm.toFixed(1):Math.abs(p.r.fb.tm-p.r.rb.tm).toFixed(1)} °C apart here).
-          The number you dial into the machine is the one labelled <b>Run at</b>.</p>
-      </div></details>
-  `;
+    <h3 class="pc-sub">On the construct</h3>
+    <div id="aln_${p.key}">${alnCardInner(k)}</div>
+    ${j?juncCard(d,S,p,st.ji):''}
+  </section>`;
 }
-function pwGo(n){
-  if(!D)return;
-  const rows=primerRows(D,D.S);
+/* the jump bar: every primer with its status; click to go to its card, the map follows the one in view */
+function jumpBar(d,S,rows){
+  let h='<div class="pchips sticky" id="jumpBar" role="group" aria-label="Jump to a primer. The highlighted one is the primer in view.">',last=-1;
+  rows.forEach((p,k)=>{
+    if(p.r.idx!==last){if(last>=0)h+='</span>';
+      h+=`<span class="pgrp"><span class="lg-num" style="background:${p.amp.color}" title="${esc(p.amp.name)}">${p.r.idx+1}</span>`;last=p.r.idx;}
+    const st=primerStatus(d,p,S);
+    h+=`<button type="button" class="pchip ${curPrimerIndex()===k?'cur':'dim'}" data-k="${k}" style="--pc:${p.amp.color}" onclick="jumpPrimer(${k})"
+      title="${esc(p.name)} · ${st.flags.length?esc(st.short):'no problems'}"><b>${p.dir}${p.r.idx+1}</b><span class="pdot ${st.s==='b'?'b':st.s==='w'?'w':'ok'}"></span></button>`;
+  });
+  return h+'</span></div>';
+}
+function cardsInner(d,S){
+  const rows=primerRows(d,S);
   window.__pw=window.__pw||{i:0};
-  window.__pw.i=((window.__pw.i+n)%rows.length+rows.length)%rows.length;
-  pwRefresh();
+  if(window.__pw.i>=rows.length)window.__pw.i=0;
+  return jumpBar(d,S,rows)+rows.map((_,k)=>primerCard(d,S,k,rows)).join('');
 }
-function pwPick(k){if(!D)return;window.__pw=window.__pw||{i:0};window.__pw.i=k;pwRefresh();}
-function pwRefresh(){
-  pwSyncAlignment();
-  const box=$('pwBox');if(box){box.innerHTML=pwInner(D,D.S);pwLiveTm();}
-  const ab=$('alnBox');if(ab)ab.innerHTML=alnInner(D,D.S);
-  const t=$('primerTable');if(t)t.innerHTML=primerTableInner(D,D.S);
+/* the primer in view is the "current" one: the map shades the others */
+function setCurrent(k){
+  if(!D)return;
+  window.__pw=window.__pw||{i:0};
+  if(window.__pw.i===k&&document.querySelector('.pcard.cur'))return;
+  window.__pw.i=k;
+  document.querySelectorAll('.pcard').forEach(c=>c.classList.toggle('cur',+c.dataset.k===k));
+  document.querySelectorAll('#jumpBar .pchip').forEach(c=>{const on=+c.dataset.k===k;c.classList.toggle('cur',on);c.classList.toggle('dim',!on);});
+  document.querySelectorAll('#primerTable tbody tr').forEach(r=>r.classList.toggle('cur-row',+r.dataset.k===k));
   renderRail();
+}
+function jumpPrimer(k){
+  const rows=D?primerRows(D,D.S):[];if(!rows[k])return;
+  setCurrent(k);
+  const el=$('pc_'+rows[k].key);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function observeCards(){
+  if(window.__obs){window.__obs.disconnect();window.__obs=null;}
+  if(typeof IntersectionObserver==='undefined')return;
+  const cards=document.querySelectorAll('.pcard');if(!cards.length)return;
+  window.__obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting)setCurrent(+e.target.dataset.k);});
+  },{rootMargin:'-35% 0px -55% 0px'});
+  cards.forEach(c=>window.__obs.observe(c));
+}
+/* redraw the table and the cards without redesigning (a sequence was edited or imported) */
+function refreshResults(){
+  if(!D)return;
+  const y=window.scrollY,t=$('primerTable'),c=$('cardsBox');
+  if(t)t.innerHTML=primerTableInner(D,D.S);
+  if(c){c.innerHTML=cardsInner(D,D.S);observeCards();}
+  renderRail();window.scrollTo(0,y);
+}
+function setOvMode(m){
+  OVMODE=(m==='native')?'native':'tails';FORCE.jm={};FORCE.ov={};
+  touch();redesign();
 }
 function useLength(key,len){FORCE.bind[key]=len;redesign();}
 function clearForce(kind,key){if(FORCE[kind])delete FORCE[kind][key];redesign();}
-function openJunctionOptions(){window.__jo=window.__jo||{open:false,spLen:12,salt:0};window.__jo.open=true;
-  const ab=$('alnBox');if(ab)ab.innerHTML=alnInner(D,D.S);
-  const el=$('juncOpts');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
-// keep the alignment showing whichever primer the walk-through is on
-function pwSyncAlignment(){
-  if(!D)return;
-  const rows=primerRows(D,D.S),p=rows[window.__pw.i];if(!p)return;
-  const units=alnUnits(D);
-  const ui=units.findIndex(u=>u.primers.some(x=>x.dir===p.dir&&x.r&&x.r.idx===p.r.idx));
-  if(ui>=0&&ui!==(window.__aln&&window.__aln.i))window.__aln={i:ui,from:null};
+function openJunctionOptions(key){
+  JOPEN[key]=true;const el=$('jo_'+key);
+  if(el){el.open=true;joToggle(el);el.scrollIntoView({behavior:'smooth',block:'center'});}
 }
+/* the alignment inside each card: a fixed window on that primer's junction, steered with the arrows */
+const ALNPOS={};
+function alnUnitFor(d,p){return alnUnits(d).find(x=>x.primers.some(q=>q.dir===p.dir&&q.r&&q.r.idx===p.r.idx));}
+function alnCardInner(k){
+  const d=D,S=d.S,rows=primerRows(d,S),p=rows[k];
+  const u=alnUnitFor(d,p);
+  if(!u)return '<div class="hint">No alignment available for this primer.</div>';
+  const L=d.asm.length,W=Math.min(72,L);
+  const from=ALNPOS[p.key]!=null?ALNPOS[p.key]:u.center-Math.floor(W/2);
+  const posLabel=`${((from%L)+L)%L+1}–${(((from+W-1)%L)+L)%L+1} of ${L.toLocaleString()} bp`;
+  return `<div class="aln-bar"><span class="aln-pick"><span class="aln-tab on"><span class="dot" style="background:${u.color}"></span>${esc(u.label)}</span>
+      <span class="hint" style="margin:0">${esc(u.sub)}</span></span>
+    <span class="aln-steer">
+      <button class="icobtn" onclick="alnMove(${k},-24)" title="Back 24 bp" type="button">«</button>
+      <button class="icobtn" onclick="alnMove(${k},-6)" title="Back 6 bp" type="button">‹</button>
+      <button class="icobtn" onclick="alnRecentre(${k})" title="Re-centre" type="button">⌖</button>
+      <button class="icobtn" onclick="alnMove(${k},6)" title="Forward 6 bp" type="button">›</button>
+      <button class="icobtn" onclick="alnMove(${k},24)" title="Forward 24 bp" type="button">»</button>
+      <span class="aln-pos">${posLabel}</span></span></div>
+    ${alnTable(d,u,from,W,p)}
+    <div class="aln-key">
+      <span><span class="aln-sw" style="background:color-mix(in srgb,${u.color} 24%,transparent)"></span>binds template</span>
+      <span><span class="aln-sw" style="background:var(--warn-soft);border:1px solid var(--warn)"></span>overlap flap</span>
+      <span><span class="aln-sw" style="background:color-mix(in srgb,var(--potato) 22%,transparent)"></span>shared overlap${u.kind==='junction'?` (${u.j.ov.L} bp)`:''}</span>
+      <span><span class="aln-sw" style="background:var(--bad-soft);border:1px solid var(--bad)"></span>differs from construct</span>
+      <span><b style="color:var(--text)">Bright</b> = ${esc(p.name)}; <b>grey</b> = the neighbouring primer, for context</span>
+      ${p.manual?`<span style="color:var(--warn);font-weight:650">✎ your sequence: red in the flap is normal, red in the binding region is not</span>`:''}
+    </div>`;
+}
+function alnMove(k,n){
+  const p=primerRows(D,D.S)[k];if(!p)return;
+  const u=alnUnitFor(D,p);if(!u)return;
+  const W=Math.min(72,D.asm.length);
+  ALNPOS[p.key]=(ALNPOS[p.key]!=null?ALNPOS[p.key]:u.center-Math.floor(W/2))+n;
+  $('aln_'+p.key).innerHTML=alnCardInner(k);
+}
+function alnRecentre(k){const p=primerRows(D,D.S)[k];if(!p)return;delete ALNPOS[p.key];$('aln_'+p.key).innerHTML=alnCardInner(k);}
+/* live Tm under a card's sequence box: the binding region by default, or whatever is highlighted */
+function pwLiveTm(k){
+  if(!D)return;
+  const S=D.S,rows=primerRows(D,S),p=rows[k];if(!p)return;
+  const el=$('pe_'+p.key),out=$('tm_'+p.key);if(!el||!out)return;
+  const raw=el.value;let a=el.selectionStart,b=el.selectionEnd;
+  if(a!=null&&b!=null&&b-a>=6){
+    const sel=clean(raw.slice(a,b));
+    if(sel.length>=6){
+      out.innerHTML=`<span class="pw-tm-live">highlighted ${sel.length} nt</span> Tm <b>${calcTm(sel,S.conc,S.na,S.mg).toFixed(1)} °C</b> · GC <b>${gcv(sel).toFixed(0)}%</b> · <span class="mono" style="opacity:.75">${sel.length>30?sel.slice(0,30)+'…':sel}</span>`;
+      return;}
+  }
+  const typed=clean(raw);
+  if(typed===clean(p.full)){
+    out.innerHTML=p.bindLen?`<span class="pw-tm-live">binding region, ${p.bindLen} nt</span> Tm <b>${p.tm.toFixed(1)} °C</b> · GC <b>${p.gc.toFixed(0)}%</b>`
+      :`<span class="pw-tm-live" style="color:var(--bad)">no part of this oligo matches the template</span>`;
+  }else{
+    const probe=analyzeManual(typed,p.dir,p.r,S);
+    out.innerHTML=probe.bindLen?`<span class="pw-tm-live">binding region, ${probe.bindLen} nt</span> Tm <b>${probe.tm.toFixed(1)} °C</b> · GC <b>${probe.gc.toFixed(0)}%</b> <span style="opacity:.7">(unsaved: press Enter or click away)</span>`
+      :`<span class="pw-tm-live" style="color:var(--bad)">3′ end does not match the template yet</span>`;
+  }
+}
+function setPrimer(key,val){
+  const v2=clean(val);
+  if(!v2){delete overrides[key];}else{overrides[key]=v2;}
+  saveAuto();refreshResults();libRemember();
+}
+// keep the alignment showing whichever primer the walk-through is on
+
+/* ── Step 3, part 1: the whole table, with a plain indication of what is wrong ── */
 function primerTableInner(d,S){
   const rows=primerRows(d,S),cur=curPrimerIndex();
   let tsv='Name\tFragment\tDirection\tSequence\tLength\tBindingTm\tGC\tOffTargetSites\tProduct\tAnnealTa\tExtension\n';
   let fa='';
   rows.forEach(p=>{
-    // case carries meaning here too: lower = overlap tail, UPPER = binds the template
+    // case carries meaning here too: lower = overlap flap, UPPER = binds the template
     tsv+=`${p.name}\t${p.amp.name}\t${p.dir==='F'?'Forward':'Reverse'}\t${casedSeq(p)}\t${p.full.length}\t${p.tm.toFixed(1)}\t${p.gc.toFixed(0)}\t${p.offN}\t${p.r.amplicon}\t${p.r.ta}\t${extTime(p.r.amplicon,S.poly)}\n`;
     fa+='>'+p.name.replace(/[^A-Za-z0-9/]/g,'_')+' '+p.amp.name.replace(/\s+/g,'_')+'_'+(p.dir==='F'?'fwd':'rev')+'\n'+casedSeq(p)+'\n';
   });
   window.__tsv=tsv; window.__pfasta=fa;
   const body=rows.map((p,k)=>{
-    // the off-target verdict gets its own column, so leave it out of the inline flag list here
-    const warn=primerFlags(p,S).filter(x=>!/competing site/.test(x.t))
-      .map(x=>`<span class="flag f-${x.s}">${x.t}</span>`);
-    const sm=p.sum;
-    const offCell=!sm?'<span class="flag f-n">no template</span>'
-      : sm.sev==='high'?`<span class="flag f-b">${p.offN} site${p.offN>1?'s':''} @ ${p.offTm} °C</span><div class="hint" style="font-size:11.5px">can prime</div>`
-      : sm.sev==='mid'?`<span class="flag f-w">watch</span><div class="hint" style="font-size:11.5px">${sm.worstAny?'partial match '+sm.worstAny.tm+' °C':''}</div>`
-      : `<span class="flag f-ok">clear</span><div class="hint" style="font-size:11.5px">${sm.worstAny?'next best '+sm.worstAny.tm+' °C':'nothing above 30 °C'}</div>`;
-    return `<tr class="${k===cur?'cur-row':''}">
-      <td class="mono" style="white-space:nowrap"><button class="text-btn" onclick="pwPick(${k});document.getElementById('pwBox').scrollIntoView({behavior:'smooth',block:'center'})" type="button" title="Show this primer above" style="font-weight:700;color:var(--accent)">${esc(p.name)}</button>
+    const st=primerStatus(d,p,S),cs=casedSeq(p);
+    const seqHtml=`<span style="color:var(--warn)">${cs.slice(0,p.tailLen)}</span>${cs.slice(p.tailLen)}`;
+    return `<tr class="${k===cur?'cur-row':''} ${st.s==='b'?'row-b':st.s==='w'?'row-w':''}" data-k="${k}">
+      <td class="st-cell"><span class="st st-${st.s}" title="${st.s==='ok'?'no problems':st.s==='b'?'needs fixing':'worth a look'}">${st.glyph}</span></td>
+      <td class="mono" style="white-space:nowrap"><button class="text-btn" onclick="jumpPrimer(${k})" type="button" title="Go to the details for this primer" style="font-weight:700;color:var(--accent)">${esc(p.name)}</button>
         ${p.manual?'<div><span class="flag f-w">edited</span></div>':''}</td>
       <td style="white-space:nowrap"><span class="lg-num" style="background:${p.amp.color};display:inline-flex;vertical-align:middle;margin-right:6px">${p.r.idx+1}</span>
         <b>${esc(p.amp.name)}</b><div class="hint" style="font-size:11.5px">${p.dir==='F'?'▶ forward':'◀ reverse'}</div></td>
-      <td style="min-width:260px">
-        <input class="seqedit" id="pe_${p.key}" value="${casedSeq(p)}" spellcheck="false"
-               onchange="setPrimer('${p.key}',this.value)" title="Edit this primer — lower case is the overlap tail">
-        <div class="hint" style="font-size:11.5px;margin-top:4px">
-          <b>${p.full.length} nt</b> = ${p.tailLen?`<span style="color:var(--warn);font-weight:700">${p.tailLen} tail</span> + `:''}${p.bindLen} binding
-          ${p.manual?`<button class="text-btn" onclick="setPrimer('${p.key}','')" type="button">reset to designed</button>`:''}</div>
-        ${warn.length?`<div class="pflags" style="margin-top:6px">${warn.join('')}</div>`:''}</td>
-      <td class="mono" style="white-space:nowrap"><b style="font-size:15px">${p.tm.toFixed(1)}</b> °C
-        <div class="hint" style="font-size:11.5px">${p.gc.toFixed(0)}% GC</div></td>
-      <td>${offCell}</td>
-      <td class="mono" style="white-space:nowrap">${p.r.amplicon.toLocaleString()} bp
-        <div class="hint" style="font-size:11.5px">${p.r.ta} °C · ${extTime(p.r.amplicon,S.poly)}</div></td>
+      <td class="mono seqcell" style="min-width:250px">${seqHtml}</td>
+      <td class="mono" style="white-space:nowrap">${p.full.length}<div class="hint" style="font-size:11.5px">${p.tailLen?p.tailLen+' flap + ':'no flap · '}${p.bindLen}</div></td>
+      <td class="mono" style="white-space:nowrap"><b>${p.tm.toFixed(1)}</b> °C</td>
+      <td class="mono">${p.gc.toFixed(0)}%</td>
+      <td class="prob">${st.short?esc(st.short):'<span class="tmpl-ok">none</span>'}${st.assumed?'<div class="hint" style="font-size:11.5px">overlap assumed, not verified</div>':''}</td>
     </tr>`;}).join('');
-  return `<thead><tr>
-      <th>Primer</th><th>Fragment</th><th>Sequence 5′→3′ · click to edit</th>
-      <th>Binding Tm</th><th>Binds elsewhere?</th><th>PCR product</th></tr></thead><tbody>${body}</tbody>`;
+  return `<thead><tr><th style="width:44px">Status</th><th>Primer</th><th>Fragment</th><th>Sequence 5′→3′</th><th>nt</th><th>Binding Tm</th><th>GC</th><th>Problems</th></tr></thead><tbody>${body}</tbody>`;
 }
-function setPrimer(key,val){
-  const v2=clean(val);
-  if(!v2){delete overrides[key];}else{overrides[key]=v2;}
-  saveAuto();
-  const t=$('primerTable');if(t)t.innerHTML=primerTableInner(D,D.S);
-  const pw=$('pwBox');if(pw){pw.innerHTML=pwInner(D,D.S);pwLiveTm();}
-  const box=$('alnBox');if(box)box.innerHTML=alnInner(D,D.S);
-  renderRail();
+/* ── junction options: native overlap, shift or resize, spacer ── */
+function joPrimerCell(o){
+  const f=o.jp.sumF,r=o.jp.sumR;
+  const one=(s,t,n)=>!s?'':`<div>${n} <span class="flag f-${s.sev==='high'?'b':s.sev==='mid'?'w':'ok'}">${s.sev==='high'?'site '+s.offTm+' °C':s.sev==='mid'?'watch':'clear'}</span> <span class="mono">${t.toFixed(1)} °C</span></div>`;
+  return one(f,o.jp.tmF,'F')+one(r,o.jp.tmR,'R');
 }
-
+function joRow(o,btnLabel,onclick,extraCls){
+  return `<tr class="${o.isCurrent?'cur-alt':''} ${extraCls||''}">
+    <td><b>${esc(o.label)}</b>${o.isCurrent?' <span class="flag f-n">current</span>':''}${o.spacer?`<div class="mono seqcell" style="margin-top:4px">${o.spacer}</div>`:''}</td>
+    <td class="mono">${o.L} bp<div class="hint">${o.a} + ${o.ov.insert.length} + ${o.c}</div></td>
+    <td class="mono">${o.tm.toFixed(0)} °C<div class="hint">${o.unique?'unique':'<span style="color:var(--bad)">repeats</span>'}${o.cleared?'':' · cold'}</div></td>
+    <td class="mono">F ${o.tailF} nt<div class="hint">R ${o.tailR} nt${o.flapless?' · no flaps':''}</div></td>
+    <td>${joPrimerCell(o)}</td>
+    <td>${o.isCurrent?'':`<button class="btn ${o.ok?'btn-primary':'btn-ghost'} btn-sm" onclick="${onclick}" type="button">${btnLabel}</button>`}</td></tr>`;
+}
+const JO_HEAD='<thead><tr><th>Option</th><th>Overlap</th><th>Overlap Tm</th><th>Flaps</th><th>Primers at this junction</th><th></th></tr></thead>';
+function juncBody(d,S,ji){
+  const j=d.junctions[ji],ov=j.ov,nat=ov.natAvail||{nU:0,nD:0,whyU:'',whyD:''},jo=window.__jo;
+  const key=j.key,spNow=FORCE.sp&&FORCE.sp[key];
+  let h=`<div class="jo-cur">Junction ${ji+1}: <b>${esc(j.U.name)} → ${esc(j.D.name)}</b>. Overlap <b>${ov.L} bp</b>
+    (${ov.a} from ${esc(j.U.name)}${j.ins?` + ${j.ins.length} inserted`:''} + ${ov.c} from ${esc(j.D.name)}), Tm ${ov.tm.toFixed(0)} °C,
+    ${ov.unique?'unique':'<b style="color:var(--bad)">repeats elsewhere</b>'}. Flaps: forward ${ov.fwdTail.length} nt, reverse ${ov.revTail.length} nt${ov.native?'. The template supplies part of the overlap':''}.
+    ${FORCE.ov&&FORCE.ov[key]?`<button class="text-btn" onclick="clearForce('ov','${key}')" type="button">back to automatic</button>`:''}
+    <div style="margin-top:4px">${(()=>{const v=verifyOverlap(d,j);return v.ok?`<span class="flag f-ok">verified</span> the two PCR products, rebuilt from the primers, overlap by <b>${v.k} bp</b> (minimum ${v.need}).`:`<span class="flag f-b">too short</span> the two PCR products overlap by only ${v.k} bp (minimum ${v.need}).`;})()}</div></div>`;
+  /* 1. native overlap */
+  h+=`<div class="sub-tag">1 · Use the template's own sequence (primers with short or no flaps)</div>`;
+  const line=(who,n,why,other)=>n?`<li><b>${esc(who)}</b>${(n===nat.nU&&nat.assumedU)||(n===nat.nD&&nat.assumedD)?' has no source plasmid attached; the source is <b>assumed</b> to continue into '+esc(other)+' (not verified)':`'s template already continues into ${esc(other)} for <b>${n} bp</b>`}.</li>`:`<li><b>${esc(who)}</b>: nothing to reuse (${esc(why||'no source plasmid')}).</li>`;
+  h+=`<ul class="jo-list">${line(j.U.name,nat.nU,nat.whyU,j.D.name)}${line(j.D.name,nat.nD,nat.whyD,j.U.name).replace("'s template already continues into "+esc(j.U.name),"'s template already carries the end of "+esc(j.U.name))}</ul>`;
+  const na=nativeAlternative(d,ji,S);
+  if(na){
+    const cur=Object.assign({},na,{isCurrent:false});
+    h+=`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${joRow(cur,na.apply.jm==='native'?'Use it':'Use flaps instead',`applyJunction(${ji},'jm','${na.apply.jm}')`)}</tbody></table></div>`;
+  }else h+=`<div class="hint">Not available here: the two templates do not carry enough of each other's sequence (at least 8 bp is needed).</div>`;
+  /* 2. shift or resize */
+  h+=`<div class="sub-tag">2 · Move or resize the overlap</div>`;
+  const alts=overlapAlternatives(d,ji,S,6);
+  h+=`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${alts.map(o=>joRow(o,'Use this',`applyJunction(${ji},'ov',{a:${o.apply.a},c:${o.apply.c}})`)).join('')}</tbody></table></div>
+    <div class="hint" style="margin-top:6px">Each option is a different overlap for the same two fragments. Overlap Tm and uniqueness are checked against every template; the primers column re-scans the two oligos with that overlap.</div>`;
+  /* 3. spacer */
+  const lens=[6,9,12,15,18,24,30];
+  h+=`<div class="sub-tag">3 · Add a spacer between the fragments</div>
+    <div class="note n-w"><span class="ic">⚠</span><div><b>A spacer adds bases to your construct.</b> Use it only where the junction is not inside a coding sequence. If it must sit in a coding sequence, keep the length a multiple of 3 and free of stop codons
+      (lengths of 6, 9, 12… are screened that way). The overlap flap is then built from this new, unique sequence, so it cannot match anywhere in the templates.</div></div>
+    ${spNow?`<div class="btn-row" style="margin:10px 0"><span class="flag f-w">spacer in use: <span class="mono">${spNow}</span> (${spNow.length} bp)</span><button class="btn btn-ghost btn-sm" onclick="clearForce('sp','${key}')" type="button">Remove spacer</button></div>`:''}
+    <div class="btn-row" style="margin:10px 0"><label class="fld" style="margin:0">Length</label>
+      <select onchange="window.__jo.spLen=+this.value;window.__jo.salt=0;joRefresh()" style="width:auto">${lens.map(l=>`<option value="${l}" ${jo.spLen===l?'selected':''}>${l} bp${l%3===0?' (in frame)':''}</option>`).join('')}</select>
+      <button class="btn btn-ghost btn-sm" onclick="window.__jo.salt++;joRefresh()" type="button">Suggest others</button></div>`;
+  const sps=spacerAlternatives(d,ji,S,jo.spLen,jo.salt);
+  h+=sps.length?`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${sps.map(o=>joRow(o,'Use this spacer',`applyJunction(${ji},'sp','${o.spacer}')`)).join('')}</tbody></table></div>`
+    :`<div class="hint">No spacer of this length passed every screen. Try another length.</div>`;
+  h+=`<div class="btn-row" style="margin-top:12px"><label class="fld" style="margin:0">Or your own</label>
+    <input type="text" class="seqedit spcustom" placeholder="paste a spacer sequence" style="max-width:280px" spellcheck="false">
+    <button class="btn btn-ghost btn-sm" onclick="useCustomSpacer(${ji},this)" type="button">Check and use</button></div>
+    <div class="hint" style="margin-top:6px">Screened for: common restriction sites (EcoRI, BamHI, HindIII, XbaI, SpeI, PstI, NotI, NdeI, NcoI, XhoI, KpnI, SacI, SalI, NheI, BsaI, BsmBI, BbsI, SapI), ATG and Shine-Dalgarno-like sequence, repeats and homopolymers, GC 35–65%, hairpins, and similarity to any of your sequences.</div>`;
+  return h;
+}
+function juncCard(d,S,p,ji){
+  const open=!!JOPEN[p.key];
+  return `<details class="adv" id="jo_${p.key}" data-ji="${ji}" data-key="${p.key}" ${open?'open':''} ontoggle="joToggle(this)"><summary>Junction ${ji+1} options: use the template's own sequence, move or resize the overlap, add a spacer</summary>
+    <div class="adv-body jbody">${open?juncBody(d,S,ji):'<div class="hint">Open to see the options.</div>'}</div></details>`;
+}
+function joToggle(el){
+  JOPEN[el.dataset.key]=el.open;
+  if(el.open&&D){const b=el.querySelector('.jbody');if(b)b.innerHTML=juncBody(D,D.S,+el.dataset.ji);}
+}
+function joRefresh(){
+  if(!D)return;const y=window.scrollY;
+  document.querySelectorAll('details[data-key][open] .jbody').forEach(b=>{b.innerHTML=juncBody(D,D.S,+b.closest('details').dataset.ji);});
+  window.scrollTo(0,y);
+}
+function applyJunction(ji,kind,payload){
+  const j=D.junctions[ji],key=j.key;
+  if(kind==='ov'){FORCE.ov[key]={a:payload.a,c:payload.c};}
+  else if(kind==='jm'){FORCE.jm[key]=payload;delete FORCE.ov[key];}
+  else if(kind==='sp'){FORCE.sp[key]=payload;delete FORCE.ov[key];}
+  redesign();
+}
+function useCustomSpacer(ji,btn){
+  const j=D.junctions[ji],inp=btn&&btn.parentElement.querySelector('input'),seq=clean(inp?inp.value:'');
+  if(seq.length<4||seq.length>60){toast('A spacer should be 4 to 60 bases');return;}
+  const tm=[j.U.template||j.U.seq,j.D.template||j.D.seq].concat(D.amps.filter(a=>a!==j.U&&a!==j.D).map(a=>a.template||a.seq));
+  const bad=spacerProblems(seq,tm,seq.length%3===0);
+  if(bad.length&&!confirm('This spacer has problems: '+bad.join(', ')+'.\n\nUse it anyway?'))return;
+  applyJunction(ji,'sp',seq);
+}
 function alnUnits(d){
   const lay=a=>d.layout.find(x=>x.type==='amp'&&x.amp===a);
   const res=a=>d.results.find(r=>r.a===a);
@@ -3076,7 +3269,7 @@ function alnPrimer(dir,amp,r,anchor){
     bind:designedBind,full,tot:full.length,tail:full.slice(0,tailLen),partner:(dir==='F'?r.rb:r.fb).tm,
     manual,tm,noMatch,r},spans);
 }
-function alnTable(d,u,from,W){
+function alnTable(d,u,from,W,crow){
   const L=d.asm.length;
   const at=k=>d.asm[((k%L)+L)%L];
   const inSpan=(k,a,b)=>{const len=b-a;if(len<=0||len>=L)return false;return (((k-a)%L)+L)%L<len;};
@@ -3088,7 +3281,6 @@ function alnTable(d,u,from,W){
   const top=cols.map(k=>`<td class="${ovCell(k)}">${at(k)}</td>`).join('');
   const bot=cols.map(k=>`<td class="${ovCell(k)}">${COMP[at(k)]||'N'}</td>`).join('');
 
-  const crow=(window.__pw&&d===D)?primerRows(d,d.S)[window.__pw.i]:null;
   const isCur=p=>!crow||(p.dir===crow.dir&&p.r.idx===crow.r.idx);
   const pRow=p=>{
     const cur=isCur(p),pc=cur?p.color:'var(--text-faint)';
@@ -3126,133 +3318,10 @@ function alnTable(d,u,from,W){
     ${revRows}
   </table></div>`;
 }
-/* ── junction options: native overlap, shift or resize, spacer ── */
-function joPrimerCell(o){
-  const f=o.jp.sumF,r=o.jp.sumR;
-  const one=(s,t,n)=>!s?'':`<div>${n} <span class="flag f-${s.sev==='high'?'b':s.sev==='mid'?'w':'ok'}">${s.sev==='high'?'site '+s.offTm+' °C':s.sev==='mid'?'watch':'clear'}</span> <span class="mono">${t.toFixed(1)} °C</span></div>`;
-  return one(f,o.jp.tmF,'F')+one(r,o.jp.tmR,'R');
-}
-function joRow(o,btnLabel,onclick,extraCls){
-  return `<tr class="${o.isCurrent?'cur-alt':''} ${extraCls||''}">
-    <td><b>${esc(o.label)}</b>${o.isCurrent?' <span class="flag f-n">current</span>':''}${o.spacer?`<div class="mono seqcell" style="margin-top:4px">${o.spacer}</div>`:''}</td>
-    <td class="mono">${o.L} bp<div class="hint">${o.a} + ${o.ov.insert.length} + ${o.c}</div></td>
-    <td class="mono">${o.tm.toFixed(0)} °C<div class="hint">${o.unique?'unique':'<span style="color:var(--bad)">repeats</span>'}${o.cleared?'':' · cold'}</div></td>
-    <td class="mono">F ${o.tailF} nt<div class="hint">R ${o.tailR} nt${o.flapless?' · no flaps':''}</div></td>
-    <td>${joPrimerCell(o)}</td>
-    <td>${o.isCurrent?'':`<button class="btn ${o.ok?'btn-primary':'btn-ghost'} btn-sm" onclick="${onclick}" type="button">${btnLabel}</button>`}</td></tr>`;
-}
-const JO_HEAD='<thead><tr><th>Option</th><th>Overlap</th><th>Overlap Tm</th><th>Flaps</th><th>Primers at this junction</th><th></th></tr></thead>';
-function juncBody(d,S,ji){
-  const j=d.junctions[ji],ov=j.ov,nat=ov.natAvail||{nU:0,nD:0,whyU:'',whyD:''},jo=window.__jo;
-  const key=j.key,spNow=FORCE.sp&&FORCE.sp[key];
-  let h=`<div class="jo-cur">Junction ${ji+1}: <b>${esc(j.U.name)} → ${esc(j.D.name)}</b>. Overlap <b>${ov.L} bp</b>
-    (${ov.a} from ${esc(j.U.name)}${j.ins?` + ${j.ins.length} inserted`:''} + ${ov.c} from ${esc(j.D.name)}), Tm ${ov.tm.toFixed(0)} °C,
-    ${ov.unique?'unique':'<b style="color:var(--bad)">repeats elsewhere</b>'}. Flaps: forward ${ov.fwdTail.length} nt, reverse ${ov.revTail.length} nt${ov.native?'. The template supplies part of the overlap':''}.
-    ${FORCE.ov&&FORCE.ov[key]?`<button class="text-btn" onclick="clearForce('ov','${key}')" type="button">back to automatic</button>`:''}
-    <div style="margin-top:4px">${(()=>{const v=verifyOverlap(d,j);return v.ok?`<span class="flag f-ok">verified</span> the two PCR products, rebuilt from the primers, overlap by <b>${v.k} bp</b> (minimum ${v.need}).`:`<span class="flag f-b">too short</span> the two PCR products overlap by only ${v.k} bp (minimum ${v.need}).`;})()}</div></div>`;
-  /* 1. native overlap */
-  h+=`<div class="sub-tag">1 · Use the template's own sequence (primers with short or no flaps)</div>`;
-  const line=(who,n,why,other)=>n?`<li><b>${esc(who)}</b>'s template already continues into ${esc(other)} for <b>${n} bp</b>.</li>`:`<li><b>${esc(who)}</b>: nothing to reuse (${esc(why||'no source plasmid')}).</li>`;
-  h+=`<ul class="jo-list">${line(j.U.name,nat.nU,nat.whyU,j.D.name)}${line(j.D.name,nat.nD,nat.whyD,j.U.name).replace("'s template already continues into "+esc(j.U.name),"'s template already carries the end of "+esc(j.U.name))}</ul>`;
-  const na=nativeAlternative(d,ji,S);
-  if(na){
-    const cur=Object.assign({},na,{isCurrent:false});
-    h+=`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${joRow(cur,na.apply.jm==='native'?'Use it':'Use flaps instead',`applyJunction(${ji},'jm','${na.apply.jm}')`)}</tbody></table></div>`;
-  }else h+=`<div class="hint">Not available here: the two templates do not carry enough of each other's sequence (at least 8 bp is needed).</div>`;
-  /* 2. shift or resize */
-  h+=`<div class="sub-tag">2 · Move or resize the overlap</div>`;
-  const alts=overlapAlternatives(d,ji,S,6);
-  h+=`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${alts.map(o=>joRow(o,'Use this',`applyJunction(${ji},'ov',{a:${o.apply.a},c:${o.apply.c}})`)).join('')}</tbody></table></div>
-    <div class="hint" style="margin-top:6px">Each option is a different overlap for the same two fragments. Overlap Tm and uniqueness are checked against every template; the primers column re-scans the two oligos with that overlap.</div>`;
-  /* 3. spacer */
-  const lens=[6,9,12,15,18,24,30];
-  h+=`<div class="sub-tag">3 · Add a spacer between the fragments</div>
-    <div class="note n-w"><span class="ic">⚠</span><div><b>A spacer adds bases to your construct.</b> Use it only where the junction is not inside a coding sequence. If it must sit in a coding sequence, keep the length a multiple of 3 and free of stop codons
-      (lengths of 6, 9, 12… are screened that way). The overlap flap is then built from this new, unique sequence, so it cannot match anywhere in the templates.</div></div>
-    ${spNow?`<div class="btn-row" style="margin:10px 0"><span class="flag f-w">spacer in use: <span class="mono">${spNow}</span> (${spNow.length} bp)</span><button class="btn btn-ghost btn-sm" onclick="clearForce('sp','${key}')" type="button">Remove spacer</button></div>`:''}
-    <div class="btn-row" style="margin:10px 0"><label class="fld" style="margin:0">Length</label>
-      <select onchange="window.__jo.spLen=+this.value;window.__jo.salt=0;joRefresh()" style="width:auto">${lens.map(l=>`<option value="${l}" ${jo.spLen===l?'selected':''}>${l} bp${l%3===0?' (in frame)':''}</option>`).join('')}</select>
-      <button class="btn btn-ghost btn-sm" onclick="window.__jo.salt++;joRefresh()" type="button">Suggest others</button></div>`;
-  const sps=spacerAlternatives(d,ji,S,jo.spLen,jo.salt);
-  h+=sps.length?`<div class="scroll-x"><table class="lab jo">${JO_HEAD}<tbody>${sps.map(o=>joRow(o,'Use this spacer',`applyJunction(${ji},'sp','${o.spacer}')`)).join('')}</tbody></table></div>`
-    :`<div class="hint">No spacer of this length passed every screen. Try another length.</div>`;
-  h+=`<div class="btn-row" style="margin-top:12px"><label class="fld" style="margin:0">Or your own</label>
-    <input type="text" id="spCustom" class="seqedit" placeholder="paste a spacer sequence" style="max-width:280px" spellcheck="false">
-    <button class="btn btn-ghost btn-sm" onclick="useCustomSpacer(${ji})" type="button">Check and use</button></div>
-    <div class="hint" style="margin-top:6px">Screened for: common restriction sites (EcoRI, BamHI, HindIII, XbaI, SpeI, PstI, NotI, NdeI, NcoI, XhoI, KpnI, SacI, SalI, NheI, BsaI, BsmBI, BbsI, SapI), ATG and Shine-Dalgarno-like sequence, repeats and homopolymers, GC 35–65%, hairpins, and similarity to any of your sequences.</div>`;
-  return h;
-}
-function juncPanel(d,S,u){
-  if(u.kind!=='junction')return '';
-  const ji=d.junctions.indexOf(u.j);
-  window.__jo=window.__jo||{open:false,spLen:12,salt:0};
-  return `<details class="adv" id="juncOpts" data-ji="${ji}" ${window.__jo.open?'open':''} ontoggle="joToggle(this)"><summary>Junction ${ji+1} options: use the template's own sequence, move or resize the overlap, add a spacer</summary>
-    <div class="adv-body" id="joBody">${window.__jo.open?juncBody(d,S,ji):'<div class="hint">Open to see the options.</div>'}</div></details>`;
-}
-function joToggle(el){
-  window.__jo.open=el.open;
-  if(el.open&&D){const b=$('joBody');if(b)b.innerHTML=juncBody(D,D.S,+el.dataset.ji);}
-}
-function joRefresh(){const el=$('juncOpts');if(el&&D){const y=window.scrollY;$('joBody').innerHTML=juncBody(D,D.S,+el.dataset.ji);window.scrollTo(0,y);}}
-function applyJunction(ji,kind,payload){
-  const j=D.junctions[ji],key=j.key;
-  if(kind==='ov'){FORCE.ov[key]={a:payload.a,c:payload.c};}
-  else if(kind==='jm'){FORCE.jm[key]=payload;delete FORCE.ov[key];}
-  else if(kind==='sp'){FORCE.sp[key]=payload;delete FORCE.ov[key];}
-  window.__jo=window.__jo||{};window.__jo.open=true;
-  redesign();
-}
-function useCustomSpacer(ji){
-  const j=D.junctions[ji],seq=clean(v('spCustom'));
-  if(seq.length<4||seq.length>60){toast('A spacer should be 4 to 60 bases');return;}
-  const tm=[j.U.template||j.U.seq,j.D.template||j.D.seq].concat(D.amps.filter(a=>a!==j.U&&a!==j.D).map(a=>a.template||a.seq));
-  const bad=spacerProblems(seq,tm,seq.length%3===0);
-  if(bad.length&&!confirm('This spacer has problems: '+bad.join(', ')+'.\n\nUse it anyway?'))return;
-  applyJunction(ji,'sp',seq);
-}
-function curName(){const r=D&&window.__pw?primerRows(D,D.S)[window.__pw.i]:null;return r?r.name+' ('+(r.dir==='F'?'forward':'reverse')+')':'the current primer';}
-function alnBody(d,S){return `<div id="alnBox">${alnInner(d,S)}</div>`;}
-function alnInner(d,S){
-  const units=alnUnits(d);
-  if(!units.length)return '<div class="hint">No junctions to show.</div>';
-  window.__aln=window.__aln||{i:0,from:null};
-  if(window.__aln.i>=units.length)window.__aln.i=0;
-  const u=units[window.__aln.i];
-  const L=d.asm.length,W=Math.min(72,L);
-  if(window.__aln.from===null||window.__aln.key!==u.label){
-    window.__aln.from=u.center-Math.floor(W/2);window.__aln.key=u.label;}
-  const from=window.__aln.from;
-  const posLabel=`${((from%L)+L)%L+1}–${(((from+W-1)%L)+L)%L+1} of ${L.toLocaleString()} bp`;
-  const edited=u.primers.filter(x=>x.manual);
-  // one control row instead of three stacked blocks, so this whole section fits a screen
-  return `
-    <div class="aln-bar">
-      <span class="aln-pick">${units.map((x,i)=>`
-        <button class="aln-tab ${i===window.__aln.i?'on':''}" onclick="alnPick(${i})" type="button">
-          <span class="dot" style="background:${x.color}"></span>${esc(x.label)}</button>`).join('')}</span>
-      <span class="aln-steer">
-        <button class="icobtn" onclick="alnScroll(-24)" title="Back 24 bp" type="button">«</button>
-        <button class="icobtn" onclick="alnScroll(-6)" title="Back 6 bp" type="button">‹</button>
-        <button class="icobtn" onclick="alnCentre()" title="Re-centre" type="button">⌖</button>
-        <button class="icobtn" onclick="alnScroll(6)" title="Forward 6 bp" type="button">›</button>
-        <button class="icobtn" onclick="alnScroll(24)" title="Forward 24 bp" type="button">»</button>
-        <span class="aln-pos">${posLabel}</span>
-      </span>
-    </div>
-    ${alnTable(d,u,from,W)}
-    <div class="aln-key">
-      <span><span class="aln-sw" style="background:color-mix(in srgb,${u.color} 24%,transparent)"></span>binds template</span>
-      <span><span class="aln-sw" style="background:var(--warn-soft);border:1px solid var(--warn)"></span>overlap tail</span>
-      <span><span class="aln-sw" style="background:color-mix(in srgb,var(--potato) 22%,transparent)"></span>shared overlap${u.kind==='junction'?` (${u.j.ov.L} bp)`:''}</span>
-      <span><span class="aln-sw" style="background:var(--bad-soft);border:1px solid var(--bad)"></span>differs from construct</span>
-      <span><b style="color:var(--text)">Bright</b> = ${esc(curName())} (the primer described above); <b>grey</b> = its neighbour on this junction, for context</span>
-      ${edited.length?`<span style="color:var(--warn);font-weight:650">✎ ${edited.map(x=>esc(x.name)).join(', ')} ${edited.length>1?'are':'is'} yours — red in the tail is normal, red in the binding region is not</span>`:''}
-    </div>
-    ${juncPanel(d,S,u)}`;
-}
-function alnPick(i){window.__aln={i,from:null};$('alnBox').innerHTML=alnInner(D,D.S);}
-function alnScroll(n){window.__aln.from+=n;$('alnBox').innerHTML=alnInner(D,D.S);}
-function alnCentre(){window.__aln.from=null;$('alnBox').innerHTML=alnInner(D,D.S);}
+
+
+
+
 
 /* compact per-primer strip: the numbers and flags, without repeating the sequence diagram */
 function renderBench(){
@@ -3689,10 +3758,7 @@ function importExcel(ev){
       else if(overrides[key]!==seq){overrides[key]=seq;changed++;}
     }
     saveAuto();
-    const t=$('primerTable');if(t)t.innerHTML=primerTableInner(D,D.S);
-    const pw=$('pwBox');if(pw){pw.innerHTML=pwInner(D,D.S);pwLiveTm();}
-    const ab=$('alnBox');if(ab)ab.innerHTML=alnInner(D,D.S);
-    renderRail();libRemember();
+    refreshResults();libRemember();
     toast(changed||reset
       ? `Imported: ${changed} primer${changed!==1?'s':''} changed${reset?`, ${reset} reset to designed`:''}${unknown?`, ${unknown} unrecognised row${unknown!==1?'s':''} skipped`:''}`
       : 'No sequence changes found in that file');
@@ -3712,7 +3778,7 @@ function applySnapshot(s){
   if(s.topo)topo=s.topo;
   overrides=s.overrides||{};
   FORCE=Object.assign({bind:{},ov:{},jm:{},sp:{}},s.force||{});
-  { const nb=$('ovNative'); if(nb)nb.checked=((s.settings||{}).ovMode==='native'); }
+  OVMODE=((s.settings||{}).ovMode==='native')?'native':'tails';
   projectId=s.id||projectId;
   outcome=Object.assign({pcr:'',colonies:'',sequencing:'',notes:''},s.outcome||{});
   D=null;plan=null;setMode(s.mode||'A');
@@ -3740,7 +3806,7 @@ function loadDemo(){
   $('nameA').value='pUC-EAAAK-sfGFP (example)';
   $('tgtName').value='pUC-EAAAK-sfGFP (example)';
   $('tgtSeq').value=backbone+'GAAGCTGCTGCTAAAGAAGCTGCTGCTAAA'+gfp;
-  resetForce();topo='circular';plan=null;D=null;
+  resetForce();OVMODE='tails';topo='circular';plan=null;D=null;
   document.querySelectorAll('#topoSeg button,#topoSegB button').forEach(b=>b.classList.toggle('on',b.dataset.t==='circular'));
   goStep(1);renderAll();
   toast('Example loaded — hit “Design my primers”');

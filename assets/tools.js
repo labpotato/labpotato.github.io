@@ -86,17 +86,17 @@ const TOOLS = [
     name: "Gibson Assembly",
     tagline: "Primers that actually anneal",
     description:
-      "Paste fragments in assembly order and get Gibson-ready primers with Tm calculations, off-target homology screening, and an annotated map. Also logs what worked, so future-you stops repeating past-you's mistakes.",
+      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every stretch of every primer, flap included, is checked against your whole source plasmid, and anything that could bind elsewhere comes with alternatives you can swap in. Can also build primers with no flaps when the template already carries the overlap.",
     icon: "gibson",
     accent: "blue",
     folder: "tools/gibson-assembly",
     features: [
-      "Build a construct part by part, or paste the finished plasmid",
-      "Primers with NEB-style Tm and overlap checks",
-      "Screens every primer against the whole source plasmid for off-target binding",
-      "Live plasmid map that updates as you add fragments",
-      "Primer table you can edit here or in Excel",
-      "Keeps a bench log of what actually worked"
+      "Tm first: every primer held near target, never knowingly above the ceiling",
+      "Every substring of each primer, flap included, scanned against the whole template",
+      "Homology report per primer, with alternative primers you can exchange in one click",
+      "Primers with no flaps where the template already carries the overlap, verified to overlap",
+      "Move or resize the overlap, or add a unique spacer for non-coding junctions",
+      "Current primer highlighted on the alignment and map, the rest shaded"
     ],
     versions: [
       { v: "v1", file: "gibson-assembly-v1.html" },
@@ -105,7 +105,8 @@ const TOOLS = [
       { v: "v4", file: "gibson-assembly-v4.html" },
       { v: "v5", file: "gibson-assembly-v5.html" },
       { v: "v6", file: "gibson-assembly-v6.html" },
-      { v: "v7", file: "gibson-assembly-v7.html", date: "2026-09-25" }
+      { v: "v7", file: "gibson-assembly-v7.html", date: "2026-09-25" },
+      { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" }
     ]
   },
 

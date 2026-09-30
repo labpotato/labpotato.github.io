@@ -86,19 +86,16 @@ const TOOLS = [
     name: "Gibson Assembly",
     tagline: "Primers that actually anneal",
     description:
-      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every stretch of every primer, flap included, is checked against your whole source plasmid, and anything that could bind elsewhere comes with alternatives you can swap in. Can also build primers with no flaps when the template already carries the overlap.",
+      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every primer is checked against your whole source plasmid, with alternatives you can swap in, and can be built with short or no flaps.",
     icon: "gibson",
     accent: "blue",
     folder: "tools/gibson-assembly",
     features: [
-      "Tm first: every primer held near target, never knowingly above the ceiling",
-      "Every substring of each primer, flap included, scanned against the whole template",
-      "Homology report per primer, with alternative primers you can exchange in one click",
-      "Step 3 shows the whole primer table with status marks first, then a detailed card for every primer",
-      "Short or no flaps option in Step 3, also when no plasmid is attached (assumed, marked not verified)",
-      "Primers with no flaps where the template already carries the overlap, verified to overlap",
-      "Move or resize the overlap, or add a unique spacer for non-coding junctions",
-      "Current primer highlighted on the alignment and map, the rest shaded"
+      "Tm first: every primer held near the target, under the ceiling",
+      "Whole primer, flap included, scanned against your source plasmid",
+      "One table with status marks, editable sequences and a flapless tick",
+      "Drag on the sequence map to try a primer and see its Tm and overlap",
+      "Alternatives, junction options and spacers when a primer has a problem"
     ],
     versions: [
       { v: "v1", file: "gibson-assembly-v1.html" },
@@ -157,32 +154,6 @@ const TOOLS = [
       { v: "v3", file: "protein-quant-v3.html" },
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" }
-    ]
-  },
-
-  {
-    id: "lab-journal",
-    name: "Lab Journal",
-    tagline: "Write it down, or it did not happen",
-    description:
-      "A lab report for the day in a calm notebook layout. Experiments sit side by side and new ones are added to the right. Each starts with its figures, then what it is about, a table of strains, plasmids and constructs, how it was done with steps and sub steps, changes from the normal protocol, results, issue and follow up. Names from the table are suggested as you type.",
-    icon: "flask",
-    accent: "indigo",
-    folder: "tools/lab-journal",
-    features: [
-      "Figures first, three across; crop only, one caption each",
-      "Strains, plasmids and constructs table; names suggested as you type (Tab to accept)",
-      "Steps 1., 1.1., 1.1.1. and sub bullets with Tab and Shift+Tab",
-      "Protocol changes recorded as before and this time",
-      "Your own filler sentences with _ blanks; everything saved offline"
-    ],
-    versions: [
-      { v: "v1", file: "lab-journal-v1.html", date: "2026-09-28" },
-      { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" },
-      { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" },
-      { v: "v4", file: "lab-journal-v4.html", date: "2026-09-28" },
-      { v: "v5", file: "lab-journal-v5.html", date: "2026-09-28" },
-      { v: "v6", file: "lab-journal-v6.html", date: "2026-09-30" }
     ]
   }
 

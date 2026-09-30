@@ -181,28 +181,8 @@ const TOOLS = [
       { v: "v2", file: "lab-journal-v2.html", date: "2026-09-28" },
       { v: "v3", file: "lab-journal-v3.html", date: "2026-09-28" },
       { v: "v4", file: "lab-journal-v4.html", date: "2026-09-28" },
-      { v: "v5", file: "lab-journal-v5.html", date: "2026-09-28" }
-    ]
-  },
-
-  {
-    id: "lab-entry",
-    name: "Lab Entry",
-    tagline: "Experiments, to-dos and reports in one notebook",
-    description:
-      "The full lab notebook: one page per experiment with project and experiment tags, figures you can crop, rotate and adjust, strains and plasmids, steps, results and follow ups. Create tomorrow's entry from today's with the to-dos carried over, and export the report as Word (.docx), PDF, or Markdown with figure images for Notion, Google Docs or Claude.",
-    icon: "flask",
-    accent: "rose",
-    folder: "tools/lab-entry",
-    features: [
-      "Project and experiment tags; tags suggest the usual to-dos and results",
-      "Follow up tomorrow: a linked new entry with tags, strains and plasmids copied and to-dos at the top",
-      "Crop, rotate, brightness and contrast for figures; the original is kept",
-      "Export to Word .docx, print or PDF, or Markdown with figure images (.zip)",
-      "Save to a file and open later; back up fillers, tags and names; works offline"
-    ],
-    versions: [
-      { v: "v1", file: "lab-entry-v1.html", date: "2026-09-30" }
+      { v: "v5", file: "lab-journal-v5.html", date: "2026-09-28" },
+      { v: "v6", file: "lab-journal-v6.html", date: "2026-09-30" }
     ]
   }
 

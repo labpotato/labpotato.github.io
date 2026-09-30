@@ -86,19 +86,16 @@ const TOOLS = [
     name: "Gibson Assembly",
     tagline: "Primers that actually anneal",
     description:
-      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every stretch of every primer, flap included, is checked against your whole source plasmid, and anything that could bind elsewhere comes with alternatives you can swap in. Can also build primers with no flaps when the template already carries the overlap.",
+      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every primer is checked against your whole source plasmid, with alternatives you can swap in, and can be built with short or no flaps.",
     icon: "gibson",
     accent: "blue",
     folder: "tools/gibson-assembly",
     features: [
-      "Tm first: every primer held near target, never knowingly above the ceiling",
-      "Every substring of each primer, flap included, scanned against the whole template",
-      "Homology report per primer, with alternative primers you can exchange in one click",
-      "Step 3 shows the whole primer table with status marks first, then a detailed card for every primer",
-      "Short or no flaps option in Step 3, also when no plasmid is attached (assumed, marked not verified)",
-      "Primers with no flaps where the template already carries the overlap, verified to overlap",
-      "Move or resize the overlap, or add a unique spacer for non-coding junctions",
-      "Current primer highlighted on the alignment and map, the rest shaded"
+      "Tm first: every primer held near the target, under the ceiling",
+      "Whole primer, flap included, scanned against your source plasmid",
+      "One table with status marks, editable sequences and a flapless tick",
+      "Drag on the sequence map to try a primer and see its Tm and overlap",
+      "Alternatives, junction options and spacers when a primer has a problem"
     ],
     versions: [
       { v: "v1", file: "gibson-assembly-v1.html" },
@@ -163,21 +160,21 @@ const TOOLS = [
   {
     id: "lab-entry",
     name: "Lab Entry",
-    tagline: "Experiments, to-dos and reports in one notebook",
+    tagline: "Write it down, or it did not happen",
     description:
-      "The full lab notebook: one page per experiment with project and experiment tags, figures you can crop, rotate and adjust, strains and plasmids, steps, results and follow ups. Create tomorrow's entry from today's with the to-dos carried over, and export the report as Word (.docx), PDF, or Markdown with figure images for Notion, Google Docs or Claude.",
+      "A lab notebook with one page per experiment. Tag by project and experiment, add figures you can crop and adjust, and keep to-dos that carry over to tomorrow's entry. Export the report as Word, PDF or Markdown for Notion, Google Docs or Claude.",
     icon: "flask",
     accent: "rose",
     folder: "tools/lab-entry",
     features: [
-      "Project and experiment tags; tags suggest the usual to-dos and results",
-      "Follow up tomorrow: a linked new entry with tags, strains and plasmids copied and to-dos at the top",
+      "Project and experiment tags suggest the usual to-dos and results",
+      "Follow up tomorrow: a linked new entry with to-dos at the top, overdue ones ask when you did them",
       "Crop, rotate, brightness and contrast for figures; the original is kept",
-      "Export to Word .docx, print or PDF, or Markdown with figure images (.zip)",
-      "Save to a file and open later; back up fillers, tags and names; works offline"
+      "Export to Word .docx, print or PDF, or Markdown with figure images",
+      "Save to a file and reopen later; works offline"
     ],
     versions: [
-      { v: "v1", file: "lab-entry-v1.html", date: "2026-09-30" }
+      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" }
     ]
   }
 

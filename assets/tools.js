@@ -155,6 +155,27 @@ const TOOLS = [
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" }
     ]
+  },
+
+  {
+    id: "lab-entry",
+    name: "Lab Entry",
+    tagline: "Write it down, or it did not happen",
+    description:
+      "A lab notebook with one page per experiment. Tag by project and experiment, add figures you can crop and adjust, and keep to-dos that carry over to tomorrow's entry. Export the report as Word, PDF or Markdown for Notion, Google Docs or Claude.",
+    icon: "flask",
+    accent: "rose",
+    folder: "tools/lab-entry",
+    features: [
+      "Project and experiment tags suggest the usual to-dos and results",
+      "Follow up tomorrow: a linked new entry with to-dos at the top, overdue ones ask when you did them",
+      "Crop, rotate, brightness and contrast for figures; the original is kept",
+      "Export to Word .docx, print or PDF, or Markdown with figure images",
+      "Save to a file and reopen later; works offline"
+    ],
+    versions: [
+      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" }
+    ]
   }
 
   /* ---------- TEMPLATE: copy this block for a new tool ----------

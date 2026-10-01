@@ -24,29 +24,40 @@ Jekyll, which can silently skip or mangle files.
 
 ## 1. Adding a new version of an existing tool
 
-Say you just finished v6 of the Gel Labeler.
+Say you just finished the next Gel Labeler.
 
-1. Put the file in that tool's existing folder, following the naming pattern:
-   `tools/gel-labeler/gel-labeler-v6.html`
-2. Open `assets/tools.js` and find the Gel Labeler block.
-3. Add one line at the **end** of its `versions` list:
+1. **Never overwrite a published file.** Check which version is the newest in
+   that tool's folder and in `assets/tools.js`, and name the new file one
+   higher. If your file says v8 but v8 is already live, it is v9: rename it
+   (and fix the version label inside the file). Numbers go up one at a time
+   with no gaps.
+2. Put the file in that tool's folder, following the naming pattern:
+   `tools/gel-labeler/gel-labeler-v7.html`
+3. Open `assets/tools.js`, find the tool's block, and add one line at the
+   **end** of its `versions` list, with today's date and what the release adds:
 
 ```js
 versions: [
-  { v: "v1", file: "gel-labeler-v1.html" },
-  { v: "v2", file: "gel-labeler-v2.html" },
-  { v: "v3", file: "gel-labeler-v3.html" },
-  { v: "v4", file: "gel-labeler-v4.html" },
-  { v: "v5", file: "gel-labeler-v5.html" },
-  { v: "v6", file: "gel-labeler-v6.html" }   // <-- new, goes last
+  ...
+  { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },   // <-- remove its `new` list
+  { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-05",      // <-- new, goes last
+    new: [
+      "The headline new thing",
+      "A second new thing"
+    ] }
 ]
 ```
 
-4. Commit and push.
+4. Keep the card short. Read the new file and update the block so that:
+   - `description` is one short sentence;
+   - `features` lists the **3** most important things the tool does;
+   - `new` on the latest version lists the **1-3** things this release adds.
+     These show in a highlighted "New in v7" box on the card.
+5. Commit and push.
 
 **The last entry in the list is always treated as the latest.** It becomes the
-big "Launch module" button; everything before it moves into the "legacy
-releases" expander. You don't need to touch `index.html`.
+big "Launch module" button; everything before it stays available in the
+"legacy releases" expander. You don't need to touch `index.html`.
 
 ---
 

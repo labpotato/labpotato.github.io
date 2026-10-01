@@ -5,10 +5,13 @@
 
    Adding a NEW VERSION -> add one line to that tool's `versions`.
                            The LAST entry in the list is the latest.
-                           Give it the release date as date: "YYYY-MM-DD";
-                           the homepage shows it next to the version.
-   features             -> the bullet list on the tool's card. Keep each
-                           line short; four to six lines reads best.
+                           Give it the release date as date: "YYYY-MM-DD"
+                           and `new: [...]`, the 1-3 things this release
+                           adds. They show in a highlighted "New in vX"
+                           box; move older `new` items off the old line.
+   description          -> ONE short sentence.
+   features             -> the 3 most important things the tool does.
+                           Short lines; keep it to three.
    Adding a NEW TOOL    -> copy a whole { ... } block and edit it.
 
    Folder / file names are written exactly as they appear on disk.
@@ -37,20 +40,22 @@ const TOOLS = [
     name: "Colony Counter",
     tagline: "Stop squinting at plates",
     description:
-      "Drop in a plate photo and it finds the dish, corrects the lighting, separates the touching ones and counts. Correct anything it got wrong by clicking, then export the marked-up image and your CFU/mL. Your eyes deserve better than tally marks on a Post-it.",
+      "Drop in a plate photo and get your count and CFU/mL. Your eyes deserve better than tally marks on a Post-it.",
     icon: "colony",
     accent: "emerald",
     folder: "tools/colony-counter",
     features: [
-      "Finds the dish on its own and evens out uneven lighting",
-      "Separates touching colonies, and flags clumps it can only estimate",
-      "Click to add or remove any colony it got wrong, with undo",
-      "Ignores the dish wall and meniscus with an adjustable edge margin",
-      "Exports the marked-up image with your count and CFU/mL"
+      "Finds the dish and counts, even colonies that touch",
+      "Click to fix anything it missed, with undo",
+      "Exports the marked-up plate with count and CFU/mL"
     ],
     versions: [
       { v: "v1", file: "colony-counter-v1.html" },
-      { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" }
+      { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23",
+        new: [
+          "Rebuilt detection: under 1% count error on test plates (was 48%)",
+          "Spot plates, manual count entry and replicate stats"
+        ] }
     ]
   },
 
@@ -59,17 +64,14 @@ const TOOLS = [
     name: "Gel Labeler",
     tagline: "Gels that don't embarrass you",
     description:
-      "Crop and rotate your gel, set lanes, drop in ladder markers, and export as PNG or a fully editable PowerPoint slide. Then compare band intensity between lanes, ImageJ-style, without opening ImageJ. No more arrows drawn in Word at 1am.",
+      "Label lanes and ladders, build blot figures and measure band intensity. No more arrows drawn in Word at 1am.",
     icon: "gel",
     accent: "violet",
     folder: "tools/gel-labeler",
     features: [
-      "Crop, rotate and flip, then drag to set the lanes",
-      "Built-in DNA and protein ladders, placed on your gel automatically",
-      "Arrow band legend and lane-name table, both draggable",
+      "Lanes, ladders and band arrows placed on your gel",
       "Snapshot panels for western-blot style figures",
-      "Band densitometry: relative and loading-control-normalised intensity, CSV out",
-      "Export PNG, JPEG or fully editable PowerPoint"
+      "Export PNG or fully editable PowerPoint"
     ],
     versions: [
       { v: "v1", file: "gel-labeler-v1.html" },
@@ -77,7 +79,11 @@ const TOOLS = [
       { v: "v3", file: "gel-labeler-v3.html" },
       { v: "v4", file: "gel-labeler-v4.html" },
       { v: "v5", file: "gel-labeler-v5.html", date: "2026-09-22" },
-      { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" }
+      { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26",
+        new: [
+          "Band quantification, ImageJ-style, with normalised intensity",
+          "Band panels: blot strip plus bar chart for the figure"
+        ] }
     ]
   },
 
@@ -86,16 +92,14 @@ const TOOLS = [
     name: "Gibson Assembly",
     tagline: "Primers that actually anneal",
     description:
-      "Paste fragments in assembly order and get Gibson-ready primers with matched Tm and an annotated map. Every primer is checked against your whole source plasmid, with alternatives you can swap in, and can be built with short or no flaps.",
+      "Paste fragments in order and get Gibson primers with matched Tm and an annotated map.",
     icon: "gibson",
     accent: "blue",
     folder: "tools/gibson-assembly",
     features: [
-      "Tm first: every primer held near the target, under the ceiling",
-      "Whole primer, flap included, scanned against your source plasmid",
-      "One table with status marks, editable sequences and a flapless tick",
-      "Drag on the sequence map to try a primer and see its Tm and overlap",
-      "Alternatives, junction options and spacers when a primer has a problem"
+      "Every primer held near the target Tm",
+      "Whole primer scanned against your source plasmid",
+      "Editable primer table, with alternatives when one fails"
     ],
     versions: [
       { v: "v1", file: "gibson-assembly-v1.html" },
@@ -105,7 +109,13 @@ const TOOLS = [
       { v: "v5", file: "gibson-assembly-v5.html" },
       { v: "v6", file: "gibson-assembly-v6.html" },
       { v: "v7", file: "gibson-assembly-v7.html", date: "2026-09-25" },
-      { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" }
+      { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" },
+      { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01",
+        new: [
+          "Click a junction on the map to move its overlap or add a spacer",
+          "Shorten a primer's overhang and have it re-checked",
+          "True Tm when the overhang also binds the template"
+        ] }
     ]
   },
 
@@ -114,21 +124,23 @@ const TOOLS = [
     name: "Microscopy Image Labeler",
     tagline: "Panels that line up, finally",
     description:
-      "Load channel images, drag them into rows, crop them in sync, and add a scale bar measured from the one already in your image. Export to PNG or editable PowerPoint. Reviewer 2 will find something else to complain about.",
+      "Arrange channel images into a labelled figure. Reviewer 2 will find something else to complain about.",
     icon: "microscopy",
     accent: "cyan",
     folder: "tools/microscopy-image-labeler",
     features: [
-      "Arrange panels in rows and reorder them by dragging",
       "Square crop synced across every image in a row",
-      "Scale bar measured from the bar in your image, drawn to true length",
       "Labels, panel letters, row and column titles",
-      "Export PNG at 2× or editable PowerPoint"
+      "Export PNG at 2\u00d7 or editable PowerPoint"
     ],
     versions: [
       { v: "v1", file: "microscopy-image-labeler-v1.html" },
       { v: "v2", file: "microscopy-image-labeler-v2.html", date: "2026-09-22" },
-      { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" }
+      { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26",
+        new: [
+          "Scale bar measured from the bar printed in your image",
+          "Drag panels to reorder them"
+        ] }
     ]
   },
 
@@ -137,23 +149,25 @@ const TOOLS = [
     name: "Protein Quant",
     tagline: "Numbers in, plot out",
     description:
-      "Paste a sequence to get MW and extinction coefficient, then turn A280 or a Bradford/BCA curve into concentration and yield, without opening a spreadsheet and slowly losing your will to live.",
+      "Concentration and yield from A280 or a standard curve, without slowly losing your will to live in a spreadsheet.",
     icon: "protein",
     accent: "amber",
     folder: "tools/protein-quant",
     features: [
-      "Paste a sequence to get MW and extinction coefficient",
-      "A280 to concentration, with replicates averaged, in any unit",
-      "Bradford/BCA standard curve with blank subtraction and linear or quadratic fit",
-      "Yield per litre, checked against benchmarks for your expression host",
-      "Export to CSV or copy straight into Excel"
+      "A280 to concentration in any unit",
+      "Yield per litre, checked against your expression host",
+      "Export to CSV or straight into Excel"
     ],
     versions: [
       { v: "v1", file: "protein-quant-v1.html" },
       { v: "v2", file: "protein-quant-v2.html" },
       { v: "v3", file: "protein-quant-v3.html" },
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
-      { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" }
+      { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26",
+        new: [
+          "Paste a sequence to get MW and extinction coefficient",
+          "Bradford/BCA curves with blank subtraction and quadratic fit"
+        ] }
     ]
   },
 
@@ -162,19 +176,23 @@ const TOOLS = [
     name: "Lab Entry",
     tagline: "Write it down, or it did not happen",
     description:
-      "A lab notebook with one page per experiment. Tag by project and experiment, add figures you can crop and adjust, and keep to-dos that carry over to tomorrow's entry. Export the report as Word, PDF or Markdown for Notion, Google Docs or Claude.",
+      "A lab notebook with one page per experiment, exported to Word, PDF or Markdown.",
     icon: "flask",
     accent: "rose",
     folder: "tools/lab-entry",
     features: [
-      "Project and experiment tags suggest the usual to-dos and results",
-      "Follow up tomorrow: a linked new entry with to-dos at the top, overdue ones ask when you did them",
-      "Crop, rotate, brightness and contrast for figures; the original is kept",
-      "Export to Word .docx, print or PDF, or Markdown with figure images",
-      "Save to a file and reopen later; works offline"
+      "Tag each entry by project and experiment",
+      "To-dos that carry over to tomorrow's entry",
+      "Figures you can crop and adjust; the original is kept"
     ],
     versions: [
-      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" }
+      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
+      { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01",
+        new: [
+          "Every tag gets its own colour",
+          "Step back through the to-do list day by day",
+          "Nudge a to-do a day earlier or later"
+        ] }
     ]
   }
 
@@ -184,14 +202,15 @@ const TOOLS = [
     name: "My New Tool",                // shown on the card
     tagline: "One short line",          // small coloured text under the title
     description: "What it does, in a sentence or two.",
-    features: ["First thing it does", "Second thing"],   // bullets on the card
+    features: ["Most important thing", "Second", "Third"],   // 3 key bullets
     icon: "flask",                      // colony | gel | gibson | microscopy |
                                         // protein | flask | dna | chart | calculator
     accent: "rose",                     // emerald | violet | blue | cyan |
                                         // amber | rose | indigo
     folder: "tools/my-new-tool",        // folder path, no spaces please
     versions: [
-      { v: "v1", file: "my-new-tool-v1.html", date: "2026-01-31" }   // last one = latest
+      { v: "v1", file: "my-new-tool-v1.html", date: "2026-01-31",
+        new: ["What this release adds"] }   // last one = latest
     ]
   }
   --------------------------------------------------------------- */

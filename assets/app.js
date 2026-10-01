@@ -61,6 +61,8 @@ function isFresh(iso) {
 
 const checkSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
 
+const sparkSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.3L20.5 10.5l-6.3 2.2L12 19l-2.2-6.3L3.5 10.5l6.3-2.2z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" opacity=".7"/></svg>`;
+
 const arrowSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>`;
 
 function renderTools() {
@@ -70,8 +72,16 @@ function renderTools() {
   grid.innerHTML = TOOLS.map((tool) => {
     const latest = latestOf(tool);
     const older = tool.versions.slice(0, -1).reverse();
+    // Three key features, then what the latest release added, highlighted.
     const features = (tool.features || []).length
-      ? `<ul class="tool-features">${tool.features.map((f, i) => `<li style="--i:${i}">${checkSvg}<span>${f}</span></li>`).join("")}</ul>`
+      ? `<ul class="tool-features">${tool.features.slice(0, 3).map((f, i) => `<li style="--i:${i}">${checkSvg}<span>${f}</span></li>`).join("")}</ul>`
+      : "";
+    const fresh = (latest.new || []).slice(0, 3);
+    const newBlock = fresh.length
+      ? `<div class="tool-new">
+           <div class="tool-new-h">${sparkSvg}New in ${latest.v}</div>
+           <ul>${fresh.map((f, i) => `<li style="--i:${i + 3}">${f}</li>`).join("")}</ul>
+         </div>`
       : "";
 
     const olderBlock = older.length
@@ -90,6 +100,7 @@ function renderTools() {
         <p class="tool-tagline">${tool.tagline}</p>
         <p class="tool-desc">${tool.description}</p>
         ${features}
+        ${newBlock}
         <div class="tool-meta">
           <span class="version-pill">${latest.v} · latest release</span>
           ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}

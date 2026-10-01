@@ -187,11 +187,12 @@ const TOOLS = [
     ],
     versions: [
       { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
-      { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01",
+      { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
+      { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01",
         new: [
-          "Every tag gets its own colour",
-          "Step back through the to-do list day by day",
-          "Nudge a to-do a day earlier or later"
+          "General to-dos, not tied to an experiment",
+          "Table editor: add rows and columns, paste from Excel",
+          "Yesterday's plan shown in Results: tick it and write the result"
         ] }
     ]
   }

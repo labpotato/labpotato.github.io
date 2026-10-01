@@ -540,6 +540,9 @@ th:hover>.t-ops,th:focus-within>.t-ops{opacity:1}
 .gtodo input{width:15px;height:15px;accent-color:var(--accent)}
 .gtodo button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 2px}.gtodo button:hover{color:var(--accent)}
 .gtodo.done label{text-decoration:line-through;color:var(--muted)}
+.gtodo input.due-x,.todo input.due-x{width:auto;height:24px;padding:0 6px;font-size:12px;border-radius:999px;background:transparent;border:1px solid var(--rule);color:var(--ink2);accent-color:auto}
+.gtodo input.due-x.over,.todo input.due-x.over{color:var(--bad);border-color:var(--bad)}.gtodo input.due-x.today,.todo input.due-x.today{color:var(--warn);border-color:var(--warn)}
+.add-bar{display:block;width:100%;margin-top:6px;border:1px dashed var(--rule2);border-radius:8px;padding:6px;color:var(--muted)}.add-bar:hover{color:var(--accent);border-color:var(--accent)}
 #undoBar{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:98;display:flex;gap:10px;align-items:center;background:var(--card);color:var(--ink);border:1px solid var(--rule2);box-shadow:0 10px 30px rgba(0,0,0,.25);border-radius:12px;padding:8px 10px 8px 16px;max-width:92vw;font-size:14px}
 #undoBar[hidden]{display:none}
 /* without the figure panel the write-up sits centred at a readable width */
@@ -615,7 +618,8 @@ th:hover>.t-ops,th:focus-within>.t-ops{opacity:1}
     <button data-act="copyMd">Copy Markdown (text only)</button>
   </div></details>
   <details class="more"><summary class="btn">More</summary><div class="menu">
-    <button data-act="openFile">Open a saved file</button>
+    <button data-act="openFile">Open a saved file (adds to what is here)</button>
+    <button data-act="openFileReplace">Open a saved file, replacing everything here</button>
     <button data-act="saveFileAs">Save everything to a new file</button>
     <hr>
     <button data-act="libExport">Back up fillers, tags and names</button>
@@ -2834,7 +2838,7 @@ function samplesHtml(b, bi){
         <td><textarea rows="1" class="fit" data-bind="${P}.samples.${si}.desc" data-noac placeholder="for example kanamycin resistance, T7 promoter" aria-label="Description">${esc(s.desc)}</textarea></td>
         <td class="narrow"><button class="btn ghost sm x" data-act="delSample" data-arg="${bi}.${si}" aria-label="Remove row">×</button></td></tr>`).join('')}
       ${b.samples.length ? '' : `<tr><td colspan="3" class="hint" style="padding:10px">No names yet. <button class="btn sm" data-act="addSample" data-arg="${bi}">Add the first one</button> or link an earlier experiment above and press ⇣ names.</td></tr>`}
-    </tbody></table><p class="hint" style="margin:6px 0 0">Names listed here are suggested while typing anywhere (Tab to accept).</p></div>${threads(b, bi, 'samples')}</section>`;
+    </tbody></table>${b.samples.length ? `<button class="btn ghost sm add-bar" data-act="addSample" data-arg="${bi}" title="Add a row (or press Enter in the last row)">+ Add row</button>` : ''}<p class="hint" style="margin:6px 0 0">Names listed here are suggested while typing anywhere (Tab to accept). Enter in the last row adds a new one.</p></div>${threads(b, bi, 'samples')}</section>`;
 }
 function changesHtml(b, bi){
   const P = `blocks.${bi}`;
@@ -3057,6 +3061,9 @@ app.addEventListener('change', e => {
     if (el.checked && t.link && findB(t.link)){ PFILL = { bid: t.link, text: clean(t.text) }; go('#exp/' + t.link); } else render(); return; }
   if (el.id === 'genWhen'){ $('#genDate').hidden = el.value !== 'date'; return; }
   if (el.id === 'genProj'){ $('#genTag').hidden = !el.checked; if (el.checked) $('#genTag').focus(); return; }
+  if (el.dataset.duex){ const [bid, tid] = el.dataset.duex.split('|'), it = findB(bid), t = it && it.b.todos.find(x => x.id === tid);
+    if (!t || !isDate(el.value) || el.value === t.due || el.value < '2000' || el.value > '2100') return;   // half-typed years t.due = el.value; dueChanged(it.e, t);
+    const to = relocate(it, t); if (to){ saveNow(); movedMsg(it, t, to); return; } saveNow(); render(); toast(`“${clean(t.text)}” is now due ${fmtDay(t.due)}.`); return; }
   if (el.dataset.todox){ const [bid, tid] = el.dataset.todox.split('|'), it = findB(bid); if (!it) return;
     const t = it.b.todos.find(x => x.id === tid); if (el.checked && isOver(t)){ askOverdue(it, t, el); return; }
     const onDay = VIEW.mode === 'home' && TDAY && TDAY < localDate() ? TDAY : undefined;
@@ -3096,6 +3103,7 @@ app.addEventListener('keydown', e => {
   const el = e.target;
   if (el.id === 'tagIn' && (e.key === 'Enter' || e.key === ',')){ e.preventDefault(); addTag(+el.dataset.bi, el.value); return; }
   if (el.id === 'todoNew' && e.key === 'Enter'){ e.preventDefault(); A.todoAdd(el.dataset.bi); return; }
+  if (el.dataset.sample && e.key === 'Enter'){ e.preventDefault(); const [bi, si] = el.dataset.sample.split('.').map(Number); el.blur(); sampleEnter(bi, si); return; }
   if (el.id === 'kindIn' && (e.key === 'Enter' || e.key === ',')){ e.preventDefault(); addKind(+el.dataset.bi, el.value); return; }
   if (el.id === 'logFieldIn' && e.key === 'Enter'){ e.preventDefault(); logAddField(+el.dataset.bi, el.value); const n = $('#logFieldIn'); if (n) n.focus(); return; }
   if ((el.id === 'cmtNew' || el.id === 'cmtReply') && e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); const b = el.parentElement.querySelector('.btn.pri'); if (b) b.click(); return; }
@@ -3120,7 +3128,10 @@ app.addEventListener('keydown', e => {
 });
 
 /* One-line boxes grow to show all their text; Enter still ends the line as in a plain field. */
-window.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('textarea.fit')){ e.preventDefault(); e.stopImmediatePropagation(); e.target.blur(); } }, true);
+window.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('textarea.fit')){ e.preventDefault(); e.stopImmediatePropagation(); e.target.blur();
+  const m = /^blocks\.(\d+)\.samples\.(\d+)\.desc$/.exec(e.target.dataset.bind || ''); if (m) sampleEnter(+m[1], +m[2]); } }, true);
+/* Enter in a strains/plasmids row: next row, or a new one after the last. */
+function sampleEnter(bi, si){ if (!E || !E.blocks[bi]) return; if (si >= E.blocks[bi].samples.length - 1){ A.addSample(bi); return; } const r = $(`[data-sample="${bi}.${si + 1}"]`); if (r) r.focus(); }
 let fitT; window.addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(() => $$('#app textarea').forEach(autoGrow), 150); });
 // ── Actions ──────────────────────────────────────────────────────────────────
 const A = {};
@@ -3504,14 +3515,21 @@ A.saveFile = async fresh => {
   download(blob, name); toast('Saved as a download. Open it later with More, Open a saved file.');
 };
 A.saveFileAs = () => A.saveFile('new');
-A.openFile = async () => {
+A.openFile = async mode => {
+  const replace = mode === 'replace';
   if (window.showOpenFilePicker){
     try { const [h] = await showOpenFilePicker({ types: [{ description: 'Lab journal', accept: { 'application/json': ['.json'] } }] });
-      if (await importData(await h.getFile())) FH = h; return; }
+      if (await importData(await h.getFile(), replace)) FH = h; return; }
     catch (e){ if (e.name === 'AbortError') return; }
   }
-  $('#fileDraft').click();
+  $('#fileDraft').dataset.replace = replace ? '1' : ''; $('#fileDraft').click();
 };
+A.openFileReplace = () => A.openFile('replace');
+/* Wipes every day and image in this browser so a saved file can be opened without duplicates. Saved lists (fillers, names) are kept. */
+async function clearAll(){
+  clearTimeout(saveT); saveT = null; E = null; ALL.length = 0; IMG.clear(); PENDING.length = 0;
+  if (DB.ok) await Promise.all(['entries', 'images'].map(s => DB.req(s, 'readwrite', st => st.clear()).catch(() => {})));
+}
 async function mergeLists(d){
   const merge = (a, b) => uniq([...(a || []), ...(b || [])]);
   const F = d.fillers || {};
@@ -3523,7 +3541,7 @@ async function mergeLists(d){
   (d.names || []).forEach(x => rememberName(x.name, x.desc)); (d.tags || []).forEach(t => rememberName(t, ''));
   await Promise.all([saveSetting('fillers', FILL), saveSetting('codes', CODES), saveSetting('names', NAMES)]);
 }
-async function importData(file){
+async function importData(file, replace){
   let d; try { d = JSON.parse(await file.text()); } catch (x){}
   if (d && d.format === 'lab-entry-v2' && d.entry){   // a v5 single-day draft: import as a new day
     await saveNow(); const entry = migrate(d.entry); entry.id = uid();
@@ -3533,7 +3551,10 @@ async function importData(file){
     toast('Draft imported.'); go('#'); ensureThumbs(); return false;
   }
   if (!d || d.format !== 'lab-journal' || !Array.isArray(d.entries)){ toast('That is not a Lab Journal file.'); return false; }
-  await saveNow();
+  if (replace && ALL.length && !confirm(`Replace all ${ALL.length} day${ALL.length === 1 ? '' : 's'} in this browser with the ${d.entries.length} in ${file.name || 'the file'}?
+
+Anything here that is not in a saved file will be lost. Cancel and use Save file first if unsure.`)) return false;
+  await saveNow(); if (replace) await clearAll();
   for (const im of d.images || []){ const rec = { id: im.id, entryId: im.entryId, name: im.name, dataUrl: im.dataUrl, w: im.w, h: im.h };
     if (DB.ok) await DB.put('images', rec).catch(() => {}); else PENDING.push(rec); IMG.delete(im.id); }
   let n = 0, kept = 0;
@@ -3543,10 +3564,10 @@ async function importData(file){
   if (E) E = ALL.find(y => y.id === E.id) || null;
   if (E) await ensureImgs(E.blocks);
   if (d.lists) await mergeLists(d.lists);
-  toast(`Opened ${n} day${n === 1 ? '' : 's'} from ${file.name || 'the file'}${kept ? `; kept ${kept} newer day${kept === 1 ? '' : 's'} already here` : ''}.`);
+  toast(`${replace ? 'Replaced everything: ' : ''}Opened ${n} day${n === 1 ? '' : 's'} from ${file.name || 'the file'}${kept ? `; kept ${kept} newer day${kept === 1 ? '' : 's'} already here` : ''}.`);
   route(); ensureThumbs(); return true;
 }
-$('#fileDraft').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) importData(f); });
+$('#fileDraft').addEventListener('change', async e => { const f = e.target.files[0], rep = e.target.dataset.replace === '1'; e.target.value = ''; e.target.dataset.replace = ''; if (f) importData(f, rep); });
 A.libExport = () => download(new Blob([JSON.stringify({ format: 'lab-entry-lists', fillers: FILL, codes: CODES, names: NAMES, roll: ROLL }, null, 1)], { type: 'application/json' }), `lab_entry_saved_lists_${localDate()}.json`);
 A.libImport = () => $('#fileLib').click();
 $('#fileLib').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -3770,10 +3791,12 @@ function todoRowX(it, t, self){
   const ln = t.link && findB(t.link);
   return `<div class="todo ${t.done ? 'done' : ''}"><input type="checkbox" data-todox="${it.b.id}|${t.id}" ${t.done ? 'checked' : ''} aria-label="Done: ${esc(t.text)}">
     <span class="todo-x">${esc(t.text)}${clean(t.note) ? `<details class="tnote-x"><summary>details</summary><div>${esc(t.note)}</div></details>` : ''}</span>
-    <span class="due ${dueCls(t.due)}">${esc(dueTxt(t.due))}</span>${t.done || t.due === addDays(localDate(), 1) ? '' : `<button class="btn ghost sm snz" data-act="snooze" data-arg="${it.b.id}|${t.id}" title="Delay to tomorrow" aria-label="Delay to tomorrow">⏭</button>`}${unpushBtn(it.b.id, t)}${shiftBtns(it.b, t)}
+    ${isDate(t.due) && !t.done ? dueX(it, t) : `<span class="due ${dueCls(t.due)}">${esc(dueTxt(t.due))}</span>`}${t.done || t.due === addDays(localDate(), 1) ? '' : `<button class="btn ghost sm snz" data-act="snooze" data-arg="${it.b.id}|${t.id}" title="Delay to tomorrow" aria-label="Delay to tomorrow">⏭</button>`}${unpushBtn(it.b.id, t)}${shiftBtns(it.b, t)}
     ${it.b.id !== self ? `<a class="chip ec" style="--ec:${it.b.color}" href="#exp/${it.b.id}" data-peek="${it.b.id}">${esc(ttl(it.b) || 'Untitled')}</a>` : ''}
     ${ln && ln.b.id !== self && ln.b.id !== it.b.id ? `<a class="chip ec" style="--ec:${ln.b.color}" href="#exp/${ln.b.id}" data-peek="${ln.b.id}">→ ${esc(ln.date)}</a>` : ''}</div>`;
 }
+/* Due date of a to-do written in another entry, editable where it is shown (Results, Today, home). */
+const dueX = (it, t) => isDate(t.due) && !t.done ? `<input type="date" class="todo-d due-x ${dueCls(t.due)}" data-duex="${it.b.id}|${t.id}" value="${esc(t.due)}" title="Change the due date" aria-label="Due date: ${esc(t.text)}">` : '';
 function dueCtl(path, d){
   return `<select class="due-m" data-duemode="${path}" aria-label="When">${[['date', 'On a date'], ['daily', 'No date yet: every day'], ['lt', 'Long term']].map(([v, l]) => `<option value="${v}" ${dueMode(d) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${isDate(d) ? `<input type="date" class="todo-d ${dueCls(d)}" data-bind="${path}" value="${esc(d)}" aria-label="Due date">` : ''}`;
 }
@@ -3853,7 +3876,7 @@ function incomingHtml(b, bi){
   const inc = items().flatMap(x => x.b.id === b.id ? [] : x.b.todos.filter(t => t.link === b.id && !t.postponedTo).map(t => [x, t]));
   if (!inc.length) return '';
   return `<div class="ghost-todos"><span class="hint">Planned for this day (from ${esc(fmtDay(inc[0][0].date))}) — tick when done; ✎ starts a result line:</span>
-    ${inc.map(([x, t]) => `<span class="gtodo ${t.done ? 'done' : ''}"><label><input type="checkbox" data-todox="${x.b.id}|${t.id}" ${t.done ? 'checked' : ''}> ${esc(t.text)}</label>${clean(t.note) ? ` <i>(${esc(clean(t.note))})</i>` : ''}
+    ${inc.map(([x, t]) => `<span class="gtodo ${t.done ? 'done' : ''}"><label><input type="checkbox" data-todox="${x.b.id}|${t.id}" ${t.done ? 'checked' : ''}> ${esc(t.text)}</label>${clean(t.note) ? ` <i>(${esc(clean(t.note))})</i>` : ''}${dueX(x, t)}
       <button data-act="ghostUse" data-arg="${x.b.id}|${t.id}|${bi}" title="Write its result">✎</button></span>`).join('')}</div>`;
 }
 A.ghostUse = arg => { const [sid, tid, bi] = arg.split('|'), it = findB(sid), t = it && it.b.todos.find(x => x.id === tid); if (!t) return;

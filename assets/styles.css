@@ -518,8 +518,8 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 
 .tool-card {
   --card: var(--accent);
-  flex: 1 1 290px;
-  max-width: 352px;
+  flex: 0 1 calc((100% - 54px) / 4);
+  min-width: 0;
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1162,6 +1162,13 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 }
 
 /* ---------------- responsive ---------------- */
+
+@media (max-width: 960px) {
+  .tool-card { flex-basis: calc((100% - 18px) / 2); }
+}
+@media (max-width: 560px) {
+  .tool-card { flex-basis: 100%; }
+}
 
 @media (max-width: 720px) {
   .section { padding: 60px 0; }

@@ -36,6 +36,32 @@ const SUPPORT_LABEL = "Buy me a coffee";
 
 const TOOLS = [
   {
+    id: "lab-entry",
+    name: "Lab Entry",
+    tagline: "Write it down, or it did not happen",
+    description:
+      "A lab notebook with one page per experiment, exported to Word, PDF or Markdown.",
+    icon: "flask",
+    accent: "rose",
+    folder: "tools/lab-entry",
+    features: [
+      "Tag each entry by project and experiment",
+      "To-dos that carry over to tomorrow's entry",
+      "Figures you can crop and adjust; the original is kept"
+    ],
+    versions: [
+      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
+      { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
+      { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01",
+        new: [
+          "General to-dos, not tied to an experiment",
+          "Table editor: add rows and columns, paste from Excel",
+          "Yesterday's plan shown in Results: tick it and write the result"
+        ] }
+    ]
+  },
+
+  {
     id: "colony-counter",
     name: "Colony Counter",
     tagline: "Stop squinting at plates",
@@ -172,27 +198,24 @@ const TOOLS = [
   },
 
   {
-    id: "lab-entry",
-    name: "Lab Entry",
-    tagline: "Write it down, or it did not happen",
+    id: "cryobox-labeler",
+    name: "Cryobox Labeler",
+    tagline: "Find that glycerol stock",
     description:
-      "A lab notebook with one page per experiment, exported to Word, PDF or Markdown.",
+      "Record glycerol stocks in a 3D freezer, from rack to box to vial, and search the lot.",
     icon: "flask",
-    accent: "rose",
-    folder: "tools/lab-entry",
+    accent: "indigo",
+    folder: "tools/cryobox-labeler",
     features: [
-      "Tag each entry by project and experiment",
-      "To-dos that carry over to tomorrow's entry",
-      "Figures you can crop and adjust; the original is kept"
+      "3D freezer, racks and cryoboxes with A1\u2013I9 positions",
+      "Autofill, search by strain or plasmid, and a suggested place",
+      "Excel export, save and share, and a trash for removed stock"
     ],
     versions: [
-      { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
-      { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
-      { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01",
+      { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08",
         new: [
-          "General to-dos, not tied to an experiment",
-          "Table editor: add rows and columns, paste from Excel",
-          "Yesterday's plan shown in Results: tick it and write the result"
+          "First release: freezer, rack and box views with vial tracking",
+          "Move boxes and vials, hold them while you rearrange, and bin the rest"
         ] }
     ]
   }

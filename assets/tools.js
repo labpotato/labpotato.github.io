@@ -202,20 +202,22 @@ const TOOLS = [
     name: "Cryobox Labeler",
     tagline: "Find that glycerol stock",
     description:
-      "Record glycerol stocks in a 3D freezer, from rack to box to vial, and search the lot.",
+      "Track samples in 3D −80 °C and −20 °C freezers and on the bench, from rack to box to tube, and search them all.",
     icon: "flask",
     accent: "indigo",
     folder: "tools/cryobox-labeler",
     features: [
-      "3D freezer, racks and cryoboxes with A1\u2013I9 positions",
-      "Autofill, search by strain or plasmid, and a suggested place",
-      "Excel export, save and share, and a trash for removed stock"
+      "Freezers sized in cm around real racks, plus −20 °C drawers and bench spots",
+      "Cryoboxes, divided 15/50 mL boxes and unordered boxes, with types and concentration",
+      "Search, autofill, tick or drag rows to the bin, and Excel export"
     ],
     versions: [
-      { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08",
+      { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08" },
+      { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13",
         new: [
-          "First release: freezer, rack and box views with vial tracking",
-          "Move boxes and vials, hold them while you rearrange, and bin the rest"
+          "−20 °C freezers with pull-out drawers, a bench, and open shelf space",
+          "Fridge sized in cm around its racks, with a sketch of what fits",
+          "Unordered and divided boxes; tick, ✕ or drag rows to the bin"
         ] }
     ]
   }

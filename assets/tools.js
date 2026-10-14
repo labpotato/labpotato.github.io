@@ -40,23 +40,24 @@ const TOOLS = [
     name: "Lab Entry",
     tagline: "Write it down, or it did not happen",
     description:
-      "A lab notebook with one page per experiment, exported to Word, PDF or Markdown.",
+      "A lab notebook that shows your experiments as a flowchart, linked by the to-dos that lead from one to the next.",
     icon: "flask",
     accent: "rose",
     folder: "tools/lab-entry",
     features: [
-      "Tag each entry by project and experiment",
-      "To-dos that carry over to tomorrow's entry",
-      "Figures you can crop and adjust; the original is kept"
+      "Board by day, by project or as a dateless flow",
+      "To-dos that link one experiment to the next, or to several",
+      "Plan days ahead and push a busy day back in one click"
     ],
     versions: [
       { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
       { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
-      { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01",
+      { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01" },
+      { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14",
         new: [
-          "General to-dos, not tied to an experiment",
-          "Table editor: add rows and columns, paste from Excel",
-          "Yesterday's plan shown in Results: tick it and write the result"
+          "Flowchart board: experiments linked through their to-dos",
+          "Plan ahead: set up the next days' to-dos in one go",
+          "Example week, Clear all, and a readable dark theme"
         ] }
     ]
   },

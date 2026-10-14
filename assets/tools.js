@@ -209,16 +209,17 @@ const TOOLS = [
     folder: "tools/cryobox-labeler",
     features: [
       "Freezers sized in cm around real racks, plus −20 °C drawers and bench spots",
-      "Cryoboxes, divided 15/50 mL boxes and unordered boxes, with types and concentration",
-      "Search, autofill, tick or drag rows to the bin, and Excel export"
+      "Cryoboxes plus divided and unordered boxes that take any tube, picked per sample",
+      "Import from Excel by pasting rows or loading .xlsx, and export to Excel"
     ],
     versions: [
       { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08" },
-      { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13",
+      { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13" },
+      { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14",
         new: [
-          "−20 °C freezers with pull-out drawers, a bench, and open shelf space",
-          "Fridge sized in cm around its racks, with a sketch of what fits",
-          "Unordered and divided boxes; tick, ✕ or drag rows to the bin"
+          "Unordered and divided boxes take any tube; pick its type as you add it",
+          "Save goes back to the same file; Ctrl+Z and Ctrl+Y undo and redo",
+          "Import from Excel: paste many rows or load an .xlsx, check, then import"
         ] }
     ]
   }

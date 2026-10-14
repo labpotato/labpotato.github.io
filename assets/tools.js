@@ -40,24 +40,25 @@ const TOOLS = [
     name: "Lab Entry",
     tagline: "Write it down, or it did not happen",
     description:
-      "A lab notebook that shows your experiments as a flowchart, linked by the to-dos that lead from one to the next.",
+      "A lab notebook that lays out your experiments as tiles on a timeline, linked by the to-dos that lead from one to the next.",
     icon: "flask",
     accent: "rose",
     folder: "tools/lab-entry",
     features: [
-      "Board by day, by project or as a dateless flow",
-      "To-dos that link one experiment to the next, or to several",
-      "Plan days ahead and push a busy day back in one click"
+      "Timeline by day, by project or as a dateless flow",
+      "Each experiment outlined as one group you can drag to a free place",
+      "To-dos on the lines that link one experiment to the next"
     ],
     versions: [
       { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
       { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
       { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01" },
-      { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14",
+      { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14" },
+      { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14",
         new: [
-          "Flowchart board: experiments linked through their to-dos",
-          "Plan ahead: set up the next days' to-dos in one go",
-          "Example week, Clear all, and a readable dark theme"
+          "Tiles instead of fixed columns: a free place is reused",
+          "Experiments outlined as groups; drag one to a free place",
+          "Lines & to-dos, Only lines or Compact, also by project"
         ] }
     ]
   },

@@ -1,0 +1,253 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Pixelify Sans';src:url(pixelify.woff2) format('woff2');font-weight:400 700}
+html,body{margin:0;background:#fcfbf9}text{font-variant-ligatures:none;font-feature-settings:'liga' 0,'calt' 0}#stage{position:relative;width:1080px;height:1920px;overflow:hidden}
+</style></head><body><div id="stage"></div><script src="common.js"></script><script src="assets.js"></script>
+<script>
+// REEL 1 — "A day in the lab, as told by a potato"
+window.DURATION = 25;
+const FLOOR = 1250;
+window.SFX = [
+  ['whoosh',0.05],['boing',0.55],['pop',0.35],['boing',2.25],['pop',2.7],['click',3.3],['rumble',3.4,6.3],['pop',4.4],['bump',6.0],['pop',6.1],
+  ['pop',7.3],['boing',7.85],['pop',9.0],['wahwah',10.1],['boing',11.95],['pop',12.05],['pop',11.9],['hop',13.15],['kick',13.4],['ding',13.5],['pop',13.6],
+  ['hop',14.0],['hop',14.5],['hop',15.0],['pop',14.6],['snore',16.4],['snore',17.3],['pop',16.2],['sparkle',17.8],['boing',18.0],['boing',18.8],['pop',17.9],
+  ['boing',20.65],['pop',20.8],['pop',21.1],['tick',21.4],['tick',21.55],['tick',21.7],['tick',21.85],['tick',22.0],['tick',22.15],['tick',22.3],['ding',22.6],['boing',22.2],['boing',23.4]
+];
+
+function background(t, night) {
+  let s = `<rect width="1080" height="1920" fill="#fcfbf9"/>`;
+  // faint wall tiles
+  for (let y = 0; y < FLOOR; y += 120) s += `<path d="M0 ${y}H1080" stroke="#14161c" stroke-opacity=".035" stroke-width="2"/>`;
+  for (let x = 60; x < 1080; x += 160) s += `<path d="M${x} 0V${FLOOR}" stroke="#14161c" stroke-opacity=".03" stroke-width="2"/>`;
+  // shelf with bottles (top-left decor, above captions? keep subtle)
+  s += `<rect x="0" y="${FLOOR}" width="1080" height="44" fill="#3b4453"/><rect x="0" y="${FLOOR + 44}" width="1080" height="${1920 - FLOOR - 44}" fill="#e7e1d7"/>
+        <path d="M0 ${FLOOR + 44}H1080" stroke="#2a313d" stroke-width="6"/>`;
+  for (let x = 0; x < 1080; x += 360) s += `<rect x="${x + 30}" y="${FLOOR + 90}" width="300" height="190" rx="14" fill="none" stroke="#cfc6b8" stroke-width="5"/><rect x="${x + 150}" y="${FLOOR + 120}" width="60" height="12" rx="6" fill="#cfc6b8"/>`;
+  if (night > 0) s += `<rect width="1080" height="1920" fill="#101833" opacity="${.62 * night}"/>`;
+  return s;
+}
+
+// ---------- props ----------
+function centrifuge(cx, base, k, shake, t) {
+  if (k <= 0) return '';
+  const jx = shake * Math.sin(t * 71) * 14, jy = -Math.abs(Math.sin(t * 43)) * shake * 22, jr = shake * Math.sin(t * 57) * 5;
+  const lid = shake > .65 ? (Math.sin(t * 90) * 0.5 + .5) * 8 * shake : 0;
+  return `<g transform="translate(${cx + jx},${base + jy}) rotate(${jr}) scale(${k})">
+    <ellipse cx="0" cy="4" rx="170" ry="12" fill="#2a2018" opacity=".12"/>
+    <rect x="-165" y="-210" width="330" height="210" rx="40" fill="#e9eef5" stroke="#14161c" stroke-width="6"/>
+    <path d="M-150 -205 Q0 ${-300 - lid} 150 -205" fill="#cfd8e4" stroke="#14161c" stroke-width="6"/>
+    <rect x="-110" y="-150" width="130" height="62" rx="12" fill="#14161c"/>
+    <text x="-45" y="-106" text-anchor="middle" font-family="Inter" font-weight="600" font-size="34" fill="${shake > .05 ? '#ff6b5e' : '#7cf0b0'}">${shake > .05 ? Math.round(4000 + shake * 9000) : '4000'}</text>
+    <circle cx="80" cy="-118" r="26" fill="${shake > .05 ? '#ff6b5e' : '#43c47a'}" stroke="#14161c" stroke-width="5"/>
+    <rect x="-140" y="-40" width="280" height="14" rx="7" fill="#cfd8e4"/>
+    ${shake > .3 ? burst(0, -150, (t * 2.3) % 1, 6, 190, 250, '#14161c', 6) : ''}
+  </g>`;
+}
+function monitor(cx, cy, k, inner) {
+  if (k <= 0) return '';
+  return `<g transform="translate(${cx},${cy}) scale(${k})">
+    <rect x="-22" y="150" width="44" height="${FLOOR - cy - 150}" fill="#3b4453"/>
+    <rect x="-90" y="${FLOOR - cy - 16}" width="180" height="16" rx="8" fill="#3b4453"/>
+    <rect x="-190" y="-150" width="380" height="300" rx="26" fill="#1c1f27"/>
+    <g transform="translate(-170,-130)">${inner}</g>
+  </g>`;
+}
+function gelNoLadder(t, q) {
+  // 340x260 screen content: dark imager view of a gel with an EMPTY first lane
+  let s = `<rect width="340" height="260" rx="10" fill="#0b0e14"/><rect x="18" y="16" width="304" height="228" rx="6" fill="#dfe3ee"/>`;
+  const lanes = 7;
+  for (let i = 0; i < lanes; i++) {
+    const x = 32 + i * 41;
+    s += `<rect x="${x}" y="24" width="30" height="7" rx="3" fill="#5a6488"/>`;
+    if (i === 0) continue;
+    const ys = [[70, .7], [118, 1], [150, .55], [196, .8]];
+    ys.forEach(([y, a], j) => { if ((i + j) % 3 !== 2 || i > 3) s += `<rect x="${x}" y="${y + (i % 2) * 3}" width="30" height="8" rx="4" fill="#27306b" opacity="${a * (.6 + .4 * rnd(i * 7 + j))}"/>`; });
+  }
+  if (q > 0) {
+    s += `<rect x="28" y="36" width="38" height="200" rx="6" fill="none" stroke="#ff4d4d" stroke-width="5" stroke-dasharray="10 8" opacity="${q}"/>`;
+    [60, 120, 180].forEach((y, i) => { const kk = pop(q * 2, i * .3, .4); s += `<text x="47" y="${y + 14}" text-anchor="middle" font-family="Inter" font-weight="700" font-size="${40 * kk}" fill="#ff4d4d">?</text>`; });
+  }
+  return s;
+}
+function board(cx, cy, k, t, kickT) {
+  if (k <= 0) return '';
+  const after = t >= kickT;
+  let s = `<g transform="translate(${cx},${cy}) scale(${k})">
+    <path d="M-120 140 L-150 ${FLOOR - cy}M120 140 L150 ${FLOOR - cy}" stroke="#3b4453" stroke-width="14" stroke-linecap="round"/>
+    <rect x="-180" y="-150" width="360" height="290" rx="22" fill="#fff" stroke="#14161c" stroke-width="8"/>
+    <text x="0" y="-92" text-anchor="middle" font-family="Inter" font-weight="500" font-size="30" fill="#9aa0ae">two-tailed t-test</text>`;
+  const col = after ? '#18a058' : '#14161c';
+  const slide = after ? -22 * (1 - easeOut(prog(t, kickT, kickT + .3))) : 0;
+  s += `<text x="${after ? slide : -22}" y="30" text-anchor="middle" font-family="Inter" font-weight="800" font-size="68" fill="${col}">p = 0.05</text>`;
+  if (!after) s += `<text x="${-22 + 136}" y="30" text-anchor="middle" font-family="Inter" font-weight="800" font-size="68" fill="#e5484d">1</text>`;
+  if (after) {
+    const kk = prog(t, kickT, kickT + 1.3);
+    // the "1" flies off on a spinning arc
+    const fx = 114 + kk * 700, fy = 0 - 900 * kk + 900 * kk * kk * .55;
+    if (kk < 1) s += `<text transform="translate(${fx},${fy}) rotate(${kk * 900})" text-anchor="middle" font-family="Inter" font-weight="700" font-size="68" fill="#e5484d" y="30">1</text>`;
+    s += burst(114, 0, prog(t, kickT, kickT + .4), 8, 40, 110, '#e5484d', 6);
+    s += sparkle(-150, -40, 18 * pop(t, kickT + .1), '#f5b301', t * 60) + sparkle(170, 90, 14 * pop(t, kickT + .2), '#f5b301', -t * 50);
+    s += `<path d="M-150 75 L-120 105 L-60 45" stroke="#18a058" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${pop(t, kickT + .15)}"/>`;
+  }
+  return s + '</g>';
+}
+function laptop(cx, base, k, t, swapT) {
+  if (k <= 0) return '';
+  const sw = prog(t, swapT, swapT + .35);
+  let screen = '';
+  // messy PowerPoint figure at 3am
+  const j = i => Math.sin(t * 9 + i) * 4;
+  screen += `<rect width="360" height="226" fill="#fff"/><rect width="360" height="22" fill="#c43e1c"/>
+    <text x="8" y="16" font-family="Inter" font-weight="600" font-size="14" fill="#fff">figure_FINAL_v7_real.pptx</text>
+    <text x="352" y="16" text-anchor="end" font-family="Inter" font-weight="600" font-size="14" fill="#fff">3:07 AM</text>
+    <rect x="70" y="58" width="200" height="140" fill="#cdd2e6"/>`;
+  for (let i = 0; i < 6; i++) screen += `<rect x="${80 + i * 32}" y="${92 + (i % 3) * 18}" width="22" height="6" rx="3" fill="#2f3a7a"/>`;
+  screen += `<text x="${78 + j(1)}" y="${50 + j(2)}" font-family="Comic Sans MS, cursive" font-size="17" fill="#d11" transform="rotate(-8 90 50)">WT??</text>
+    <text x="${170 + j(3)}" y="${48 + j(4)}" font-family="Comic Sans MS, cursive" font-size="15" fill="#13a" transform="rotate(12 180 48)">mutant (i think)</text>
+    <path d="M${290 + j(5)} ${90 + j(6)} L262 ${108 + j(7)}" stroke="#e00" stroke-width="4"/><path d="M262 ${108 + j(7)} l12 -2 l-6 -10z" fill="#e00"/>
+    <path d="M${30 + j(8)} ${150 + j(9)} L68 ${140 + j(1)}" stroke="#090" stroke-width="4"/>
+    <text x="22" y="${178 + j(2)}" font-family="Times New Roman" font-size="15" fill="#000">~70 kDa?</text>`;
+  const fig = `<rect width="360" height="226" fill="#fff"/><image href="${ASSETS.export}" x="6" y="8" width="348" height="${348 * 604 / 924}" preserveAspectRatio="xMidYMid meet"/>`;
+  return `<g transform="translate(${cx},${base}) scale(${k})">
+    <path d="M-230 0 L230 0 L200 -26 L-200 -26Z" fill="#c9d0db" stroke="#14161c" stroke-width="5" stroke-linejoin="round"/>
+    <rect x="-200" y="-290" width="400" height="264" rx="18" fill="#1c1f27"/>
+    <svg x="-180" y="-272" width="360" height="226" viewBox="0 0 360 226">
+      <g transform="translate(${-360 * sw},0)">${screen}</g>
+      <g transform="translate(${360 * (1 - sw)},0)">${fig}</g>
+    </svg>
+    ${t > swapT ? sparkle(-210, -300, 26 * pop(t, swapT + .1), '#f5b301', t * 90) + sparkle(215, -250, 20 * pop(t, swapT + .25), '#f5b301', -t * 70) + sparkle(190, -330, 14 * pop(t, swapT + .35), '#ffcf4d', t * 40) : ''}
+  </g>`;
+}
+function zzz(t, t0, x, y) {
+  let s = '';
+  for (let i = 0; i < 3; i++) {
+    const k = ((t - t0) * .6 + i / 3) % 1; if (t < t0) continue;
+    s += `<text x="${x + k * 60 + Math.sin(k * 6) * 12}" y="${y - k * 120}" font-family="Inter" font-weight="700" font-size="${30 + k * 26}" fill="#c9d4ff" opacity="${Math.sin(k * Math.PI)}">z</text>`;
+  }
+  return s;
+}
+
+// ---------- the potato's performance ----------
+function potatoAt(t) {
+  let o = { x: 540, y: FLOOR, s: 2.15, eyes: blinkAt(t) ? 'blink' : 'open', mouth: 'flat' };
+  let m = idle(t);
+  // S0 drop-in
+  if (t < .55) { const k = easeIn(prog(t, 0, .55)); m = { dy: lerp(-620, 0, k), sx: .88, sy: 1.18 }; o.eyes = 'wide'; o.mouth = 'o'; }
+  else if (t < 2.2) { const w = spring(t - .55, 3.2, 6); m = { dy: 0, sx: 1 + .25 * w, sy: 1 - .27 * w }; o.gogY = -18 * spring(t - .62, 3, 6); o.eyes = t < 1.1 ? 'squint' : (blinkAt(t) ? 'blink' : 'open'); if (t > 1.2) o.look = .8; if (t > 1.6) { o.look = 0; o.mouth = 'smile'; } }
+  // hop to the left for the sketches
+  const hx = (t0, x0, x1, d = .55) => { if (t >= t0 && t < t0 + .1 + d) o.x = lerp(x0, x1, easeInOut(prog(t, t0 + .1, t0 + .1 + d))); };
+  if (t >= 2.2 && t < 20.6) o.x = 330;
+  hx(2.2, 540, 330);
+  if (t >= 2.2 && t < 3) m = hop(t, 2.2, .5, 140);
+  // S1 centrifuge
+  if (t >= 2.9 && t < 7.2) {
+    o.look = .8; m = idle(t);
+    if (t > 3.0 && t < 3.6) o.armR = 70 * Math.sin(prog(t, 3.0, 3.6) * Math.PI);
+    if (t >= 3.6) { o.eyes = 'wide'; o.mouth = t > 4.4 ? 'wobble' : 'o'; o.sweat = pop(t, 3.8); o.rot = -6; o.look = 1; }
+    if (t >= 4.9 && t < 6.0) m = hops(t, [[4.9, .35, 70], [5.4, .35, 70]]);
+    if (t >= 6.0) { const w = spring(t - 6.0, 2.6, 4); o.rot = -6 - 18 * w; o.x = 330 - 30 * (1 - Math.exp(-(t - 6) * 6)); m = { dy: 0, sx: 1 + .15 * w, sy: 1 - .15 * w }; o.eyes = 'squint'; o.mouth = 'wobble'; }
+  }
+  // S2 gel
+  if (t >= 7.2 && t < 11.8) {
+    o.look = .9; o.lookY = .3; m = idle(t);
+    if (t >= 7.7 && t < 8.9) { m = hop(t, 7.75, .45, 90); o.eyes = 'happy'; o.mouth = 'smile'; }
+    if (t >= 8.9) { o.eyes = 'wide'; o.mouth = 'o'; o.gogY = 22 * easeOutBack(prog(t, 9.0, 9.4)); o.sweat = pop(t, 9.2); }
+    if (t >= 10.1) {           // melt into a sad pancake
+      const k = easeOutBack(prog(t, 10.1, 10.8), 1.2);
+      m = { dy: 0, sx: lerp(1, 1.45, k), sy: lerp(1, .52, k) }; o.eyes = 'closed'; o.mouth = 'frown'; o.gogY = 22;
+    }
+  }
+  // S3 p-value
+  if (t >= 11.8 && t < 16.0) {
+    o.gogY = 22 * (1 - prog(t, 11.9, 12.2));
+    m = t < 12.6 ? hop(t, 11.85, .45, 110) : idle(t);
+    o.look = 1; o.eyes = t > 12.4 && t < 13.1 ? 'squint' : (blinkAt(t) ? 'blink' : 'open');
+    if (t >= 12.2 && t < 13.1) o.mouth = 'flat';
+    if (t >= 13.05 && t < 13.9) { // lunge and punch the "1"
+      m = hop(t, 13.05, .35, 120); o.x = 330 + 120 * Math.sin(prog(t, 13.1, 13.85) * Math.PI); o.armR = 170 * Math.sin(prog(t, 13.1, 13.8) * Math.PI); o.eyes = 'squint'; o.mouth = 'grin';
+    }
+    if (t >= 13.9) { // victory dance
+      m = hops(t, [[13.9, .35, 80], [14.4, .35, 80], [14.9, .35, 80], [15.4, .35, 60]]);
+      o.rot = 9 * Math.sin((t - 13.9) * Math.PI * 2); o.eyes = 'happy'; o.mouth = 'grin'; o.armL = 120 + 30 * Math.sin(t * 12); o.armR = 120 - 30 * Math.sin(t * 12); o.blush = 1;
+    }
+  }
+  // S4 3am
+  if (t >= 16.0 && t < 20.6) {
+    o.look = 1; o.eyes = 'tired'; o.eyebags = 1; o.mouth = 'flat';
+    const nod = Math.max(0, Math.sin((t - 16) * 2.4)); o.rot = 5 * nod; m = { dy: 6 * nod, sx: 1 + .03 * nod, sy: 1 - .04 * nod };
+    if (t >= 17.8) {
+      o.eyes = t < 18.6 ? 'star' : 'happy'; o.mouth = 'grin'; o.eyebags = .34 * prog(t, 18.6, 19.2); o.blush = 1; o.rot = 0;
+      m = hops(t, [[17.9, .5, 170], [18.7, .4, 110], [19.4, .35, 70]]); o.armL = 150; o.armR = 150;
+    }
+  }
+  // S5 CTA
+  if (t >= 20.6) {
+    o.x = 330; hx(20.6, 330, 540, .5); if (t > 21.2) o.x = 540;
+    o.s = lerp(2.15, 1.75, easeInOut(prog(t, 20.6, 21.2)));
+    m = hops(t, [[20.6, .5, 150], [22.2, .4, 90], [23.4, .4, 90]]);
+    o.eyes = blinkAt(t, 2.3) ? 'happy' : 'open'; o.mouth = 'smile'; o.armR = 140 + 25 * Math.sin(t * 10); o.blush = .6;
+    if (t > 22.15 && t < 22.9 || t > 23.35 && t < 24.1) { o.eyes = 'happy'; o.mouth = 'grin'; }
+  }
+  o.y = FLOOR + m.dy; o.sx = m.sx; o.sy = m.sy;
+  o.shadow = clamp(1 + m.dy / 600, .3, 1);
+  return o;
+}
+
+function nightK(t) { return t >= 16 && t < 17.8 ? prog(t, 16, 16.3) : (t >= 17.8 && t < 20.6 ? 1 - prog(t, 17.8, 18.2) : 0); }
+function art(t) {
+  const night = t >= 16 && t < 17.8 ? prog(t, 16, 16.3) : (t >= 17.8 && t < 20.6 ? 1 - prog(t, 17.8, 18.2) : 0);
+  let s = background(t, night);
+  // props
+  const inK = (t0, t1) => t < t0 || t > t1 + .3 ? 0 : (t > t1 ? 1 - easeIn(prog(t, t1, t1 + .3)) : pop(t, t0, .5));
+  const shake = t < 3.4 ? 0 : (t < 6.2 ? easeIn(prog(t, 3.4, 6.0)) : Math.max(0, 1 - (t - 6.2) * 3));
+  const walk = 140 * easeInOut(prog(t, 4.4, 6.0));
+  s += centrifuge(735 - walk, FLOOR, inK(2.6, 6.95), shake, t);
+  s += monitor(735, 930, inK(7.2, 11.6), gelNoLadder(t, prog(t, 9.3, 10.3)));
+  s += board(755, 930, inK(11.85, 15.75), t, 13.45);
+  s += laptop(740, FLOOR, inK(16.0, 20.4), t, 17.8);
+  // the star of the show
+  s += potato(potatoAt(t));
+  if (t >= 16.3 && t < 17.8) s += zzz(t, 16.3, 420, 760);
+  if (t >= .55 && t < 1.2) s += burst(540, FLOOR - 30, prog(t, .55, 1.0), 10, 140, 250, '#14161c', 8);
+  if (t >= 6.0 && t < 6.5) s += burst(520, 1000, prog(t, 6.0, 6.45), 7, 30, 100, '#e5484d', 7);
+  if (t >= 13.9 && t < 15.8) for (let i = 0; i < 14; i++) { const k = ((t - 13.9) * .7 + rnd(i)) % 1; s += `<rect x="${100 + rnd(i + 3) * 880}" y="${260 + k * 1000}" width="18" height="10" rx="3" fill="${['#f5b301', '#e5484d', '#3b82f6', '#18a058', '#c58d52'][i % 5]}" transform="rotate(${k * 720 + i * 40} ${100 + rnd(i + 3) * 880} ${260 + k * 1000})" opacity="${1 - k * .6}"/>`; }
+
+  s += bubble(t, 6.15, 7.05, BUB, BUBO, 'art');
+  return s;
+}
+const BUB = ['It was unbalanced.', 'So was I.'], BUBO = { x: 400, y: 560, size: 46, tx: 340, ty: 690 };
+function ui(t) {
+  const night = nightK(t); let s = '';
+  // captions (inside the safe zone)
+  const night2 = night > .5;
+  const ink = night2 ? '#ffffff' : '#14161c';
+  s += caption(t, 0, ['A day in the lab,', 'as told by a potato'], { y: 400, size: 80, hl: 'potato', out: 2.3 });
+  s += caption(t, 2.7, ['Me: the centrifuge', 'is balanced.'], { y: 400, size: 76, out: 4.25 });
+  s += caption(t, 4.4, ['The centrifuge:'], { y: 420, size: 86, hl: 'centrifuge', hlColor: '#e5484d', out: 7.0 });
+  s += bubble(t, 6.15, 7.05, BUB, BUBO, 'ui');
+  s += caption(t, 7.3, ['2 hours of', 'electrophoresis later...'], { y: 400, size: 72, out: 8.85 });
+  s += caption(t, 9.0, ['...forgot the', 'ladder.'], { y: 400, size: 92, hl: 'ladder.', hlColor: '#e5484d', out: 11.6 });
+  s += caption(t, 11.9, ['The stats came back:'], { y: 420, size: 74, out: 13.4 });
+  s += caption(t, 13.6, ['Close enough.', "I'm calling it."], { y: 400, size: 86, hl: 'Close enough.', hlColor: '#18a058', out: 15.8 });
+  s += caption(t, 14.7, ['(Reviewer 2 would like a word)'], { y: 600, size: 38, color: '#6b7280', weight: 500, out: 15.8 });
+  s += caption(t, 16.2, ['Making the figure', 'at 3:07 AM'], { y: 400, size: 78, color: ink, hl: '3:07 AM', hlColor: '#ffcf4d', out: 17.75 });
+  s += caption(t, 17.9, ['...or let Lab Potato', 'label it for you'], { y: 400, size: 76, hl: 'Lab Potato', out: 20.45 });
+  // CTA
+  if (t >= 20.8) {
+    s += caption(t, 20.8, ['Lab Potato'], { y: 400, size: 132, hl: 'Potato', hlColor: '#b87a3c' });
+    s += caption(t, 21.1, ['Free lab tools that', 'run in your browser'], { y: 490, size: 52, weight: 600, color: '#3a3f4b' });
+    const tools = [['Gel Labeler', 'Colony Counter'], ['Gibson Primers', 'Lab Entry', 'Protein Quant'], ['Microscopy Labeler', 'Cryobox Labeler']];
+    let i = 0;
+    tools.forEach((row, r) => {
+      const widths = row.map(l => l.length * 30 * .56 + 52), tot = widths.reduce((a, b) => a + b, 0) + (row.length - 1) * 16;
+      let x = 540 - tot / 2;
+      row.forEach((l, c) => { const k = pop(t, 21.4 + i * .15, .4); const cx = x + widths[c] / 2;
+        s += `<g transform="translate(${cx},${640 + r * 64}) scale(${k}) translate(${-cx},${-(640 + r * 64)})" opacity="${clamp(k * 2)}">${chip(cx, 640 + r * 64, l, { size: 30, fill: ['#efe3d4', '#e4ecfb', '#e3f5ea', '#fbe6ea', '#efe7fb', '#e6f3f8', '#fff1d6'][i % 7], color: '#14161c' })}</g>`;
+        x += widths[c] + 16; i++; });
+    });
+    const k = pop(t, 22.6, .5);
+    s += `<g transform="translate(540,1370) scale(${k}) translate(-540,-1370)">${chip(540, 1370, 'labpotato.github.io', { size: 54, fill: '#14161c', color: '#fff', pad: 40 })}</g>`;
+  }
+  return s;
+}
+mount(art, ui);
+</script></body></html>

@@ -1,0 +1,214 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Pixelify Sans';src:url(pixelify.woff2) format('woff2');font-weight:400 700}
+html,body{margin:0;background:#fcfbf9}text{font-variant-ligatures:none;font-feature-settings:'liga' 0,'calt' 0}#stage{position:relative;width:1080px;height:1920px;overflow:hidden}
+</style></head><body><div id="stage"></div><script src="common.js"></script><script src="assets.js"></script>
+<script>
+// REEL 2 — Gel Labeler showcase
+window.DURATION = 28;
+const FLOOR = 1452;
+// card that shows the real Gel Labeler screens (crisp, UI layer)
+const CARD = { x: 95, y: 590, w: 820, h: 615 };   // 4:3 viewport inside the safe zone
+window.SFX = [
+  ['pop',0.15],['type',0.6],['bump',1.4],['pop',1.6],['whoosh',3.2],['kick',3.25],['pop',3.5],['sparkle',3.9],['boing',3.7],
+  ['swipe',5.0],['pop',5.1],['click',6.55],['swipe',8.0],['pop',8.1],['click',8.5],['tick',8.8],['tick',9.1],['tick',9.4],['tick',9.7],['ding',10.0],
+  ['swipe',11.2],['pop',11.3],['type',11.6],['type',12.4],['type',13.2],
+  ['swipe',14.4],['pop',14.5],['click',15.0],['click',15.5],['click',16.0],['sparkle',16.4],['ding',16.5],['boing',16.6],
+  ['swipe',18.2],['pop',18.3],['click',18.8],['sparkle',19.1],['swipe',20.0],['ding',20.3],
+  ['swipe',21.6],['pop',21.7],['whoosh',22.6],['ding',23.4],['boing',23.5],
+  ['swipe',24.8],['pop',25.0],['pop',25.3],['pop',25.6],['ding',26.0],['boing',26.2],['boing',27.0]
+];
+// [start, end, image, from view, to view]   views are [x, y, w, h] in screenshot pixels (2560x1600)
+const SHOTS = [
+  [5.0, 6.5, 'cap/01_raw.png', [420, 240, 880, 660], [470, 250, 820, 615]],
+  [6.5, 8.0, 'cap/02_cropbox.png', [360, 200, 1200, 900], [420, 230, 1100, 825]],
+  [8.0, 8.4, 'cap/03_lanes_1.png', [460, 200, 960, 720], [460, 200, 960, 720]],
+  [8.4, 8.8, 'cap/03_lanes_1.png', [460, 200, 960, 720], [460, 200, 960, 720]],
+  [8.8, 9.2, 'cap/03_lanes_2.png', [460, 200, 960, 720], [460, 200, 960, 720]],
+  [9.2, 9.6, 'cap/03_lanes_3.png', [460, 200, 960, 720], [460, 200, 960, 720]],
+  [9.6, 11.2, 'cap/03_lanes_4.png', [460, 200, 960, 720], [480, 220, 900, 675]],
+  [11.2, 11.9, 'cap/04_labels_2.png', [400, 220, 1000, 750], [440, 230, 900, 675]],
+  [11.9, 12.6, 'cap/04_labels_5.png', [440, 230, 900, 675], [460, 235, 860, 645]],
+  [12.6, 13.3, 'cap/04_labels_8.png', [460, 235, 860, 645], [470, 240, 820, 615]],
+  [13.3, 14.4, 'cap/04_labels_9.png', [470, 240, 820, 615], [470, 240, 820, 615]],
+  [14.4, 15.2, 'cap/05_ladder_0.png', [380, 250, 1000, 750], [380, 250, 1000, 750]],
+  [15.2, 15.7, 'cap/05_ladder_1.png', [380, 250, 1000, 750], [380, 250, 1000, 750]],
+  [15.7, 16.3, 'cap/05_ladder_2.png', [380, 250, 1000, 750], [380, 250, 1000, 750]],
+  [16.3, 18.2, 'cap/05_ladder_done.png', [380, 270, 980, 735], [390, 290, 640, 480]],
+  [18.2, 20.0, 'cap/06_quant.png', [330, 300, 1100, 825], [340, 360, 1000, 750]],
+  [20.0, 21.6, 'cap/07_panel.png', [840, 330, 820, 615], [880, 340, 740, 555]],
+];
+function cardView(t) {
+  for (const s of SHOTS) if (t >= s[0] && t < s[1]) {
+    const k = easeInOut(prog(t, s[0], s[1])); return { img: s[2], v: s[3].map((a, i) => lerp(a, s[4][i], k)) };
+  }
+  return null;
+}
+// map screenshot pixel -> screen position inside the card
+const mapPt = (v, px, py) => [CARD.x + (px - v[0]) / v[2] * CARD.w, CARD.y + (py - v[1]) / v[3] * CARD.h];
+
+function cursor(x, y, down) {
+  const s = down ? .9 : 1;
+  return `<g transform="translate(${x},${y}) scale(${2.4 * s})"><path d="M0 0V17L4 13L7 20L10 19L7 12H12Z" fill="#fff" stroke="#14161c" stroke-width="1.6" stroke-linejoin="round" shape-rendering="crispEdges"/></g>`;
+}
+function windowChrome(x, y, w, h, title, body) {
+  return `<g filter="url(#soft)"><path d="${pbox(x, y, w, h + 54, 8)}" fill="#14161c"/></g>
+    <path d="${pbox(x + 6, y + 6, w - 12, 44, 6)}" fill="#2a2f3a"/>
+    <rect x="${x + 22}" y="${y + 21}" width="14" height="14" fill="#ff5f57"/><rect x="${x + 44}" y="${y + 21}" width="14" height="14" fill="#febc2e"/><rect x="${x + 66}" y="${y + 21}" width="14" height="14" fill="#28c840"/>
+    <text x="${x + w / 2}" y="${y + 37}" text-anchor="middle" font-family="Pixelify Sans" font-weight="500" font-size="24" fill="#c9d0db">${title}</text>
+    ${body}`;
+}
+
+// ---------- art layer (pixelated) ----------
+function pptMock(t, k, fly) {
+  if (k <= 0) return '';
+  const j = i => Math.sin(t * 8 + i * 1.7) * 7;
+  const fx = -1400 * easeIn(fly), fr = -35 * easeIn(fly);
+  let s = `<g transform="translate(${505 + fx},${880}) rotate(${fr}) scale(${k}) translate(-505,-880)">
+    <rect x="80" y="560" width="850" height="640" rx="10" fill="#fff" stroke="#14161c" stroke-width="10"/>
+    <rect x="80" y="560" width="850" height="64" fill="#c43e1c"/>
+    <text x="110" y="604" font-family="Inter" font-weight="700" font-size="30" fill="#fff">gel_figure_FINAL_v9.pptx</text>
+    <rect x="270" y="720" width="460" height="330" fill="#dfe3ee" stroke="#9aa3b8" stroke-width="4"/>`;
+  for (let i = 0; i < 8; i++) {
+    const x = 290 + i * 54;
+    s += `<rect x="${x}" y="732" width="38" height="10" fill="#5a6488"/>`;
+    [[800, .9], [860, .6], [930, 1], [990, .7]].forEach(([y, a], q) => { if ((i + q) % 3 !== 1) s += `<rect x="${x}" y="${y + (i % 2) * 4}" width="38" height="12" fill="#27306b" opacity="${a}"/>`; });
+  }
+  // crooked labels and arrows, all jiggling
+  s += `<text x="${300 + j(1)}" y="${700 + j(2)}" font-family="Comic Sans MS, cursive" font-size="34" fill="#d11" transform="rotate(-9 330 700)">WT</text>
+    <text x="${380 + j(3)}" y="${690 + j(4)}" font-family="Comic Sans MS, cursive" font-size="30" fill="#13a" transform="rotate(14 400 690)">KO?</text>
+    <text x="${470 + j(5)}" y="${705 + j(6)}" font-family="Times New Roman" font-size="32" fill="#000" transform="rotate(-4 480 705)">mutant 2 (final)</text>
+    <text x="${120 + j(7)}" y="${815 + j(8)}" font-family="Times New Roman" font-size="30" fill="#000">~70?</text>
+    <path d="M${200 + j(1)} ${805 + j(2)} L262 ${822 + j(3)}" stroke="#e00" stroke-width="8"/><path d="M262 ${822 + j(3)} l-20 -14 l-4 16z" fill="#e00"/>
+    <text x="${130 + j(4)}" y="${975 + j(5)}" font-family="Times New Roman" font-size="30" fill="#000">25 kDa??</text>
+    <path d="M${240 + j(6)} ${965 + j(7)} L262 ${995 + j(8)}" stroke="#090" stroke-width="8"/>
+    <path d="M${760 + j(2)} ${900 + j(3)} L735 ${930 + j(4)}" stroke="#e00" stroke-width="8"/>
+    <text x="${770 + j(5)}" y="${890 + j(6)}" font-family="Comic Sans MS, cursive" font-size="28" fill="#d11">band!!</text>
+    <rect x="${540 + j(1) * 3}" y="${1080 + j(2)}" width="230" height="70" fill="none" stroke="#3b82f6" stroke-width="5" stroke-dasharray="12 8"/>
+    <text x="${560 + j(1) * 3}" y="${1127 + j(2)}" font-family="Inter" font-size="30" fill="#3b82f6">Click to add text</text>
+  </g>`;
+  return s;
+}
+function gelIcon(cx, cy, sc) {
+  let s = `<g transform="translate(${cx},${cy}) scale(${sc})"><path d="${pbox(-60, -60, 120, 120, 10)}" fill="#7c5cff"/>`;
+  [[-36, -30, 30], [6, -30, 30], [-36, -4, 46], [22, -4, 14], [-36, 22, 20], [-6, 22, 42]].forEach(([x, y, w]) => s += `<rect x="${x}" y="${y}" width="${w}" height="12" fill="#fff"/>`);
+  return s + '</g>';
+}
+function potatoAt(t) {
+  let o = { x: 175, y: FLOOR, s: .95, eyes: blinkAt(t) ? 'blink' : 'open', mouth: 'smile', look: .8, lookY: -.6 };
+  let m = idle(t);
+  if (t < 3.2) { // hook: exhausted potato wrestling with PowerPoint
+    o.x = 540; o.s = 1.2; o.y = FLOOR; o.eyes = 'tired'; o.eyebags = 1; o.mouth = 'wobble'; o.sweat = 1; o.look = 0; o.lookY = -1;
+    o.armR = 150 + 20 * Math.sin(t * 14); o.armL = 30 + 15 * Math.sin(t * 9);
+    m = { dy: -6 * Math.abs(Math.sin(t * 7)), sx: 1, sy: 1 };
+    if (t > 1.4 && t < 2.2) { const w = spring(t - 1.4, 3, 5); o.rot = 12 * w; o.eyes = 'squint'; }
+  } else if (t < 5.0) { // kicks the slide away, then hops over to the corner
+    o.s = 1.2; o.x = 540;
+    if (t < 3.6) { m = hop(t, 3.0, .3, 90); o.armR = 170; o.eyes = 'squint'; o.mouth = 'grin'; }
+    else { m = hops(t, [[3.6, .45, 160], [4.3, .5, 120]]); o.eyes = 'star'; o.mouth = 'grin'; o.armL = 150; o.armR = 150; o.blush = 1;
+      if (t > 4.3) { const k = easeInOut(prog(t, 4.4, 4.9)); o.x = lerp(540, 175, k); o.s = lerp(1.2, .95, k); } }
+  } else if (t < 24.8) { // reacting next to the screen
+    const steps = [5.0, 8.0, 11.2, 14.4, 18.2, 21.6];
+    m = hops(t, steps.map(s => [s + .05, .35, 70]).concat([[16.45, .45, 130], [23.4, .45, 120]]));
+    o.armR = 0; o.look = .9; o.lookY = -1;
+    if (t > 16.4 && t < 17.6) { o.eyes = 'star'; o.mouth = 'grin'; o.armL = 150; o.armR = 150; }
+    if (t > 19.1 && t < 20.0 || t > 20.3 && t < 21.4) { o.eyes = 'happy'; o.mouth = 'grin'; o.armR = 150; }
+    if (t > 23.3) { o.eyes = 'happy'; o.mouth = 'grin'; o.armL = 140; o.armR = 140; o.blush = 1; }
+  } else { // CTA: centre stage
+    const k = easeInOut(prog(t, 24.8, 25.4)); o.x = lerp(175, 190, k); o.s = lerp(.95, 1.15, k);
+    m = hops(t, [[24.8, .5, 170], [26.2, .4, 100], [27.0, .4, 80]]);
+    o.eyes = blinkAt(t, 2.2) ? 'happy' : 'open'; o.mouth = 'grin'; o.armR = 140 + 25 * Math.sin(t * 10); o.look = 0; o.lookY = 0; o.blush = .6;
+  }
+  o.y = FLOOR + m.dy; o.sx = m.sx; o.sy = m.sy; o.shadow = clamp(1 + m.dy / 500, .3, 1);
+  return o;
+}
+const BUBS = [ // potato commentary
+  [5.6, 7.8, ['PNG, JPG, TIFF.'], {}],
+  [9.7, 11.0, ['10 lanes,', 'one drag.'], {}],
+  [16.5, 18.0, ['3 clicks.', '9 bands.'], {}],
+  [19.2, 21.4, ['ImageJ who?'], {}],
+];
+function art(t) {
+  let s = `<rect width="1080" height="1920" fill="#f6f3ee"/>`;
+  for (let y = 0; y < 1920; y += 60) for (let x = (y / 60) % 2 ? 0 : 60; x < 1080; x += 120) s += `<rect x="${x}" y="${y}" width="60" height="60" fill="#14161c" opacity=".025"/>`;
+  s += `<rect x="0" y="${FLOOR}" width="1080" height="${1920 - FLOOR}" fill="#e7e1d7"/><rect x="0" y="${FLOOR}" width="1080" height="14" fill="#3b4453"/>`;
+  // hook
+  if (t < 4.2) s += pptMock(t, t < .25 ? lerp(.85, 1, easeOutBack(prog(t, 0, .25))) : 1, prog(t, 3.2, 3.9));
+  if (t > 1.4 && t < 1.9) s += burst(700, 760, prog(t, 1.4, 1.85), 8, 30, 90, '#e5484d', 8);
+  // title card
+  if (t >= 3.6 && t < 5.2) { const k = pop(t, 3.6, .5) * (1 - easeIn(prog(t, 4.9, 5.15))); s += gelIcon(540, 760, 1.6 * k); s += sparkle(400, 680, 30 * k, '#f5b301', t * 90) + sparkle(690, 840, 24 * k, '#f5b301', -t * 80); }
+  // card shadow / pixel frame behind the crisp screenshots
+  const cardK = t >= 5.0 && t < 24.6 ? pop(t, 4.95, .45) * (1 - easeIn(prog(t, 24.4, 24.7))) : 0;
+  if (cardK > 0) s += `<g transform="translate(505,898) scale(${cardK}) translate(-505,-898)"><path d="${pbox(CARD.x - 12, CARD.y - 66, CARD.w + 24, CARD.h + 78, 12)}" fill="#14161c" transform="translate(12,12)" opacity=".18"/></g>`;
+  s += potato(potatoAt(t));
+  for (const [a, b, l, o] of BUBS) s += bubble(t, a, b, l, Object.assign({ x: 560, y: 1330, size: 42, tx: 300, ty: 1340 }, o), 'art');
+  if (t >= 24.8) {
+    for (let i = 0; i < 16; i++) { const k = ((t - 24.8) * .55 + rnd(i)) % 1; const x = 80 + rnd(i + 5) * 880, y = 280 + k * 1100; s += `<rect x="${x}" y="${y}" width="22" height="12" fill="${['#f5b301', '#e5484d', '#3b82f6', '#18a058', '#7c5cff'][i % 5]}" transform="rotate(${k * 540 + i * 30} ${x} ${y})"/>`; }
+  }
+  return s;
+}
+
+// ---------- UI layer (crisp text + real screenshots) ----------
+const STEPS = [
+  [5.0, 8.0, 'STEP 1', ['Drop in your gel,', 'crop in one drag']],
+  [8.0, 11.2, 'STEP 2', ['Drag once.', 'Every lane found.']],
+  [11.2, 14.4, 'STEP 3', ['Type your', 'lane names']],
+  [14.4, 18.2, 'STEP 4', ['Click 3 ladder bands,', 'get all 9 labelled']],
+  [18.2, 21.6, 'STEP 5', ['Quantify bands,', 'ImageJ-style']],
+  [21.6, 24.8, 'STEP 6', ['Export PNG or', 'editable PowerPoint']],
+];
+function ui(t) {
+  let s = '';
+  s += caption(t, 0, ['Still labelling gels', 'in PowerPoint at 1 AM?'], { y: 360, size: 66, hl: 'PowerPoint', hlColor: '#c43e1c', out: 3.2 });
+  if (t >= 3.5 && t < 5.2) {
+    const a = 1 - prog(t, 4.95, 5.15);
+    s += `<g opacity="${a}">` + caption(t, 3.5, ['Gel Labeler'], { y: 420, size: 112, hl: 'Labeler', hlColor: '#7c5cff' }) + caption(t, 3.75, ['free, in your browser'], { y: 510, size: 50, weight: 500, color: '#3a3f4b' }) + '</g>';
+  }
+  for (const [a, b, lab, lines] of STEPS) {
+    if (t < a || t >= b + .01) continue;
+    const k = pop(t, a + .05, .4);
+    s += `<g transform="translate(540,322) scale(${k}) translate(-540,-322)">${chip(540, 322, lab, { size: 34, fill: '#7c5cff', color: '#fff' })}</g>`;
+    s += caption(t, a + .1, lines, { y: 408, size: 60, out: b - .2 });
+  }
+  // the card with real screens
+  const cardK = t >= 5.0 && t < 24.6 ? pop(t, 4.95, .45) * (1 - easeIn(prog(t, 24.4, 24.7))) : 0;
+  if (cardK > 0) {
+    let body = `<rect x="${CARD.x}" y="${CARD.y}" width="${CARD.w}" height="${CARD.h}" fill="#fff"/>`;
+    const cv = cardView(t);
+    if (cv) {
+      const [vx, vy, vw, vh] = cv.v;
+      body += `<svg x="${CARD.x}" y="${CARD.y}" width="${CARD.w}" height="${CARD.h}" viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="xMidYMid slice"><image href="${cv.img}" width="2560" height="1600"/></svg>`;
+      // cursor
+      if (t >= 6.0 && t < 6.6) { const k = easeInOut(prog(t, 6.0, 6.5)); const [x, y] = mapPt(cv.v, lerp(500, 1480, k), lerp(240, 1080, k)); s2 = cursor(x, y, true); body += s2; }
+      if (t >= 8.2 && t < 9.9) { const k = easeInOut(prog(t, 8.4, 9.6)); const [x, y] = mapPt(cv.v, 596 + 676 * k, 384); body += cursor(x, y, t > 8.4); }
+      if (t >= 14.5 && t < 16.3) {
+        const ys = [932, 792, 636], i = t < 15.0 ? 0 : t < 15.5 ? 1 : 2; const pt = t < 14.8 ? [700, 1100] : [596, ys[i]];
+        const k = t < 14.8 ? 0 : 1; const [x, y] = mapPt(cv.v, pt[0], pt[1]); const down = ((t - 15.0) % .5 + .5) % .5 < .1 && t > 14.95;
+        body += cursor(x, y, down); if (down) body += `<circle cx="${x}" cy="${y}" r="26" fill="none" stroke="#18a058" stroke-width="6"/>`;
+      }
+    }
+    // before / after export
+    if (t >= 21.6) {
+      const w = easeInOut(prog(t, 22.4, 23.2)); const split = CARD.x + CARD.w * (1 - w);
+      body += `<svg x="${CARD.x}" y="${CARD.y}" width="${CARD.w}" height="${CARD.h}" viewBox="0 0 900 675" preserveAspectRatio="xMidYMid meet"><rect width="900" height="675" fill="#fff"/><image href="gel.png" x="0" y="17" width="900" height="640"/></svg>
+        <clipPath id="cl"><rect x="${split}" y="${CARD.y}" width="${CARD.x + CARD.w - split}" height="${CARD.h}"/></clipPath>
+        <g clip-path="url(#cl)"><rect x="${CARD.x}" y="${CARD.y}" width="${CARD.w}" height="${CARD.h}" fill="#fff"/><svg x="${CARD.x}" y="${CARD.y}" width="${CARD.w}" height="${CARD.h}" viewBox="0 0 924 604" preserveAspectRatio="xMidYMid meet"><image href="cap/export.png" width="924" height="604"/></svg></g>
+        ${w > 0 && w < 1 ? `<rect x="${split - 4}" y="${CARD.y}" width="8" height="${CARD.h}" fill="#7c5cff"/>` : ''}
+        ${chip(CARD.x + 100, CARD.y + CARD.h - 36, w < .5 ? 'BEFORE' : 'AFTER', { size: 28, fill: w < .5 ? '#14161c' : '#18a058' })}`;
+    }
+    s += `<g transform="translate(505,898) scale(${cardK}) translate(-505,-898)">${windowChrome(CARD.x - 12, CARD.y - 66, CARD.w + 24, CARD.h + 12, 'Gel Labeler · Lab Potato', body)}</g>`;
+  }
+  for (const [a, b, l, o] of BUBS) s += bubble(t, a, b, l, Object.assign({ x: 560, y: 1330, size: 42, tx: 300, ty: 1340 }, o), 'ui');
+  // CTA
+  if (t >= 24.9) {
+    s += caption(t, 24.95, ['Gel Labeler'], { y: 400, size: 120, hl: 'Labeler', hlColor: '#7c5cff' });
+    s += caption(t, 25.25, ['Free. No install. No sign-up.', 'Your gel never leaves', 'your computer.'], { y: 500, size: 46, weight: 500, color: '#3a3f4b' });
+    const fk = pop(t, 25.5, .55);
+    s += `<g transform="translate(540,880) rotate(${-3 * fk}) scale(${fk}) translate(-540,-880)" filter="url(#soft)"><path d="${pbox(150, 705, 780, 530, 10)}" fill="#fff" stroke="#14161c" stroke-width="6"/><svg x="165" y="720" width="750" height="500" viewBox="0 0 924 604" preserveAspectRatio="xMidYMid meet"><image href="cap/export.png" width="924" height="604"/></svg></g>`;
+    const k = pop(t, 25.9, .5);
+    s += `<g transform="translate(540,1370) scale(${k}) translate(-540,-1370)">${chip(540, 1370, 'labpotato.github.io', { size: 54, fill: '#14161c', color: '#fff', pad: 40 })}</g>`;
+  }
+  return s;
+}
+let s2 = '';
+mount(art, ui);
+</script></body></html>

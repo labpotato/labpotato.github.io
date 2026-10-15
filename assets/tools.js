@@ -58,9 +58,9 @@ const TOOLS = [
       { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15" },
       { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15",
         new: [
-          "Ladder-style lines: no more parallel lines beside outlines",
-          "Any number of tables in the aim and methods; Back and Home",
-          "Edit to-dos on the experiment page; even spacing"
+          "Bold, red and green text in Results; tiles show more results",
+          "A to-do two days ahead makes day 2 there: no blank days",
+          "Ladder-style lines, more tables, Back and Home"
         ] }
     ]
   },

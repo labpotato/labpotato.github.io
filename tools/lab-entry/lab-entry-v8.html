@@ -1162,10 +1162,6 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 .hl-ic{color:#c9961a}
 .hl-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .hl-r{display:flex;align-items:flex-start;gap:6px;font-size:13px}.hl-r mark{flex:1;display:block;-webkit-line-clamp:unset}
-#hlBtn{position:fixed;z-index:2000;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid color-mix(in srgb,#e0b13a 60%,transparent);background:#fff8e1;color:#5a4300;font:650 12px var(--ui);box-shadow:0 6px 18px rgba(0,0,0,.16);cursor:pointer}
-#hlBtn[hidden]{display:none}
-:root[data-theme="dark"] #hlBtn{background:#3a3115;color:#ffe28a}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #hlBtn{background:#3a3115;color:#ffe28a}}
 /* v7: autofill marks names from this experiment */
 #ac button.own b{color:var(--accent)}
 .ac-own{font-style:normal;font-size:10px;font-weight:650;color:var(--accent);background:var(--accent-soft,color-mix(in srgb,var(--accent) 12%,transparent));border-radius:999px;padding:0 6px;margin-left:6px}
@@ -1213,6 +1209,43 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 /* v8 · Back and Home in the top bar */
 .top .nav-back{white-space:nowrap}
 .top .nav-back[hidden]{display:none}
+
+/* v8 · bold / red / green while writing Results */
+.rich-wrap{position:relative}
+.rich-wrap > textarea.rich{display:block;margin:0;color:transparent;caret-color:var(--ink);-webkit-text-fill-color:transparent}
+.rich-wrap > textarea.rich::placeholder{color:var(--muted);opacity:1;-webkit-text-fill-color:var(--muted)}
+.rich-wrap > textarea.rich::selection{background:color-mix(in srgb,var(--accent) 28%,transparent);-webkit-text-fill-color:transparent}
+.rich-mirror{position:absolute;inset:0;pointer-events:none;white-space:pre-wrap;overflow-wrap:break-word;overflow:hidden;color:var(--ink);box-sizing:border-box}
+.rich-mirror .mk{color:var(--muted);opacity:.55}
+.rich-mirror .rb{-webkit-text-stroke:.55px currentColor}
+.rich-mirror .rr{color:#c62f2f}.rich-mirror .rg{color:#17803f}
+.rc-r{color:#c62f2f}.rc-g{color:#17803f}
+:root[data-theme="dark"] .rich-mirror .rr,:root[data-theme="dark"] .rc-r{color:#ff8f86}:root[data-theme="dark"] .rich-mirror .rg,:root[data-theme="dark"] .rc-g{color:#7fe0a0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rich-mirror .rr,:root:not([data-theme="light"]) .rc-r{color:#ff8f86}:root:not([data-theme="light"]) .rich-mirror .rg,:root:not([data-theme="light"]) .rc-g{color:#7fe0a0}}
+.fmt-g{display:inline-flex;gap:0;margin-right:6px;padding-right:8px;border-right:1px solid var(--rule)}
+.fmt-g .btn{min-width:26px;padding-left:7px;padding-right:7px;font-weight:700}
+.fmt-g .f-r,#fmtBar .f-r{color:#c62f2f}.fmt-g .f-g,#fmtBar .f-g{color:#17803f}
+:root[data-theme="dark"] .fmt-g .f-r,:root[data-theme="dark"] #fmtBar .f-r{color:#ff8f86}:root[data-theme="dark"] .fmt-g .f-g,:root[data-theme="dark"] #fmtBar .f-g{color:#7fe0a0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fmt-g .f-r,:root:not([data-theme="light"]) #fmtBar .f-r{color:#ff8f86}:root:not([data-theme="light"]) .fmt-g .f-g,:root:not([data-theme="light"]) #fmtBar .f-g{color:#7fe0a0}}
+#fmtBar{position:fixed;z-index:2000;display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;border:1px solid var(--rule2);background:var(--card);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+#fmtBar[hidden]{display:none}
+#fmtBar button{border:0;background:transparent;border-radius:999px;min-width:28px;height:26px;padding:0 8px;font:700 13px var(--ui);color:var(--ink);cursor:pointer}
+#fmtBar button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+#fmtBar .sep{width:1px;height:16px;background:var(--rule2);margin:0 3px}
+#fmtBar button[data-f="hl"]{font-weight:650;color:#8a6200}
+:root[data-theme="dark"] #fmtBar button[data-f="hl"]{color:#ffe28a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #fmtBar button[data-f="hl"]{color:#ffe28a}}
+/* v8 · tiles show more of the results in writing */
+.card.bk .bk-r{-webkit-line-clamp:7;font-size:12.5px}
+.card.bk .bk-r.short{-webkit-line-clamp:4}
+.card.bk .bk-r.after-hl{-webkit-line-clamp:4;margin-top:6px}
+.compact .card.bk .bk-r{-webkit-line-clamp:2}
+.card.bk .bk-r b{color:var(--ink)}
+.card .kr{-webkit-line-clamp:7}
+
+/* v8 · Plan ahead: a day without an entry or to-do is just a date, numbered once something is planned on it */
+.ptl-c.free .ptl-d b.ptl-wd{font-weight:600;color:var(--ink2)}
+.ptl-c.free .ptl-d span{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -3264,17 +3297,17 @@ function render(){
 function shown(){
   const q = FILT.q.toLowerCase();
   return items().filter(({ b }) => !isEmpty(b) && (!FILT.tag || b.tags.includes(FILT.tag) || b.kinds.includes(FILT.tag)) && (!FILT.status || b.status === FILT.status)
-    && (!q || [b.title, ...b.kinds, b.aim, b.result, b.method, b.next, ...b.issues.map(i => i.problem + ' ' + i.fix), ...b.todos.map(t => t.text), b.fig.title, ...b.tags, ...b.samples.map(s => s.name + ' ' + s.desc)].join(' ').toLowerCase().includes(q)));
+    && (!q || [b.title, ...b.kinds, b.aim, plain(b.result), b.method, b.next, ...b.issues.map(i => i.problem + ' ' + i.fix), ...b.todos.map(t => t.text), b.fig.title, ...b.tags, ...b.samples.map(s => s.name + ' ' + s.desc)].join(' ').toLowerCase().includes(q)));
 }
 function cardHtml({ b, date }){
   const oc = openCmts(b).length, nx = openTodos(b).length, t = ttl(b) || 'Untitled', m = / · day (\d+)/.exec(t), name = t.replace(/ · day \d+/, '');
-  const r = firstLines(dayResult(findB(b.id)), 4), a = /^Follow-up of /.test(clean(b.aim)) ? '' : firstLines(b.aim, 2);
+  const r = firstLines(dayResult(findB(b.id)), 8), a = /^Follow-up of /.test(clean(b.aim)) ? '' : firstLines(b.aim, 2);
   return `<article class="card" style="--ec:${b.color}" data-act="openExp" data-arg="${b.id}" role="button" tabindex="0" aria-label="Open ${esc(t)}, ${date}"><button class="card-x" data-act="delCard" data-arg="${b.id}" title="Delete this experiment" aria-label="Delete ${esc(t)}">×</button>
     ${b.thumb ? `<div class="th"><img src="${b.thumb}" alt=""></div>` : b.images.length ? '<div class="th"><span class="none">Preparing figure</span></div>' : miniTable(b)}
     <div class="cb">
       <div class="ct">${m ? `<span class="dayb">Day ${m[1]}</span>` : ''}${esc(name)}</div>
       <div class="cm"><span>${esc(fmtDay(date))}</span>${b.kinds.map(k => `<span class="kind tg"${tgs(k)}>${esc(k)}</span>`).join('')}${b.status ? `<span class="sd s-${b.status}">● ${STATUS_TXT[b.status]}</span>` : ''}</div>
-      ${r ? `<div class="kr">${esc(r)}</div>` : a ? `<div class="kr ka">${esc(a)}</div>` : '<div class="kr none">No results yet</div>'}
+      ${r ? `<div class="kr">${rich(r)}</div>` : a ? `<div class="kr ka">${esc(a)}</div>` : '<div class="kr none">No results yet</div>'}
       ${b.tags.length || nx || oc || b.links.length ? `<div class="cf">${b.tags.map(x => `<span class="chip tg"${tgs(x)}>${esc(x)}</span>`).join('')}<span class="grow"></span>
         ${nx ? `<span title="Open to-dos">☐ ${nx}</span>` : ''}${oc ? `<span title="Open comments">💬 ${oc}</span>` : ''}${b.links.length ? `<span title="Linked experiments">⛓ ${b.links.length}</span>` : ''}</div>` : ''}</div></article>`;
 }
@@ -3432,8 +3465,8 @@ function listTools(path, steps){
 }
 function textSec(sec, path, bi, val, o){
   o = o || {};
-  return `<section class="sec" id="sec_${sec}">${head(sec, path, bi, listTools(path, o.steps) + (o.tbl ? tblBtn(E.blocks[bi], bi, o.tbl) : ''))}<div class="sec-b">${o.before || ''}
-    <textarea data-bind="${path}" aria-label="${esc(SEC[sec])}" placeholder="${esc(o.ph || '')}">${esc(val)}</textarea>${o.after || ''}</div>${threads(E.blocks[bi], bi, sec)}</section>`;
+  return `<section class="sec" id="sec_${sec}">${head(sec, path, bi, (o.rich ? fmtTools() : '') + listTools(path, o.steps) + (o.tbl ? tblBtn(E.blocks[bi], bi, o.tbl) : ''))}<div class="sec-b">${o.before || ''}
+    ${o.rich ? richTa(`data-bind="${path}" aria-label="${esc(SEC[sec])}" placeholder="${esc(o.ph || '')}"`, val) : `<textarea data-bind="${path}" aria-label="${esc(SEC[sec])}" placeholder="${esc(o.ph || '')}">${esc(val)}</textarea>`}${o.after || ''}</div>${threads(E.blocks[bi], bi, sec)}</section>`;
 }
 function threads(b, bi, sec){
   const list = (b.comments || []).filter(c => c.sec === sec && (SHOW_RES || !c.resolved)), k = `${bi}|${sec}`;
@@ -3585,14 +3618,14 @@ function renderExp(){
       ${stepsHtml(b, bi)}
       ${changesHtml(b, bi)}
       ${textSec('result', P + '.result', bi, b.result, { ph: 'Key results first: the first lines show on the home page card', before: threadBefore(b, bi) + incomingHtml(b, bi),
-        tbl: 'table', after: `${hlHtml(b, bi)}${noteChips(b, bi)}<div class="tbl-slot">${tableHtml(b, bi)}</div>${answerHtml(b, bi)}` })}
+        rich: true, tbl: 'table', after: `${hlHtml(b, bi)}${noteChips(b, bi)}<div class="tbl-slot">${tableHtml(b, bi)}</div>${answerHtml(b, bi)}` })}
       ${issuesHtml(b, bi)}
       ${todosHtml(b, bi)}
       ${(b.comments || []).some(c => c.resolved) ? `<label class="check" style="margin-top:10px"><input type="checkbox" id="showRes" ${SHOW_RES ? 'checked' : ''}> Show resolved comments</label>` : ''}
     </article></div>
   <nav class="xp-nav xp-nav-b" aria-label="Back"><button class="btn" data-act="back">← Back</button><a class="hint" href="#">⌂ Home</a><span class="grow"></span>
     <button class="btn ghost sm" data-act="toTop">↑ Top</button></nav>`;
-  drawFigs(); $$('#app textarea').forEach(autoGrow); fillKinds(); startFill();
+  drawFigs(); $$('#app textarea').forEach(autoGrow); syncRich(); fillKinds(); startFill();
   if (FOCUS_TITLE){ FOCUS_TITLE = false; const t = $('.xp-main input.title'); if (t) t.focus(); }
 }
 function autoGrow(ta){ if (!ta.offsetParent) return; /* hidden (closed <details>): measured on toggle */ ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 3) + 'px'; }
@@ -3625,7 +3658,7 @@ function renumber(ta){
     pos += l.length + 1; return nl; }).join('\n');
   if (out !== ta.value){ ta.value = out; const c = Math.max(0, caret + delta); ta.setSelectionRange(c, c); }
 }
-function commit(ta){ if (ta.dataset.bind){ setPath(E, ta.dataset.bind, ta.value); scheduleSave(); } autoGrow(ta); }
+function commit(ta){ if (ta.dataset.bind){ setPath(E, ta.dataset.bind, ta.value); scheduleSave(); } autoGrow(ta); if (ta.classList.contains('rich')) mirrorOf(ta); }
 function lineRange(ta){ const v = ta.value, a = ta.selectionStart, b = ta.selectionEnd;
   const s = v.lastIndexOf('\n', a - 1) + 1; let e = v.indexOf('\n', b); if (e < 0) e = v.length; return [s, e]; }
 function shiftLevel(ta, dir){
@@ -3859,7 +3892,7 @@ const shortT = (s, n = 34) => s.length > n ? s.slice(0, n - 1) + '…' : s;
 const tagOfX = x => FILT.tag && x.b.tags.includes(FILT.tag) ? FILT.tag : x.b.tags[0] || '';
 /* What a card on the board shows: name, how it went, its figure or table, the main finding, and your latest note. */
 function bdCard(x, tag, segLab, g){
-  const b = x.b, t = ttl(b) || 'Untitled', m = / · day (\d+)/.exec(t), name = t.replace(/ · day \d+/, ''), r = firstLines(dayResult(findB(b.id)), 3), td = localDate();
+  const b = x.b, t = ttl(b) || 'Untitled', m = / · day (\d+)/.exec(t), name = t.replace(/ · day \d+/, ''), r = firstLines(dayResult(findB(b.id)), 12), td = localDate();
   const fig = b.thumb ? `<div class="bk-fig"><img src="${b.thumb}" alt="Figure of ${esc(t)}"></div>` : miniTable(b).replace('class="th tb"', 'class="bk-tab"');
   const note = openCmts(b).slice(-1)[0], hl = (b.hl || []).filter(h => clean(h));
   return `<article class="card bk" style="--ec:${b.color}" data-act="openExp" data-arg="${b.id}" role="button" tabindex="0" aria-label="Open ${esc(t)}, ${esc(fmtDay(x.date))}">
@@ -3868,7 +3901,7 @@ function bdCard(x, tag, segLab, g){
     <div class="bk-t">${m ? `<span class="dayb">Day ${m[1]}</span>` : ''}<b>${esc(name)}</b></div>
     <div class="bk-s">${b.status ? `<span class="sd s-${b.status}">● ${STATUS_TXT[b.status]}</span>` : x.date > td ? '<span class="bk-pl">Planned</span>' : ''}${tag ? `<span>${esc(new Date(x.date + 'T00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</span>` : ''}</div>
     ${fig}
-    ${hl.length ? `<div class="bk-hl" title="Highlighted in Results">${hl.slice(0, 4).map(h => `<mark>${esc(h)}</mark>`).join('')}</div>` : r ? `<div class="bk-r${fig ? ' short' : ''}">${esc(r)}</div>` : `<div class="bk-r none">${x.date > td ? 'Not started' : 'No result yet'}</div>`}
+    ${hl.length ? `<div class="bk-hl" title="Highlighted in Results">${hl.slice(0, 4).map(h => `<mark>${esc(h)}</mark>`).join('')}</div>` : ''}${r ? `<div class="bk-r${fig ? ' short' : ''}${hl.length ? ' after-hl' : ''}">${rich(r)}</div>` : hl.length ? '' : `<div class="bk-r none">${x.date > td ? 'Not started' : 'No result yet'}</div>`}
     ${b.kinds.length || (!g && b.tags.length) ? `<div class="bk-tags">${b.kinds.map(k => `<span class="kind tg"${tgs(k)} data-tk="${esc(key(k))}">${esc(k)}</span>`).join('')}${g ? '' : b.tags.map(t => `<span class="chip tg"${tgs(t)} data-tk="${esc(key(t))}">${esc(t)}</span>`).join('')}</div>` : ''}
     ${note ? `<div class="bk-n" title="${esc(note.author || '')}: ${esc(note.text)}">💬 ${esc(note.text)}</div>` : ''}</article>`;
 }
@@ -4336,10 +4369,13 @@ function planTl(b, bi){
   const all = th.flatMap(x => x.b.todos.map(t => [x, t])).concat(items().filter(x => !thIds.has(x.b.id)).flatMap(x => x.b.todos.filter(t => tgtsOf(t).some(id => thIds.has(id))).map(t => [x, t])))
     .filter(([, t]) => !t.cancelled && isDate(t.due) && days.includes(t.due));
   const seen = new Set(), uniqAll = all.filter(([, t]) => !seen.has(t.id) && seen.add(t.id));
+  /* a day gets its number only once the experiment has an entry or a to-do on it; the others are just dates */
+  const used = [...new Set([...th.map(x => x.date), ...th.flatMap(x => x.b.todos).filter(t => !t.cancelled && isDate(t.due)).map(t => t.due), ...uniqAll.map(([, t]) => t.due)])].sort();
   return `<div class="ptl"><div class="ptl-h"><b>📅 Plan ahead</b><span class="hint">Type into a day and press Enter. Each to-do gets an entry on its day; drag it to move it.</span><span class="grow"></span>
     <span class="seg" role="group" aria-label="Days shown">${[[3, '3 days'], [7, '1 week'], [14, '2 weeks']].map(([k, l]) => `<button class="btn sm ${TL_DAYS === k ? 'on' : ''}" data-act="tlDays" data-arg="${k}">${l}</button>`).join('')}</span></div>
     <div class="ptl-sc"><div class="ptl-g" style="--n:${TL_DAYS}">${days.map((d, k) => { const dt = new Date(d + 'T00:00'), wd = dt.getDay();
-      return `<div class="ptl-c${d === td ? ' today' : ''}${wd === 6 ? ' sat' : wd === 0 ? ' sun' : ''}${d < td ? ' past' : ''}" data-tlday="${d}"><div class="ptl-d"><b>Day ${k + 1}</b><span>${esc(dt.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</span></div>
+      const dn = used.indexOf(d) + 1;
+      return `<div class="ptl-c${d === td ? ' today' : ''}${wd === 6 ? ' sat' : wd === 0 ? ' sun' : ''}${d < td ? ' past' : ''}${dn ? '' : ' free'}" data-tlday="${d}"><div class="ptl-d">${dn ? `<b>Day ${dn}</b>` : `<b class="ptl-wd">${esc(dt.toLocaleDateString(undefined, { weekday: 'long' }))}</b>`}<span>${esc(dt.toLocaleDateString(undefined, dn ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' }))}</span></div>
         ${uniqAll.filter(([, t]) => t.due === d).map(([x, t]) => { const y = tgtsOf(t).map(findB).filter(Boolean)[0];
           return `<div class="ptl-t ${t.done ? 'done' : ''}" data-tlt="${x.b.id}|${t.id}" style="--ec:${x.b.color}"><span class="ptl-grip" draggable="true" title="Drag to another day" aria-hidden="true">⠿</span><input type="checkbox" data-todox="${x.b.id}|${t.id}" ${t.done ? 'checked' : ''} aria-label="Done: ${esc(t.text)}"><span class="ptl-tx"><textarea rows="1" class="fit ptl-x" data-todotext="${x.b.id}|${t.id}" data-acphrase aria-label="To-do">${esc(t.text)}</textarea>${y && y.b.id !== b.id ? `<a class="ptl-to" href="#exp/${y.b.id}" data-peek="${y.b.id}">→ ${esc(shortT(ttl(y.b) || 'Untitled', 28))}</a>` : ''}</span>
             <span class="ptl-a"><button data-act="linkTodo" data-arg="${x.b.id}|${t.id}" title="Choose which experiments it leads to" aria-label="Link">🔗</button><button data-act="todoCancel" data-arg="${x.b.id}|${t.id}" title="Cancel this to-do" aria-label="Cancel">⊘</button></span></div>`; }).join('')}
@@ -4452,20 +4488,70 @@ function hlHtml(b, bi){ const hl = (b.hl || []).filter(h => clean(h));
   return `<div class="hl-box${hl.length ? '' : ' empty'}"><div class="hl-h"><span class="hl-ic" aria-hidden="true">✦</span><b>Highlights</b><span class="hint">${hl.length ? 'shown on the board tile instead of the first lines' : 'select words in Results and press ✦ Highlight: they show on the board tile'}</span></div>
     ${hl.length ? `<div class="hl-list">${hl.map((h, i) => `<div class="hl-r"><mark>${esc(h)}</mark><button class="btn ghost sm x" data-act="hlDel" data-arg="${bi}|${i}" title="Remove this highlight" aria-label="Remove this highlight">×</button></div>`).join('')}</div>` : ''}</div>`; }
 A.hlDel = arg => { const [bi, i] = arg.split('|').map(Number), b = E.blocks[bi]; if (!b || !b.hl) return; b.hl.splice(i, 1); scheduleSave(); rerender(); };
+/* Results text can carry bold and red / green: written **bold**, {r}red{/r}, {g}green{/g}. The box shows the look while you type. */
+const rich = s => esc(String(s || '')).replace(/\{r\}([^\n]*?)\{\/r\}/g, '<span class="rc rc-r">$1</span>').replace(/\{g\}([^\n]*?)\{\/g\}/g, '<span class="rc rc-g">$1</span>').replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
+const plain = s => String(s || '').replace(/\*\*/g, '').replace(/\{\/?[rg]\}/g, '');
+const richMirror = s => esc(String(s || '')).replace(/\{r\}([^\n]*?)\{\/r\}/g, '<span class="mk">{r}</span><span class="rr">$1</span><span class="mk">{/r}</span>').replace(/\{g\}([^\n]*?)\{\/g\}/g, '<span class="mk">{g}</span><span class="rg">$1</span><span class="mk">{/g}</span>')
+  .replace(/\*\*([^*\n]+?)\*\*/g, '<span class="mk">**</span><span class="rb">$1</span><span class="mk">**</span>') + '\n​';
+const richTa = (attrs, val, rows) => `<div class="rich-wrap"><textarea class="rich" ${rows ? `rows="${rows}" ` : ''}${attrs}>${esc(val)}</textarea><div class="rich-mirror" aria-hidden="true">${richMirror(val)}</div></div>`;
+const mirrorOf = ta => { const m = ta.parentNode && ta.parentNode.querySelector('.rich-mirror'); if (m) m.innerHTML = richMirror(ta.value); };
+function syncRich(){ $$('.rich-wrap').forEach(w => { const ta = $('textarea', w), m = $('.rich-mirror', w), cs = getComputedStyle(ta);
+  ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'tabSize', 'wordSpacing', 'textIndent'].forEach(p => { m.style[p] = cs[p]; });
+  m.style.borderStyle = 'solid'; m.style.borderColor = 'transparent'; m.innerHTML = richMirror(ta.value); }); }
+const fmtTools = () => `<span class="fmt-g" role="group" aria-label="Format the text you are writing"><button class="btn ghost sm f-b" data-act="fmt" data-arg="b" title="Bold (Ctrl+B). Select words first, or click inside one."><b>B</b></button><button class="btn ghost sm f-r" data-act="fmt" data-arg="r" title="Red">A</button><button class="btn ghost sm f-g" data-act="fmt" data-arg="g" title="Green">A</button></span>`;
+const FMT = { ta: null }, FMT_TAG = { b: ['**', '**'], r: ['{r}', '{/r}'], g: ['{g}', '{/g}'] };
+const WORD = /[\p{L}\p{N}_.\-+µ%°\/]/u;
+function fmtUnwrap(ta, s, e, [o, c]){ const v = ta.value;
+  if (v.slice(s - o.length, s) === o && v.slice(e, e + c.length) === c){ ta.setRangeText(v.slice(s, e), s - o.length, e + c.length, 'preserve'); return [s - o.length, e - o.length]; }
+  const seg = v.slice(s, e); if (seg.length >= o.length + c.length && seg.startsWith(o) && seg.endsWith(c)){ ta.setRangeText(seg.slice(o.length, seg.length - c.length), s, e, 'preserve'); return [s, e - o.length - c.length]; }
+  return null; }
+function fmtWrap(ta, f){
+  const [o, c] = FMT_TAG[f], v = ta.value; let s = ta.selectionStart, e = ta.selectionEnd;
+  if (s === e){ while (s > 0 && WORD.test(v[s - 1])) s--; while (e < v.length && WORD.test(v[e])) e++; }
+  if (s === e){ ta.setRangeText(o + c, s, s, 'end'); const p = s + o.length; ta.setSelectionRange(p, p); }
+  else { let un = fmtUnwrap(ta, s, e, FMT_TAG[f]);
+    if (un) ta.setSelectionRange(un[0], un[1]);
+    else { if (f !== 'b'){ const sw = fmtUnwrap(ta, s, e, FMT_TAG[f === 'r' ? 'g' : 'r']); if (sw){ s = sw[0]; e = sw[1]; } }   // red over green swaps the colour
+      const seg = ta.value.slice(s, e), out = seg.split('\n').map(l => { if (!l.trim()) return l; const lead = /^\s*/.exec(l)[0], body = l.slice(lead.length).replace(/\s+$/, ''), tail = l.slice(lead.length + body.length);
+        return lead + (body.length >= o.length + c.length && body.startsWith(o) && body.endsWith(c) ? body.slice(o.length, body.length - c.length) : o + body + c) + tail; }).join('\n');
+      ta.setRangeText(out, s, e, 'select'); } }
+  commit(ta); mirrorOf(ta); ta.focus(); fmtCheck(ta); }
+A.fmt = f => { let ta = FMT.ta && document.contains(FMT.ta) ? FMT.ta : $('#sec_result textarea.rich'); if (ta) fmtWrap(ta, f); };
+document.addEventListener('focusin', e => { if (e.target.classList && e.target.classList.contains('rich')) FMT.ta = e.target; });
+document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('rich')) mirrorOf(e.target); });
+document.addEventListener('keydown', e => { const t = e.target; if (t.classList && t.classList.contains('rich') && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b'){ e.preventDefault(); fmtWrap(t, 'b'); } });
+document.addEventListener('mousedown', e => { if (e.target.closest && e.target.closest('.fmt-g button')) e.preventDefault(); });   // keep the selection while pressing B / A / A
+
+/* Highlights: select words in Results, press ✦ Highlight; they are listed under Results and shown on the board tile. */
 const HL_RE = /^blocks\.(\d+)\.(result|results\.\d+\.text)$/;
-function hlBtnEl(){ let x = $('#hlBtn'); if (!x){ x = document.createElement('button'); x.id = 'hlBtn'; x.type = 'button'; x.hidden = true; x.innerHTML = '<span aria-hidden="true">✦</span> Highlight'; x.title = 'Show this on the board tile'; document.body.append(x); } return x; }
-function hlCheck(el){ const btn = hlBtnEl(); if (!el || !el.dataset || !HL_RE.test(el.dataset.bind || '') || el.selectionEnd - el.selectionStart < 2 || !clean(el.value.slice(el.selectionStart, el.selectionEnd))){ btn.hidden = true; return; }
-  const p = caretXY(el, el.selectionStart); btn._el = el; btn.hidden = false;
-  btn.style.left = Math.max(8, Math.min(p.x, window.innerWidth - 130)) + 'px'; btn.style.top = Math.max(8, p.y - 34) + 'px'; }
-['mouseup', 'keyup', 'select'].forEach(ev => document.addEventListener(ev, e => { if (e.target && e.target.id === 'hlBtn') return; setTimeout(() => hlCheck(document.activeElement), 0); }));
-document.addEventListener('scroll', () => { const x = $('#hlBtn'); if (x) x.hidden = true; }, true);
-document.addEventListener('mousedown', e => { const btn = e.target.closest && e.target.closest('#hlBtn'); if (!btn) return; e.preventDefault();
-  const el = btn._el, m = el && HL_RE.exec(el.dataset.bind || ''); btn.hidden = true; if (!m) return;
-  const txt = clean(el.value.slice(el.selectionStart, el.selectionEnd)).replace(/\s+/g, ' '), b = E.blocks[+m[1]]; if (!txt || !b) return;
+function fmtBarEl(){ let x = $('#fmtBar'); if (!x){ x = document.createElement('div'); x.id = 'fmtBar'; x.hidden = true; x.setAttribute('role', 'toolbar'); x.setAttribute('aria-label', 'Format the selected text');
+  x.innerHTML = '<button type="button" data-f="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-f="r" class="f-r" title="Red">A</button><button type="button" data-f="g" class="f-g" title="Green">A</button><span class="sep"></span><button type="button" data-f="hl" title="Show this on the board tile"><span aria-hidden="true">✦</span> Highlight</button>'; document.body.append(x); } return x; }
+function fmtCheck(el){ const bar = fmtBarEl(); if (!el || !el.dataset || !HL_RE.test(el.dataset.bind || '') || el.selectionEnd === el.selectionStart || !clean(el.value.slice(el.selectionStart, el.selectionEnd))){ bar.hidden = true; return; }
+  const p = caretXY(el, el.selectionStart); bar._el = el; bar.hidden = false;
+  bar.style.left = Math.max(8, Math.min(p.x, window.innerWidth - bar.offsetWidth - 8)) + 'px'; bar.style.top = Math.max(8, p.y - 40) + 'px'; }
+['mouseup', 'keyup', 'select'].forEach(ev => document.addEventListener(ev, e => { if (e.target && e.target.closest && e.target.closest('#fmtBar')) return; setTimeout(() => fmtCheck(document.activeElement), 0); }));
+document.addEventListener('scroll', () => { const x = $('#fmtBar'); if (x) x.hidden = true; }, true);
+document.addEventListener('mousedown', e => { const btn = e.target.closest && e.target.closest('#fmtBar button'); if (!btn) return; e.preventDefault();
+  const bar = btn.closest('#fmtBar'), el = bar._el, f = btn.dataset.f; if (!el) return;
+  if (f !== 'hl'){ fmtWrap(el, f); return; }
+  const m = HL_RE.exec(el.dataset.bind || ''); bar.hidden = true; if (!m) return;
+  const txt = clean(plain(el.value.slice(el.selectionStart, el.selectionEnd))).replace(/\s+/g, ' '), b = E.blocks[+m[1]]; if (!txt || !b) return;
   b.hl = b.hl || []; if (!b.hl.includes(txt)) b.hl.push(txt); scheduleSave(); rerender(); toast('Highlighted: it now shows on the board tile.'); }, true);
 
 /* v8 · To-dos shown on an experiment page (planned for this day, plan ahead) are edited in place; other views catch up when you leave the box. */
 document.addEventListener('change', e => { const el = e.target; if (el.dataset && el.dataset.todotext && el.closest('.xp')){ saveNow(); rerender(); } });
+
+/* a downloaded .md keeps bold as **bold** and turns red / green into inline HTML that Markdown viewers show */
+const mdOut = md => md.replace(/\{r\}([^\n]*?)\{\/r\}/g, '<span style="color:#c62f2f">$1</span>').replace(/\{g\}([^\n]*?)\{\/g\}/g, '<span style="color:#17803f">$1</span>');
+
+/* v8 · Moving an entry to another date takes the to-dos that lead into it along, and renumbers the experiment's days. */
+const DATE_WAS = new Map();   // the date an entry had before you started changing it (the page redraws while you type)
+document.addEventListener('input', e => { const el = e.target, m = el.type === 'date' && /^blocks\.(\d+)\.date$/.exec(el.dataset.bind || ''); if (!m) return;
+  const b = E.blocks[+m[1]]; if (b && !DATE_WAS.has(b.id)) DATE_WAS.set(b.id, dateOf(E, b)); }, true);
+document.addEventListener('change', e => { const el = e.target, m = el.type === 'date' && /^blocks\.(\d+)\.date$/.exec(el.dataset.bind || ''); if (!m) return;
+  const b = E.blocks[+m[1]]; if (!b) return; const was = DATE_WAS.get(b.id), now = el.value; DATE_WAS.delete(b.id); if (!was || !isDate(now) || was === now) return;
+  items().forEach(x => x.b.todos.forEach(t => { if (!t.done && t.due === was && (t.link === b.id || tgtsOf(t).includes(b.id))){ t.due = now; touch(x.e); } }));
+  renumberDays(b); syncFollows(); saveNow(); rerender(); toast(`Moved to ${fmtDay(now)}; the to-dos that lead here moved with it.`); });
 
 A.home = () => go('#');
 A.jumpToday = () => { const h = $('#grp-today'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -4738,15 +4824,15 @@ function blankWarn(md){ BLANK.lastIndex = 0; const n = (md.match(BLANK) || []).l
 async function copyText(t){ try { await navigator.clipboard.writeText(t); }
   catch (e){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } }
 async function prep(){ const its = scope(); if (!its.length){ toast('Nothing to export.'); return null; } await saveNow(); await ensureImgs(its.map(x => x.b)); return its; }
-A.copyMd = async () => { const its = await prep(); if (!its) return; const t = buildMd(its); await copyText(t); toast('Markdown copied. Text only: use Word or PDF to keep figures.'); blankWarn(t); };
-A.dlZip = async () => { const its = await prep(); if (!its) return; const z = new JSZip(), md = buildMd(its); blankWarn(md); z.file(fileBase(its) + '.md', md);
+A.copyMd = async () => { const its = await prep(); if (!its) return; const t = mdOut(buildMd(its)); await copyText(t); toast('Markdown copied. Text only: use Word or PDF to keep figures.'); blankWarn(t); };
+A.dlZip = async () => { const its = await prep(); if (!its) return; const z = new JSZip(), md = buildMd(its), mdo = mdOut(md); blankWarn(md); z.file(fileBase(its) + '.md', mdo);
   for (const [p, cv] of Object.entries(figCanvases(its))) z.file(p, await toBlob(cv));
   download(await z.generateAsync({ type: 'blob', compression: 'DEFLATE' }), fileBase(its) + '.zip'); };
 A.dlDocx = async () => { const its = await prep(); if (!its) return; toast('Building the Word file…'); const md = buildMd(its); blankWarn(md);
   download(await buildDocx(md, figCanvases(its)), fileBase(its) + '.docx'); };
 function mdHtml(md, map, noFm){
   let fm = ''; if (md.startsWith('---\n')){ const e = md.indexOf('\n---\n', 4); fm = noFm ? '' : `<pre>${esc(md.slice(4, e))}</pre>`; md = md.slice(e + 5); }
-  const inl = s => esc(s).replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, a, p) => map[p] ? `<img src="${map[p]}" alt="${a}">` : '').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^\*(.+)\*$/, '<i>$1</i>');
+  const inl = s => esc(s).replace(/\{r\}([^\n]*?)\{\/r\}/g, '<span class="rc rc-r">$1</span>').replace(/\{g\}([^\n]*?)\{\/g\}/g, '<span class="rc rc-g">$1</span>').replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, a, p) => map[p] ? `<img src="${map[p]}" alt="${a}">` : '').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/^\*(.+)\*$/, '<i>$1</i>');
   const ls = md.split('\n'); let h = '', i = 0;
   while (i < ls.length){ const l = ls[i];
     if (!l.trim()){ i++; continue; }
@@ -4767,7 +4853,8 @@ function docXml(md, media){
   if (md.startsWith('---\n')) md = md.slice(md.indexOf('\n---\n', 4) + 5);
   const X = s => esc(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
   const run = (t, rp) => `<w:r>${rp ? `<w:rPr>${rp}</w:rPr>` : ''}<w:t xml:space="preserve">${X(t)}</w:t></w:r>`;
-  const runs = (s, rp = '') => s.split(/(\*\*[^*]+\*\*)/).filter(Boolean).map(p => /^\*\*[^*]+\*\*$/.test(p) ? run(p.slice(2, -2), '<w:b/>' + rp) : run(p, rp)).join('');
+  const runs = (s, rp = '') => { let c = ''; return s.split(/(\*\*[^*]+\*\*|\{\/?[rg]\})/).filter(Boolean).map(p => { if (p === '{r}'){ c = 'C62F2F'; return ''; } if (p === '{g}'){ c = '17803F'; return ''; } if (p === '{/r}' || p === '{/g}'){ c = ''; return ''; }
+    const col = c ? `<w:color w:val="${c}"/>` : ''; return /^\*\*[^*]+\*\*$/.test(p) ? run(p.slice(2, -2), '<w:b/>' + col + rp) : run(p, col + rp); }).join(''); };
   const para = (inner, ppr) => `<w:p>${ppr ? `<w:pPr>${ppr}</w:pPr>` : ''}${inner}</w:p>`;
   const cells = r => r.replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
   const pic = (rid, cx, cy, id) => `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Figure ${id}"/>`
@@ -4976,7 +5063,7 @@ app.addEventListener('input', e => { if (e.target.id !== 'linkQ') return; const 
 document.addEventListener('click', e => { $$('details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
 document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details.linkpick') && e.target.open){ const q = $('#linkQ'); if (q) q.focus(); } else if (e.target.matches && e.target.matches('details.linkpick')) hidePeek(); }, true);
 A.dlMd = async () => { const its = await prep(); if (!its) return;
-  const md = buildMd(its).replace(/^!\[[^\]]*\]\(images\/[^)]+\)\n\n/gm, '');   // text only: figures are described by their legends
+  const md = mdOut(buildMd(its)).replace(/^!\[[^\]]*\]\(images\/[^)]+\)\n\n/gm, '');   // text only: figures are described by their legends
   blankWarn(md); download(new Blob([md], { type: 'text/markdown;charset=utf-8' }), fileBase(its) + '.md'); };
 
 // ── Experiment tags: what is being done, and what usually comes next ────────
@@ -5156,9 +5243,7 @@ function relocate(it, t){
   t.keepHere = false;
   const want = addDays(t.due, -1); if (it.date === want) return null;
   const th = threadOf(it.b);
-  let to = th.find(x => x.date === want);
-  if (!to && want > it.date) to = ensureFollow(th[th.length - 1].date < want ? th[th.length - 1].b : it.b, want);
-  if (!to) to = th.filter(x => x.date < t.due).pop();
+  const to = th.filter(x => x.date < t.due).pop();   // only days that already exist: the due day itself gets its entry, nothing in between
   if (!to || to.b.id === it.b.id) return null;
   it.b.todos.splice(it.b.todos.indexOf(t), 1); to.b.todos.push(t);
   if (t.link){ const l = findB(t.link); if (!l || l.date !== t.due){ const old = t.link; t.link = ''; dropIfBare(old); } }
@@ -5418,12 +5503,12 @@ function threadRow(x, bi){
   const txt = dayResult(x), figs = x.b.images.length;
   return `<div class="th-day" style="--ec:${x.b.color}"><div class="th-h"><b>${esc(fmtDay(x.date))}</b>${linkChip(x.b.id, bi, false)}
       ${figs ? `<button class="btn ghost sm" data-act="showFig" data-arg="${x.b.id}" title="Show this day's figure on the left">🖼 Figure (${figs})</button>` : ''}${x.b.ended ? '<span class="chip">last day</span>' : ''}</div>
-    <div class="th-t">${txt ? esc(txt) : '<i class="hint">No results written.</i>'}</div></div>`;
+    <div class="th-t">${txt ? rich(txt) : '<i class="hint">No results written.</i>'}</div></div>`;
 }
 function resultsExtra(b, bi){
   const P = `blocks.${bi}.results`;
   return (b.results || []).map((r, ri) => `<div class="rdate"><input type="date" data-bind="${P}.${ri}.date" value="${esc(r.date)}" aria-label="Date of this result">
-      <textarea data-bind="${P}.${ri}.text" rows="2" placeholder="Results on this date" aria-label="Results on ${esc(r.date)}">${esc(r.text)}</textarea>
+      ${richTa(`data-bind="${P}.${ri}.text" placeholder="Results on this date" aria-label="Results on ${esc(r.date)}"`, r.text, 2)}
       <button class="btn ghost sm x" data-act="resDel" data-arg="${bi}|${ri}" aria-label="Remove">×</button></div>`).join('');
 }
 /* Results reads top to bottom: this day's box first, then what to do next, then the other days folded away. */

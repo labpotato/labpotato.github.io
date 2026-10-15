@@ -46,19 +46,20 @@ const TOOLS = [
     folder: "tools/lab-entry",
     features: [
       "Timeline by day, by project or as a dateless flow",
-      "Each experiment outlined as one group you can drag to a free place",
-      "To-dos on the lines that link one experiment to the next"
+      "Highlight key results and see them on the board",
+      "Autofill of your strains and plasmids everywhere you write"
     ],
     versions: [
       { v: "v2", file: "lab-entry-v2.html", date: "2026-09-30" },
       { v: "v3", file: "lab-entry-v3.html", date: "2026-10-01" },
       { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01" },
       { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14" },
-      { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14",
+      { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14" },
+      { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15",
         new: [
-          "Tiles instead of fixed columns: a free place is reused",
-          "Experiments outlined as groups; drag one to a free place",
-          "Lines & to-dos, Only lines or Compact, also by project"
+          "Highlight words in Results to show them on the board",
+          "Autofill everywhere, this experiment's names first",
+          "Tables in the aim and methods; project tags on each tile group"
         ] }
     ]
   },

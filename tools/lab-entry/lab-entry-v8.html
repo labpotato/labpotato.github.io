@@ -1203,13 +1203,24 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 .xp-main .sec-b > button.btn:not(:first-child){margin-top:8px}
 .xp-main .sec-b > input.proto{margin-bottom:0}
 .xp-main > .exp-h + .sec{border-top:0}
+/* v8 · tables in 02 / 03: a clear bar to add one (or another) under the section */
+.xp-main .sec-b > .t-addtbl{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:8px;padding:7px 10px;border:1.5px dashed var(--rule2);border-radius:10px;background:transparent;color:var(--muted);font:600 12.5px var(--ui);cursor:pointer}
+.t-addtbl:hover{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.t-addtbl svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.3}
+.tbl-slot > .tbl-ed + .tbl-ed{margin-top:14px}
+/* v8 · the day's to-do section on follow-up days carries a tick instead of a number, so 01–07 mean the same in every entry */
+.sec-h .no.no-ic{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+/* v8 · Back and Home in the top bar */
+.top .nav-back{white-space:nowrap}
+.top .nav-back[hidden]{display:none}
 </style>
 </head>
 <body>
 <div class="top"><div class="top-in">
   <a class="brand" href="https://labpotato.github.io/" title="Lab Potato home"><svg class="brand-mark" viewBox="22 46 208 144" aria-hidden="true"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path></svg><span class="brand-word">Lab&nbsp;Potato</span></a><span class="brand-sep">/</span>
   <h1>Lab Journal</h1><span class="ver-chip">v8</span>
-  <button class="btn nav" data-act="home" data-nav="home">All experiments</button>
+  <button class="btn nav-back" data-act="back" title="Back to the previous page (Alt+Left)">← Back</button>
+  <button class="btn nav" data-act="home" data-nav="home" title="Home: all your experiments on the timeline">⌂ Home</button>
   <button class="btn nav" data-act="nextView" data-nav="next">To-do</button>
   <button class="btn pri" data-act="newExp">+ New experiment</button>
   <span class="grow"></span>
@@ -3107,7 +3118,7 @@ const ttl = b => clean(b.title) + (clean(b.sub) ? ' — ' + clean(b.sub) : '');
 const items = () => ALL.flatMap(e => e.blocks.map((b, bi) => ({ e, b, bi, date: dateOf(e, b) })));
 const findB = id => items().find(x => x.b.id === id);
 const curBi = () => E && VIEW.mode === 'exp' ? E.blocks.findIndex(b => b.id === VIEW.bid) : -1;
-const isEmpty = b => !clean(b.title) && !b.images.length && !b.table && !b.tblAim && !b.tblMethod && !(b.hl || []).length && !b.status && !b.changes.length && !(b.comments || []).length
+const isEmpty = b => !clean(b.title) && !b.images.length && !b.table && !tlist(b, 'tblAim').length && !tlist(b, 'tblMethod').length && !(b.hl || []).length && !b.status && !b.changes.length && !(b.comments || []).length
   && !['aim', 'method', 'result', 'next', 'protocol'].some(k => clean(b[k])) && !b.samples.some(s => clean(s.name)) && !b.todos.length && !b.log
   && !b.kinds.length && !b.steps.length && !b.issues.some(i => clean(i.problem) || clean(i.fix));
 const allTags = () => uniq(ALL.flatMap(e => e.blocks.flatMap(b => b.tags))).sort((a, b) => a.localeCompare(b));
@@ -3244,7 +3255,7 @@ function render(){
   const fp = $('.xp-fig'); if (fp && fp.style.width) FIGW = fp.style.width;
   const n = shown().length;
   $('#scopeLbl').textContent = VIEW.mode === 'exp' ? 'Exports this experiment' : VIEW.mode === 'report' ? `Exports the report: ${repLabel()}` : `Exports the ${n} experiment${n === 1 ? '' : 's'} shown${FILT.tag ? ' in ' + FILT.tag : ''}`;
-  $$('.top [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === VIEW.mode));
+  $$('.top [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === VIEW.mode)); { const nb = $('.top .nav-back'); if (nb) nb.hidden = VIEW.mode === 'home'; }
   if (VIEW.mode === 'exp') return renderExp();
   if (VIEW.mode === 'next') return renderNext();
   if (VIEW.mode === 'report') return renderReport();
@@ -3411,7 +3422,7 @@ let secNo = 0;
 function cmtBtn(bi, sec, path){ const n = openCmts(E.blocks[bi]).filter(c => c.sec === sec).length;
   return `<button class="btn ghost sm" data-act="cmt" data-arg="${bi}|${sec}|${path || ''}" title="Comment. Select text first to quote it.">💬${n ? ' ' + n : ''}</button>`; }
 function head(sec, path, bi, tools){
-  return `<header class="sec-h"><span class="no">${pad2(++secNo)}</span><h3>${SEC[sec]}</h3><span class="tools">${tools || ''}${path ? fillBtn(sec, path, bi) : ''}${cmtBtn(bi, sec, path)}</span>${path ? fillPop(sec, path, bi) : ''}</header>`;
+  return `<header class="sec-h"><span class="no${sec === 'today' ? ' no-ic' : ''}">${sec === 'today' ? '✓' : pad2(++secNo)}</span><h3>${SEC[sec]}</h3><span class="tools">${tools || ''}${path ? fillBtn(sec, path, bi) : ''}${cmtBtn(bi, sec, path)}</span>${path ? fillPop(sec, path, bi) : ''}</header>`;
 }
 function listTools(path, steps){
   return `${steps ? `<button class="btn ghost sm" data-act="addStep" data-arg="${path}" title="Numbered step">1. Step</button>` : ''}
@@ -3530,9 +3541,9 @@ function changesHtml(b, bi){
 const FIG_OPEN = new Set(), FIG_HIDE = new Set();
 const figOn = b => !!FIGSHOW || (b.images.length ? !FIG_HIDE.has(b.id) : FIG_OPEN.has(b.id));
 const colL = i => i < 26 ? String.fromCharCode(65 + i) : 'Z' + (i - 25);
-function tableHtml(b, bi, k = 'table'){
-  const t = b[k]; if (!t) return '';
-  const id = tbId(bi, k), p = `blocks.${bi}.${k}`, nc = t.cols.length; bi = id;
+function tableHtml(b, bi, k = 'table', ti = 0){
+  const t = k === 'table' ? b[k] : tlist(b, k)[ti]; if (!t) return '';
+  const id = tbId(bi, k, ti), p = k === 'table' ? `blocks.${bi}.${k}` : `blocks.${bi}.${k}.${ti}`, nc = t.cols.length; bi = id;
   return `<div class="tbl-ed" data-tbl="${id}">
     <div class="tbl-key"><span class="k-col">▥ Column = top to bottom (A, B, C…)</span><span class="k-row">▤ Row = left to right (1, 2, 3…)</span>
       <span class="grow"></span><button class="btn ghost sm x" data-act="tRemove" data-arg="${bi}">Remove table</button></div>
@@ -3559,7 +3570,7 @@ function renderExp(){
   <datalist id="dlTags">${uniq([...CODES, ...allTags()]).sort().map(t => `<option value="${esc(t)}">`).join('')}</datalist>
   <nav class="xp-nav" style="--ec:${b.color}" aria-label="Experiment navigation">
     <button class="btn" data-act="back" title="Back to the previous page (Alt+Left)">← Back</button>
-    <span class="xp-crumb"><a href="#">All experiments</a> › <b>${esc(ttl(b) || 'Untitled')}</b> <span class="hint">${esc(dateOf(E, b))}</span></span>
+    <span class="xp-crumb"><a href="#">Home</a> › <b>${esc(ttl(b) || 'Untitled')}</b> <span class="hint">${esc(dateOf(E, b))}</span></span>
     ${figOn(b) ? '' : `<button class="btn" data-act="figShow" data-arg="${b.id}">🖼 ${b.images.length ? `Show figure (${b.images.length})` : 'Add figures'}</button>`}
     <button class="btn x xbtn" data-act="delBlock" data-arg="${bi}" title="Delete this experiment" aria-label="Delete this experiment">×</button></nav>
   <div class="xp ${figOn(b) ? '' : 'solo'}" data-block="${bi}" style="--ec:${b.color}">
@@ -3570,7 +3581,7 @@ function renderExp(){
       ${expHead(b, bi)}
       ${b.log ? dayTodosHtml(b, bi) : ''}
       ${samplesHtml(b, bi)}
-      ${textSec('aim', P + '.aim', bi, b.aim, { ph: 'What you set out to do, and why', before: kindsRow(b, bi), tbl: 'tblAim', after: `<div class="tbl-slot">${tableHtml(b, bi, 'tblAim')}</div>` })}
+      ${textSec('aim', P + '.aim', bi, b.aim, { ph: 'What you set out to do, and why', before: kindsRow(b, bi), tbl: 'tblAim', after: tablesHtml(b, bi, 'tblAim') })}
       ${stepsHtml(b, bi)}
       ${changesHtml(b, bi)}
       ${textSec('result', P + '.result', bi, b.result, { ph: 'Key results first: the first lines show on the home page card', before: threadBefore(b, bi) + incomingHtml(b, bi),
@@ -3579,7 +3590,7 @@ function renderExp(){
       ${todosHtml(b, bi)}
       ${(b.comments || []).some(c => c.resolved) ? `<label class="check" style="margin-top:10px"><input type="checkbox" id="showRes" ${SHOW_RES ? 'checked' : ''}> Show resolved comments</label>` : ''}
     </article></div>
-  <nav class="xp-nav xp-nav-b" aria-label="Back"><button class="btn" data-act="back">← Back</button><a class="hint" href="#">All experiments</a><span class="grow"></span>
+  <nav class="xp-nav xp-nav-b" aria-label="Back"><button class="btn" data-act="back">← Back</button><a class="hint" href="#">⌂ Home</a><span class="grow"></span>
     <button class="btn ghost sm" data-act="toTop">↑ Top</button></nav>`;
   drawFigs(); $$('#app textarea').forEach(autoGrow); fillKinds(); startFill();
   if (FOCUS_TITLE){ FOCUS_TITLE = false; const t = $('.xp-main input.title'); if (t) t.focus(); }
@@ -4030,7 +4041,7 @@ function drawBoardLinks(){
     el.className = `bd-node${n.done ? ' done' : ''}${n.loose ? ' loose' : ''}`; el.style.setProperty('--ec', n.color); el.dataset.a = n.a; el.dataset.tg = tg.join(',');
     el.innerHTML = n.html; el.style.visibility = 'hidden'; bd.append(el); return Object.assign({ el, tg }, n); });
   const need = Math.max(0, ...nodes.map(n => tag ? n.el.offsetWidth : n.el.offsetHeight));
-  const want = Math.round((need ? (tag ? clamp(need + 36, 56, 240) : clamp(need + 30, 40, 220)) : 26) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
+  const tabbed = !tag && nodes.some(n => $('.bk-seg', cell(n.a))), want = Math.round((need ? (tag ? clamp(need + 36, 56, 240) : clamp(need + 30, 40, 220)) : 26) + (tabbed ? 26 : 0) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
   if (Math.abs((cur || 0) - want) > 1) bd.style.setProperty('--rg', want + 'px');
   const o = bd.getBoundingClientRect(), R = el => { const r = el.getBoundingClientRect(); return { l: r.left - o.left, t: r.top - o.top, r: r.right - o.left, b: r.bottom - o.top }; };
   const U = r => tag ? [r.l, r.r] : [r.t, r.b], V = r => tag ? (r.t + r.b) / 2 : (r.l + r.r) / 2, VV = r => tag ? [r.t, r.b] : [r.l, r.r], XY = (u, v) => tag ? [u, v] : [v, u];
@@ -4044,8 +4055,9 @@ function drawBoardLinks(){
     g.sort((p, q) => p.want - q.want || p.tg.length - q.tg.length); let end = -1e9;
     g.forEach(n => { n.v0 = Math.max(n.want - n.w / 2, end + 12); end = n.v0 + n.w; });
     const over = end - vMax; if (over > 0) g.forEach(n => { n.v0 -= over; }); const under = vMin - g[0].v0; if (under > 0) g.forEach(n => { n.v0 += under; });
-    const uc = (U(G)[0] + U(G)[1]) / 2 - (tag ? 0 : 0);
-    g.forEach(n => { const [x, y] = XY(uc - n.h / 2, n.v0); n.el.style.left = x + 'px'; n.el.style.top = y + 'px'; n.el.style.visibility = ''; n.N = R(n.el); }); });
+    const uc = (U(G)[0] + U(G)[1]) / 2;
+    g.forEach(n => { const tb = $('.bk-seg', card(n.a).parentElement), T = tb && R(tb), lo = T && dir < 0 ? U(G)[0] : T ? U(T)[1] + 6 : 0, hi = T && dir < 0 ? U(T)[0] - 6 : T ? U(G)[1] : 0;
+      const ucn = T && hi - lo >= n.h ? (lo + hi) / 2 : uc, [x, y] = XY(ucn - n.h / 2, n.v0); n.el.style.left = x + 'px'; n.el.style.top = y + 'px'; n.el.style.visibility = ''; n.N = R(n.el); }); });
   /* the lane where lines turn: past the steps in that gap, before the next day */
   const chan = gi => { const G = gapR.get(gi); if (!G) return null; const ns = byGap.get(gi) || [], end = fwd(G);
     if (!ns.length) return (U(G)[0] + U(G)[1]) / 2; const f = (dir > 0 ? Math.max(...ns.map(n => fwd(n.N))) : Math.min(...ns.map(n => fwd(n.N)))) ; return (f + end) / 2; };
@@ -4060,28 +4072,58 @@ function drawBoardLinks(){
   const flows = [];
   nodes.filter(n => n.N).forEach(n => flows.push({ a: n.a, color: n.color, n, cls: `${n.done ? ' done' : ''}${n.loose ? ' loose' : ''}`, p: [fwd(n.N), V(n.N)], gi: n.g, tg: n.tg }));
   (BD.direct || []).filter(e => card(e.a) && card(e.b)).forEach(e => { const A = R(card(e.a)); flows.push({ a: e.a, color: e.color, cls: ' th', p: [fwd(A), V(A)], gi: e.g, tg: [e.b] }); });
-  flows.forEach(f => { f.br = f.tg.map(id => { const B = R(card(id)), q = [back(B), V(B)], skip = [f.a, id];
+  /* Ladder routing: lines run only along the middle of a column and change column only with a straight rung across the gap
+     between two days, so they cross experiment outlines square-on instead of running beside them. When the target's column is
+     taken on the way, the climb uses the nearest column that is clear for that stretch; the narrow gutter is the last resort. */
+  const laneC = l => { const a = lanes.get(l); return a ? (a[0] + a[1]) / 2 : null; };
+  const clear = (l, u1, u2, skip, own) => { if (laneC(l) == null) return false; const lo = Math.min(u1, u2), hi = Math.max(u1, u2), cs = cardsR.filter(c => c.lane === l && !skip.includes(c.id));
+    if (cs.some(c => Math.min(U(c.r)[1] + 6, hi) > Math.max(U(c.r)[0] - 6, lo))) return false;
+    return own || !(cs.some(c => U(c.r)[1] <= lo) && cs.some(c => U(c.r)[0] >= hi)); };   // own column: the line just follows its own trunk   // not between two days of another experiment
+  const gapBefore = id => { const s = slotOf(id); return dir < 0 ? s : s - 1; };
+  flows.forEach(f => { const u0 = chan(f.gi) ?? f.p[0] + dir * 14, sl = laneOf(f.a);
+    f.br = f.tg.map(id => { const B = R(card(id)), q = [back(B), V(B)], skip = [f.a, id], tl = laneOf(id);
       const straight = Math.abs(f.p[1] - q[1]) < 1.5 && !blocked(q[1], f.p[0], q[0], skip);
-      return { id, q, straight, far: !straight && blocked(q[1], chan(f.gi) ?? f.p[0], q[0], skip) }; });
+      if (straight) return { id, q, straight };
+      if (clear(tl, u0, q[0], skip)) return { id, q, kind: 'rung' };
+      const cn = chan(gapBefore(id)) ?? (q[0] - dir * 14), ls = [sl, ...[...lanes.keys()].filter(l => l !== tl && l !== sl).sort((x, y) => Math.abs(laneC(x) - q[1]) - Math.abs(laneC(y) - q[1]))];
+      const X = ls.find(l => clear(l, u0, cn, skip, l === sl));
+      if (X != null) return { id, q, kind: 'climb', xv: laneC(X), cn };
+      return { id, q, kind: 'gutter', far: true }; });
     f.bent = f.br.some(b => !b.straight);
-    if (f.bent){ f.br.forEach(b => { if (b.far){ const side = b.q[1] >= f.p[1] ? 1 : -1; b.gv = gut(laneOf(f.a), side); } });
-      const vs = [f.p[1], ...f.br.map(b => b.far ? b.gv : b.q[1])]; f.lo = Math.min(...vs); f.hi = Math.max(...vs); } });
-  const lv = new Map(); flows.filter(f => f.bent).sort((p, q) => p.lo - q.lo).forEach(f => { const L = lv.get(f.gi) || []; let k = 0; while (L[k] != null && L[k] > f.lo - 10) k++; L[k] = f.hi; lv.set(f.gi, L);
-    f.cu = (chan(f.gi) ?? f.p[0] + dir * 14) + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 6; });
-  /* curves: an S-bend wherever a line changes column; a fork splits at one point, about halfway to where it leads */
-  const C = (p, q) => Math.abs(p[1] - q[1]) < 1.5 ? P([p, q]) : (m => `M${XY(...p)} C${XY(m, p[1])} ${XY(m, q[1])} ${XY(...q)}`)((p[0] + q[0]) / 2);
-  /* room check: a bend that has to travel far sideways in a short gap looks squeezed, so open the gaps and draw again */
-  let short = 0; const need2 = (p, q) => { const dv = Math.abs(p[1] - q[1]); if (dv < 1.5) return; const want = Math.min(48, 20 + dv * .07), du = Math.abs(q[0] - p[0]); if (du < want) short = Math.max(short, want - du); };
-  const mk = new Map(), mkId = c => { if (!mk.has(c)) mk.set(c, 'ah' + mk.size); return mk.get(c); };
+    if (f.bent){ f.br.forEach(b => { if (b.kind === 'gutter'){ const side = b.q[1] >= f.p[1] ? 1 : -1; b.gv = gut(sl, side); } });
+      const vs = [f.p[1], ...f.br.map(b => b.kind === 'gutter' ? b.gv : b.kind === 'climb' ? b.xv : b.q[1])]; f.lo = Math.min(...vs); f.hi = Math.max(...vs); } });
+  const lv = new Map(), bus = new Map(); flows.filter(f => f.bent).sort((p, q) => p.lo - q.lo).forEach(f => { const ks = f.br.filter(b => !b.straight).map(b => f.gi + '|' + b.id), hit = ks.find(k => bus.has(k));
+    if (hit != null){ f.cu = bus.get(hit); ks.forEach(k => bus.set(k, f.cu)); return; }   // lines heading to the same experiment from the same gap share one rung
+    const L = lv.get(f.gi) || []; let k = 0; while (L[k] != null && L[k] > f.lo - 10) k++; L[k] = f.hi; lv.set(f.gi, L);
+    f.cu = (chan(f.gi) ?? f.p[0] + dir * 14) + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 10; ks.forEach(k2 => bus.set(k2, f.cu)); });
+  /* a rung in the gap where the target's own climb begins may share its height with others: give each its own level there too */
+  const lv2 = new Map(), bus2 = new Map(); flows.forEach(f => f.br.filter(b => b.kind === 'climb').forEach(b => { const k0 = Math.round(b.cn), L = lv2.get(k0) || []; const lo = Math.min(b.xv, b.q[1]), hi = Math.max(b.xv, b.q[1]);
+    if (bus2.has(b.id)){ b.cn2 = bus2.get(b.id); return; }   // into the same experiment: one shared rung
+    let k = 0; while (L[k] != null && L[k] > lo - 10) k++; L[k] = hi; lv2.set(k0, L); b.cn2 = b.cn + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 10; bus2.set(b.id, b.cn2); }));
+  /* a rung never lies along the top or bottom edge of an experiment's outline: it moves within its gap until it is clear */
+  const boxes = [...grpBoxes(bd).values()].filter(b => b.n > 1).map(b => tag ? { u0: b.l - 4, u1: b.r + 4, v0: b.t - 4, v1: b.b + 4 } : { u0: b.t - 4, u1: b.b + 4, v0: b.l - 4, v1: b.r + 4 });
+  const obst = [...$$('.bk-seg', bd), ...nodes.filter(n => n.N).map(n => n.el)].map(el => { const r = R(el); return tag ? { u0: r.l, u1: r.r, v0: r.t, v1: r.b } : { u0: r.t, u1: r.b, v0: r.l, v1: r.r }; });   // tabs and to-dos
+  const nudge = (u, va, vb, gi) => { const G = gapR.get(gi); if (!G) return u; const lo = Math.min(va, vb), hi = Math.max(va, vb), [g0, g1] = U(G);
+    const edges = boxes.filter(b => b.v1 > lo && b.v0 < hi).flatMap(b => [b.u0, b.u1]), solid = obst.filter(o => o.v1 > lo + 2 && o.v0 < hi - 2);
+    const ok = x => x > g0 + 3 && x < g1 - 3 && edges.every(e => Math.abs(e - x) >= 8) && solid.every(o => x < o.u0 - 5 || x > o.u1 + 5);
+    for (let d = 0; d <= 60; d += 4){ if (ok(u + d)) return u + d; if (ok(u - d)) return u - d; } return u; };
+  const span = new Map(); flows.forEach(f => { if (!f.bent || f.cu == null) return; const k = f.gi + '@' + f.cu, vs = [f.p[1], ...f.br.filter(b => !b.straight).map(b => b.kind === 'climb' ? b.xv : b.kind === 'gutter' ? b.gv : b.q[1])], a = span.get(k);
+    span.set(k, a ? [Math.min(a[0], ...vs), Math.max(a[1], ...vs)] : [Math.min(...vs), Math.max(...vs)]); });
+  const nud = new Map(); flows.forEach(f => { if (f.bent && f.cu != null){ const k = f.gi + '@' + f.cu; if (!nud.has(k)) nud.set(k, nudge(f.cu, ...span.get(k), f.gi)); f.cu = nud.get(k); }
+    f.br.filter(b => b.kind === 'climb').forEach(b => { const k = 'n' + b.id; if (!bus2.has(k)) bus2.set(k, nudge(b.cn2, Math.min(...flows.flatMap(g => g.br.filter(c => c.id === b.id && c.kind === 'climb').map(c => c.xv)), b.q[1]), Math.max(...flows.flatMap(g => g.br.filter(c => c.id === b.id && c.kind === 'climb').map(c => c.xv)), b.q[1]), gapBefore(b.id))); b.cn2 = bus2.get(k); }); });
+  const C = (p, q) => Math.abs(p[1] - q[1]) < 1.5 ? P([p, q]) : (m => `M${XY(...p)} C${XY(m, p[1])} ${XY(m, q[1])} ${XY(...q)}`)((p[0] + q[0]) / 2);   // a tile to its own to-do, when the to-do had to move aside
+  const short = 0, mk = new Map(), mkId = c => { if (!mk.has(c)) mk.set(c, 'ah' + mk.size); return mk.get(c); };
+  const L2 = pts => roundPath(pts.filter((p, i) => !i || Math.abs(p[0] - pts[i - 1][0]) + Math.abs(p[1] - pts[i - 1][1]) > 1).map(([u, v]) => XY(u, v)), 12);
   const svg = flows.map(f => { const parts = [];
-    if (f.n){ const a = [fwd(f.n.A), V(f.n.A)], ni = [back(f.n.N), V(f.n.N)]; need2(a, ni); parts.push([C(a, ni), 0]); }
-    const near = f.br.filter(b => !b.far), far = f.br.filter(b => b.far), fork = f.br.length > 1;
-    let J = f.p;
-    if (fork){ const du = Math.min(...near.map(b => Math.abs(b.q[0] - f.p[0])), ...(far.length ? [Math.abs((chan(f.gi) ?? f.p[0]) - f.p[0]) * 2] : [])); J = [f.p[0] + dir * du / 2, f.p[1]]; parts.push([P([f.p, J]), 0]); }
-    near.forEach(b => { need2(fork ? f.p : J, b.q); parts.push([C(J, b.q), 1]); });
-    far.forEach(b => { const s = slotOf(b.id), gn = dir < 0 ? s : s - 1, cn = chan(gn) ?? (b.q[0] - dir * 14), c0 = f.cu ?? J[0];
-      parts.push([roundPath([J, [c0, J[1]], [c0, b.gv], [cn, b.gv], [cn, b.q[1]], b.q].map(([u, v]) => XY(u, v)), 26), 1]); });
-    const id = mkId(f.color), jn = fork ? (([x, y]) => `<circle class="jn" cx="${x}" cy="${y}" r="3.5"/>`)(XY(...J)) : '';
+    if (f.n){ const a = [fwd(f.n.A), V(f.n.A)], ni = [back(f.n.N), V(f.n.N)]; parts.push([C(a, ni), 0]); }
+    const fork = f.br.length > 1, cu = f.cu ?? f.p[0] + dir * 14, J = f.bent ? [cu, f.p[1]] : f.p;
+    if (f.bent) parts.push([P([f.p, J]), 0]);
+    f.br.forEach(b => {
+      if (b.straight) parts.push([P([J, b.q]), 1]);
+      else if (b.kind === 'rung') parts.push([L2([J, [cu, b.q[1]], b.q]), 1]);
+      else if (b.kind === 'climb') parts.push([L2([J, [cu, b.xv], [b.cn2, b.xv], [b.cn2, b.q[1]], b.q]), 1]);
+      else { const cn = chan(gapBefore(b.id)) ?? (b.q[0] - dir * 14); parts.push([roundPath([J, [cu, b.gv], [cn, b.gv], [cn, b.q[1]], b.q].map(([u, v]) => XY(u, v)), 12), 1]); } });
+    const id = mkId(f.color), jn = fork && f.bent ? (([x, y]) => `<circle class="jn" cx="${x}" cy="${y}" r="3.5"/>`)(XY(...J)) : '';
     return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.A) : dot(R(card(f.a)))}${jn}</g>`; }).join('');
   if (short > 1 && (BD.rgX || 0) < 90){ BD.rgX = (BD.rgX || 0) + Math.ceil(short); return drawBoardLinks(); }
   const defs = `<defs>${[...mk].map(([c, id]) => `<marker id="${id}" viewBox="0 0 10 10" refX="8.6" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:color-mix(in srgb,${c} var(--lk-mix),#fff)"/></marker>`).join('')}</defs>`;
@@ -4390,9 +4432,12 @@ document.addEventListener('keydown', e => { const d = BD.gd; if (e.key === 'Esca
 document.addEventListener('click', e => { if (BD.gdJust){ BD.gdJust = false; e.stopPropagation(); e.preventDefault(); } }, true);
 
 /* v7 · Tables in 02 (aim), 03 (methods) and Results. A table is named by its block and section: "3" (Results) or "3~tblAim". */
-const tbId = (bi, k) => k === 'table' ? String(bi) : `${bi}~${k}`;
-const TB = id => { const [bi, k = 'table'] = String(id).split('~'), b = E.blocks[+bi]; return { bi: +bi, k, b, t: b && b[k] }; };
-const tblBtn = (b, bi, k) => b[k] ? '' : `<button class="btn ghost sm tbl-add" data-act="tAdd" data-arg="${tbId(bi, k)}" title="Add a table to this section (paste from Excel works)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.6"/><path d="M1.5 6.2h13M1.5 9.9h13M6 2.5v11M10.5 2.5v11"/></svg>Table</button>`;
+const tbId = (bi, k, ti = 0) => k === 'table' ? String(bi) : `${bi}~${k}~${ti}`;
+/* sections 02 and 03 can hold several tables; an older single table becomes the first of the list */
+function tlist(b, k, make){ if (!b) return []; if (!b[k]){ if (!make) return []; b[k] = []; } if (!Array.isArray(b[k])) b[k] = [b[k]]; return b[k]; }
+const TB = id => { const [bi, k = 'table', ti = '0'] = String(id).split('~'), b = E.blocks[+bi]; return { bi: +bi, k, ti: +ti, b, t: b && (k === 'table' ? b[k] : tlist(b, k)[+ti]) }; };
+const tablesHtml = (b, bi, k) => `<div class="tbl-slot">${tlist(b, k).map((t, ti) => tableHtml(b, bi, k, ti)).join('')}</div><button class="t-addtbl" data-act="tAdd" data-arg="${bi}~${k}" title="Add a table here (paste from Excel works)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.6"/><path d="M1.5 6.2h13M1.5 9.9h13M6 2.5v11M10.5 2.5v11"/></svg>${tlist(b, k).length ? 'Add another table' : 'Add a table'}</button>`;
+const tblBtn = (b, bi, k) => k === 'table' && b[k] ? '' : `<button class="btn ghost sm tbl-add" data-act="tAdd" data-arg="${k === 'table' ? bi : bi + '~' + k}" title="Add a table to this section (paste from Excel works)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.6"/><path d="M1.5 6.2h13M1.5 9.9h13M6 2.5v11M10.5 2.5v11"/></svg>Table</button>`;
 
 /* v7 · Autofill: the strains, plasmids and constructs of the experiment you are writing in come first. */
 function acOwn(el){ let b = null; const m = el.dataset.bind && /^blocks\.(\d+)\./.exec(el.dataset.bind);
@@ -4498,7 +4543,9 @@ A.delCard = async id => { const it = findB(id); if (!it || !confirm(`Delete “$
   it.e.blocks.splice(it.e.blocks.indexOf(it.b), 1); touch(it.e); await saveNow(); render(); toast('Deleted. Ctrl+Z to undo.'); };
 A.delBlock = async i => { const b = E.blocks[+i]; if (!confirm(`Delete “${ttl(b) || 'Untitled'}”? (Ctrl+Z brings it back)`)) return;
   E.blocks.splice(+i, 1); await saveNow(); go('#'); toast('Deleted. Ctrl+Z to undo.'); };
-A.tAdd = i => { const { b, k } = TB(i); b[k] = { cols: ['Sample', 'Value', 'Note'], rows: [['', '', ''], ['', '', '']] }; scheduleSave(); rerender(); const n = $(`[data-tbl="${tbId(TB(i).bi, k)}"] [data-cell="h|0"]`); if (n) n.focus(); };
+A.tAdd = i => { const { b, k, bi } = TB(i), nt = { cols: ['Sample', 'Value', 'Note'], rows: [['', '', ''], ['', '', '']] }; let ti = 0;
+  if (k === 'table') b[k] = nt; else { const a = tlist(b, k, true); a.push(nt); ti = a.length - 1; }
+  scheduleSave(); rerender(); const n = $(`[data-tbl="${tbId(bi, k, ti)}"] [data-cell="h|0"]`); if (n){ n.focus(); n.select(); } };
 A.figShow = id => { FIG_HIDE.delete(id); FIG_OPEN.add(id); rerender(); };
 A.figHide = id => { FIG_OPEN.delete(id); FIG_HIDE.add(id); FIGSHOW = null; rerender(); };
 A.tInsR = arg => { const [id, r] = arg.split('|'), ri = +r, t = TB(id).t; t.rows.splice(ri + 1, 0, t.cols.map(() => '')); scheduleSave(); rerender();
@@ -4528,7 +4575,7 @@ A.tAddRow = i => { const t = E.blocks[+i].table; t.rows.push(t.cols.map(() => ''
 A.tAddCol = i => { const t = E.blocks[+i].table; t.cols.push(''); t.rows.forEach(r => r.push('')); scheduleSave(); rerender(); };
 A.tDelRow = i => { const t = E.blocks[+i].table; if (t.rows.length > 1) t.rows.pop(); scheduleSave(); rerender(); };
 A.tDelCol = i => { const t = E.blocks[+i].table; if (t.cols.length > 1){ t.cols.pop(); t.rows.forEach(r => r.pop()); } scheduleSave(); rerender(); };
-A.tRemove = i => { if (!confirm('Remove this table?')) return; const { b, k } = TB(i); b[k] = null; scheduleSave(); rerender(); };
+A.tRemove = i => { if (!confirm('Remove this table?')) return; const { b, k, ti } = TB(i); if (k === 'table') b[k] = null; else tlist(b, k).splice(ti, 1); scheduleSave(); rerender(); };
 // figure panels
 A.figMove = arg => { const [bi, ii, d] = arg.split('.').map(Number), a = E.blocks[bi].images, j = ii + d; if (j < 0 || j >= a.length) return;
   [a[j], a[ii]] = [a[ii], a[j]]; dirty(bi); scheduleSave(); rerender(); };
@@ -4658,9 +4705,9 @@ function buildMd(its){
     if (ss.length) L.push('### Strains, plasmids and constructs', '', '| Name | Description |', '| --- | --- |', ...ss.map(s => `| ${cellMd(s.name)} | ${cellMd(s.desc)} |`), '');
     const sec = (h, text) => { const ls = mdLines(text); if (ls.length) L.push(`### ${h}`, '', ...ls, ''); };
     const tmd = t => t && t.cols.length ? ['| ' + t.cols.map(cellMd).join(' | ') + ' |', '| ' + t.cols.map(() => '---').join(' | ') + ' |', ...t.rows.filter(x => x.some(clean)).map(x => '| ' + x.map(cellMd).join(' | ') + ' |'), ''] : [];
-    sec('What this experiment is about', b.aim); if (b.tblAim && b.tblAim.cols.length){ if (!mdLines(b.aim).length) L.push('### What this experiment is about', ''); L.push(...tmd(b.tblAim)); }
+    sec('What this experiment is about', b.aim); if (tlist(b, 'tblAim').length){ if (!mdLines(b.aim).length) L.push('### What this experiment is about', ''); tlist(b, 'tblAim').forEach(t => L.push(...tmd(t))); }
     const m = mdLines(b.method);
-    if (clean(b.protocol) || m.length || (b.tblMethod && b.tblMethod.cols.length)){ L.push('### Methods', ''); if (clean(b.protocol)) L.push(`Protocol: ${clean(b.protocol)}`, ''); L.push(...m, ''); L.push(...tmd(b.tblMethod)); }
+    if (clean(b.protocol) || m.length || tlist(b, 'tblMethod').length){ L.push('### Methods', ''); if (clean(b.protocol)) L.push(`Protocol: ${clean(b.protocol)}`, ''); L.push(...m, ''); tlist(b, 'tblMethod').forEach(t => L.push(...tmd(t))); }
     const ch = b.changes.filter(c => clean(c.what) || clean(c.before) || clean(c.now));
     if (b.standard) L.push('### Changes from normal protocol', '', '- None: standard protocol.', '');
     else if (ch.length){
@@ -5012,7 +5059,7 @@ function stepsHtml(b, bi){
     <div class="steps">${box(b.steps, `${P}.steps`, '', 0)}</div>
     <button class="btn sm" data-act="stepAdd" data-arg="${bi}">+ Step</button>
     <span class="hint">In a box: Enter adds the next step · Tab makes it a sub-step · Shift+Tab moves it back · Shift+Enter new line</span>
-    <div class="tbl-slot">${tableHtml(b, bi, 'tblMethod')}</div>
+    ${tablesHtml(b, bi, 'tblMethod')}
   </div>${threads(b, bi, 'method')}</section>`;
 }
 function focusStep(p, end){ scheduleSave(); rerender(); const n = $(`[data-bind="${p}.text"]`); if (n){ n.focus(); const c = end ? n.value.length : 0; n.setSelectionRange(c, c); } }

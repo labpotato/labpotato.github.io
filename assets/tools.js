@@ -55,11 +55,12 @@ const TOOLS = [
       { v: "v4", file: "lab-entry-v4.html", date: "2026-10-01" },
       { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14" },
       { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14" },
-      { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15",
+      { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15" },
+      { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15",
         new: [
-          "Highlight words in Results to show them on the board",
-          "Autofill everywhere, this experiment's names first",
-          "Tables in the aim and methods; project tags on each tile group"
+          "A postponed to-do's line now starts from the day just before it",
+          "Edit to-dos right inside the experiment page",
+          "Even spacing throughout, and a wider day column"
         ] }
     ]
   },

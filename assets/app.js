@@ -9,13 +9,13 @@ const REPO = "https://github.com/labpotato/labpotato.github.io";
 // SUPPORT_URL / SUPPORT_LABEL are defined at the top of tools.js
 
 const ACCENTS = {
-  emerald: "#0f9d76",
-  violet: "#7257e8",
-  blue: "#2f6fed",
-  cyan: "#0e93a8",
-  amber: "#cf8215",
-  rose: "#dd4f75",
-  indigo: "#5350d4",
+  emerald: "#139171",
+  violet: "#6a55d6",
+  blue: "#2f67d6",
+  cyan: "#108a9e",
+  amber: "#b8781c",
+  rose: "#c94b6d",
+  indigo: "#4f4dc6",
 };
 
 // Encode each path SEGMENT separately — encoding the whole string would
@@ -37,7 +37,7 @@ function accentOf(tool) {
 }
 
 function iconSvg(name) {
-  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "dna", "chart", "calculator"];
+  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "cryobox", "dna", "chart", "calculator"];
   const key = known.includes(name) ? name : "flask";
   return `<svg viewBox="0 0 24 24" stroke="currentColor"><use href="#icon-${key}"></use></svg>`;
 }
@@ -95,18 +95,25 @@ function renderTools() {
 
     return `
       <article class="tool-card reveal" style="--card:${accentOf(tool)}">
-        <div class="tool-icon">${iconSvg(tool.icon)}</div>
-        <h3>${tool.name}</h3>
-        <p class="tool-tagline">${tool.tagline}</p>
-        <p class="tool-desc">${tool.description}</p>
-        ${features}
-        ${newBlock}
-        <div class="tool-meta">
-          <span class="version-pill">${latest.v} · latest release</span>
-          ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}
+        <div class="tc-main">
+          <div class="tc-head">
+            <div class="tool-icon app-icon">${appGlyph(tool)}</div>
+            <div class="tc-title"><h3>${tool.name}</h3><p class="tool-tagline">${tool.tagline}</p></div>
+          </div>
+          <p class="tool-desc">${tool.description}</p>
+          <div class="tc-foot">
+            <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Launch module ${arrowSvg}</a>
+            <div class="tool-meta">
+              <span class="version-pill">${latest.v} · latest</span>
+              ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}
+            </div>
+          </div>
+          ${olderBlock}
         </div>
-        ${olderBlock}
-        <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Launch module ${arrowSvg}</a>
+        <div class="tc-side">
+          ${features}
+          ${newBlock}
+        </div>
       </article>`;
   }).join("");
 }
@@ -522,10 +529,60 @@ function initMascot() {
   scheduleIdleNag();
 }
 
+/* Quick launch: app icons like a phone home screen. Each tool has its own solid, two-tone glyph:
+   white shapes on the tool's colour, details in the tool's colour. */
+const C = 'style="fill:var(--card)"', CS = 'style="stroke:var(--card)"';
+const APP_GLYPH = {
+  flask: `<rect x="12" y="8" width="25" height="32" rx="4" fill="#fff"/><rect x="12" y="8" width="6" height="32" rx="3" ${C} opacity=".22"/>
+    <path d="M22.5 17h9M22.5 22h9M22.5 27h6" ${CS} stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M30 8v10l2.75-2.2L35.5 18V8z" fill="#ffcf6b"/>`,
+  colony: `<circle cx="24" cy="24" r="15.5" fill="#fff"/><circle cx="24" cy="24" r="12" fill="none" ${CS} stroke-opacity=".22" stroke-width="1.6"/>
+    <circle cx="19" cy="20" r="2.6" ${C}/><circle cx="27.5" cy="17.5" r="1.8" ${C} opacity=".8"/><circle cx="29.5" cy="26.5" r="3" ${C}/>
+    <circle cx="20.5" cy="29" r="2" ${C} opacity=".75"/><circle cx="25" cy="23.5" r="1.3" ${C} opacity=".6"/><circle cx="16.5" cy="25.5" r="1.4" ${C} opacity=".55"/>`,
+  gel: `<rect x="9" y="10" width="30" height="28" rx="4" fill="#fff"/>
+    <g ${C}><rect x="13" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="21.75" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="30.5" y="13" width="4.5" height="2" rx="1" opacity=".3"/>
+    <rect x="13" y="19" width="4.5" height="2.4" rx="1.2"/><rect x="13" y="24" width="4.5" height="2.4" rx="1.2" opacity=".55"/><rect x="13" y="29" width="4.5" height="2.4" rx="1.2" opacity=".35"/><rect x="13" y="33" width="4.5" height="2" rx="1" opacity=".25"/>
+    <rect x="21.75" y="22" width="4.5" height="2.6" rx="1.3"/><rect x="30.5" y="22" width="4.5" height="2.6" rx="1.3" opacity=".7"/><rect x="30.5" y="27" width="4.5" height="2.4" rx="1.2"/></g>`,
+  gibson: `<rect x="6" y="14" width="25" height="7" rx="3.5" fill="#fff"/><rect x="17" y="27" width="25" height="7" rx="3.5" fill="#fff" fill-opacity=".72"/>
+    <path d="M19.5 21.5v5M23 21.5v5M26.5 21.5v5M30 21.5v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    <rect x="6" y="14" width="9" height="7" rx="3.5" ${C} opacity=".28"/><rect x="33" y="27" width="9" height="7" rx="3.5" ${C} opacity=".28"/>`,
+  microscopy: `<rect x="9" y="9" width="14" height="14" rx="3" fill="#fff"/><rect x="25" y="9" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/>
+    <rect x="9" y="25" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/><rect x="25" y="25" width="14" height="14" rx="3" fill="#fff"/>
+    <circle cx="15" cy="15" r="3" ${C}/><circle cx="32" cy="16" r="2.4" ${C} opacity=".7"/><circle cx="16" cy="32" r="2.6" ${C} opacity=".55"/><circle cx="31" cy="31" r="3.2" ${C}/><circle cx="34" cy="34.5" r="1.4" ${C} opacity=".6"/>`,
+  protein: `<path d="M10 37.5h28" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><rect x="12.5" y="26" width="6" height="9" rx="2" fill="#fff" fill-opacity=".7"/>
+    <rect x="21" y="19" width="6" height="16" rx="2" fill="#fff" fill-opacity=".85"/><rect x="29.5" y="11" width="6" height="24" rx="2" fill="#fff"/>
+    <rect x="31" y="14" width="3" height="5" rx="1.2" ${C} opacity=".55"/>`,
+  cryobox: `<rect x="9" y="9" width="30" height="30" rx="4.5" fill="#fff"/>
+    <g ${C}><circle cx="17" cy="17" r="3"/><circle cx="24" cy="17" r="3" opacity=".7"/><circle cx="31" cy="17" r="3"/><circle cx="17" cy="24" r="3" opacity=".45"/><circle cx="24" cy="24" r="3"/>
+    <circle cx="31" cy="24" r="3" opacity=".7"/><circle cx="17" cy="31" r="3"/><circle cx="24" cy="31" r="3" opacity=".25"/><circle cx="31" cy="31" r="3" opacity=".25"/></g>`,
+};
+function appGlyph(tool) { const g = APP_GLYPH[tool.icon]; return g ? `<svg viewBox="0 0 48 48" aria-hidden="true">${g}</svg>` : iconSvg(tool.icon); }
+
+function renderQuick() {
+  const row = document.getElementById("quick-grid");
+  if (!row) return;
+  row.innerHTML = TOOLS.map((tool) => {
+    const latest = latestOf(tool);
+    return `<a class="app" style="--card:${accentOf(tool)}" href="${toolPath(tool, latest)}" target="_blank" rel="noopener" title="Open ${tool.name} ${latest.v}">
+        <span class="app-icon">${appGlyph(tool)}</span>
+        <span class="app-name">${tool.name}</span>
+        <span class="app-cap">${tool.short || tool.tagline}</span>
+      </a>`;
+  }).join("");
+}
+
+/* A click anywhere on a platform card opens the tool, except on its own links and the legacy-release list */
+document.addEventListener("click", (e) => {
+  const card = e.target.closest && e.target.closest(".tool-card");
+  if (!card || e.target.closest("a, button, summary, details, input, select, textarea")) return;
+  if (window.getSelection && String(window.getSelection()).trim()) return;   // selecting text is not a click to launch
+  const go = card.querySelector(".tool-open"); if (go) window.open(go.href, "_blank", "noopener");
+});
+
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 renderTools();
+renderQuick();
 renderFeedback();
 renderQuotes();
 renderSpecs();
@@ -535,3 +592,17 @@ initMascot();
 initTrustStrip();
 initFooterPotato();
 initSecretPotato();
+
+
+/* Colour theme: Auto follows the system; Light or Dark is remembered on this device. */
+(function themeSwitch() {
+  const root = document.documentElement, btns = document.querySelectorAll("[data-theme-set]");
+  const mark = () => { const cur = root.dataset.theme || "auto"; btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeSet === cur))); };
+  btns.forEach((b) => b.addEventListener("click", () => {
+    const t = b.dataset.themeSet;
+    if (t === "auto") delete root.dataset.theme; else root.dataset.theme = t;
+    try { if (t === "auto") localStorage.removeItem("lp-theme"); else localStorage.setItem("lp-theme", t); } catch (e) {}
+    mark();
+  }));
+  mark();
+})();

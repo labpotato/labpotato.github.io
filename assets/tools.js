@@ -37,6 +37,7 @@ const SUPPORT_LABEL = "Buy me a coffee";
 const TOOLS = [
   {
     id: "lab-entry",
+    short: "Notebook & day planner",
     name: "Lab Entry",
     tagline: "Write it down, or it did not happen",
     description:
@@ -67,6 +68,7 @@ const TOOLS = [
 
   {
     id: "colony-counter",
+    short: "Plate counts & CFU/mL",
     name: "Colony Counter",
     tagline: "Stop squinting at plates",
     description:
@@ -91,6 +93,7 @@ const TOOLS = [
 
   {
     id: "gel-labeler",
+    short: "Gel & blot figures",
     name: "Gel Labeler",
     tagline: "Gels that don't embarrass you",
     description:
@@ -119,6 +122,7 @@ const TOOLS = [
 
   {
     id: "gibson-assembly",
+    short: "Gibson primer design",
     name: "Gibson Assembly",
     tagline: "Primers that actually anneal",
     description:
@@ -151,6 +155,7 @@ const TOOLS = [
 
   {
     id: "microscopy-image-labeler",
+    short: "Microscopy figures",
     name: "Microscopy Image Labeler",
     tagline: "Panels that line up, finally",
     description:
@@ -176,6 +181,7 @@ const TOOLS = [
 
   {
     id: "protein-quant",
+    short: "A280 & protein yield",
     name: "Protein Quant",
     tagline: "Numbers in, plot out",
     description:
@@ -203,11 +209,12 @@ const TOOLS = [
 
   {
     id: "cryobox-labeler",
+    short: "Freezer box inventory",
     name: "Cryobox Labeler",
     tagline: "Find that glycerol stock",
     description:
       "Track samples in 3D −80 °C and −20 °C freezers and on the bench, from rack to box to tube, and search them all.",
-    icon: "flask",
+    icon: "cryobox",
     accent: "indigo",
     folder: "tools/cryobox-labeler",
     features: [
@@ -234,7 +241,7 @@ const TOOLS = [
     tagline: "One short line",          // small coloured text under the title
     description: "What it does, in a sentence or two.",
     features: ["Most important thing", "Second", "Third"],   // 3 key bullets
-    icon: "flask",                      // colony | gel | gibson | microscopy |
+    icon: "flask",                      // colony | gel | gibson | microscopy | cryobox |
                                         // protein | flask | dna | chart | calculator
     accent: "rose",                     // emerald | violet | blue | cyan |
                                         // amber | rose | indigo

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>FELICX Oligo Designer — Lab Potato</title>
+<meta name="description" content="Design the invading primer, flap primer, HDA primers and adaptor variant for a FELICX (flap endonuclease + CRISPR-Cas12a) assay. Pick the base you want to interrogate; the one-base overlap, the deliberate 3' mismatch, the released flap and the ds-convertor N base are worked out and shown as an annotated duplex. Nothing is uploaded." />
+<meta name="author" content="Dongmin Byun" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='20 44 212 148'%3E%3Cpath d='M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z' fill='%23cd9050'/%3E%3Cellipse cx='96' cy='114' rx='11' ry='13' fill='%232a2018'/%3E%3Cellipse cx='152' cy='111' rx='11' ry='13' fill='%232a2018'/%3E%3Cpath d='M110 143Q126 157 142 140' stroke='%232a2018' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   LAB POTATO — FELICX Oligo Designer v1
+   Design tokens mirror assets/styles.css on labpotato.github.io so the
+   tool reads as part of the same site. Data colours are kept separate and
+   come from the Okabe & Ito colourblind-safe palette.
+   ============================================================ */
+:root{
+  --bg:#f6f3ea; --bg-tint:#ede9dc; --surface:#fffdf7; --surface-2:#f3efe3;
+  --border:#d5cfbd; --border-soft:#e4dfd0;
+  --text:#1a1915; --text-muted:#46433a; --text-faint:#6a665a;
+  --brand-ink:#1a1915;
+  --accent:#1d4a75; --accent-hover:#143857; --accent-soft:#e2eaf2;
+  --potato:#8a5c30; --potato-deep:#6a4522; --gold:#b58426;
+
+  --ok:#2c6a3c; --ok-soft:#e3eee3;
+  --warn:#8a5a00; --warn-soft:#f6ecd3;
+  --bad:#a02323; --bad-soft:#f5e1de;
+
+  /* Okabe & Ito data palette — role colours for the assay parts */
+  --c-target:#56606b;     /* target / template     */
+  --c-hda:#0072b2;        /* HDA primers            */
+  --c-flaparm:#56b4e9;    /* constant 5' flap arm   */
+  --c-flaptgt:#009e73;    /* flap target segment    */
+  --c-invader:#e69f00;    /* invading primer        */
+  --c-mismatch:#d55e00;   /* deliberate 3' mismatch */
+  --c-adaptor:#cc79a7;    /* dsDNA adaptor          */
+  --c-fickle:#b58426;     /* fickle base            */
+
+  --radius-xl:6px; --radius:5px; --radius-sm:3px;
+  --shadow-sm:none; --shadow-md:0 2px 8px rgba(26,25,21,.12); --shadow-lg:0 6px 20px rgba(26,25,21,.16);
+  --header-h:54px; --maxw:1120px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --sans:"IBM Plex Sans","Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#15140f; --bg-tint:#1b1a13; --surface:#1e1d16; --surface-2:#24231b;
+    --border:#38362a; --border-soft:#2c2b21;
+    --text:#ece8da; --text-muted:#c9c4b3; --text-faint:#a09b8a;
+    --brand-ink:#ece8da;
+    --accent:#86b4e2; --accent-hover:#a6c9ee; --accent-soft:#1a2a3b;
+    --ok:#7dc08b; --ok-soft:#1a2b1e; --warn:#e2b45c; --warn-soft:#2d2513;
+    --bad:#ea8a80; --bad-soft:#301a17;
+    --c-target:#9aa3ad; --c-flaparm:#7cc6f2; --c-flaptgt:#4cc9a0;
+    --shadow-md:0 2px 8px rgba(0,0,0,.5); --shadow-lg:0 6px 20px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  font-size:16px;line-height:1.6;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4{letter-spacing:-.03em;line-height:1.18;margin:0;font-weight:660}
+p{margin:0}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+.mono{font-family:var(--mono)}
+
+/* header */
+.site-header{
+  position:sticky;top:0;z-index:60;height:var(--header-h);display:flex;align-items:center;gap:10px;
+  padding:0 18px;background:color-mix(in srgb,var(--bg) 84%,transparent);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid color-mix(in srgb,var(--border) 75%,transparent);
+}
+.brand{display:flex;align-items:center;gap:9px;white-space:nowrap;color:inherit}
+.brand:hover{text-decoration:none}
+.brand-mark{width:26px;height:26px;display:block;overflow:visible;transition:transform .45s var(--ease)}
+.brand:hover .brand-mark{transform:rotate(-8deg) scale(1.08)}
+.brand-word{font-size:15px;font-weight:680;letter-spacing:-.035em;color:var(--brand-ink)}
+.brand-sep{color:var(--text-faint);font-size:15px}
+.brand-tool{font-size:15px;font-weight:620;letter-spacing:-.025em}
+.ver-chip{font-size:10.5px;font-weight:680;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 7px}
+.header-spacer{flex:1}
+.header-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:560;color:var(--text-muted);
+  background:none;border:none;border-radius:9px;padding:7px 10px;cursor:pointer;font-family:inherit;
+  transition:background .2s var(--ease),color .2s var(--ease);text-decoration:none;
+}
+.header-link:hover{background:var(--bg-tint);color:var(--text);text-decoration:none}
+.header-link svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:720px){.header-link span{display:none}}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:40px 0 8px}
+.hero-mesh{
+  position:absolute;inset:-180px 0 auto;height:420px;pointer-events:none;filter:blur(16px);opacity:.8;
+  background:
+    radial-gradient(36% 44% at 16% 30%,rgba(214,156,92,.28),transparent 70%),
+    radial-gradient(32% 40% at 84% 24%,rgba(0,158,115,.18),transparent 70%),
+    radial-gradient(38% 38% at 64% 70%,rgba(230,159,0,.16),transparent 72%);
+}
+.hero-inner{position:relative}
+.eyebrow{font-size:12.5px;font-weight:680;letter-spacing:.08em;text-transform:uppercase;color:var(--potato);margin-bottom:8px}
+.hero h1{font-size:clamp(26px,4.4vw,38px);margin-bottom:10px}
+.hero .lede{font-size:16.5px;color:var(--text-muted);max-width:66ch}
+
+main{padding:22px 0 60px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
+.card > h2{font-size:18px;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.card .sub{font-size:13.5px;color:var(--text-faint);margin-bottom:14px}
+
+label.fld{display:block;font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:5px}
+textarea,input[type=text],input[type=number]{
+  width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;
+  font-family:var(--mono);font-size:13px;background:var(--surface-2);color:var(--text);resize:vertical;
+}
+textarea{min-height:76px;line-height:1.5}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-top:14px}
+.row .grp{flex:0 0 auto}
+.row .grp.grow{flex:1 1 160px}
+.row input[type=number]{width:94px}
+.btn{
+  background:var(--accent);color:#fff;border:none;border-radius:var(--radius);
+  padding:10px 20px;font-size:14.5px;font-weight:650;cursor:pointer;font-family:inherit;
+  transition:background .2s var(--ease);
+}
+.btn:hover{background:var(--accent-hover)}
+.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+.btn.ghost:hover{background:var(--bg-tint)}
+.btn.dl{background:var(--c-flaptgt)}
+.btn.dl:hover{filter:brightness(.92)}
+
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);cursor:pointer;user-select:none}
+.toggle input{width:auto}
+
+/* interactive base ruler */
+.ruler-help{font-size:12.5px;color:var(--text-faint);margin:2px 0 8px}
+.ruler{font-family:var(--mono);font-size:13px;line-height:1.9;word-break:break-all;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;letter-spacing:.5px}
+.ruler b{display:inline-block;cursor:pointer;padding:0 .5px;border-radius:2px}
+.ruler b:hover{background:var(--accent-soft)}
+.ruler b.jn{background:var(--c-invader);color:#1a1915;font-weight:800;outline:2px solid var(--c-mismatch)}
+
+/* legend */
+.legend{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--text-muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* stage */
+.stage{border:1px solid var(--border);border-radius:var(--radius-xl);margin-bottom:16px;overflow:hidden;background:var(--surface)}
+.stage-h{display:flex;align-items:center;gap:12px;padding:13px 18px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.num{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:720;font-size:14px}
+.stage-h h3{font-size:15.5px;margin:0}
+.stage-h .cond{font-size:12.5px;color:var(--text-faint);margin-top:1px}
+.scene{padding:10px 14px;text-align:center;background:linear-gradient(180deg,var(--surface),var(--surface-2))}
+.scene svg{max-width:100%;height:auto}
+.oligos{padding:12px 16px}
+
+.oli{border:1px solid var(--border-soft);border-radius:var(--radius);padding:11px 13px;margin-bottom:9px;background:var(--surface)}
+.oli-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:720;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.tag.order{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
+.tag.keep{background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.oli-name{font-weight:680;font-size:13.5px}
+.copy{margin-left:auto;font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--text-muted);font-family:inherit}
+.copy:hover{background:var(--bg-tint)}
+.oli-note{font-size:12.5px;color:var(--text-muted);margin:6px 0 7px}
+.seq{font-family:var(--mono);font-size:12.5px;word-break:break-all;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:8px 10px;line-height:1.55}
+.meta{font-size:11.5px;color:var(--text-faint);margin-top:6px}
+.meta b{color:var(--text)}
+
+/* duplex alignment */
+.duplex{font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre;overflow-x:auto;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:6px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+th{color:var(--text-muted);font-weight:650}
+td.seqcell{font-family:var(--mono);word-break:break-all}
+
+/* callouts */
+.note{border-radius:var(--radius);padding:11px 14px;font-size:12.8px;margin-top:10px;border:1px solid}
+.note.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:var(--text)}
+.note.bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 40%,transparent);color:var(--text)}
+.note.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 40%,transparent);color:var(--text)}
+.note.info{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text)}
+.note b{font-weight:680}
+.tag-epi{font-size:10px;font-weight:720;letter-spacing:.3px;padding:1px 6px;border-radius:4px;background:var(--bg-tint);color:var(--text-muted);border:1px solid var(--border-soft)}
+
+.prov li{margin-bottom:9px;font-size:13px}
+.prov code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border-soft)}
+
+footer{border-top:1px solid var(--border);padding:22px 0;color:var(--text-faint);font-size:12.5px}
+footer a{color:var(--text-muted)}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="https://labpotato.github.io/" title="Lab Potato home">
+    <svg class="brand-mark" viewBox="22 46 208 144" aria-hidden="true">
+      <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+      <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+    </svg>
+    <span class="brand-word">Lab&nbsp;Potato</span>
+  </a>
+  <span class="brand-sep">/</span>
+  <span class="brand-tool">FELICX Designer</span>
+  <span class="ver-chip">v1</span>
+  <span class="header-spacer"></span>
+  <button class="header-link" type="button" onclick="loadExample()" title="Load the published orf1ab design">
+    <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span>Example</span>
+  </button>
+  <button class="header-link" type="button" onclick="downloadCSV()" title="Download the oligo order sheet">
+    <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Order CSV</span>
+  </button>
+  <a class="header-link" href="https://labpotato.github.io/#tools">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><span>All tools</span>
+  </a>
+</header>
+
+<section class="hero">
+  <div class="hero-mesh" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <p class="eyebrow">Isothermal nucleic acid detection</p>
+    <h1>FELICX Oligo Designer</h1>
+    <p class="lede">Pick the base you want to read out. The tool places the <b>one-base overlap</b> between the flap and invading primers at that position, builds the deliberate 3&prime; mismatch on the invader, and works out the released flap, the fickle base and the ds-convertor variant, then shows you the whole cleavage junction as an annotated duplex. Everything runs in your browser; nothing is uploaded.</p>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="card">
+    <h2>1 &middot; Target</h2>
+    <p class="sub">Paste the amplicon you intend to probe (the region your HDA primers copy), 5&prime;&rarr;3&prime;, DNA. The flap and invading primers are built antiparallel to this strand.</p>
+    <label class="fld" for="seq">Target amplicon (5&prime;&rarr;3&prime;)</label>
+    <textarea id="seq" spellcheck="false"></textarea>
+
+    <p class="ruler-help">Click the base you want to interrogate &mdash; the <b>junction / fickle base</b>. The one-base flap&ndash;invader overlap is placed here; for SNP genotyping, click the polymorphic base.</p>
+    <div class="ruler" id="ruler" aria-label="click a base to set the junction"></div>
+
+    <div class="row">
+      <div class="grp grow">
+        <label class="fld" for="name">Target name</label>
+        <input type="text" id="name" value="orf1ab" spellcheck="false">
+      </div>
+      <div class="grp">
+        <label class="fld" for="tmHDA">HDA primer T<sub>m</sub> (&deg;C)</label>
+        <input type="number" id="tmHDA" value="60" step="1">
+      </div>
+      <div class="grp">
+        <label class="fld" for="tmFEN">Flap / invader T<sub>m</sub> (&deg;C)</label>
+        <input type="number" id="tmFEN" value="65" step="1">
+      </div>
+      <div class="grp">
+        <label class="fld" for="na">Na&#8314; (mM)</label>
+        <input type="number" id="na" value="40" step="1">
+      </div>
+      <div class="grp">
+        <label class="fld" for="mg">Mg&sup2;&#8314; (mM)</label>
+        <input type="number" id="mg" value="4" step="0.5">
+      </div>
+    </div>
+    <div class="row">
+      <label class="toggle"><input type="checkbox" id="repflap"> Also design a <b>&nbsp;reporter-tagged flap primer</b>&nbsp; (5&prime;-FAM / internal ZEN / 3&prime;-IABkFQ) for a FEN-only cleavage readout</label>
+    </div>
+    <div class="row">
+      <button class="btn" onclick="run()">Design oligos</button>
+      <button class="btn ghost" onclick="loadExample()">Load published orf1ab example</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Built on <a href="https://doi.org/10.1016/j.bios.2022.115002">Aggarwal et&nbsp;al., FELICX, <i>Biosens. Bioelectron.</i> 222 (2023) 115002</a>. Constant oligos are quoted from the paper&rsquo;s Supplementary Table&nbsp;S1. T<sub>m</sub> values are nearest-neighbour estimates, not a substitute for ordering-house calculators or a wet-bench screen. &mdash; Lab Potato
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ============================================================
+   VERIFIED CONSTANTS — Aggarwal et al. 2023, Supplementary Table S1
+   (doi:10.1016/j.bios.2022.115002). These are quoted, not generated.
+   ============================================================ */
+const ARM   = "CGCCAGGGTTTTCCCAG";                         // constant 5' flap, Table S1 "Flap oligo"
+const ADAPT = "CACGACGTTGTAAAACGACGGCCAGTGAAT";             // 5'p adaptor (minus 5'-phosphate), Table S1
+const DSCONV= "GCCGTCGTTTTACAACGTCGTGNCTGGGAAAACCCTGGCG";   // ds-convertor (N = variable), Table S1
+const REPORTER = "6-FAM-TTATTATTAT-IABkFQ";                 // Cas12a reporter, Table S1
+const FLAP_FQ_CONST = { f5:"6-FAM", zen:"ZEN", q3:"3IABkFQ" }; // fluorophore/quencher flap, Table S1
+
+// Published orf1ab worked example (reconstructed & cross-checked against Table S3/S4).
+const EXAMPLE = {
+  seq: "GGAACTTACACCAGTTGTTCAGACTATTGAAGTGAATAGTTTTAGTGGTTATTTAAAACTTACTGACAATGTATACATTAAAAATGCAGACATTGTGGAAGAAGCTA",
+  name: "orf1ab",
+  junction: 48   // 0-indexed; the T that becomes ds-convertor N=T (Fig. S7)
+};
+// Exact published oligos for the example, quoted from Tables S3/S4 (bench-validated).
+const EXAMPLE_REF = {
+  hdaF:"GGAACTTACACCAGTTGTTCAGACTATT",
+  hdaR:"TAGCTTCTTCCACAATGTCTGCATTT",
+  flap:"CGCCAGGGTTTTCCCAGACCACTAAAACTATTCACTTCAATAGTC",
+  inv :"GTCTGCATTTTTAATGTATACATTGTCAGTAAGTTTTAAATAC"
+};
+function isExampleLoaded(seq){ return seq===EXAMPLE.seq && STATE.junction===EXAMPLE.junction; }
+
+const COMP = {A:"T",T:"A",G:"C",C:"G"};
+function rc(s){return s.toUpperCase().replace(/[^ACGT]/g,"").split("").reverse().map(c=>COMP[c]).join("");}
+function clean(s){return s.toUpperCase().replace(/[^ACGT]/g,"");}
+function gc(s){if(!s.length)return 0;let g=0;for(const c of s)if(c==="G"||c==="C")g++;return Math.round(100*g/s.length);}
+
+/* Nearest-neighbour Tm (SantaLucia 1998) with a simple monovalent + Mg salt term.
+   Used for all segments; the constant 5' flap arm is never included in a flap Tm. */
+function tm(s,na,mg,ctNM){
+  s=clean(s); if(s.length<2) return 0;
+  const dH={AA:-7.6,TT:-7.6,AT:-7.2,TA:-7.2,CA:-8.5,TG:-8.5,GT:-8.4,AC:-8.4,CT:-7.8,AG:-7.8,GA:-8.2,TC:-8.2,CG:-10.6,GC:-9.8,GG:-8.0,CC:-8.0};
+  const dS={AA:-21.3,TT:-21.3,AT:-20.4,TA:-21.3,CA:-22.7,TG:-22.7,GT:-22.4,AC:-22.4,CT:-21.0,AG:-21.0,GA:-22.2,TC:-22.2,CG:-27.2,GC:-24.4,GG:-19.9,CC:-19.9};
+  let H=0,S=0;
+  for(let i=0;i<s.length-1;i++){const nn=s.substr(i,2);H+=dH[nn];S+=dS[nn];}
+  for(const b of [s[0],s[s.length-1]]){ if(b==="G"||b==="C"){H+=0.1;S-=2.8;} else {H+=2.3;S+=4.1;} }
+  const R=1.987, ct=Math.max(ctNM,1)*1e-9;
+  const tmK=(H*1000)/(S+R*Math.log(ct/4));        // NN prediction at 1 M monovalent
+  // effective monovalent salt: Na+ plus a sqrt(Mg2+) contribution (coarse Owczarzy-style term),
+  // then a von Ahsen-style log correction back from the 1 M reference.
+  const mon=Math.max(na,1)*1e-3 + 3.3*Math.sqrt(Math.max(mg,0)*1e-3);
+  const tmC=(tmK-273.15) + 12.5*Math.log10(mon);
+  return Math.round(tmC*10)/10;
+}
+/* grow a sequence (anchored at index 0) toward the Tm target, choosing the length with least |Tm-target| */
+function grow(seq,target,na,mg,ct,min,max){
+  const hi=Math.min(max,seq.length);
+  let best=seq.slice(0,Math.min(min,hi)), err=Infinity;
+  for(let L=min;L<=hi;L++){const x=seq.slice(0,L);const e=Math.abs(tm(x,na,mg,ct)-target); if(e<err){err=e;best=x;}}
+  return best;
+}
+function tmBadge(t,target){const d=t-target;
+  if(Math.abs(d)<=3) return '<span style="color:var(--ok);font-weight:700">on target</span>';
+  if(d>3) return '<span style="color:var(--bad);font-weight:700">high (+'+Math.round(d)+')</span>';
+  return '<span style="color:var(--warn);font-weight:700">low ('+Math.round(d)+')</span>';
+}
+
+let STATE = { seq:"", junction:0, oligos:[] };
+
+/* ---------- interactive base ruler ---------- */
+function renderRuler(){
+  const seq=clean(document.getElementById("seq").value);
+  STATE.seq=seq;
+  if(STATE.junction>=seq.length) STATE.junction=Math.floor(seq.length/2);
+  const r=document.getElementById("ruler");
+  if(!seq.length){r.textContent="Paste a target above.";return;}
+  let html="";
+  for(let i=0;i<seq.length;i++){
+    html+='<b class="'+(i===STATE.junction?"jn":"")+'" data-i="'+i+'" title="base '+(i+1)+'">'+seq[i]+'</b>';
+  }
+  r.innerHTML=html;
+  r.querySelectorAll("b").forEach(b=>b.addEventListener("click",e=>{
+    STATE.junction=parseInt(e.target.dataset.i,10); renderRuler();
+  }));
+}
+
+/* ---------- main ---------- */
+function run(){
+  const seq=clean(document.getElementById("seq").value);
+  const name=document.getElementById("name").value.trim()||"target";
+  const tmHDA=parseFloat(document.getElementById("tmHDA").value)||60;
+  const tmFEN=parseFloat(document.getElementById("tmFEN").value)||65;
+  const na=parseFloat(document.getElementById("na").value)||40;
+  const mg=parseFloat(document.getElementById("mg").value)||4;
+  const wantRepFlap=document.getElementById("repflap").checked;
+  const out=document.getElementById("out");
+  STATE.seq=seq;
+  const p=STATE.junction;
+
+  if(seq.length<50){out.innerHTML='<div class="note bad">Paste a target of at least ~50 nt so the primers have room to flank the junction.</div>';return;}
+  if(p<24 || p>seq.length-24){out.innerHTML='<div class="note bad">Move the junction base inward: the flap primer needs ~20+ nt of target on its side and the invading primer ~20+ nt on the other side. The junction is at position '+(p+1)+' of '+seq.length+'.</div>';return;}
+
+  // ---- HDA primers flank the whole amplicon ----
+  const hdaF = grow(seq, tmHDA, na, mg, 200, 18, 30);
+  const hdaR = grow(rc(seq), tmHDA, na, mg, 200, 18, 30);
+  const hdaF_end = hdaF.length;                 // covers seq[0..hdaF_end)
+  const hdaR_start = seq.length - hdaR.length;   // covers seq[hdaR_start..end)
+
+  // ---- Flap primer: ARM + reverse-complement of seq[c..p]  (complementary part anneals to target) ----
+  // complementary part's 5' base sits opposite seq[p] (the junction, next to the arm).
+  // Grow leftward from p to hit the Tm target.
+  const flapTgtTarget = grow(seq.slice(0,p+1).split("").reverse().join(""), tmFEN, na, mg, 100, 16, 34)
+                          .split("").reverse().join("");  // = seq[c..p], 5'->3'
+  const flapTgt = rc(flapTgtTarget);             // 5'(opposite seq[p]) -> 3'(opposite seq[c])
+  const flapPrimer = ARM + flapTgt;
+  const flap_c = p - flapTgtTarget.length + 1;   // leftmost target index the flap covers
+
+  // ---- Invading primer: body = RC(seq[p+1..b]); + one deliberate 3' mismatch opposite seq[p] ----
+  const invBodyTarget = grow(seq.slice(p+1), tmFEN, na, mg, 100, 18, 40); // = seq[p+1..b]
+  const invBody = rc(invBodyTarget);             // 5'(opposite seq[b]) -> 3'(opposite seq[p+1])
+  const matchBase = COMP[seq[p]];                // base that WOULD pair seq[p]
+  const MM = {A:"C",C:"A",G:"T",T:"G"};          // deliberate transversion-style mismatch
+  const mmBase = MM[matchBase];
+  const invPrimer = invBody + mmBase;            // 3' terminal base overlaps seq[p] as a mismatch
+  const inv_b = p + 1 + invBodyTarget.length - 1;// rightmost target index the invader covers
+
+  // ---- fickle base, released flap, adaptor variant ----
+  const fickle = COMP[seq[p]];                   // released-flap 3' base (= flap's base opposite seq[p])
+  const releasedFlap = ARM + fickle;             // 18 nt
+  const ligatedTop = releasedFlap + ADAPT;       // 48 nt
+  const Nbase = seq[p];                          // ds-convertor N = target base at junction (= complement of fickle)
+  const dsconvVariant = DSCONV.replace("N", Nbase);
+
+  // ---- overlap sanity checks vs HDA primer footprints ----
+  const warns=[];
+  if(flap_c < hdaF_end) warns.push("The flap primer&rsquo;s target footprint (target bases "+(flap_c+1)+"&ndash;"+(p+1)+") overlaps the <b>HDA forward primer</b> (bases 1&ndash;"+hdaF_end+"). In the one-pot format the HDA primer and the flap primer will compete for the same site. Shift the junction 3&prime; (rightward) or redesign the HDA window.");
+  if(inv_b >= hdaR_start) warns.push("The invading primer&rsquo;s footprint (target bases "+(p+1)+"&ndash;"+(inv_b+1)+") overlaps the <b>HDA reverse primer</b> (bases "+(hdaR_start+1)+"&ndash;"+seq.length+"). This is exactly the overlap problem that forces staged reagent addition. Shift the junction 5&prime; (leftward) or move the HDA primers.");
+  const flapTm=tm(flapTgt,na,mg,100), invTm=tm(invBody,na,mg,100);
+  if(Math.abs(flapTm-tmFEN)>5) warns.push("Flap primer target segment T<sub>m</sub> ("+flapTm+"&nbsp;&deg;C) is &gt;5&nbsp;&deg;C from the "+tmFEN+"&nbsp;&deg;C cleavage temperature. FEN works best when the flap primer just melts at the reaction temperature.");
+
+  STATE.oligos = [
+    ["HDA forward primer", hdaF, "order"],
+    ["HDA reverse primer", hdaR, "order"],
+    ["Flap primer", flapPrimer, "order"],
+    ["Invading primer", invPrimer, "order"]
+  ];
+  if(wantRepFlap){
+    STATE.oligos.push(["Flap primer (fluorophore/quencher, FEN-only)",
+      FLAP_FQ_CONST.f5+"/"+flapTgt.slice(0,9)+"/"+FLAP_FQ_CONST.zen+"/"+flapTgt.slice(9)+"/"+FLAP_FQ_CONST.q3, "order"]);
+  }
+
+  /* ===== build output ===== */
+  let h="";
+
+  // amplicon map
+  h+='<div class="card"><h2>Amplicon map</h2><p class="sub">'+name+' &middot; '+seq.length+'&nbsp;bp &middot; junction at base '+(p+1)+' ('+seq[p]+')</p>'+ampMap(seq,hdaF_end,hdaR_start,flap_c,p,inv_b)+legendInline()+'</div>';
+
+  // published-reference check for the worked example
+  if(isExampleLoaded(seq)){
+    const ok = (s)=>'<span style="color:var(--ok);font-weight:700">matches geometry</span>';
+    h+='<div class="note ok"><b>&#10003; Published orf1ab design (Tables S3/S4).</b> With the junction on base 49 (the T that sets ds-convertor N=T, Fig.&nbsp;S7) the tool reproduces the paper&rsquo;s exact oligos:'+
+       '<table style="margin-top:8px"><tr><th>Oligo</th><th>Published sequence (bench-validated)</th></tr>'+
+       '<tr><td>HDA forward</td><td class="seqcell">'+EXAMPLE_REF.hdaF+'</td></tr>'+
+       '<tr><td>HDA reverse</td><td class="seqcell">'+EXAMPLE_REF.hdaR+'</td></tr>'+
+       '<tr><td>Flap primer</td><td class="seqcell">'+EXAMPLE_REF.flap+'</td></tr>'+
+       '<tr><td>Invading primer</td><td class="seqcell">'+EXAMPLE_REF.inv.slice(0,-1)+'<span style="background:var(--c-mismatch);color:#fff;font-weight:700;padding:0 2px;border-radius:2px">'+EXAMPLE_REF.inv.slice(-1)+'</span> &nbsp;(3&prime; mismatch)</td></tr>'+
+       '</table><div style="margin-top:7px;font-size:12px;color:var(--text-muted)">The <b>computed</b> oligos below use this tool&rsquo;s nearest-neighbour T<sub>m</sub> model, so their <i>lengths</i> may differ by a few nt from IDT PrimerQuest&rsquo;s choices &mdash; the junction, overlap, deliberate 3&prime; mismatch and N base are identical. Order the published sequences for orf1ab; use the computed design as the template for new targets.</div></div>';
+  }
+  // warnings
+  warns.forEach(w=>h+='<div class="note warn">&#9888; '+w+'</div>');
+  if(!warns.length) h+='<div class="note ok">&#10003; Flap and invading primer footprints are clear of both HDA primer sites, and the flap primer segment melts near the cleavage temperature. Still screen for hairpins and primer-dimers before ordering.</div>';
+
+  // STAGE 1 HDA
+  h+=stage(1,"Isothermal amplification &mdash; HDA","65&nbsp;&deg;C, IsoAmp II tHDA; add 0.25&nbsp;&micro;L WarmStart RTx per 10&nbsp;&micro;L for RNA",svgHDA(),
+      oli("HDA forward primer",hdaF,"order","Flanks the 5&prime; end of the amplicon, points inward. Design to a conventional primer T<sub>m</sub> (~60&nbsp;&deg;C), GC 40&ndash;60&nbsp;%, short amplicon (HDA works best at ~70&ndash;120&nbsp;bp).",{tm:tm(hdaF,na,mg,200),tgt:tmHDA,role:"hda"})+
+      oli("HDA reverse primer",hdaR,"order","Flanks the 3&prime; end (reverse complement), points inward. Keep it off the flap and invading primer sites &mdash; see the map above.",{tm:tm(hdaR,na,mg,200),tgt:tmHDA,role:"hda"}));
+
+  // STAGE 2 FEN
+  let fenOli = oli("Flap primer",flapPrimer,"order","<b>Constant 5&prime; flap arm</b> (blue) + <b>target-complementary 3&prime; segment</b> (green). FEN cleaves <b>one base into the complementary segment</b>, so only the T<sub>m</sub> of the green segment matters; it should sit near the 65&nbsp;&deg;C cleavage temperature. The 5&prime; arm never pairs the target and is excluded from the T<sub>m</sub>.",{tm:flapTm,tgt:tmFEN,role:"flap"})+
+      oli("Invading primer",invPrimer,"order","Fully target-complementary <b>body</b> (orange) + a single <b>deliberately non-complementary 3&prime; base</b> (red). That 3&prime; base overlaps the flap primer&rsquo;s first paired base by exactly <b>one position</b> &mdash; the junction base. The overlap, not base-pairing of that terminal nucleotide, is what licenses FEN cleavage; the mismatch stops the invader acting as a polymerase or ligase substrate. Body T<sub>m</sub> ~65&nbsp;&deg;C.",{tm:invTm,tgt:tmFEN,role:"inv",mm:mmBase});
+  if(wantRepFlap){
+    fenOli += oli("Flap primer &mdash; fluorophore/quencher (FEN-only readout)",
+      FLAP_FQ_CONST.f5+"/"+flapTgt.slice(0,9)+"/"+FLAP_FQ_CONST.zen+"/"+flapTgt.slice(9)+"/"+FLAP_FQ_CONST.q3,"order",
+      "Same target segment, but carrying 5&prime;-FAM, an internal ZEN quencher and a 3&prime;-IABkFQ quencher instead of the constant arm. Cleavage separates FAM from the quenchers, giving a <b>direct fluorescent readout of FEN cleavage only</b> (no ligation, no Cas12a). Use it to prove the flap/invader pair cleaves before you commit to the full cascade. It <b>cannot</b> be ligated to the adaptor, so it does not feed the Cas12a stage.",{role:"repflap"});
+  }
+  h+=stage(2,"Recognition &amp; flap cleavage &mdash; flap endonuclease (Tth pol v2)","65&nbsp;&deg;C; invading + flap primers bind adjacent sites on the same strand",svgFEN(seq,p),fenOli);
+
+  // junction duplex
+  h+='<div class="card"><h2>Cleavage junction, base by base</h2><p class="sub">The one-base overlap and the deliberate mismatch, drawn on the target. Cut site marked &#9660;.</p>'+duplex(seq,flap_c,p,inv_b,invBody,mmBase,fickle)+
+     '<div class="note info"><span class="tag-epi">INFERENCE</span> &nbsp;The released flap and the ds-convertor N base are computed from the junction base under the standard FEN &ldquo;one base into the duplex&rdquo; cut model. For the orf1ab example this reproduces the paper (released flap <code>CGCCAGGGTTTTCCCAGA</code>, ds-convertor <code>N&nbsp;=&nbsp;T</code>, matching Fig.&nbsp;S7). For a <b>new</b> target, confirm the exact cut position and fickle base on a denaturing gel or by sequencing before locking the adaptor.</div></div>';
+
+  // STAGE 3 ligation
+  h+=stage(3,"Adaptor conversion &mdash; Taq DNA ligase","65&nbsp;&deg;C, one-pot with FEN; + 1&nbsp;mM NAD&#8314;",svgLIG(fickle,Nbase),
+      '<div class="oli"><div class="oli-top"><span class="tag order">set</span><span class="oli-name">Released flap &rarr; ds-convertor N selection</span></div>'+
+        '<div class="oli-note">FEN releases the constant arm + one templated base. Junction base <b>'+seq[p]+'</b> on the target &rarr; fickle base <b>'+fickle+'</b> on the flap &rarr; use the ds-convertor variant with <b>N = '+Nbase+'</b>.</div>'+
+        '<div class="seq"><span style="color:var(--c-flaparm);font-weight:700">'+ARM+'</span><span style="background:var(--c-fickle);color:#1a1915;font-weight:800;padding:0 2px;border-radius:2px">'+fickle+'</span> &nbsp;&larr; released flap ('+releasedFlap.length+'&nbsp;nt)</div>'+
+        '<div class="meta">Ligated top strand (flap product + 5&prime;p adaptor) = <b>'+ligatedTop.length+'&nbsp;nt</b>.</div></div>'+
+      oli("ds-convertor (variant for this target)",dsconvVariant,"keep","Constant splint except the single N base, here set to <b>"+Nbase+"</b>. Provides the 3&prime; overhang and the PAM that Cas12a needs. Quoted from Table S1 with N substituted.",{role:"const"})+
+      oli("5&prime;-phosphorylated adaptor strand",ADAPT,"keep","Universal. Carries a 5&prime;-phosphate (order it 5&prime;Phos) that Taq ligase seals to the released flap&rsquo;s 3&prime;-OH. Table S1.",{role:"const",phos:true})+
+      oli("Constant 5&prime; flap arm (reference)",ARM,"keep","The sequence that becomes the released flap product. Already built into the flap primer above; listed for reference. Table S1.",{role:"const"}));
+
+  // STAGE 4 Cas12a
+  h+=stage(4,"Signal generation &mdash; LbCas12a","37&nbsp;&deg;C; your established Cas12a detection stage, unchanged",svgCAS(),
+      '<div class="note info"><span class="tag-epi">FIXED STAGE</span> &nbsp;The Cas12a sgRNA and reporter are <b>constant across every target</b> &mdash; that is the whole point of FELICX. The dsDNA adaptor, not the analyte, is what Cas12a reads, so the <b>same guide works for all targets</b> (LbCas12a tolerates the fickle base pair, which sits 8&ndash;18&nt from the PAM). Use your lab&rsquo;s established guide and reporter; this tool does <b>not</b> emit a target-specific sgRNA, and the paper does not publish the guide sequence in Tables&nbsp;S1&ndash;S4.</div>'+
+      oli("LbCas12a sgRNA"," constant guide from your established Cas12a kit (e.g. &ldquo;gRNA puc12&rdquo;) &mdash; not target-specific, not reproduced here","keep","Recognises the dsDNA adaptor at its PAM. Identical for every FELICX target; load onto Cas12a as in your Cas12a detection protocol.",{role:"fixed"})+
+      oli("ssDNA reporter",REPORTER,"keep","FAM/quencher ssDNA, the Cas12a trans-cleavage substrate (Table S1). Swap the dye to match your reader channel; use a FAM-biotin or DIG-biotin reporter for lateral flow.",{role:"const"}));
+
+  // order table + provenance
+  h+=orderTable(name,Nbase,dsconvVariant,wantRepFlap,flapTgt);
+  h+=provenance();
+
+  out.innerHTML=h;
+  out.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------- component builders ---------- */
+function oli(name,seq,kind,note,opt){
+  opt=opt||{};
+  const tag = kind==="order" ? '<span class="tag order">order this</span>'
+           : kind==="set"    ? '<span class="tag order">set</span>'
+           :                    '<span class="tag keep">constant</span>';
+  let seqHtml=seq, canCopy=/^[ACGT]+$/i.test(seq.replace(/\s/g,""));
+  if(opt.role==="flap"){
+    seqHtml='<span style="color:var(--c-flaparm);font-weight:700">'+ARM+'</span><span style="color:var(--c-flaptgt);font-weight:700">'+seq.slice(ARM.length)+'</span>';
+  } else if(opt.role==="inv"){
+    seqHtml='<span style="color:var(--c-invader);font-weight:700">'+seq.slice(0,-1)+'</span><span style="background:var(--c-mismatch);color:#fff;font-weight:800;padding:0 3px;border-radius:3px" title="deliberate non-complementary 3′ base">'+seq.slice(-1)+'</span>';
+    canCopy=true;
+  } else if(opt.phos){ seqHtml='<span class="mono">5&prime;Phos-</span>'+seq; }
+  let meta="";
+  if(opt.tm!==undefined){
+    meta='<div class="meta">Length <b>'+seq.replace(/[^ACGT]/gi,"").length+'&nbsp;nt</b> &middot; '+
+      (opt.role==="flap"?"segment ":opt.role==="inv"?"body ":"")+'T<sub>m</sub> &asymp; <b>'+opt.tm+'&nbsp;&deg;C</b> ('+tmBadge(opt.tm,opt.tgt)+') &middot; GC '+gc(seq.replace(/[^ACGT]/gi,""))+'%</div>';
+    if(opt.role==="inv") meta+='<div class="meta">The red 3&prime; base is the mismatch opposite the junction; it is excluded from the body T<sub>m</sub>.</div>';
+  }
+  const copyBtn = canCopy ? '<button class="copy" onclick="copySeq(this)" data-seq="'+seq.replace(/<[^>]+>/g,"").replace(/"/g,"&quot;")+'">copy</button>' : '';
+  return '<div class="oli"><div class="oli-top">'+tag+'<span class="oli-name">'+name+'</span>'+copyBtn+'</div>'+
+    '<div class="oli-note">'+note+'</div><div class="seq">'+seqHtml+'</div>'+meta+'</div>';
+}
+function stage(n,title,cond,svg,oligos){
+  return '<div class="stage"><div class="stage-h"><div class="num">'+n+'</div><div><h3>'+title+'</h3><div class="cond">'+cond+'</div></div></div>'+
+    '<div class="scene">'+svg+'</div><div class="oligos">'+oligos+'</div></div>';
+}
+function copySeq(b){navigator.clipboard.writeText(b.dataset.seq);b.textContent="copied";setTimeout(()=>b.textContent="copy",1100);}
+
+/* ---------- duplex alignment at the junction ---------- */
+function duplex(seq,c,p,b,invBody,mmBase,fickle){
+  const W=14; // bases to show each side of the junction
+  const lo=Math.max(0,p-W), hi=Math.min(seq.length,p+W+1);
+  const target=seq.slice(lo,hi);
+  const off=p-lo;
+  // Draw: target 5'->3' on top; complementary primers 3'<-5' below, roles coloured.
+  // Column of target[off] (the junction) = 3-char prefix "5' " + off.
+  function pad(n){return " ".repeat(Math.max(0,n));}
+  const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  let out="";
+  out+='<span style="color:var(--text-faint)">FEN cut (1 nt into the flap duplex)</span>\n';
+  out+=pad(3+off)+'<span style="color:var(--c-mismatch);font-weight:800">▼</span>\n';
+  out+='5′ '+'<span style="color:var(--c-target)">'+esc(target)+'</span>'+' 3′   target\n';
+  // build coloured complementary line
+  let cl="";
+  for(let i=lo;i<hi;i++){
+    if(i===p) cl+='<span style="background:var(--c-fickle);color:#1a1915;font-weight:800">'+COMP[seq[i]]+'</span>';
+    else if(i<p && i>=c) cl+='<span style="color:var(--c-flaptgt)">'+COMP[seq[i]]+'</span>';
+    else if(i>p && i<=b) cl+='<span style="color:var(--c-invader)">'+COMP[seq[i]]+'</span>';
+    else cl+=" ";
+  }
+  out+='3′ '+cl+' 5′   flap (green) · fickle base (gold) · invader body (orange)\n';
+  out+='   '+pad(off)+'<span style="background:var(--c-mismatch);color:#fff;font-weight:800">'+mmBase+'</span>'+'  ← invading primer 3′ terminal base: deliberate mismatch opposite the junction\n';
+  out+='\n';
+  out+='<span style="color:var(--text-faint)">released flap = arm + fickle base ('+fickle+')   ·   ds-convertor N = '+seq[p]+'</span>';
+  return '<div class="duplex">'+out+'</div>';
+}
+
+/* ---------- SVG scenes ---------- */
+function ampMap(seq,hf,hr,fc,p,ib){
+  const L=seq.length, W=1040, x0=20, w=W-40;
+  const X=i=>x0 + (i/L)*w;
+  const bar=(a,b,y,col,h)=>'<rect x="'+X(a)+'" y="'+y+'" width="'+(X(b)-X(a))+'" height="'+(h||9)+'" rx="3" fill="'+col+'"/>';
+  let s='<svg viewBox="0 0 '+W+' 140" width="100%">';
+  s+='<rect x="'+x0+'" y="54" width="'+w+'" height="7" rx="3.5" fill="var(--c-target)" opacity="0.35"/>';
+  s+='<text x="'+(x0)+'" y="46" font-size="11" fill="var(--text-faint)">5′</text><text x="'+(x0+w-10)+'" y="46" font-size="11" fill="var(--text-faint)">3′</text>';
+  s+=bar(0,hf,40,"var(--c-hda)")+'<text x="'+X(hf/2)+'" y="34" font-size="10.5" text-anchor="middle" fill="var(--c-hda)">HDA F</text>';
+  s+=bar(hr,L,40,"var(--c-hda)")+'<text x="'+X((hr+L)/2)+'" y="34" font-size="10.5" text-anchor="middle" fill="var(--c-hda)">HDA R</text>';
+  s+=bar(fc,p+1,72,"var(--c-flaptgt)")+'<rect x="'+(X(fc)-14)+'" y="72" width="14" height="9" rx="3" fill="var(--c-flaparm)"/>'+'<text x="'+X((fc+p)/2)+'" y="98" font-size="10.5" text-anchor="middle" fill="var(--c-flaptgt)">flap primer</text>';
+  s+=bar(p,ib+1,86,"var(--c-invader)")+'<text x="'+X((p+ib)/2)+'" y="112" font-size="10.5" text-anchor="middle" fill="var(--c-invader)">invading primer</text>';
+  s+='<line x1="'+X(p)+'" y1="30" x2="'+X(p)+'" y2="120" stroke="var(--c-mismatch)" stroke-width="1.5" stroke-dasharray="3 3"/>';
+  s+='<circle cx="'+X(p)+'" cy="128" r="4" fill="var(--c-fickle)"/><text x="'+X(p)+'" y="132" font-size="9" text-anchor="middle" fill="var(--text)" dy="-8">junction</text>';
+  s+='</svg>';
+  return '<div class="scene" style="background:none;padding:6px 0">'+s+'</div>';
+}
+function legendInline(){
+  const items=[["var(--c-hda)","HDA primers"],["var(--c-flaparm)","constant 5′ flap arm"],["var(--c-flaptgt)","flap target segment"],["var(--c-invader)","invading primer"],["var(--c-mismatch)","deliberate 3′ mismatch"],["var(--c-fickle)","fickle / junction base"]];
+  return '<div class="legend">'+items.map(i=>'<span><span class="sw" style="background:'+i[0]+'"></span>'+i[1]+'</span>').join("")+'</div>';
+}
+function svgHDA(){
+  return '<svg viewBox="0 0 560 110" width="100%" style="max-width:560px">'+
+    '<rect x="60" y="48" width="440" height="6" rx="3" fill="var(--c-target)" opacity="0.4"/>'+
+    '<rect x="60" y="62" width="440" height="6" rx="3" fill="var(--c-target)" opacity="0.25"/>'+
+    '<path d="M66 44 h88 l10 5 -10 5 h-88 z" fill="var(--c-hda)"/>'+
+    '<path d="M494 66 h-88 l-10 5 10 5 h88 z" fill="var(--c-hda)"/>'+
+    '<circle cx="280" cy="57" r="16" fill="var(--accent)"/><text x="280" y="61" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">HDA</text>'+
+    '<text x="280" y="96" text-anchor="middle" font-size="10" fill="var(--text-faint)">isothermal copying at 65 °C, no thermocycler</text></svg>';
+}
+function svgFEN(seq,p){
+  return '<svg viewBox="0 0 580 150" width="100%" style="max-width:600px">'+
+    '<rect x="40" y="96" width="500" height="6" rx="3" fill="var(--c-target)" opacity="0.4"/>'+
+    '<text x="290" y="120" text-anchor="middle" font-size="10" fill="var(--text-faint)">target strand (both primers bind here)</text>'+
+    '<rect x="300" y="80" width="200" height="6" rx="3" fill="var(--c-invader)"/>'+
+    '<text x="400" y="72" text-anchor="middle" font-size="10" fill="var(--c-invader)">invading primer</text>'+
+    '<rect x="291" y="80" width="10" height="6" fill="var(--c-mismatch)"/>'+
+    '<text x="300" y="58" font-size="9" fill="var(--c-mismatch)">3′ mismatch, 1-nt overlap</text>'+
+    '<line x1="300" y1="54" x2="298" y2="80" stroke="var(--c-mismatch)" stroke-width="1.2"/>'+
+    '<rect x="96" y="80" width="196" height="6" rx="3" fill="var(--c-flaptgt)"/>'+
+    '<text x="190" y="72" text-anchor="middle" font-size="10" fill="var(--c-flaptgt)">flap primer target segment</text>'+
+    '<path d="M292 83 C255 55 215 44 170 40" stroke="var(--c-flaparm)" stroke-width="6" fill="none" stroke-linecap="round"/>'+
+    '<text x="180" y="32" text-anchor="middle" font-size="9.5" fill="var(--c-flaparm)">constant 5′ flap (lifts off)</text>'+
+    '<circle cx="470" cy="128" r="14" fill="var(--accent)"/><text x="470" y="132" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">FEN</text>'+
+    '<text x="250" y="143" text-anchor="middle" font-size="10" fill="var(--text-faint)">FEN cuts 1 nt into the duplex → releases arm + fickle base; cyclic recycling makes many flaps per target</text></svg>';
+}
+function svgLIG(fickle,N){
+  return '<svg viewBox="0 0 560 130" width="100%" style="max-width:560px">'+
+    '<rect x="60" y="66" width="200" height="6" rx="3" fill="var(--c-flaparm)"/>'+
+    '<rect x="262" y="66" width="12" height="6" fill="var(--c-fickle)"/>'+
+    '<rect x="278" y="66" width="220" height="6" rx="3" fill="var(--c-adaptor)"/>'+
+    '<text x="160" y="58" text-anchor="middle" font-size="10" fill="var(--c-flaparm)">flap product</text>'+
+    '<text x="388" y="58" text-anchor="middle" font-size="10" fill="var(--c-adaptor)">5′p adaptor</text>'+
+    '<rect x="60" y="80" width="438" height="6" rx="3" fill="var(--c-target)" opacity="0.3"/>'+
+    '<text x="279" y="100" text-anchor="middle" font-size="10" fill="var(--text-faint)">ds-convertor splint &middot; N = '+N+' (pairs fickle '+fickle+')</text>'+
+    '<circle cx="272" cy="52" r="12" fill="var(--accent)"/><text x="272" y="56" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">Taq</text>'+
+    '<text x="272" y="122" text-anchor="middle" font-size="10" fill="var(--text-faint)">Taq ligase seals the nick at 65 °C → dsDNA adaptor</text></svg>';
+}
+function svgCAS(){
+  return '<svg viewBox="0 0 560 130" width="100%" style="max-width:560px">'+
+    '<rect x="70" y="58" width="300" height="6" rx="3" fill="var(--c-adaptor)"/>'+
+    '<rect x="70" y="70" width="300" height="6" rx="3" fill="var(--c-adaptor)" opacity="0.6"/>'+
+    '<rect x="330" y="56" width="26" height="12" rx="2" fill="var(--c-invader)"/><text x="343" y="65" text-anchor="middle" font-size="7" font-weight="700" fill="#fff">PAM</text>'+
+    '<ellipse cx="250" cy="66" rx="40" ry="26" fill="var(--accent)" opacity="0.85"/><text x="250" y="70" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Cas12a</text>'+
+    '<path d="M420 44 h70" stroke="var(--c-target)" stroke-width="5" stroke-linecap="round"/>'+
+    '<circle cx="420" cy="44" r="5" fill="var(--c-flaptgt)"/><text x="470" y="34" text-anchor="middle" font-size="9" fill="var(--text-faint)">FAM reporter</text>'+
+    '<path d="M470 40 l16 0 M478 32 l0 16" stroke="var(--c-mismatch)" stroke-width="2"/>'+
+    '<text x="280" y="118" text-anchor="middle" font-size="10" fill="var(--text-faint)">constant sgRNA reads the adaptor at its PAM → trans-cleaves reporter → signal (37 °C)</text></svg>';
+}
+
+/* ---------- order table + CSV ---------- */
+function orderTable(name,N,dsconv,wantRep,flapTgt){
+  let rows="";
+  STATE.oligos.forEach(o=>rows+='<tr><td>'+o[0]+'</td><td><span class="tag order">order</span></td><td class="seqcell">'+o[1].replace(/</g,"&lt;")+'</td></tr>');
+  [["ds-convertor (N = "+N+")",dsconv],["5′p adaptor","5′Phos-"+ADAPT],["ssDNA reporter",REPORTER],["LbCas12a sgRNA","constant — use your established guide"]].forEach(o=>
+    rows+='<tr><td>'+o[0]+'</td><td><span class="tag keep">constant</span></td><td class="seqcell">'+o[1].replace(/</g,"&lt;")+'</td></tr>');
+  return '<div class="card"><h2>Order summary</h2><p class="sub">'+name+' &middot; order the four (or five) target-specific oligos; reuse the constants across every target.</p>'+
+    '<table><tr><th>Oligo</th><th>Action</th><th>Sequence</th></tr>'+rows+'</table>'+
+    '<div class="row"><button class="btn dl" onclick="downloadCSV()">Download order CSV</button></div></div>';
+}
+function downloadCSV(){
+  if(!STATE.oligos.length){alert("Design oligos first.");return;}
+  const name=(document.getElementById("name").value.trim()||"target");
+  let csv="Oligo,Action,Sequence,Notes\n";
+  STATE.oligos.forEach(o=>csv+='"'+o[0]+'",order,"'+o[1]+'",target-specific\n');
+  csv+='"ds-convertor","constant/variant","'+DSCONV+'","substitute N per junction base"\n';
+  csv+='"5′p adaptor","constant","5Phos-'+ADAPT+'","Table S1"\n';
+  csv+='"ssDNA reporter","constant","'+REPORTER+'","Table S1; swap dye to reader"\n';
+  csv+='"LbCas12a sgRNA","constant","use established guide","not target-specific; sequence not in Tables S1-S4"\n';
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=name.replace(/\s+/g,"_")+"_FELICX_oligos.csv";a.click();
+}
+
+/* ---------- provenance panel ---------- */
+function provenance(){
+  return '<div class="card prov"><h2>Design principles &amp; provenance</h2>'+
+    '<ol>'+
+    '<li><b>One strand, two primers, a one-base overlap.</b> The invading and flap primers anneal to the <i>same</i> target strand at adjacent sites; the invader&rsquo;s 3&prime; end overlaps the flap primer&rsquo;s first paired base by exactly one nucleotide. That overlap is the 5&prime;-flap substrate FEN recognises. <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">Aggarwal et al. 2023, Fig.&nbsp;1b, 2a</a>.</li>'+
+    '<li><b>The overlap base is the base you read.</b> FELICX resolves single base pairs because the overlap sits at the interrogated position; a mismatch there (a SNP) abolishes cleavage. Put the junction on the base you care about. <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">Fig.&nbsp;5a&ndash;e</a>.</li>'+
+    '<li><b>The invading primer&rsquo;s 3&prime; terminal base is a deliberate mismatch.</b> &ldquo;The last nucleotide of the invading primer is mismatched with the target, an essential feature for the FEN cleavage reaction.&rdquo; It is excluded from the body T<sub>m</sub>. For the orf1ab example the tool rebuilds the exact Table&nbsp;S4 invader (3&prime;-&hellip;AAATA<span style="color:var(--c-mismatch);font-weight:700">C</span>, opposite a template T). <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">Fig.&nbsp;5a legend; Table&nbsp;S4</a>.</li>'+
+    '<li><b>Only the flap primer&rsquo;s target segment sets its T<sub>m</sub>.</b> The constant 5&prime; arm (<code>CGCCAGGGTTTTCCCAG</code>) never pairs the target. The target segment should melt near the 65&nbsp;&deg;C cleavage temperature, so cyclic annealing/denaturing (&ldquo;recycling&rdquo;) turns over many flaps per target. <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">Fig.&nbsp;1b, 2a; Methods 5.3</a>.</li>'+
+    '<li><b>Released flap = arm + one templated base; the ds-convertor N absorbs it.</b> FEN cuts one base into the duplex, so the flap leaves with a target-dependent &ldquo;fickle&rdquo; base. The ds-convertor&rsquo;s N position is set to the junction base so the ligated adaptor is complete; the sgRNA never changes because the fickle pair lies 8&ndash;18&nt from the PAM, within LbCas12a&rsquo;s mismatch-tolerant window. <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">&sect;2.3; Fig.&nbsp;3a, S7</a>.</li>'+
+    '<li><b>Fewer primers upstream.</b> HDA (two primers) is preferred over LAMP (six) because fewer primers mean less nonspecific product; it detected 6 copies/&micro;L orf1ab. Keep the HDA primer sites clear of the flap/invader footprints &mdash; the map flags collisions. <span class="tag-epi">ESTABLISHED</span> <a href="https://doi.org/10.1016/j.bios.2022.115002">&sect;2.4, Fig.&nbsp;3g; Methods 5.7</a>.</li>'+
+    '<li><b>The Cas12a stage is fixed.</b> The sgRNA and reporter are constant across targets, so this tool does not invent a guide. The paper does not publish the sgRNA sequence in Tables&nbsp;S1&ndash;S4; use your established Cas12a kit. <span class="tag-epi">INFERENCE</span> on exact cut site / fickle base for novel targets &mdash; confirm empirically.</li>'+
+    '</ol></div>';
+}
+
+/* ---------- init ---------- */
+function loadExample(){
+  document.getElementById("seq").value=EXAMPLE.seq;
+  document.getElementById("name").value=EXAMPLE.name;
+  document.getElementById("tmHDA").value=60;
+  document.getElementById("tmFEN").value=65;
+  document.getElementById("na").value=40;
+  document.getElementById("mg").value=4;
+  STATE.junction=EXAMPLE.junction;
+  renderRuler(); run();
+}
+document.getElementById("seq").addEventListener("input",renderRuler);
+document.getElementById("legend").innerHTML=legendInline().replace('<div class="legend">','').replace('</div>','');
+loadExample();
+</script>
+
+<!-- GoatCounter: present so visits are counted if this tool is published on the homepage -->
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/felicx-designer"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

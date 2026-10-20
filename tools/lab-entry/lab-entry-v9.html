@@ -1295,6 +1295,7 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 /* v10: timeline by tag. Every tile sits centred in its row, so the line from one tile to the next leaves and
    arrives at the same height and runs straight. */
 .m-tag .bd-cell{align-self:center}
+.ac-ghosting::placeholder{color:transparent}
 </style>
 </head>
 <body>
@@ -3757,12 +3758,28 @@ function caretXY(el, pos){
   const x = r.left + sp.offsetLeft - el.scrollLeft, y = r.top + sp.offsetTop - el.scrollTop, h = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
   m.remove(); return { x, y, h, font: `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` };
 }
-function hideAc(){ AC.el = null; AC.items = []; const b = $('#ac'), g = $('#acGhost'); if (b) b.hidden = true; if (g) g.hidden = true; }
+function hideAc(){ $$('.ac-ghosting').forEach(x => x.classList.remove('ac-ghosting')); AC.el = null; AC.items = []; const b = $('#ac'), g = $('#acGhost'); if (b) b.hidden = true; if (g) g.hidden = true; }
+const isNewTodoBox = el => el.id === 'todoNew' || el.id === 'genText' || !!el.dataset.tladd;
+function scopeBlock(el){ if (el.dataset.bi != null && E && E.blocks && E.blocks[+el.dataset.bi]) return E.blocks[+el.dataset.bi];
+  if (el.dataset.todotext){ const it = findB(el.dataset.todotext.split('|')[0]); return it && it.b; }
+  const m = el.dataset.bind && /^blocks\.(\d+)\./.exec(el.dataset.bind); return m && E ? E.blocks[+m[1]] : null; }
+function openHere(el){ const k = t => clean(t.text).toLowerCase();
+  if (el.id === 'genText') return new Set([...GEN, ...items().flatMap(x => x.b.todos)].filter(t => !t.done).map(k));   // general box: nothing open anywhere
+  const b = scopeBlock(el), it = b && findB(b.id); return new Set((it ? threadOf(it.b) : items()).flatMap(x => x.b.todos.filter(t => !t.done).map(k))); }
+function blankPhrases(el, open){ const b = el.id === 'genText' ? null : scopeBlock(el), it = b && findB(b.id), root = it && rootOf(it.b).b.id, out = [], seen = new Set(open);
+  const add = (text, why) => { const k = clean(text).toLowerCase(); if (!k || seen.has(k)) return; seen.add(k); out.push({ text: clean(text), why }); };
+  if (b) b.kinds.forEach(k => (typeSug(k, 'next') || []).forEach(x => add(x, `usual for ${k}`)));
+  const past = [...items().flatMap(x => x.b.todos.map(t => [t.setAt || x.date, t.text, x])), ...GEN.map(t => [t.setAt || '', t.text, null])].sort((p, q) => String(q[0]).localeCompare(String(p[0])));
+  past.filter(p => root && p[2] && rootOf(p[2].b).b.id === root).forEach(p => add(p[1], 'this experiment, before'));
+  past.forEach(p => add(p[1], 'written before'));
+  return out.slice(0, 6); }
 function updateAc(el){
   if (!acTargets(el) || el.selectionStart !== el.selectionEnd){ hideAc(); return; }
   if (el.dataset.acphrase !== undefined && el.selectionStart === el.value.length){   // whole to-dos written before
-    const v = el.value, vl = v.trim().toLowerCase();
-    if (vl.length >= 2){ const ph = todoPhrases().filter(x => x.toLowerCase() !== vl);
+    const v = el.value, vl = v.trim().toLowerCase(), open = openHere(el);
+    if (!vl && isNewTodoBox(el)){ const hits = blankPhrases(el, open);
+      if (hits.length){ Object.assign(AC, { el, token: v, start: 0, items: hits.map(x => ({ name: x.text, desc: x.why })), sel: 0 }); drawAc(); } else hideAc(); return; }
+    if (vl.length >= 2){ const ph = todoPhrases().filter(x => x.toLowerCase() !== vl && !open.has(x.toLowerCase()));
       const hits = ph.filter(x => x.toLowerCase().startsWith(vl)).concat(ph.filter(x => !x.toLowerCase().startsWith(vl) && x.toLowerCase().includes(vl))).slice(0, 8);
       if (hits.length){ Object.assign(AC, { el, token: v, start: 0, items: hits.map(x => ({ name: x, desc: 'written before' })), sel: 0 }); drawAc(); return; } } }
   const p = el.selectionStart, before = el.value.slice(0, p), m = TOKEN_RE.exec(before);
@@ -3785,8 +3802,8 @@ function drawAc(){
   box.hidden = false; const on = box.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' }); box.style.left = Math.min(pos.x, window.innerWidth - 330) + 'px'; box.style.top = (pos.y + pos.h + 4) + 'px';
   const top = AC.items[AC.sel], nextCh = el.value.slice(el.selectionStart, el.selectionStart + 1);
   if (top.name.toLowerCase().startsWith(AC.token.toLowerCase()) && (!nextCh || /\s/.test(nextCh))){
-    g.textContent = top.name.slice(AC.token.length); g.style.font = pos.font; g.style.left = pos.x + 'px'; g.style.top = pos.y + 'px'; g.style.lineHeight = pos.h + 'px'; g.hidden = false;
-  } else g.hidden = true;
+    g.textContent = top.name.slice(AC.token.length); g.style.font = pos.font; g.style.left = pos.x + 'px'; g.style.top = pos.y + 'px'; g.style.lineHeight = pos.h + 'px'; g.hidden = false; el.classList.toggle('ac-ghosting', !el.value);
+  } else { g.hidden = true; el.classList.remove('ac-ghosting'); }
 }
 function acceptAc(i){
   const el = AC.el, x = AC.items[i == null ? AC.sel : i]; if (!el || !x) return;
@@ -3881,6 +3898,7 @@ app.addEventListener('focusout', e => { const el = e.target;
 app.addEventListener('keydown', e => {
   const el = e.target;
   if (el.id === 'tagIn' && (e.key === 'Enter' || e.key === ',')){ e.preventDefault(); addTag(+el.dataset.bi, el.value); return; }
+  if ((el.id === 'todoNew' || el.dataset.tladd) && e.key === 'Enter' && (e.isComposing || e.repeat)){ e.preventDefault(); return; }
   if (el.id === 'todoNew' && e.key === 'Enter'){ e.preventDefault(); A.todoAdd(el.dataset.bi); return; }
   if (el.dataset.tladd && e.key === 'Enter'){ e.preventDefault(); tlAdd(el); const n = $(`[data-tladd="${el.dataset.tladd}"]`); if (n) n.focus(); return; }
   if (el.dataset.sample && e.key === 'Enter'){ e.preventDefault(); const [bi, si] = el.dataset.sample.split('.').map(Number); el.blur(); sampleEnter(bi, si); return; }
@@ -5322,7 +5340,10 @@ function todosHtml(b, bi){
       ${conts.length ? `<span class="row">Continued in ${conts.map(x => linkChip(x.b.id, bi, false)).join('')}</span>` : ''}</div>
   </div>${threads(b, bi, 'next')}</section>`;
 }
-function addTodo(bi, text, due, note){ text = clean(text); if (!text) return null; const t = { id: uid(), text, done: false, due: due || '', note: note || '', setAt: localDate() }; E.blocks[bi].todos.push(t); scheduleSave(); return t; }
+function addTodo(bi, text, due, note){ text = clean(text); if (!text) return null;
+  const it0 = findB(E.blocks[bi].id), same = it0 && threadOf(it0.b).flatMap(x => x.b.todos).find(o => !o.done && clean(o.text).toLowerCase() === text.toLowerCase());
+  if (same){ toast(`Already on the list${isDate(same.due) ? ' for ' + fmtDay(same.due) : ''}: “${clean(same.text)}”.`); return null; }
+  const t = { id: uid(), text, done: false, due: due || '', note: note || '', setAt: localDate() }; E.blocks[bi].todos.push(t); scheduleSave(); return t; }
 const nextDay = b => addDays(dateOf(E, b), 1);   // the entry's own next day, so back-filling the 29th plans the 30th
 /* Moves a to-do to the thread's entry for (due − 1 day), creating that entry if it doesn't exist yet. */
 function relocate(it, t){
@@ -5451,7 +5472,7 @@ const todoMd = t => `- [${t.done ? 'x' : ' '}] ${clean(t.text)}${t.done ? '' : `
 A.issueTodo = arg => { const [bi, i] = arg.split('|').map(Number), b = E.blocks[bi], x = b.issues[i];
   if (x.todo && b.todos.some(t => t.id === x.todo)){ toast('Already a to-do (see Next / follow up).'); return; }
   if (!clean(x.fix)){ toast('Write the potential fix first.'); return; }
-  const t = addTodo(bi, x.fix, nextDay(b), clean(x.problem) ? `Problem: ${clean(x.problem)}` : ''); x.todo = t.id; NOTE_OPEN.add(t.id);
+  const t = addTodo(bi, x.fix, nextDay(b), clean(x.problem) ? `Problem: ${clean(x.problem)}` : ''); if (!t) return; x.todo = t.id; NOTE_OPEN.add(t.id);
   syncFollows(); if (askWeekend(findB(b.id), t, 'next')) return; rerender(); toast('Added as tomorrow\'s to-do; the problem is in its drop-down details.'); };
 
 // ── Follow-up entries: one per experiment and day, shared by to-dos and results ─
@@ -5480,14 +5501,24 @@ function ensureFollow(src, date, title){
   e.blocks.push(b); touch(e); renumberDays(b); return findB(b.id);
 }
 /* An automatic entry nobody has written in, with nothing pointing at it any more. */
-const isBareAuto = b => b.auto && !b.images.length && !clean(b.result) && !b.record.length && !b.todos.length && !b.log && !(b.comments || []).length
-  && !b.steps.some(s => clean(s.text)) && !items().some(x => x.b.todos.some(t => tgtsOf(t).includes(b.id) && !t.done));
+const bareBut = (b, skip = []) => b.auto && !b.images.length && !clean(b.result) && !b.record.length && !b.todos.some(t => !skip.includes(t)) && !b.log && !(b.comments || []).length
+  && !b.steps.some(s => clean(s.text)) && !b.table && !(b.results || []).some(r => clean(r.text)) && !(b.hl || []).length
+  && !items().some(x => x.b.todos.some(t => !skip.includes(t) && tgtsOf(t).includes(b.id) && !t.done));
+const isBareAuto = b => bareBut(b);
 function dropIfBare(id){ const it = id && findB(id); if (!it || !isBareAuto(it.b)) return; const p = it.b.from && findB(it.b.from);
   it.e.blocks.splice(it.e.blocks.indexOf(it.b), 1); touch(it.e); if (p) renumberDays(p.b); }
 /* To-dos due between the experiment's day and tomorrow get their follow-up. A deleted follow-up is not remade (t.link stays). */
 /* A to-do belongs to the day before it is due: one due on (or before) its own entry's day moves to
    the latest earlier entry of the same thread, and shows on its due day's entry as that day's to-do. */
-function placeTodos(){
+function unparkPushed(){
+  items().filter(it => it.b.auto).forEach(it => { const cur = findB(it.b.id); if (!cur) return;
+    const ts = cur.b.todos.filter(t => !t.done && (t.pushed || []).length && isDate(t.due) && t.due > cur.date);
+    if (!ts.length || !bareBut(cur.b, ts)) return;
+    const prev = threadOf(cur.b).filter(x => x.b.id !== cur.b.id && x.date < cur.date).pop(); if (!prev) return;
+    ts.forEach(t => { cur.b.todos.splice(cur.b.todos.indexOf(t), 1); prev.b.todos.push(t); }); touch(cur.e); touch(prev.e);
+    const p = cur.b.from && findB(cur.b.from); cur.e.blocks.splice(cur.e.blocks.indexOf(cur.b), 1); if (p) renumberDays(p.b); });
+}
+function placeTodos(){ unparkPushed();
   /* earlier versions copied a carried to-do into the next entry and closed the original: merge them back into one */
   items().forEach(it => it.b.todos.forEach(o => { if (!o.done || o.doneAt || !o.link || o.postponedTo) return; const l = findB(o.link); if (!l) return;
     const c = l.b.todos.find(x => clean(x.text) === clean(o.text)); if (!c) return;
@@ -5666,11 +5697,13 @@ A.fuCreate = async () => {
 };
 A.snooze = arg => { const [bid, tid] = arg.split('|'), it = findB(bid), t = it && it.b.todos.find(x => x.id === tid); if (!t) return;
   const td = localDate(), due = addDays(isDate(t.due) && t.due > td ? t.due : td, 1);
-  /* postponing moves it onto the day it was due (where it was not done), or the latest earlier entry of the thread */
-  const ln = t.link && findB(t.link), home = ln && ln.date < due ? ln : threadOf(it.b).filter(x => x.date < due).pop() || it;
   (t.pushed = t.pushed || []).push(t.due); Object.assign(t, { due, rolledFrom: '', keepHere: false }); delete t.prev;
-  if (home.b.id !== it.b.id){ it.b.todos.splice(it.b.todos.indexOf(t), 1); home.b.todos.push(t); touch(it.e); }
-  dueChanged(home.e, t); if (askWeekend(findB(home.b.id), t, 'next')) return;
+  /* first let go of the day it was due: a panel that was only there for this to-do goes (dueChanged → dropIfBare) */
+  dueChanged(it.e, t);
+  /* then it belongs to the latest entry still there before its new day: the day it was due if you worked in it, else where it was written */
+  const own = findB(it.b.id), home = threadOf(own.b).filter(x => x.date < due && (x.b.id === own.b.id || !bareBut(x.b, [t]))).pop() || own;
+  if (home.b.id !== own.b.id){ own.b.todos.splice(own.b.todos.indexOf(t), 1); home.b.todos.push(t); touch(own.e); touch(home.e); syncFollows(); }
+  if (askWeekend(findB(home.b.id), t, 'next')) return;
   saveNow(); render(); showUndo(`“${clean(t.text)}” moved to ${fmtDay(t.due)}${home.b.id !== it.b.id ? ` (now under ${fmtDay(home.date)})` : ''}.`); };
 /* On opening: to-dos planned two or more days ago and still open. Say what happened, then re-date, finish or drop each. */
 let LATE = null;
@@ -5726,11 +5759,11 @@ function todayHtml(){
   /* that day: open ones due then (today also: every-day ones), ones ticked that day (crossed out), and on past days the ones carried forward */
   const onD = r => r[1].done ? doneDay(r[1]) === D || r[1].due === D && !doneDay(r[1]) && !r[1].link
     : isT ? r[1].due === 'daily' || isDate(r[1].due) && r[1].due <= td : r[1].due === D || !isT && D < td && r[1].rolledFrom === D;
-  let rows = all.filter(onD); if (isT && TFUT) rows = rows.concat(future);
+  const todayRows = all.filter(onD); let rows = isT && TFUT ? future.slice() : todayRows;
   rows.sort((a, b) => (a[1].done ? 1 : 0) - (b[1].done ? 1 : 0));
-  const was = t => t.rolledFrom || t.due, late = isT ? rows.filter(r => !r[1].done && (isDate(r[1].due) && r[1].due < td || isOver(r[1]))).sort((a, b) => was(a[1]).localeCompare(was(b[1]))) : [];
+  const was = t => t.rolledFrom || t.due, late = isT && !TFUT ? rows.filter(r => !r[1].done && (isDate(r[1].due) && r[1].due < td || isOver(r[1]))).sort((a, b) => was(a[1]).localeCompare(was(b[1]))) : [];
   const main = rows.filter(r => !late.includes(r));
-  const recs = isT ? its.filter(x => x.date <= td && x.b.record.some(r => !clean(r.value))) : [];
+  const recs = isT && !TFUT ? its.filter(x => x.date <= td && x.b.record.some(r => !clean(r.value))) : [];
   const by = FILT.tgroup2 || 'exp', opt = (v, t) => `<option value="${v}" ${by === v ? 'selected' : ''}>${t}</option>`;
   const moved = t => !t.done && D < td && t.rolledFrom === D;
   const li = (it, t) => `<li class="${t.done ? 'done' : ''} ${moved(t) ? 'moved' : ''}"${heat(t)}><input type="checkbox" data-todox="${it.b.id}|${t.id}" ${t.done ? 'checked' : ''} aria-label="Done"><textarea rows="1" class="fit tx" data-todotext="${it.b.id}|${t.id}" aria-label="To-do">${esc(t.text)}</textarea>
@@ -5741,20 +5774,20 @@ function todayHtml(){
   const rem = recs.length ? col('Record results', recs.length, 'rem', recs.map(x => `<li><span class="rem-i">✎</span> <span>${esc(x.b.record.filter(r => !clean(r.value)).map(r => r.name).join(', '))}</span>
       <a class="tsrc" style="--ec:${x.b.color}" href="#exp/${x.b.id}" data-peek="${x.b.id}">${esc(ttl(x.b) || 'Untitled')}</a></li>`).join('')) : '';
   const gFut = GEN.filter(t => !t.done && !(t.due === 'daily' || isDate(t.due) && t.due <= td)).length;
-  const edge = isT && future.length + gFut ? `<button class="t-later ${TFUT ? 'on' : ''}" data-act="toggleFut" aria-expanded="${TFUT}" title="${TFUT ? 'Show only today' : 'Show tomorrow and later'}">${TFUT ? '‹ Only today' : `+${future.length + gFut} later ›`}</button>` : '';
+  const edge = isT && future.length + gFut ? `<button class="t-later ${TFUT ? 'on' : ''}" data-act="toggleFut" aria-expanded="${TFUT}" title="${TFUT ? "Back to today's to-dos" : "Tomorrow and later (today's are not repeated there)"}">${TFUT ? '‹ Today' : `+${future.length + gFut} later ›`}</button>` : '';
   const nOpen = rows.filter(r => !r[1].done).length, nDone = rows.length - nOpen;
-  if (isT){ const gD = GEN.filter(t => t.due === 'daily' || isDate(t.due) && t.due <= td), left = nOpen + gD.filter(t => !t.done).length, tot = rows.length + gD.length;
+  if (isT){ const gD = GEN.filter(t => t.due === 'daily' || isDate(t.due) && t.due <= td), left = todayRows.filter(r => !r[1].done).length + gD.filter(t => !t.done).length, tot = todayRows.length + gD.length;
     if (!left && tot && LAST_LEFT > 0) setTimeout(() => { confetti(); toast(pick(YAY)); }, 60);
     LAST_LEFT = left; var cheer = !tot ? '' : !left ? '<span class="cheer-l yay">🎉 All done for today. Go rest, you earned it.</span>'
       : `<span class="cheer-l">${pick(left / tot > .5 ? GO : ALMOST)}</span>`; }
   return `<section class="today-p"><div class="row"><h2>To-do</h2>
       <span class="tday"><button class="btn ghost sm" data-act="tDay" data-arg="-1" aria-label="Previous day">‹</button><input type="date" id="tDay" value="${esc(D)}" aria-label="Day of the to-do list">
-        <button class="btn ghost sm" data-act="tDay" data-arg="1" aria-label="Next day">›</button>${isT ? '<b class="tday-l">today</b>' : `<button class="btn sm" data-act="tDay" data-arg="0">Today</button>`}</span>
+        <button class="btn ghost sm" data-act="tDay" data-arg="1" aria-label="Next day">›</button>${isT ? `<b class="tday-l">${TFUT ? 'tomorrow and later' : 'today'}</b>` : `<button class="btn sm" data-act="tDay" data-arg="0">Today</button>`}</span>
       <span class="hint">${nOpen} open${nDone ? ` · ${nDone} done` : ''}</span>${isT ? cheer : ''}<span class="grow"></span>
       <select id="fTGroup" aria-label="Group to-dos by">${opt('due', 'By due date')}${opt('exp', 'By experiment')}${opt('tag', 'By tag')}</select>
       <button class="btn sm" data-act="nextView">Full list</button></div>
     <div class="t-wrap2"><div class="tcols">${genCol(D, isT, td)}${rem}${by === 'exp' ? expCols(main, li) : todoGroups(main, by).map(([h, g, c]) => col(h, g.length, c, g.map(([it, t]) => li(it, t)).join(''))).join('')
-      || (genCol(D, isT, td) ? '' : `<p class="hint" style="margin:4px 0">${isT ? 'Nothing due today.' : `No to-dos for ${esc(fmtDay(D))}.`}</p>`)}</div>${edge}</div>${genForm()}</section>`;
+      || (genCol(D, isT, td) ? '' : `<p class="hint" style="margin:4px 0">${isT ? (TFUT ? 'Nothing planned after today.' : 'Nothing due today.') : `No to-dos for ${esc(fmtDay(D))}.`}</p>`)}</div>${edge}</div>${genForm()}</section>`;
 }
 let TDAY = '';
 function overdueHtml(){
@@ -5790,6 +5823,7 @@ let TOPEN = '', TFUT = false, GEN = [];
 function genDue(){ const w = $('#genWhen').value, td = localDate(); return w === 'tomorrow' ? addDays(td, 1) : w === 'today' ? td : w === 'date' ? $('#genDate').value : w === 'daily' ? 'daily' : ''; }
 A.genAdd = async () => {
   smartWhen($('#genText'), 'gen'); const text = clean($('#genText').value); if (!text){ toast('Write the to-do first.'); $('#genText').focus(); return; }
+  if (GEN.some(g => !g.done && clean(g.text).toLowerCase() === text.toLowerCase())){ toast(`Already on the general list: “${text}”.`); return; }
   const due = genDue(); if ($('#genWhen').value === 'date' && !due){ toast('Pick the date.'); return; }
   const t = { id: uid(), text, due, done: false, note: '', setAt: localDate(), gen: true };
   if ($('#genProj').checked){ const tag = clean($('#genTag').value); if (!tag){ toast('Name the project tag.'); $('#genTag').focus(); return; }
@@ -5801,7 +5835,8 @@ A.genDel = id => { GEN = GEN.filter(x => x.id !== id); saveSetting('general', GE
 A.genSnooze = id => { const t = GEN.find(x => x.id === id); if (!t) return; const nt = Object.assign({}, t, { id: uid(), due: addDays(localDate(), 1), done: false, doneAt: '', prev: t.id, setAt: localDate() });
   GEN.splice(GEN.indexOf(t), 1, nt); saveSetting('general', GEN); render(); toast(`Moved to ${fmtDay(nt.due)}.`); };
 function genCol(D, isT, td){
-  const onD = t => t.done ? (t.doneAt ? localDate(new Date(t.doneAt)) : '') === D : isT ? TFUT || t.due === 'daily' || isDate(t.due) && t.due <= td : t.due === D;
+  const now = t => t.due === 'daily' || isDate(t.due) && t.due <= td;
+  const onD = t => isT && TFUT ? !t.done && !now(t) : t.done ? (t.doneAt ? localDate(new Date(t.doneAt)) : '') === D : isT ? now(t) : t.due === D;
   const rows = GEN.filter(t => onD(t) && !(isT && !t.done && isDate(t.due) && t.due < td)).sort((a, b) => a.done - b.done); if (!rows.length) return '';
   return `<div class="tcol texp gen"><h4>General <span>${rows.filter(t => !t.done).length}</span></h4><ul>${rows.map(t => { const l = t.link && findB(t.link); return `<li class="${t.done ? 'done' : ''}"${heat(t)}>
     <input type="checkbox" data-gen="${t.id}" ${t.done ? 'checked' : ''} aria-label="Done"><textarea rows="1" class="fit tx" data-gentext="${t.id}" aria-label="To-do">${esc(t.text)}</textarea>
@@ -5841,7 +5876,7 @@ A.newCreate = async () => {
   const b = newBlock(); Object.assign(b, { color: pickColor(e), date: d, title: clean($('#nxTitle').value), tags, kinds: uniq($('#nxKind').value.split(',')) });
   e.blocks.push(b); $('#newDlg').close(); await saveNow(); if (!b.title) FOCUS_TITLE = true; go('#exp/' + b.id); };
 $('#newDlg').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT'){ e.preventDefault(); A.newCreate(); } });
-app.addEventListener('keydown', e => { if ((e.target.id === 'genText' || e.target.id === 'genTag') && e.key === 'Enter'){ e.preventDefault(); A.genAdd(); } });
+app.addEventListener('keydown', e => { if ((e.target.id === 'genText' || e.target.id === 'genTag') && e.key === 'Enter'){ e.preventDefault(); if (!e.isComposing && !e.repeat) A.genAdd(); } });
 
 // ── Reports: a day (default), a week, a month, a date range, or a whole tag ──
 /* #report/<day> · #report/<from>..<to> · either followed by /t/<tag> */

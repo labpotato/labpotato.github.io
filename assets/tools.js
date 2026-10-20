@@ -62,7 +62,7 @@ const TOOLS = [
         new: [
           "Several titled tables in Results",
           "Compact board, golden-ratio spacing, curved lines by tag",
-          "Autofill comes back on Tab, click and arrow keys"
+          "Grey to-do suggestions; postponing leaves no empty days"
         ] }
     ]
   },

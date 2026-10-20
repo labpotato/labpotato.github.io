@@ -61,7 +61,7 @@ const TOOLS = [
       { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20",
         new: [
           "Several titled tables in Results",
-          "Compact board: five experiments per screen, golden-ratio spacing",
+          "Compact board, golden-ratio spacing, curved lines by tag",
           "Autofill comes back on Tab, click and arrow keys"
         ] }
     ]

@@ -1292,6 +1292,9 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 .card.bk .bk-s > .bk-tags{margin:0 0 0 auto;justify-content:flex-end}
 .card.bk .bk-r{margin-top:var(--g1)}
 .bk-tab .mini-more td{color:var(--muted);font-style:italic;border-bottom:0;text-align:center;padding:2px 6px}
+/* v10: timeline by tag. Every tile sits centred in its row, so the line from one tile to the next leaves and
+   arrives at the same height and runs straight. */
+.m-tag .bd-cell{align-self:center}
 </style>
 </head>
 <body>
@@ -4132,7 +4135,7 @@ function drawBoardLinks(){
     el.className = `bd-node${n.done ? ' done' : ''}${n.loose ? ' loose' : ''}`; el.style.setProperty('--ec', n.color); el.dataset.a = n.a; el.dataset.tg = tg.join(',');
     el.innerHTML = n.html; el.style.visibility = 'hidden'; bd.append(el); return Object.assign({ el, tg }, n); });
   const need = Math.max(0, ...nodes.map(n => tag ? n.el.offsetWidth : n.el.offsetHeight));
-  const tabbed = !tag && nodes.some(n => $('.bk-seg', cell(n.a))), want = Math.round((need ? (tag ? clamp(need + 36, 56, 240) : clamp(need + 13, 34, 220)) : 21) + (tabbed ? 26 : 0) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
+  const tabbed = !tag && nodes.some(n => $('.bk-seg', cell(n.a))), want = Math.round((need ? (tag ? clamp(need + 89, 89, 300) : clamp(need + 13, 34, 220)) : 21) + (tabbed ? 26 : 0) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
   if (Math.abs((cur || 0) - want) > 1) bd.style.setProperty('--rg', want + 'px');
   const o = bd.getBoundingClientRect(), R = el => { const r = el.getBoundingClientRect(); return { l: r.left - o.left, t: r.top - o.top, r: r.right - o.left, b: r.bottom - o.top }; };
   const U = r => tag ? [r.l, r.r] : [r.t, r.b], V = r => tag ? (r.t + r.b) / 2 : (r.l + r.r) / 2, VV = r => tag ? [r.t, r.b] : [r.l, r.r], XY = (u, v) => tag ? [u, v] : [v, u];
@@ -4147,8 +4150,9 @@ function drawBoardLinks(){
     g.forEach(n => { n.v0 = Math.max(n.want - n.w / 2, end + 12); end = n.v0 + n.w; });
     const over = end - vMax; if (over > 0) g.forEach(n => { n.v0 -= over; }); const under = vMin - g[0].v0; if (under > 0) g.forEach(n => { n.v0 += under; });
     const uc = (U(G)[0] + U(G)[1]) / 2;
+    /* by tag the to-do sits right after its tile, leaving the rest of the gap for the slope to the next one */
     g.forEach(n => { const tb = $('.bk-seg', card(n.a).parentElement), T = tb && R(tb), lo = T && dir < 0 ? U(G)[0] : T ? U(T)[1] + 6 : 0, hi = T && dir < 0 ? U(T)[0] - 6 : T ? U(G)[1] : 0;
-      const ucn = T && hi - lo >= n.h ? (lo + hi) / 2 : uc, [x, y] = XY(ucn - n.h / 2, n.v0); n.el.style.left = x + 'px'; n.el.style.top = y + 'px'; n.el.style.visibility = ''; n.N = R(n.el); }); });
+      const ucn = tag ? (dir > 0 ? U(G)[0] + 13 + n.h / 2 : U(G)[1] - 13 - n.h / 2) : T && hi - lo >= n.h ? (lo + hi) / 2 : uc, [x, y] = XY(ucn - n.h / 2, n.v0); n.el.style.left = x + 'px'; n.el.style.top = y + 'px'; n.el.style.visibility = ''; n.N = R(n.el); }); });
   /* the lane where lines turn: past the steps in that gap, before the next day */
   const chan = gi => { const G = gapR.get(gi); if (!G) return null; const ns = byGap.get(gi) || [], end = fwd(G);
     if (!ns.length) return (U(G)[0] + U(G)[1]) / 2; const f = (dir > 0 ? Math.max(...ns.map(n => fwd(n.N))) : Math.min(...ns.map(n => fwd(n.N)))) ; return (f + end) / 2; };
@@ -4205,9 +4209,27 @@ function drawBoardLinks(){
   const C = (p, q) => Math.abs(p[1] - q[1]) < 1.5 ? P([p, q]) : (m => `M${XY(...p)} C${XY(m, p[1])} ${XY(m, q[1])} ${XY(...q)}`)((p[0] + q[0]) / 2);   // a tile to its own to-do, when the to-do had to move aside
   const short = 0, mk = new Map(), mkId = c => { if (!mk.has(c)) mk.set(c, 'ah' + mk.size); return mk.get(c); };
   const L2 = pts => roundPath(pts.filter((p, i) => !i || Math.abs(p[0] - pts[i - 1][0]) + Math.abs(p[1] - pts[i - 1][1]) > 1).map(([u, v]) => XY(u, v)), 12);
+  /* Timeline by tag: a change of row is one smooth S-curve (level out, a slope across, level in) instead of two right angles.
+     Points are (u, v) = (along the time axis, across it); every run across the rows becomes the slope of one curve,
+     which borrows up to 40 px of the level runs on either side; a line that can go straight to its tile is a single curve.
+     The gap between days is 89 px wider here, so the slopes stay gentle. */
+  const SW = 40, smooth = pts => { pts = pts.filter((p, i) => !i || Math.abs(p[0] - pts[i - 1][0]) + Math.abs(p[1] - pts[i - 1][1]) > 1);
+    const cross = i => Math.abs(pts[i][0] - pts[i - 1][0]) < .5 && Math.abs(pts[i][1] - pts[i - 1][1]) >= 1;
+    let d = `M${XY(...pts[0])}`;
+    for (let i = 1; i < pts.length; i++){ const a = pts[i - 1], b = pts[i];
+      if (!cross(i)){ if (!(i + 1 < pts.length && cross(i + 1))) d += ` L${XY(...b)}`; continue; }
+      const pv = pts[i - 2], nx = pts[i + 1], lp = pv ? Math.abs(a[0] - pv[0]) / (i - 2 > 0 && cross(i - 2) ? 2 : 1) : 0, ln = nx ? Math.abs(nx[0] - b[0]) / (i + 2 < pts.length && cross(i + 2) ? 2 : 1) : 0;
+      const si = pv ? Math.sign(a[0] - pv[0]) || dir : dir, so = nx ? Math.sign(nx[0] - b[0]) || dir : dir;
+      const S = [a[0] - si * Math.min(SW, lp), a[1]], E = [b[0] + so * Math.min(SW, ln), b[1]], m = (S[0] + E[0]) / 2;
+      d += ` L${XY(...S)} C${XY(m, a[1])} ${XY(m, b[1])} ${XY(...E)}`; }
+    return d; };
   const svg = flows.map(f => { const parts = [];
     if (f.n){ const a = [fwd(f.n.A), V(f.n.A)], ni = [back(f.n.N), V(f.n.N)]; parts.push([C(a, ni), 0]); }
     const fork = f.br.length > 1, cu = f.cu ?? f.p[0] + dir * 14, J = f.bent ? [cu, f.p[1]] : f.p;
+    if (tag){ f.br.forEach(b => { const cn = b.kind === 'gutter' ? chan(gapBefore(b.id)) ?? (b.q[0] - dir * 14) : 0;
+        parts.push([b.kind === 'rung' ? (m => `M${XY(...f.p)} C${XY(m, f.p[1])} ${XY(m, b.q[1])} ${XY(...b.q)}`)((f.p[0] + b.q[0]) / 2) : smooth(b.straight ? [f.p, b.q] : b.kind === 'climb' ? [f.p, J, [cu, b.xv], [b.cn2, b.xv], [b.cn2, b.q[1]], b.q] : [f.p, J, [cu, b.gv], [cn, b.gv], [cn, b.q[1]], b.q]), 1]); });
+      const id = mkId(f.color);
+      return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.A) : dot(R(card(f.a)))}</g>`; }
     if (f.bent) parts.push([P([f.p, J]), 0]);
     f.br.forEach(b => {
       if (b.straight) parts.push([P([J, b.q]), 1]);

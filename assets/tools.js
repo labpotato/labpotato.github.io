@@ -58,11 +58,10 @@ const TOOLS = [
       { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14" },
       { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15" },
       { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15" },
-      { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20",
+      { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20" },
+      { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20",
         new: [
-          "Several titled tables in Results",
-          "Compact board, golden-ratio spacing, curved lines by tag",
-          "Grey to-do suggestions; postponing leaves no empty days"
+          "Autofill: Tab fills one word at a time, the right arrow takes it all"
         ] }
     ]
   },
@@ -220,17 +219,18 @@ const TOOLS = [
     folder: "tools/cryobox-labeler",
     features: [
       "Freezers sized in cm around real racks, plus −20 °C drawers and bench spots",
-      "Cryoboxes plus divided and unordered boxes that take any tube, picked per sample",
+      "Edit a box like an Excel sheet; smart sort tells you what to move where",
       "Import from Excel by pasting rows or loading .xlsx, and export to Excel"
     ],
     versions: [
       { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08" },
       { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13" },
-      { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14",
+      { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14" },
+      { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20",
         new: [
-          "Unordered and divided boxes take any tube; pick its type as you add it",
-          "Save goes back to the same file; Ctrl+Z and Ctrl+Y undo and redo",
-          "Import from Excel: paste many rows or load an .xlsx, check, then import"
+          "Sheet view like Excel: copy and paste, fill down, drag columns",
+          "Smart sort with a list of moves, labelled groups, find duplicates",
+          "Fill across or down (A1 to I1), colony number, wider table"
         ] }
     ]
   }

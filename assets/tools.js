@@ -47,7 +47,7 @@ const TOOLS = [
     folder: "tools/lab-entry",
     features: [
       "Timeline by day, by project or as a dateless flow",
-      "Highlight key results and see them on the board",
+      "Compact tiles: title, figure or table, and your highlights",
       "Autofill of your strains and plasmids everywhere you write"
     ],
     versions: [
@@ -57,11 +57,12 @@ const TOOLS = [
       { v: "v5", file: "lab-entry-v5.html", date: "2026-10-14" },
       { v: "v6", file: "lab-entry-v6.html", date: "2026-10-14" },
       { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15" },
-      { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15",
+      { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15" },
+      { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20",
         new: [
-          "Bold, red and green text in Results; tiles show more results",
-          "A to-do two days ahead makes day 2 there: no blank days",
-          "Ladder-style lines, more tables, Back and Home"
+          "Several titled tables in Results",
+          "Compact board: five experiments per screen, golden-ratio spacing",
+          "Autofill comes back on Tab, click and arrow keys"
         ] }
     ]
   },

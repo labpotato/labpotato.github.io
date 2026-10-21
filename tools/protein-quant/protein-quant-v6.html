@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protein Quant — Lab Potato</title>
+<meta name="description" content="Protein concentration and yield from A280 or a standard curve, for several proteins at once, in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%2722 46 208 144%27%3E%3Cpath d=%27M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z%27 fill=%27%23cd9050%27/%3E%3C/svg%3E">
+<style>
+  :root{
+    /* Lab Potato homepage tokens (assets/styles.css), same as Lab Entry and Cryobox */
+    --paper:#fcfbf9; --card:#fff; --ink:#16181d; --ink-2:#3d424b; --ink-3:#5d636d;
+    --line:#e6e5e1; --line-2:#d6d4ce;
+    --blue:#0a5fd0; --blue-d:#0850b1; --blue-l:#e8f0fc;
+    --green:#0f9d76; --green-l:#e5f5f0; --green-d:#0b5c45;
+    --amber:#b7791f; --amber-l:#fdf3e2; --amber-d:#6b4510;
+    --red:#d1495b; --red-l:#fbeaec; --red-d:#8a1f2e;
+    --violet:#7c5cd6; --violet-l:#f1edfc;
+    --brand-ink:#1d2433;
+    --calc:#f6f7f9; --sel:rgba(10,95,208,.10); --selb:#0a5fd0;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--paper:#0f1115; --card:#181b21; --ink:#f1f2f4; --ink-2:#c3c7ce; --ink-3:#9aa0a9;
+      --line:#2b3038; --line-2:#3a404a;
+      --blue:#5b9dff; --blue-d:#8cbaff; --blue-l:#16233a;
+      --green:#3fcf9f; --green-l:#11281f; --green-d:#7fe0bd;
+      --amber:#f0b95a; --amber-l:#2a2112; --amber-d:#f5d9a6;
+      --red:#f07a8a; --red-l:#2d161b; --red-d:#f7a9b3;
+      --violet:#b39dff; --violet-l:#221c36;
+      --brand-ink:#f1f2f4; --calc:#14171c; --sel:rgba(91,157,255,.16); --selb:#5b9dff;
+      --sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.006em;display:flex;flex-direction:column;overflow:hidden}
+  button,select,input,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  a{color:var(--blue)}
+  kbd{font:600 11px/1 var(--mono);padding:2px 5px;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;background:var(--card);color:var(--ink-2)}
+
+  /* ---- Lab Potato site header (same as Lab Entry and Cryobox) ---- */
+  .site-header{position:relative;z-index:70;display:flex;align-items:center;gap:10px;height:54px;padding:0 16px;flex:0 0 auto;
+    background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:9px;white-space:nowrap;color:inherit;text-decoration:none}
+  .brand-mark{width:26px;height:26px;display:block;overflow:visible;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+  .brand:hover .brand-mark{transform:rotate(-8deg) scale(1.08)}
+  .brand-word{font-size:15px;font-weight:680;letter-spacing:-.035em;color:var(--brand-ink)}
+  .brand-sep{color:var(--ink-3);font-weight:300}
+  .brand-tool{font-size:15px;font-weight:560;letter-spacing:-.025em;white-space:nowrap}
+  .ver-chip{font-size:10.5px;font-weight:640;letter-spacing:.02em;padding:2.5px 7px;border-radius:999px;background:var(--blue-l);color:var(--blue);
+    border:1px solid color-mix(in srgb,var(--blue) 22%,transparent)}
+  .header-spacer{flex:1}
+  .all-tools{font-size:12.5px;color:var(--ink-3);text-decoration:none;white-space:nowrap}
+  .all-tools:hover{color:var(--ink)}
+  .status{font-size:12px;color:var(--ink-3);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .status.busy::before{background:var(--amber)}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-2);background:var(--card);border-radius:9px;padding:6px 11px;font-size:13px;font-weight:560;white-space:nowrap;transition:background .15s,border-color .15s,transform .1s,color .15s}
+  .btn:hover{background:var(--paper);border-color:var(--ink-3)}
+  .btn:active{transform:translateY(1px)}
+  .btn svg{width:15px;height:15px;flex:0 0 auto}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.primary:hover{background:var(--blue-d);border-color:var(--blue-d)}
+  .btn.ghost{border-color:transparent;background:none}
+  .btn.ghost:hover{background:var(--line)}
+  .btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+  .btn.danger:hover{background:var(--red-l)}
+  .btn.small{padding:4px 9px;font-size:12.5px}
+  .btn:disabled{opacity:.4;cursor:default;transform:none}
+  .btn.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue)}
+
+  /* method switch, like the view switches in the other tools */
+  .seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;padding:2px;background:var(--card);gap:2px}
+  .seg button{border:0;background:none;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:560;color:var(--ink-2);white-space:nowrap}
+  .seg button.on{background:var(--blue);color:#fff}
+  .seg button:not(.on):hover{background:var(--paper)}
+
+  .menu-wrap{position:relative}
+  .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:90;width:330px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 14px 40px rgba(20,24,32,.2);padding:6px}
+  .menu button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;font-size:13.5px;font-weight:560}
+  .menu button svg{width:16px;height:16px;flex:0 0 auto;margin-top:2px;color:var(--ink-3)}
+  .menu button small{display:block;font-size:11.5px;color:var(--ink-3);font-weight:450;line-height:1.35}
+  .menu button:hover{background:var(--blue-l)}
+  .menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+  .menu .danger,.menu .danger svg{color:var(--red)}
+  .menu .danger:hover{background:var(--red-l)}
+
+  /* ---- settings bar under the header ---- */
+  .bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:48px;padding:7px 16px;border-bottom:1px solid var(--line);background:var(--card);flex:0 0 auto}
+  .bar label{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+  .bar select,.bar input[type=text]{border:1px solid var(--line-2);border-radius:8px;background:var(--card);padding:4px 8px;font-size:13px;color:var(--ink)}
+  .bar .sep{width:1px;height:22px;background:var(--line)}
+  .stepper{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+  .stepper button{border:0;background:var(--card);width:26px;height:26px;font-size:15px;color:var(--ink-2)}
+  .stepper button:hover{background:var(--paper)}
+  .stepper b{min-width:24px;text-align:center;font-size:13px;color:var(--ink)}
+
+  /* ---- layout: sheet on the left, results panel on the right (like Cryobox) ---- */
+  /* golden ratio: sheet 61.8 % · panel 38.2 % */
+  .app{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 6px var(--pw,clamp(300px,calc((100vw - 6px) * .27),400px))}
+  .main{min-width:0;min-height:0;overflow:auto;padding:16px 18px 40px}
+  .split{cursor:col-resize;background:var(--line);position:relative}
+  .split:hover,.split.drag{background:var(--blue)}
+  .panel{min-height:0;overflow:auto;background:var(--card);border-left:1px solid var(--line);padding:16px 18px 40px}
+  .sec-h{display:flex;align-items:baseline;gap:10px;margin:2px 0 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+  .sec-h .sub{font-size:12px;font-weight:450;letter-spacing:0;text-transform:none;margin-left:auto}
+  .sec-h .n{font:700 11px/1 var(--mono);color:var(--blue);background:var(--blue-l);border-radius:5px;padding:3px 6px;letter-spacing:0}
+  .hint{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh)}
+  .main > .block{margin-bottom:22px}
+  .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+  .tools .grow{flex:1}
+
+  /* ---- the sheet ---- */
+  .sheet{position:relative;outline:none;border:1px solid var(--line-2);border-radius:10px;overflow:auto;background:var(--card);max-height:min(62vh,760px)}
+  .sheet:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 25%,transparent)}
+  .sheet table{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%;table-layout:fixed}
+  .sheet th,.sheet td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:30px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;vertical-align:middle}
+  .sheet thead th{position:sticky;top:0;z-index:3;background:var(--paper);font-size:11.5px;font-weight:650;color:var(--ink-2);height:auto;padding:5px 8px;line-height:1.25;white-space:normal;cursor:pointer;user-select:none}
+  .sheet thead tr.cl th{height:20px;padding:0 8px;font:600 10.5px/20px var(--mono);color:var(--ink-3);text-align:center}
+  .sheet thead tr.hd th{top:20px}
+  .sheet thead th small{display:block;font-weight:450;color:var(--ink-3);font-size:10.5px}
+  .sheet thead th.calc{background:color-mix(in srgb,var(--violet-l) 70%,var(--paper))}
+  .sheet thead th.calc.first{border-left:2px solid var(--violet)}
+  .sheet .rn{position:sticky;left:0;z-index:2;width:38px;min-width:38px;text-align:center;background:var(--paper);color:var(--ink-3);font:600 11px var(--mono);padding:0;cursor:pointer;user-select:none}
+  .sheet thead .rn{z-index:4}
+  .sheet td.k-name{position:sticky;left:38px;z-index:1;background:var(--card);font-weight:600;box-shadow:1px 0 0 var(--line)}
+  .sheet thead th.k-name{left:38px;z-index:4}
+  .sheet td{cursor:cell;user-select:none;background:var(--card)}
+  .sheet td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .sheet td.calc{background:var(--calc);color:var(--ink-2)}
+  .sheet td.calc.first{border-left:2px solid var(--violet)}
+  .sheet td.calc.big{color:var(--ink);font-weight:650}
+  .sheet td.ph{color:var(--ink-3);font-style:italic}
+  .sheet td.sel{background:var(--sel)}
+  .sheet td.calc.sel{background:color-mix(in srgb,var(--sel) 100%,var(--calc))}
+  .sheet td.act{box-shadow:inset 0 0 0 2px var(--selb)}
+  .sheet tr.new td{background:color-mix(in srgb,var(--green-l) 55%,var(--card))}
+  .sheet tr.new td.k-name{color:var(--ink-3);font-style:italic;font-weight:450}
+  .sheet tr.new td.calc{background:color-mix(in srgb,var(--green-l) 30%,var(--calc))}
+  .sheet tr.new td.sel{background:var(--sel)}
+  .sheet tr.cur .rn{color:var(--blue);background:var(--blue-l)}
+  .sheet tr.rsel .rn{background:var(--blue);color:#fff}
+  .sheet th.csel{background:var(--blue-l);color:var(--blue)}
+  .sheet .ed{position:absolute;z-index:6;border:2px solid var(--selb);border-radius:2px;padding:0 6px;background:var(--card);font-size:13px;outline:none;box-shadow:0 4px 14px rgba(20,24,32,.18)}
+  .sheet select.ed{padding:0 2px}
+  .pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11.5px;font-weight:620;line-height:18px}
+  .t-low{background:var(--amber-l);color:var(--amber-d)} .t-typical{background:var(--blue-l);color:var(--blue)}
+  .t-high,.t-veryhigh{background:var(--green-l);color:var(--green-d)} .t-impressive{background:var(--violet-l);color:var(--violet)}
+  .t-impossible{background:var(--red-l);color:var(--red-d)}
+  .fl-err{color:var(--red)} .fl-warn{color:var(--amber)}
+  td .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  td .seqchip{font:600 11px var(--mono);color:var(--violet);background:var(--violet-l);border-radius:5px;padding:2px 6px}
+  .sheet .rx{display:none;position:absolute;left:2px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:0;border-radius:4px;background:none;color:var(--red);font-size:13px;line-height:16px;padding:0}
+  .sheet tr:not(.new):hover .rn .rx{display:block}
+  .sheet tr:not(.new):hover .rn .rnn{visibility:hidden}
+  .sheet .rn{position:sticky}
+  .sheet .rn > span{position:relative}
+
+  /* ---- results panel ---- */
+  .panel .card{padding:12px 14px;margin-bottom:14px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:13px}
+  .kv dt{color:var(--ink-3)} .kv dd{font-variant-numeric:tabular-nums}
+  .big-n{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+  .big-n small{font-size:14px;font-weight:560;color:var(--ink-3);margin-left:4px}
+  .flags{list-style:none;display:grid;gap:4px;font-size:12.5px;margin-top:8px}
+  .flags li{padding:5px 8px;border-radius:7px;background:var(--paper)}
+  .flags li.err{background:var(--red-l);color:var(--red-d)} .flags li.warn{background:var(--amber-l);color:var(--amber-d)}
+  .chart{width:100%;height:auto;display:block}
+  .chart text{font-family:var(--sans);fill:var(--ink-2)}
+  .chart .ax{stroke:var(--line-2)} .chart .gl{stroke:var(--line);stroke-dasharray:2 3}
+  .chart .bar{fill:var(--blue)} .chart .bar.y{fill:var(--green)} .chart .err{stroke:var(--ink);stroke-width:1.4;stroke-linecap:round}.chart .err-h{stroke:var(--card);stroke-width:3.4;stroke-linecap:round;opacity:.9}
+  .chart .bar.cur{fill:var(--violet)}
+  .chart .fit{stroke:var(--blue);stroke-width:2;fill:none} .chart .std{fill:var(--blue)} .chart .smp{fill:var(--violet)} .chart .out{fill:none;stroke:var(--red);stroke-width:1.6}
+  .units{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .units div{background:var(--paper);border-radius:8px;padding:5px 8px;font-size:12px;color:var(--ink-3)}
+  .units b{display:block;font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .empty{padding:18px;text-align:center;color:var(--ink-3);font-size:13px}
+  .eq{font:600 13px var(--mono);background:var(--paper);border-radius:8px;padding:8px 10px;margin:8px 0}
+
+  /* ---- help ---- */
+  details.help{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  details.help > summary{cursor:pointer;padding:12px 16px;font-weight:620;font-size:13.5px}
+  .helpbody{padding:0 18px 16px;font-size:13px;color:var(--ink-2);max-width:86ch}
+  .helpbody h4{margin:14px 0 4px;font-size:13.5px;color:var(--ink)}
+  .helpbody p{margin:4px 0}
+  .helpbody code{font:12px var(--mono);background:var(--paper);padding:1px 5px;border-radius:4px}
+  .helpbody ul{list-style:none;margin-top:12px;font-size:12px;display:grid;gap:3px}
+  .wm{margin-top:18px;font-size:11.5px;color:var(--ink-3)}
+
+  /* ---- dialog and toast (same as the other tools) ---- */
+  .overlay{position:fixed;inset:0;z-index:100;background:rgba(15,17,21,.35);display:grid;place-items:center;padding:20px}
+  .dlg{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--card);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.25);border:1px solid var(--line)}
+  .dlg.wide{width:min(820px,100%)}
+  .dlg-h{padding:14px 18px 6px;font-size:16px;font-weight:680}
+  .dlg-b{padding:6px 18px 12px;font-size:13.5px;color:var(--ink-2)}
+  .dlg-b p{margin:6px 0}
+  .dlg-b textarea{width:100%;min-height:160px;border:1px solid var(--line-2);border-radius:8px;padding:8px;font:12.5px var(--mono);background:var(--paper)}
+  .dlg-f{display:flex;gap:8px;align-items:center;padding:10px 18px 16px}
+  .dlg-f .grow{flex:1}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:110;display:flex;align-items:center;gap:12px;background:#1d2433;color:#fff;border-radius:12px;padding:10px 12px 10px 16px;font-size:13.5px;box-shadow:0 12px 30px rgba(0,0,0,.25);max-width:min(720px,92vw)}
+  .toast button{border:0;border-radius:8px;background:rgba(255,255,255,.14);color:#fff;padding:4px 10px;font-weight:600}
+  .toast button:hover{background:rgba(255,255,255,.25)}
+
+  .toast[hidden],.menu[hidden]{display:none}
+  @media (max-width:1560px){.site-header .lbl,.seg .long,.all-tools span,.site-header .status{display:none}.site-header{gap:7px}}
+  @media (max-width:1100px) and (min-width:901px){.app{grid-template-columns:1fr;grid-template-rows:auto auto;overflow:auto;display:block;flex:1}.split{display:none}.panel{border-left:0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-content:start}.panel>.sec-h{grid-column:1/-1}.panel .card{margin:0}.main{overflow:visible}}
+  .bar select{max-width:100%}
+  @media (max-width:900px){
+    .app{display:block;flex:none;overflow:visible}
+    .bar label{white-space:normal;flex-wrap:wrap;max-width:100%}
+    .bar select{max-width:calc(100vw - 40px)}
+    .split{display:none}
+    .panel{border-left:0;border-top:1px solid var(--line)}
+    body{overflow:auto} .main{overflow:visible}
+    .site-header{flex-wrap:wrap;height:auto;padding:8px 12px}
+  }
+
+  /* ================= v6 cards: one per protein, room to breathe ================= */
+  .main{padding:20px 24px 60px}
+  .sec-h.big{font-size:12.5px;margin:6px 0 12px}
+  .hero-card{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:center;padding:22px 26px;margin-bottom:22px}
+  .hero-card h2{font-size:21px;letter-spacing:-.02em;margin-bottom:6px}
+  .hero-card p{color:var(--ink-2);font-size:14px;max-width:56ch}
+  .hero-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .pcard{container-type:inline-size;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:14px;box-shadow:var(--sh);margin-bottom:16px;transition:box-shadow .2s}
+  .pcard:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 35%,transparent),var(--sh)}
+  .pcard.flash{animation:flash 1.1s ease}
+  @keyframes flash{0%,100%{box-shadow:var(--sh)}30%{box-shadow:0 0 0 5px color-mix(in srgb,var(--pc) 55%,transparent)}}
+  .ch{display:flex;align-items:center;gap:10px;padding:12px 14px 10px 16px;border-bottom:1px solid var(--line)}
+  .pcard.folded .ch{border-bottom:0}
+  .swatch{width:12px;height:12px;border-radius:50%;flex:0 0 auto;display:inline-block}
+  .in{border:1px solid var(--line-2);border-radius:9px;background:var(--card);padding:7px 10px;font-size:14px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+  .in:hover{border-color:var(--ink-3)}
+  .in:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 18%,transparent)}
+  .in::placeholder{color:color-mix(in srgb,var(--ink-3) 75%,transparent)}
+  .in:disabled{opacity:.55}
+  select.in{padding:7px 8px}
+  .in.name{font-size:16px;font-weight:650;border-color:transparent;background:none;padding:5px 8px;flex:1}
+  .in.name:hover{border-color:var(--line-2)}
+  .sum{font-size:13px;color:var(--ink-2);white-space:nowrap}
+  .sum b{font-size:15px;color:var(--ink)}
+  .ch-b{display:flex;gap:2px}
+  .ib{border:0;background:none;width:30px;height:30px;border-radius:8px;color:var(--ink-3);font-size:15px;display:grid;place-items:center}
+  .ib:hover{background:var(--paper);color:var(--ink)}
+  .ib.del:hover{background:var(--red-l);color:var(--red)}
+  .ib.sm{width:26px;height:26px;font-size:14px}
+  .cb{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:0}
+  .grps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:16px 18px 18px}
+  .grp{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .gt{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+  .gt span{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--pc) 28%,var(--card));color:var(--ink);font-size:11px;letter-spacing:0}
+  .gt small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-3)}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fl{display:flex;align-items:baseline;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .fl small{font-weight:450;color:var(--ink-3)}
+  .fl .all{margin-left:auto;border:0;background:none;color:var(--blue);font-size:11.5px;font-weight:600;padding:0 2px;border-radius:5px;opacity:.75}
+  .fl .all:hover{opacity:1;background:var(--blue-l)}
+  .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:6px}
+  .two.u{grid-template-columns:minmax(0,1fr) 74px}
+  .two.e{grid-template-columns:minmax(0,1fr) 104px}
+  .fld.mt{margin-top:4px}
+  .seqrow{display:flex;flex-direction:column;gap:4px}
+  textarea.in.seq{font:12px/1.45 var(--mono);resize:vertical;min-height:62px;word-break:break-all}
+  .seqinfo{font-size:12px;color:var(--ink-3);line-height:1.5}
+  .seqinfo .flags{margin-top:2px}
+  .seqchip{font:600 11px var(--mono);color:var(--violet);background:var(--violet-l);border-radius:5px;padding:2px 6px;margin-right:4px}
+  .lnk{border:0;background:none;color:var(--blue);font-size:13px;font-weight:600;padding:2px 0;text-align:left;align-self:flex-start}
+  .lnk:hover{text-decoration:underline}
+  .reads{display:flex;flex-direction:column;gap:6px}
+  .rd{display:grid;grid-template-columns:22px minmax(0,1fr) 26px;align-items:center;gap:6px}
+  .rd .ri{font:600 11.5px var(--mono);color:var(--ink-3);text-align:right}
+  .rd .in{font-variant-numeric:tabular-nums}
+  .rd .rx{border:0;background:none;color:var(--ink-3);border-radius:6px;width:26px;height:26px;font-size:15px;opacity:0;transition:opacity .15s}
+  .rd:hover .rx,.rd:focus-within .rx{opacity:1}
+  .rd .rx:hover{background:var(--red-l);color:var(--red)}
+  .addrd{margin-left:28px}
+  .res{border-left:1px solid var(--line);background:color-mix(in srgb,var(--pc) 7%,var(--card));border-radius:0 14px 14px 0;padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+  .res-n{display:flex;flex-direction:column;gap:6px;min-height:84px}
+  .r-wait{font-size:13px;color:var(--ink-3);line-height:1.5}
+  .r-big b{font-size:30px;font-weight:750;letter-spacing:-.035em;line-height:1}
+  .r-big span{font-size:15px;font-weight:600;color:var(--ink-2)}
+  .r-alt{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .r-line{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .r-y{display:flex;gap:6px;flex-wrap:wrap}
+  .r-y div{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:5px 9px;display:flex;flex-direction:column;min-width:74px}
+  .r-y small{font-size:11px;color:var(--ink-3)} .r-y b{font-size:14px;font-variant-numeric:tabular-nums}
+  .r-hint{font-size:12px;color:var(--ink-3)}
+  .r-v{font-size:12px;color:var(--ink-2);line-height:1.45}
+  .res .flags{margin-top:0}
+  .dish{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px}
+  .dish-t{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+  .addcard{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:21px;border:2px dashed var(--line-2);border-radius:14px;background:none;color:var(--ink-2);font-size:15px;font-weight:620;margin:2px 0 14px;transition:all .15s}
+  .addcard span{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:18px;transition:transform .2s}
+  .addcard:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+  .addcard:hover span{transform:rotate(90deg)}
+  .tips{margin:4px 0 16px}
+  .ct{font-size:12.5px;font-weight:700;margin-bottom:8px} .ct small{font-weight:450;color:var(--ink-3);margin-left:4px}
+  table.ov{width:100%;border-collapse:collapse;font-size:13px}
+  table.ov th{font-size:11px;color:var(--ink-3);font-weight:650;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+  table.ov td{padding:6px;border-bottom:1px solid var(--line)}
+  table.ov tr[data-go]{cursor:pointer} table.ov tr[data-go]:hover td{background:var(--paper)}
+  table.ov .num{text-align:right;font-variant-numeric:tabular-nums}
+  .ov-b{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  /* standards */
+  .stdwrap{container-type:inline-size;margin-bottom:24px}
+  .stdcard{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:22px;padding:16px 18px}
+  .std-h,.std{display:grid;grid-template-columns:22px 96px minmax(0,1fr) 64px 104px 26px;gap:8px;align-items:center}
+  .std-h{font-size:11px;font-weight:650;color:var(--ink-3);padding:0 0 6px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .std{padding:4px 0}
+  .std .ri{font:600 11.5px var(--mono);color:var(--ink-3);text-align:right}
+  .sreads{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sreads .in{width:84px;flex:0 0 84px}
+  .sm-v{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .sm-v small{font-size:11px;color:var(--ink-3)}
+  .std-f{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}
+  .curve{min-width:0}
+  .curve-empty{height:100%;min-height:200px;border:2px dashed var(--line-2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-3);text-align:center;padding:16px}
+  .curve-empty svg{width:120px;color:var(--line-2);fill:var(--line-2)}
+  .curve-empty b{color:var(--ink-2)}
+  .kvs{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);margin:0 0 6px}
+  .kvs b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .eq{word-break:break-word}
+
+  /* ---------- live culture dish (from v5) ---------- */
+  .critter-stage{position:relative;width:250px;height:150px;border-radius:14px;overflow:hidden;
+    background:radial-gradient(120% 110% at 50% 100%,#eaf6f0 0%,#dbeee6 60%,#cde7dd 100%);border:2px solid #fff;box-shadow:var(--sh);transition:background .5s ease}
+  .critter-stage.earth-mode{background:radial-gradient(120% 120% at 50% 45%,#17223c 0%,#0b1425 60%,#060b16 100%)}
+  .critter-stage.galaxy-mode{background:radial-gradient(120% 120% at 50% 50%,#1c1131 0%,#120a22 55%,#06030d 100%)}
+  .critter-bug{position:absolute;bottom:9px;left:50%;width:96px;transform:translateX(-50%);animation:rock 4.4s ease-in-out infinite;transform-origin:50% 90%;z-index:3}
+  .critter-bug.centred{bottom:auto;top:50%;width:54px;transform:translate(-50%,-50%);z-index:5;animation:rockC 3.4s ease-in-out infinite}
+  @keyframes rock{0%,100%{transform:translateX(-50%) rotate(-5deg)}50%{transform:translateX(-50%) rotate(5deg) translateY(-2px)}}
+  @keyframes rockC{0%,100%{transform:translate(-50%,-50%) rotate(-6deg)}50%{transform:translate(-50%,-50%) rotate(6deg)}}
+  .critter-bug svg{width:100%;height:auto;display:block;filter:drop-shadow(0 2px 3px rgba(30,55,80,.18))}
+  .critter-bug.host-yeast{width:80px} .critter-bug.host-yeast.centred{width:48px}
+  .critter-bug.host-mammalian{width:88px} .critter-bug.host-mammalian.centred{width:52px}
+  .critter-bug.host-plant{width:78px} .critter-bug.host-plant.centred{width:48px}
+  .cpart{position:absolute;left:0;top:0;pointer-events:none;will-change:transform;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .sh-circle{border-radius:50%} .sh-blob{border-radius:62% 38% 33% 67% / 60% 32% 68% 40%}
+  .sh-hex{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)} .sh-tri{clip-path:polygon(50% 4%,4% 96%,96% 96%)} .sh-dia{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+  .cstar{position:absolute;border-radius:50%;background:#fff;pointer-events:none}
+  .cearth{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 32% 30%,#6fd6c9 0,#3fa8d9 38%,#1f6fae 68%,#12507f 100%);box-shadow:0 0 26px 4px rgba(90,180,220,.4)}
+  .ccont{position:absolute;background:#4f9c6e;opacity:.8;border-radius:58% 42% 40% 60%/55% 35% 65% 45%}
+  .cgal{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,240,200,.95) 0,rgba(220,160,255,.5) 18%,rgba(120,90,220,.22) 45%,transparent 72%);animation:spin 24s linear infinite}
+  @keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .carm{position:absolute;left:50%;top:50%;width:100%;height:26%;margin-top:-13%;transform-origin:0 50%;border-radius:50%;background:radial-gradient(ellipse at 0 50%,rgba(190,150,255,.45) 0,rgba(120,180,255,.2) 42%,transparent 78%)}
+  .ccap{position:absolute;left:5px;right:5px;top:6px;text-align:center;font-size:10px;line-height:1.25;color:#5b7f74;font-style:italic;pointer-events:none}
+  .earth-mode .ccap,.galaxy-mode .ccap{color:#a8bbdd;top:auto;bottom:4px}
+  @media (prefers-color-scheme: dark){.critter-stage{border-color:var(--line)}}
+  @media (prefers-reduced-motion: reduce){.critter-bug,.critter-bug.centred,.cgal{animation:none}}
+
+  /* each card picks its own layout from its own width, so nothing is squeezed */
+
+  @media (max-width:700px){.grps,.grps .grp:last-child{grid-template-columns:1fr}.hero-card{grid-template-columns:1fr}.hero-card .pq-hero{display:none}.critter-stage{width:min(250px,80vw)}.main{padding:14px 12px 50px}.std-h,.std{grid-template-columns:18px 70px minmax(0,1fr) 26px}.std-h span:nth-child(4),.std-h span:nth-child(5),.std .sm-v{display:none}}
+
+  /* ---- golden ratio everywhere: spacing 8 · 13 · 21 · 34, type 13 · 21 · 34, card = inputs 1.618 : result 1 ---- */
+  :root{--g1:8px;--g2:13px;--g3:21px;--g4:34px}
+  .main{padding:var(--g3) var(--g4) 55px}
+  .panel{padding:var(--g3) var(--g3) 55px}
+  .panel .card{padding:var(--g2) var(--g3);margin-bottom:var(--g2)}
+  .pcard{margin-bottom:var(--g3);border-radius:13px}
+  .ch{padding:var(--g2) var(--g3)}
+  .in.name{font-size:21px;letter-spacing:-.02em}
+  .cb{grid-template-columns:minmax(0,1.618fr) minmax(0,1fr)}
+  .grps{gap:var(--g3);padding:var(--g3)}
+  .grp{gap:var(--g2)}
+  .res{padding:var(--g3);gap:var(--g2);border-radius:0 13px 13px 0}
+  .r-big b{font-size:34px}
+  .r-big span{font-size:13px}
+  .hero-card{grid-template-columns:1.618fr 1fr;padding:var(--g4);gap:var(--g4);margin-bottom:var(--g3)}
+  .hero-card h2{font-size:21px}
+  .sec-h.big{margin:var(--g1) 0 var(--g2)}
+  .stdcard{padding:var(--g3);gap:var(--g3);grid-template-columns:minmax(0,1.618fr) minmax(0,1fr)}
+  .curve{max-width:none}
+  /* the dish fills the result column, at the golden ratio */
+  .res{min-height:100%}
+  .dish{width:100%;flex:1;display:flex;flex-direction:column;gap:5px;min-height:160px}
+  /* the stage is the cell itself: no box, its outline is the membrane */
+  .culture{width:100%;flex:none;aspect-ratio:1.618;min-height:0;background:none;filter:drop-shadow(0 6px 10px rgba(20,24,32,.12))}
+  .dish{justify-content:center}
+  .culture canvas.pix{width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+  .dish-t{font:600 11px var(--mono);letter-spacing:.02em;text-transform:none;color:var(--ink-3);text-align:center}
+  @container (max-width:1070px){.grps{grid-template-columns:repeat(2,minmax(0,1fr))}.grps .grp:last-child{grid-column:1 / -1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g2) var(--g3)}.grps .grp:last-child .gt{grid-column:1/-1}}
+  @container (max-width:640px){.cb{grid-template-columns:1fr}.res{border-left:0;border-top:1px solid var(--line);border-radius:0 0 13px 13px}.dish{flex:none}.culture{flex:none;aspect-ratio:1.618}}
+  @container (max-width:480px){.grps,.grps .grp:last-child{grid-template-columns:1fr}}
+  @container (max-width:900px){.stdcard{grid-template-columns:1fr}}
+  @media (max-width:700px){.main{padding:var(--g2) var(--g2) 50px}.hero-card{grid-template-columns:1fr;padding:var(--g3)}}
+
+/* ---------- table view ---------- */
+.viewseg{margin-left:auto;display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;font-size:12.5px}
+.viewseg button{border:0;background:var(--card);padding:4px 12px;cursor:pointer;font:inherit;color:var(--ink-2)}.viewseg button.on{background:var(--blue);color:#fff}
+.sheet-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:calc(100vh - 230px)}
+table.sheet{border-collapse:separate;border-spacing:0;font-size:13px;width:100%;table-layout:fixed}
+.sheet th{position:sticky;top:0;z-index:1;background:var(--calc);font-size:11px;font-weight:650;color:var(--ink-2);text-align:left;padding:6px 6px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.sheet th.num{text-align:right}.sheet td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0}
+.sheet .sc{width:100%;min-width:44px;border:0;background:transparent;padding:6px 5px;font:inherit;font-size:12.5px;color:var(--ink);outline:none}.sheet .sc.num{text-align:right;font-variant-numeric:tabular-nums;min-width:48px;max-width:70px}
+.sheet input.sc[data-sc$=":name"]{min-width:110px}.sheet select.sc{min-width:40px;max-width:76px;padding:5px 3px;appearance:none;-webkit-appearance:none;cursor:pointer}
+.sheet td.chk{max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.sheet .sc:focus{background:var(--sel);box-shadow:inset 0 0 0 2px var(--selb)}
+.sheet td.rn{background:var(--calc);color:var(--ink-3);font-size:10.5px;padding:0 3px;white-space:nowrap;text-align:center}.sheet td.rn i{display:block!important;margin:0 auto 2px!important}.sheet td.rn i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.sheet td.out,.sheet th.out{background:var(--calc);text-align:right;padding:6px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}.sheet td.chk{text-align:left;font-size:12px;color:var(--ink-2)}.sheet td.chk.bad{color:var(--red)}
+.sv-addr,.sv-del{border:1px solid var(--line-2);background:var(--card);border-radius:6px;cursor:pointer;font:inherit;line-height:1;padding:2px 7px;color:var(--ink-2)}.sv-del{border:0;background:none;font-size:16px;padding:2px 8px}.sv-del:hover{color:var(--red)}
+
+.sheet .sc{min-width:0!important;max-width:none!important}.sheet .pair{display:flex}.sheet .pair .sc.num{flex:1}.sheet .pair select.sc.u{flex:0 0 38px;color:var(--ink-3);font-size:11.5px;text-align:left}
+.sheet td.out.bad{color:var(--red)}.vd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px;background:var(--ink-3)}
+.vd.v-low{background:#e0a458}.vd.v-typical{background:#60a5fa}.vd.v-high,.vd.v-veryhigh{background:#10b981}.vd.v-impressive{background:#8b5cf6}.vd.v-impossible{background:#ef4444}
+
+.sheet th{overflow:hidden;text-overflow:ellipsis}.sheet td{overflow:hidden}
+
+/* ---- round 5: smaller cards, and the culture flask replaces the pixel cell ---- */
+:root{--g3:16px;--g4:26px}
+.panel .card{padding:var(--g2) var(--g3)}
+.in.name{font-size:18px}
+.r-big b{font-size:28px}
+.ch{padding:10px var(--g3)}
+.grps{gap:var(--g2) var(--g3);padding:var(--g2) var(--g3)}
+.res{padding:var(--g2) var(--g3);gap:var(--g1)}
+.dish{min-height:120px;gap:3px}
+.culture{aspect-ratio:1.3;filter:none;border-radius:10px;overflow:hidden}
+.culture canvas{width:100%;height:100%;display:block}
+.dish-t{font-size:10.5px}
+.hero-card{padding:var(--g3);gap:var(--g3)}
+@container (max-width:640px){.culture{aspect-ratio:1.3}}
+
+.pq-hero{width:100%;max-width:360px;height:auto;justify-self:center;overflow:visible}
+.pq-shadow{fill:var(--ink);opacity:.07}
+.pq-machine{fill:var(--card);stroke:var(--line-2);stroke-width:2}
+.pq-screen{fill:#16181d}
+.pq-scrtxt{font:600 7px var(--mono);fill:#7dd3a8}
+.pq-scrnum{font:700 11px var(--mono);fill:#a7f3d0}
+.pq-slot{fill:var(--paper);stroke:var(--line-2);stroke-width:1.5}
+.pq-knob{fill:var(--blue-l);stroke:var(--blue);stroke-width:1.5}
+.pq-btn{fill:var(--blue-l)}
+.pq-cuv{fill:rgba(255,255,255,.75);stroke:#94a3b8;stroke-width:1.5}
+.pq-liquid{fill:#8b7cf6;opacity:.75}
+.pq-bub{fill:#fff;opacity:0;animation:pqBub 2.6s ease-in infinite}
+.pq-bub.d2{animation-delay:.9s}
+.pq-bub.d3{animation-delay:1.7s}
+.pq-glass{fill:rgba(255,255,255,.35);stroke:var(--ink-3);stroke-width:2.2;stroke-linejoin:round}
+.pq-rim{stroke:var(--ink-3);stroke-width:3;stroke-linecap:round}
+.pq-cap{fill:#e8d5b5;stroke:#b08a4e;stroke-width:1.5}
+.pq-wave{fill:#8b7cf6;opacity:.55;animation:pqWave 3.6s linear infinite}
+.pq-fbub{fill:#fff;opacity:0;animation:pqBub 3s ease-in infinite}
+.pq-fbub.d2{animation-delay:1s}
+.pq-fbub.d3{animation-delay:2s}
+.pq-arc{fill:none;stroke:var(--line-2);stroke-width:1.6;stroke-dasharray:3 5}
+.pq-travel{fill:#8b7cf6}
+.pq-mol{fill:#8b7cf6;opacity:.14;animation:pqDrift 9s ease-in-out infinite}
+.pq-mol{transform:translate(118px,150px)}
+.pq-mol.m2{animation-duration:11s;animation-delay:-4s}
+.pq-mol.m3{animation-duration:13s;animation-delay:-8s}
+.pq-n1{animation:pqSwapA 4s steps(1) infinite}
+.pq-n2{animation:pqSwapB 4s steps(1) infinite}
+.pq-spark{fill:#fbbf24;opacity:0;transform-box:fill-box;transform-origin:center;animation:pqSpark 2.8s ease-in-out infinite}
+.pq-spark.d2{animation-delay:.9s}
+.pq-spark.d3{animation-delay:1.8s}
+.pq-beam{stroke-dasharray:5 5;animation:pqBeam .7s linear infinite}
+.pq-glow{animation:pqGlow 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.pq-flick{animation:pqFlick 2.4s steps(1) infinite}
+.pq-fill{transform-box:fill-box;transform-origin:50% 100%;animation:pqFill .7s cubic-bezier(.3,1.4,.5,1) both}
+.pq-pop{transform-box:fill-box;transform-origin:center;animation:pqPop .45s cubic-bezier(.3,1.6,.5,1) both}
+.pq-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:pqDraw .9s ease-out .15s forwards}
+@keyframes pqWave{to{transform:translateX(30px)}}
+@keyframes pqDrift{0%{transform:translate(110px,160px) rotate(0)}50%{transform:translate(135px,60px) rotate(40deg)}100%{transform:translate(110px,160px) rotate(0)}}
+@keyframes pqSwapA{0%{opacity:1}50%{opacity:0}}
+@keyframes pqSwapB{0%{opacity:0}50%{opacity:1}}
+@keyframes pqBub{0%{opacity:0;transform:translateY(0)}20%{opacity:.9}100%{opacity:0;transform:translateY(-28px)}}
+@keyframes pqSpark{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes pqBeam{to{stroke-dashoffset:-10}}
+@keyframes pqGlow{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.25);opacity:1}}
+@keyframes pqFlick{0%{opacity:1}50%{opacity:.55}}
+@keyframes pqFill{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes pqPop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes pqDraw{to{stroke-dashoffset:0}}
+/* ---------- Lab Potato house style (from Lab Entry): its colours and its system UI font ---------- */
+:root{--paper:#edf1f6;--card:#ffffff;--ink:#121925;--ink-2:#2b3443;--ink-3:#566174;--line:#dce2eb;--line-2:#c3ccd9;--blue:#1f66cc;--blue-d:#1a56ad;--blue-l:#e6effb;--green:#248a3d;--green-l:#e4f3e8;--red:#d70015;--red-l:#fde7e9;--amber:#b25000;--amber-l:#fbeedd;--selb:#1f66cc;--sel:rgba(31,102,204,.18);--calc:#f3f6fa;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-serif:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root{--paper:#0e131a;--card:#171d26;--ink:#eef2f7;--ink-2:#cfd7e3;--ink-3:#9aa7b9;--line:#2a3442;--line-2:#3b475a;--blue:#6aa8ff;--blue-d:#8dbcff;--blue-l:rgba(106,168,255,.16);--green:#5fd28a;--green-l:#15281c;--red:#ff453a;--red-l:#3a1a1d;--amber:#f2b45a;--amber-l:#2e2414;--selb:#6aa8ff;--sel:rgba(106,168,255,.25);--calc:#1d2430;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-serif:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif}}
+body,button,input,select,textarea{font-family:var(--lp-ui)}
+h1,h2,.brand-tool,.pc-name-big{font-family:var(--lp-serif);letter-spacing:-.015em}
+@media (max-width:1100px){header.site-header{gap:7px!important}header.site-header .brand-sep{display:none!important}}   /* the system font sets the title a little wider than the serif did */
+
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="https://labpotato.github.io/" title="Lab Potato home">
+    <svg class="brand-mark" viewBox="22 46 208 144" aria-hidden="true">
+      <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path>
+      <ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse>
+      <path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path>
+    </svg>
+    <span class="brand-word">Lab&nbsp;Potato</span>
+  </a>
+  <span class="brand-sep">/</span>
+  <h1 class="brand-tool">Protein Quant</h1>
+  <span class="ver-chip">v6</span>
+  <div class="seg" role="tablist" aria-label="Method">
+    <button data-act="mode" data-arg="a280" id="mA" role="tab">A280</button>
+    <button data-act="mode" data-arg="curve" id="mC" role="tab">Standard curve<span class="long"> (Bradford / BCA)</span></button>
+  </div>
+  <span class="header-spacer"></span>
+  <a class="all-tools" href="https://labpotato.github.io/#tools" title="All Lab Potato tools">← <span>All tools</span></a>
+  <span class="status" id="status">Saved</span>
+  <button class="btn ghost" data-act="undo" id="undoBtn" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="lbl">Undo</span></button>
+  <button class="btn ghost" data-act="redo" id="redoBtn" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg><span class="lbl">Redo</span></button>
+  <button class="btn" data-act="save" title="Save everything to a file (Ctrl+S)">Save file</button>
+  <button class="btn" data-act="toLE" title="Send these results to a Lab Entry experiment (it waits in Lab Entry's waiting room)">↗ <span class="lbl">Send to </span>Lab Entry</button>
+  <button class="btn" data-act="xlsx" title="Download an Excel workbook: inputs, results, standard curve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span class="lbl">Export to </span>Excel</button>
+  <div class="menu-wrap">
+    <button class="btn" data-act="menu" id="moreBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>More</button>
+    <div class="menu" id="menu" hidden role="menu">
+      <button data-act="open" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open a saved file…<small>A .json saved from here (replaces what is on screen; you can undo)</small></span></button>
+      <button data-act="importBox" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg><span>Paste from Excel or a plate reader…<small>Rows of numbers, or FASTA sequences: one protein per row</small></span></button>
+      <button data-act="copyTable" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg><span>Copy the whole table<small>Inputs and results, ready to paste into Excel</small></span></button>
+      <button data-act="csv" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Download CSV<small>The table on screen as a .csv file</small></span></button>
+      <hr>
+      <button data-act="example" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z"/></svg><span>Load a worked example<small>Four proteins on A280 and a BSA curve with three samples</small></span></button>
+      <button data-act="clear" class="danger" role="menuitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Start over<small>Empty both sheets (you can undo)</small></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="bar" id="bar"></div>
+
+<div class="app" id="app">
+  <main class="main" id="main"></main>
+  <div class="split" id="split" role="separator" aria-orientation="vertical" aria-label="Drag to resize the panel" title="Drag to resize · double-click to reset"></div>
+  <aside class="panel" id="panel"></aside>
+</div>
+<div id="modalRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ==================== PURE CORE START ==================== */
+function sig(x, n){
+  if (x === null || x === undefined || !isFinite(x)) return "—";
+  if (x === 0) return "0";
+  n = Math.max(1, Math.min(12, n|0));
+  var mag = Math.floor(Math.log10(Math.abs(x)));
+  var dec = n - 1 - mag;
+  if (dec > 0) return x.toFixed(Math.min(dec, 15));
+  var f = Math.pow(10, -dec);
+  return String(Math.round(x / f) * f);
+}
+function toOneCm(a, lMM){ return a / (lMM / 10); }
+function molarFromAbs(a1cm, eps, dilution){ return (a1cm * dilution) / eps; }
+function mgmlFromMolar(molar, mw){ return molar * mw; }
+
+function parseReadings(raw){
+  var toks = String(raw || "").split(/[,;\s]+/).filter(function(t){ return t !== ""; });
+  var values = [], invalid = [];
+  toks.forEach(function(t){
+    var v = parseFloat(t);
+    if (isFinite(v) && /^-?[0-9.eE+-]+$/.test(t)) values.push(v); else invalid.push(t);
+  });
+  return { values: values, invalid: invalid };
+}
+function mean(arr){ if (!arr.length) return null; var s=0; for(var i=0;i<arr.length;i++) s+=arr[i]; return s/arr.length; }
+function sampleSD(arr){
+  if (arr.length < 2) return null;
+  var m = mean(arr), s = 0;
+  for (var i=0;i<arr.length;i++) s += (arr[i]-m)*(arr[i]-m);
+  return Math.sqrt(s/(arr.length-1));
+}
+
+function molarToUnit(molar, unit, mw){
+  switch(unit){
+    case "M": return molar; case "mM": return molar*1e3; case "uM": return molar*1e6; case "nM": return molar*1e9;
+    case "mgml": return (mw>0) ? molar*mw : null;
+    case "ugml": return (mw>0) ? molar*mw*1000 : null;
+    case "pct":  return (mw>0) ? (molar*mw)/10 : null;
+    default: return null;
+  }
+}
+function unitToMolar(v, unit, mw){
+  switch(unit){
+    case "M": return v; case "mM": return v/1e3; case "uM": return v/1e6; case "nM": return v/1e9;
+    case "mgml": return (mw>0) ? v/mw : null;
+    case "ugml": return (mw>0) ? (v/1000)/mw : null;
+    case "pct":  return (mw>0) ? (v*10)/mw : null;
+    default: return null;
+  }
+}
+function massToMgPerMl(v, unit){
+  switch(unit){ case "mgml": return v; case "ugml": return v/1000; case "pct": return v*10; default: return null; }
+}
+function volToL(v, unit){ return unit==="L" ? v : (unit==="mL" ? v/1e3 : v/1e6); }
+function LtoUnit(L, unit){ return unit==="L" ? L : (unit==="mL" ? L*1e3 : L*1e6); }
+var UNIT_LABEL = { M:"M", mM:"mM", uM:"µM", nM:"nM", mgml:"mg/mL", ugml:"µg/mL", pct:"% (w/v)" };
+
+function stockVolumeL(cStockM, cTargetM, vTargetL){
+  var out = { ok:false, flags:[] };
+  if (!(cStockM > 0))  out.flags.push({t:"err", m:"Stock concentration must be greater than zero."});
+  if (!(cTargetM >= 0)) out.flags.push({t:"err", m:"Target concentration cannot be negative."});
+  if (!(vTargetL >= 0)) out.flags.push({t:"err", m:"Final volume cannot be negative."});
+  if (out.flags.length) return out;
+  if (cTargetM > cStockM){ out.flags.push({t:"err", m:"Target concentration is higher than the stock. Dilution cannot raise a concentration."}); return out; }
+  var v1 = (cTargetM * vTargetL) / cStockM;
+  out.ok = true; out.v1L = v1; out.remainderL = vTargetL - v1;
+  if (v1 > 0 && v1 < 1e-9) out.flags.push({t:"warn", m:"Required stock volume is below 1 nL and cannot be pipetted; prepare an intermediate dilution first."});
+  return out;
+}
+
+function computeRow(row, pathMM){
+  var out = { ok:false, flags:[] };
+  var epsType = (row.epsType === "molar" || row.epsType === "e1pct") ? row.epsType : "mass01";
+  var eps = row.eps, mw = row.mw;
+  var dil = (row.dil===undefined||row.dil===null||row.dil==="") ? 1 : row.dil;
+  var parsed = parseReadings(row.a280raw);
+
+  if (!(eps > 0)) out.flags.push({t:"err", m:"Extinction coefficient must be a positive number."});
+  if (epsType === "molar" && !(mw > 0)) out.flags.push({t:"err", m:"MW is required when ε is entered as a molar extinction coefficient (M⁻¹cm⁻¹)."});
+  if (mw !== null && mw !== undefined && !(mw > 0)) out.flags.push({t:"err", m:"MW must be a positive number if entered."});
+  if (!(dil > 0)) out.flags.push({t:"err", m:"Dilution must be a positive number."});
+  if (!(pathMM > 0)) out.flags.push({t:"err", m:"Path length must be a positive number."});
+  if (!parsed.values.length) out.flags.push({t:"err", m:"Enter at least one A280 reading."});
+  if (parsed.invalid.length) out.flags.push({t:"warn", m:"Ignored unreadable token(s): " + parsed.invalid.join(", ")});
+  if (out.flags.some(function(f){return f.t==="err";})) { out.parsed = parsed; return out; }
+
+  var m = mean(parsed.values);
+  var sd = sampleSD(parsed.values);
+  var a1cm = toOneCm(m, pathMM);
+  if (a1cm < 0) out.flags.push({t:"err", m:"Mean A280 is negative."});
+  if (out.flags.some(function(f){return f.t==="err";})) { out.parsed = parsed; return out; }
+
+  if (m < 0.02) out.flags.push({t:"warn", m:"Mean A280 as read is " + sig(m,2) + ", below 0.02: weak signal, noise-dominated."});
+  if (m > 1.5)  out.flags.push({t:"warn", m:"Mean A280 as read is " + sig(m,2) + ", above 1.5: likely outside instrument linearity."});
+
+  var molar, mgml;
+  if (epsType === "molar"){
+    molar = molarFromAbs(a1cm, eps, dil);
+    mgml = mgmlFromMolar(molar, mw);
+  } else if (epsType === "mass01"){
+    /* eps is A(0.1%): the absorbance of a 1 mg/mL (1 g/L) solution at 1 cm.
+       c(mg/mL) = A1cm x dilution / A(0.1%). MW is only needed to also report molar units. */
+    mgml = (a1cm * dil) / eps;
+    molar = (mw > 0) ? mgml / mw : null;
+    if (mw === null || mw === undefined) out.flags.push({t:"info", m:"No MW entered: mass-based units (mg/mL, µg/mL, % w/v) are available; molar units are not."});
+  } else {
+    /* eps is E(1%): the absorbance of a 1% w/v (10 mg/mL) solution at 1 cm.
+       E(1%) = 10 x A(0.1%), so c(mg/mL) = 10 x A1cm x dilution / E(1%). */
+    mgml = 10 * (a1cm * dil) / eps;
+    molar = (mw > 0) ? mgml / mw : null;
+    if (mw === null || mw === undefined) out.flags.push({t:"info", m:"No MW entered: mass-based units (mg/mL, µg/mL, % w/v) are available; molar units are not."});
+  }
+
+  out.ok = true;
+  out.n = parsed.values.length; out.meanA280 = m; out.sdA280 = sd; out.a1cm = a1cm;
+  out.molar = molar; out.mgml = mgml; out.epsType = epsType;
+  out.parsed = parsed;
+  return out;
+}
+
+function linreg(points){
+  var out = { ok:false, flags:[] };
+  var pts = (points || []).filter(function(p){ return isFinite(p.x) && isFinite(p.y); });
+  if (pts.length < 2){ out.flags.push({t:"err", m:"At least two standard points with a readable concentration and absorbance are needed."}); return out; }
+  var n = pts.length, sumX=0,sumY=0,sumXY=0,sumXX=0;
+  pts.forEach(function(p){ sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumXX+=p.x*p.x; });
+  var denom = n*sumXX - sumX*sumX;
+  if (Math.abs(denom) < 1e-12){ out.flags.push({t:"err", m:"Standard concentrations must not all be identical."}); return out; }
+  var slope = (n*sumXY - sumX*sumY) / denom;
+  var intercept = (sumY - slope*sumX) / n;
+  var meanY = sumY / n, ssTot=0, ssRes=0;
+  pts.forEach(function(p){ var yhat = slope*p.x + intercept; ssTot += (p.y-meanY)*(p.y-meanY); ssRes += (p.y-yhat)*(p.y-yhat); });
+  var r2 = ssTot > 0 ? (1 - ssRes/ssTot) : 1;
+  out.ok = true; out.slope = slope; out.intercept = intercept; out.r2 = r2; out.n = n;
+  out.xMin = Math.min.apply(null, pts.map(function(p){return p.x;}));
+  out.xMax = Math.max.apply(null, pts.map(function(p){return p.x;}));
+  out.points = pts;
+  if (Math.abs(slope) < 1e-12){ out.ok = false; out.flags.push({t:"err", m:"Fitted slope is zero; cannot invert the curve to compute concentration."}); return out; }
+  if (r2 < 0.99) out.flags.push({t:"warn", m:"R² is " + sig(r2,4) + ", below the 0.99 linearity benchmark used in published assay-validation work."});
+  return out;
+}
+
+function concFromCurve(fit, aMean, dil){
+  var out = { ok:false, flags:[] };
+  if (!fit || !fit.ok){ out.flags.push({t:"err", m:"Standard curve is not valid yet."}); return out; }
+  var d = (dil===undefined||dil===null||dil==="") ? 1 : dil;
+  if (!(d > 0)) { out.flags.push({t:"err", m:"Dilution must be a positive number."}); return out; }
+  var c = invertCurve(fit, aMean);
+  if (c === null || !isFinite(c)){ out.flags.push({t:"err", m:"This absorbance is above the top of the fitted curve, so no concentration matches it. Dilute the sample and re-read."}); return out; }
+  var cActual = c * d;
+  out.ok = true; out.cMeasured = c; out.cActual = cActual;
+  if (c < fit.xMin || c > fit.xMax) out.flags.push({t:"warn", m:"Concentration " + sig(c,4) + " falls outside the standard range (" + sig(fit.xMin,3) + "–" + sig(fit.xMax,3) + "): this is an extrapolation."});
+  if (c < 0) out.flags.push({t:"warn", m:"Computed concentration (before dilution) is negative: the sample's absorbance is below the lowest standard."});
+  return out;
+}
+/* -------- Yield: total amount from concentration x volume, optional % recovery -------- */
+function computeYield(mgPerMl, molarM, volumeL){
+  var out = { ok:false, flags:[] };
+  if (!(volumeL > 0)) { out.flags.push({t:"err", m:"Total volume must be greater than zero."}); return out; }
+  if (mgPerMl === null && molarM === null) { out.flags.push({t:"err", m:"Selected stock has no usable concentration."}); return out; }
+  out.ok = true;
+  out.massMg = (mgPerMl !== null) ? mgPerMl * LtoUnit(volumeL,"mL") : null;
+  out.molarMol = (molarM !== null) ? molarM * volumeL : null;
+  return out;
+}
+function recoveryPercent(yieldMassMg, yieldMolarMol, startVal, startUnit){
+  var out = { ok:false, flags:[] };
+  if (!(startVal > 0)) { out.flags.push({t:"err", m:"Starting amount must be greater than zero."}); return out; }
+  var pct;
+  if (startUnit === "mg" || startUnit === "ug"){
+    if (yieldMassMg === null) { out.flags.push({t:"err", m:"Mass-based recovery needs a mass yield for this stock."}); return out; }
+    var startMg = (startUnit === "ug") ? startVal/1000 : startVal;
+    pct = (yieldMassMg / startMg) * 100;
+  } else {
+    if (yieldMolarMol === null) { out.flags.push({t:"err", m:"Molar recovery needs a molecular weight for this stock."}); return out; }
+    var startMol = (startUnit === "nmol") ? startVal*1e-9 : startVal*1e-6;
+    pct = (yieldMolarMol / startMol) * 100;
+  }
+  out.ok = true; out.pct = pct;
+  if (pct > 100) out.flags.push({t:"warn", m:"Recovery is over 100% (" + sig(pct,3) + "%): check the starting amount and units, since purification cannot increase total protein."});
+  return out;
+}
+/* Normalise a total yield against a reference volume (e.g. starting culture volume), giving a
+   production rate like "mg protein per L culture" rather than just a total amount. refVolumeL and
+   the total amount must already be in compatible bases (mass in mg, or moles in mol); the division
+   is dimension-preserving, so the result is amount per litre of the *reference* volume, not per litre
+   of the sample itself. */
+function yieldPerVolume(totalMass, totalMolar, refVolumeL){
+  var out = { ok:false, flags:[] };
+  if (!(refVolumeL > 0)) { out.flags.push({t:"err", m:"Reference volume must be greater than zero."}); return out; }
+  if (totalMass === null && totalMolar === null) { out.flags.push({t:"err", m:"No yield available to normalise."}); return out; }
+  out.ok = true;
+  out.massMgPerL = (totalMass !== null) ? totalMass / refVolumeL : null;
+  out.molarMolPerL = (totalMolar !== null) ? totalMolar / refVolumeL : null;
+  return out;
+}
+/* Expression hosts, with yield benchmarks taken from the literature for each.
+   A yield that is excellent in a plant cell suspension is mediocre in CHO, so the
+   verdict has to be host-specific or it is simply wrong. All thresholds in mg per
+   litre of culture. "ceiling" is the point above which the number is not physically
+   achievable for that host and almost certainly indicates a unit error.
+   Sources are listed in the Help panel. */
+var HOSTS = {
+  ecoli: {
+    label: "E. coli", short: "E. coli",
+    low:10, typical:100, high:500, veryhigh:10000, ceiling:100000,
+    typicalNote:"Normal shake-flask range for a soluble cytoplasmic protein.",
+    highNote:"Optimised shake flask.",
+    veryNote:"Fed-batch bioreactor range (0.5-10 g/L).",
+    impNote:"Above 10 g/L, at or beyond the best reported fed-batch titres.",
+    ceilNote:"Above ~100 g/L exceeds total E. coli cellular protein (~55 g/L even at 100 gDCW/L, ~55% protein by dry weight)."
+  },
+  yeast: {
+    label: "Yeast (P. pastoris)", short: "Yeast",
+    low:10, typical:100, high:1000, veryhigh:15000, ceiling:150000,
+    typicalNote:"Modest for a secreting yeast; routine shake-flask range.",
+    highNote:"Good secreted titre (0.1-1 g/L), typical of an optimised P. pastoris clone.",
+    veryNote:"High-cell-density fermentation range (1-15 g/L).",
+    impNote:"Above 15 g/L, top-tier for a secreted yeast product.",
+    ceilNote:"P. pastoris reaches >100-150 gDCW/L, but a single product above ~150 g/L is not achievable. Check the units."
+  },
+  mammalian: {
+    label: "Mammalian (CHO/HEK)", short: "CHO/HEK",
+    low:10, typical:100, high:1000, veryhigh:10000, ceiling:50000,
+    typicalNote:"Typical transient transfection range (HEK293/CHO).",
+    highNote:"Strong transient or an early stable pool (0.1-1 g/L).",
+    veryNote:"Routine fed-batch mAb range (1-10 g/L); 3-6 g/L is industry standard.",
+    impNote:"Above 10 g/L, near the best published CHO fed-batch titres (~12.6 g/L).",
+    ceilNote:"Mammalian cultures reach far lower biomass than microbes; above ~50 g/L is not physically achievable. Check the units."
+  },
+  plant: {
+    label: "Plant cell (BY-2)", short: "Plant cell",
+    low:10, typical:100, high:500, veryhigh:1200, ceiling:20000,
+    typicalNote:"Above the 10 mg/L viability threshold for further R&D.",
+    highNote:"Above the ~100 mg/L benchmark generally needed to be economically interesting.",
+    veryNote:"Approaching the highest titres reported for plant suspension culture.",
+    impNote:"Above 1.2 g/L, beyond the highest titre ever reported for BY-2 or any plant suspension culture.",
+    ceilNote:"Far beyond anything achieved in plant cell suspension; above ~20 g/L indicates a unit error."
+  }
+};
+function classifyYield(mgPerL, hostKey){
+  if (mgPerL === null || mgPerL === undefined || !isFinite(mgPerL) || mgPerL < 0) return null;
+  var h = HOSTS[hostKey] || HOSTS.ecoli;
+  if (mgPerL < h.low)       return { tier:"low",        label:"Low",        note:"Below the usual range for "+h.short+"." };
+  if (mgPerL < h.typical)   return { tier:"typical",    label:"Typical",    note:h.typicalNote };
+  if (mgPerL < h.high)      return { tier:"high",       label:"High",       note:h.highNote };
+  if (mgPerL < h.veryhigh)  return { tier:"veryhigh",   label:"Very high",  note:h.veryNote };
+  if (mgPerL < h.ceiling)   return { tier:"impressive", label:"Impressive", note:h.impNote };
+  return { tier:"impossible", label:"Unusually high — verify", note:"This exceeds the calculator’s literature-based sanity-check range for "+h.short+". Verify units, culture volume, dilution, extinction-coefficient convention, and whether this value represents purified recovery rather than expression titre. "+h.ceilNote };
+}
+/* Easter-egg thresholds follow the same host-specific scale, so "impressive" always
+   means impressive *for that host* rather than for E. coli only. */
+function easterThresholds(hostKey){
+  var h = HOSTS[hostKey] || HOSTS.ecoli;
+  return { earth:h.veryhigh, galaxy:h.ceiling };
+}
+/* -------- v5: protein sequence -> MW and extinction coefficient --------
+   MW: sum of average residue masses + one water (ExPASy ProtParam values).
+   e280 (Pace et al. 1995): e = nW x 5500 + nY x 1490 + nCystine x 125 M^-1 cm^-1.
+   Cys only absorbs as cystine (a disulfide), so two numbers are given:
+   every Cys pair oxidised, and all Cys reduced (cytoplasmic E. coli proteins,
+   anything in DTT/TCEP). */
+var AA_MASS = { A:71.0788, R:156.1875, N:114.1038, D:115.0886, C:103.1388, E:129.1155, Q:128.1307,
+  G:57.0519, H:137.1411, I:113.1594, L:113.1594, K:128.1741, M:131.1926, F:147.1766, P:97.1167,
+  S:87.0782, T:101.1051, W:186.2132, Y:163.1760, V:99.1326 };
+var WATER = 18.01524;
+function cleanSeq(raw){
+  var lines = String(raw||"").split(/\r?\n/).filter(function(l){ return l.trim().charAt(0) !== ">"; });
+  return lines.join("").toUpperCase().replace(/[^A-Z*]/g,"").replace(/\*+$/,"");
+}
+function seqStats(raw){
+  var seq = cleanSeq(raw), out = { ok:false, flags:[], len:seq.length, seq:seq };
+  if (!seq.length) return out;
+  if (/^[ACGTUN]+$/.test(seq) && seq.length >= 12){
+    out.flags.push({t:"err", m:"This looks like a DNA/RNA sequence. Paste the protein (amino-acid) sequence instead."});
+    return out;
+  }
+  var counts = {}, unknown = {}, mass = WATER;
+  for (var i=0;i<seq.length;i++){
+    var c = seq.charAt(i);
+    if (AA_MASS[c] !== undefined){ counts[c]=(counts[c]||0)+1; mass += AA_MASS[c]; }
+    else unknown[c]=(unknown[c]||0)+1;
+  }
+  var unk = Object.keys(unknown);
+  if (unk.length) out.flags.push({t:"warn", m:"Skipped non-standard letters: "+unk.map(function(k){return k+" ×"+unknown[k];}).join(", ")+". MW and ε ignore them."});
+  var nW=counts.W||0, nY=counts.Y||0, nC=counts.C||0;
+  out.ok = true;
+  out.mw = mass; out.nW=nW; out.nY=nY; out.nC=nC;
+  out.epsReduced = nW*5500 + nY*1490;
+  out.epsOxidised = out.epsReduced + Math.floor(nC/2)*125;
+  out.a01Reduced = out.epsReduced / mass;
+  out.a01Oxidised = out.epsOxidised / mass;
+  if (nW===0 && nY===0) out.flags.push({t:"err", m:"No Trp or Tyr: this protein barely absorbs at 280 nm, so A280 cannot measure it. Use a Bradford/BCA standard curve (other tab) or A205 instead."});
+  else if (nW===0) out.flags.push({t:"warn", m:"No Trp: ε280 rests on Tyr alone, so the prediction error is larger (Pace et al. report the best accuracy for Trp-containing proteins). Consider confirming with a dye assay."});
+  return out;
+}
+
+/* -------- v5: standard-curve helpers -------- */
+/* Ordinary least squares for A = a0 + a1 C + a2 C^2 (Bradford responses curve at high
+   dye occupancy, so a second-order fit is common). */
+function quadreg(points){
+  var out = { ok:false, flags:[], model:"quad" };
+  var pts = (points || []).filter(function(p){ return isFinite(p.x) && isFinite(p.y); });
+  if (pts.length < 3){ out.flags.push({t:"err", m:"A quadratic fit needs at least three standards (four or more is better)."}); return out; }
+  var S=[0,0,0,0,0], T=[0,0,0];
+  pts.forEach(function(p){ var xx=1; for(var k=0;k<5;k++){ S[k]+=xx; if(k<3) T[k]+=xx*p.y; xx*=p.x; } });
+  var M=[[S[0],S[1],S[2],T[0]],[S[1],S[2],S[3],T[1]],[S[2],S[3],S[4],T[2]]];
+  for (var c=0;c<3;c++){
+    var piv=c; for(var r=c+1;r<3;r++) if(Math.abs(M[r][c])>Math.abs(M[piv][c])) piv=r;
+    var tmp=M[c]; M[c]=M[piv]; M[piv]=tmp;
+    if (Math.abs(M[c][c]) < 1e-15){ out.flags.push({t:"err", m:"Standards do not span enough distinct concentrations for a quadratic fit."}); return out; }
+    for (var r2=0;r2<3;r2++){ if(r2===c) continue; var f=M[r2][c]/M[c][c]; for(var k2=c;k2<4;k2++) M[r2][k2]-=f*M[c][k2]; }
+  }
+  var a0=M[0][3]/M[0][0], a1=M[1][3]/M[1][1], a2=M[2][3]/M[2][2];
+  var meanY=0; pts.forEach(function(p){meanY+=p.y;}); meanY/=pts.length;
+  var ssTot=0, ssRes=0;
+  pts.forEach(function(p){ var yh=a0+a1*p.x+a2*p.x*p.x; ssTot+=(p.y-meanY)*(p.y-meanY); ssRes+=(p.y-yh)*(p.y-yh); });
+  out.ok=true; out.a0=a0; out.a1=a1; out.a2=a2; out.n=pts.length; out.points=pts;
+  out.r2 = ssTot>0 ? 1-ssRes/ssTot : 1;
+  out.xMin = Math.min.apply(null, pts.map(function(p){return p.x;}));
+  out.xMax = Math.max.apply(null, pts.map(function(p){return p.x;}));
+  // the curve must keep rising across the standards or a reading maps to two concentrations
+  if (Math.abs(a2) > 1e-15){
+    var vx = -a1/(2*a2);
+    if (vx > out.xMin && vx < out.xMax) out.flags.push({t:"warn", m:"The fitted curve turns over at "+sig(vx,3)+", inside your standard range, so one absorbance can match two concentrations. Drop the saturated top standard(s) or use a linear fit."});
+  }
+  if (out.r2 < 0.99) out.flags.push({t:"warn", m:"R² is "+sig(out.r2,4)+", below 0.99. Check the standards for pipetting outliers."});
+  return out;
+}
+function curveY(fit, x){ return fit.model==="quad" ? fit.a0+fit.a1*x+fit.a2*x*x : fit.slope*x+fit.intercept; }
+/* Invert the fitted curve. For the quadratic, take the root on the rising branch that
+   lies closest to the tested range. */
+function invertCurve(fit, a){
+  if (fit.model!=="quad") return (a - fit.intercept) / fit.slope;
+  var A=fit.a2, B=fit.a1, C=fit.a0-a;
+  if (Math.abs(A) < 1e-15) return -C/B;
+  var disc=B*B-4*A*C;
+  if (disc < 0) return null;
+  var r1=(-B+Math.sqrt(disc))/(2*A), r2=(-B-Math.sqrt(disc))/(2*A);
+  var mid=(fit.xMin+fit.xMax)/2;
+  var ok=[r1,r2].filter(function(r){ return (B+2*A*r) > 0; });   // positive slope only
+  var pool = ok.length ? ok : [r1,r2];
+  pool.sort(function(p,q){ return Math.abs(p-mid)-Math.abs(q-mid); });
+  return pool[0];
+}
+/* ==================== PURE CORE END ==================== */
+/* ---- Lab Potato waiting room (shared by every tool) ----
+   A tool "sends" a result: it waits in the waiting room until Lab Entry files it into the Results of the right experiment.
+   Same browser: kept in this site's storage, and every open Lab Potato tab hears about it at once (BroadcastChannel).
+   Another computer: the same item downloads as a .labpotato.json file, which Lab Entry opens into its waiting room.
+   An item: {id, at, from, tool, ver, title, lines:[text], table:{cols,rows}, images:[{name,dataUrl,caption}], note} */
+const LPInbox=(()=>{
+  const KEY='labpotato-waiting-room-v1',CH='labpotato-waiting-room',LE_URL='../lab-entry/lab-entry-v12.html';
+  let bc=null;try{bc=new BroadcastChannel(CH)}catch(e){}
+  const read=()=>{try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}};
+  const write=a=>{localStorage.setItem(KEY,JSON.stringify(a));try{bc&&bc.postMessage({n:a.length,t:Date.now()})}catch(e){}fire()};
+  const subs=new Set(),fire=()=>{const a=read();subs.forEach(f=>{try{f(a)}catch(e){}})};
+  if(bc) bc.onmessage=fire;addEventListener('storage',e=>{if(e.key===KEY) fire()});
+  const make=o=>Object.assign({id:'lp'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),v:1,at:new Date().toISOString(),lines:[],images:[]},o);
+  function send(o){const it=make(o),a=read();a.push(it);try{write(a);try{dispatchEvent(new CustomEvent('lp:sent',{detail:it}))}catch(e){}return {ok:true,item:it}}catch(e){return {ok:false,item:it}}}
+  function remove(id){write(read().filter(x=>x.id!==id))}
+  function restore(it){const a=read();if(!a.some(x=>x.id===it.id)){a.push(it);write(a)}}
+  const fileText=items=>JSON.stringify({app:'labpotato-waiting-room',v:1,items},null,1);
+  /* a .labpotato.json file (or several items in one) goes into this browser's waiting room; returns how many were new */
+  function accept(text){let d;try{d=JSON.parse(text)}catch(e){return -1}const its=d&&d.app==='labpotato-waiting-room'&&Array.isArray(d.items)?d.items:null;if(!its) return -1;
+    const a=read(),have=new Set(a.map(x=>x.id));let n=0;its.forEach(x=>{if(x&&x.id&&!have.has(x.id)){a.push(x);have.add(x.id);n++}});if(n) write(a);return n}
+  function download(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+  /* an SVG on screen → PNG data URL, with the page's colours baked in (for charts sent along with a result) */
+  function svgToPng(svg,scale=2){return new Promise(res=>{try{const c=svg.cloneNode(true),src=[...svg.querySelectorAll('*')],dst=[...c.querySelectorAll('*')];
+    src.forEach((el,i)=>{const cs=getComputedStyle(el),d=dst[i];['fill','stroke','stroke-width','stroke-dasharray','opacity','font-size','font-weight','font-family'].forEach(p=>{const v=cs.getPropertyValue(p);if(v) d.style.setProperty(p,v)})});
+    const vb=svg.viewBox.baseVal,w=vb&&vb.width||svg.clientWidth,h=vb&&vb.height||svg.clientHeight;c.setAttribute('width',w);c.setAttribute('height',h);c.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');cv.width=w*scale;cv.height=h*scale;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/png'))};
+    img.onerror=()=>res(null);img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c))}catch(e){res(null)}})}
+  /* the send dialog every tool uses: a preview, an optional note, then "Send to Lab Entry" or "Download as file" */
+  const E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function css(){if(document.getElementById('lpi-css')) return;const st=document.createElement('style');st.id='lpi-css';st.textContent=`
+    .lpi-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(15,17,21,.38);display:grid;place-items:center;padding:20px}
+    .lpi{width:min(640px,100%);max-height:90vh;overflow:auto;background:var(--card,#fff);color:var(--ink,#16181d);border:1px solid var(--line,#e6e5e1);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.25);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+    .lpi-h{padding:16px 20px 4px;font-size:17px;font-weight:680;letter-spacing:-.02em}.lpi-b{padding:6px 20px 12px;display:grid;gap:12px}
+    .lpi-from{display:inline-block;font-size:11.5px;font-weight:650;color:var(--blue,#0a5fd0);background:var(--blue-l,#e8f0fc);border-radius:999px;padding:2px 9px}
+    .lpi-box{border:1px solid var(--line,#e6e5e1);border-radius:10px;padding:10px 12px;font-size:13px;background:var(--paper,#fcfbf9)}
+    .lpi-box ul{margin:0;padding-left:18px}.lpi-t{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}.lpi-t th,.lpi-t td{border:1px solid var(--line,#e6e5e1);padding:3px 6px;text-align:left;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+    .lpi-t th{background:var(--card,#fff);font-weight:650}.lpi-imgs{display:flex;gap:8px;flex-wrap:wrap}.lpi-imgs img{height:84px;border-radius:6px;border:1px solid var(--line,#e6e5e1);background:#fff}
+    .lpi textarea{width:100%;min-height:54px;border:1px solid var(--line-2,#d6d4ce);border-radius:9px;padding:8px 10px;font:inherit;background:var(--card,#fff);color:inherit;resize:vertical}
+    .lpi-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 20px 18px}.lpi-f .g{flex:1}
+    .lpi-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2,#d6d4ce);background:var(--card,#fff);color:inherit;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:560;line-height:1.2;font-family:inherit;cursor:pointer}
+    .lpi-btn:hover{border-color:var(--ink-3,#5d636d)}.lpi-btn.p{background:var(--blue,#0a5fd0);border-color:var(--blue,#0a5fd0);color:#fff}.lpi-btn.p:hover{filter:brightness(.95)}
+    .lpi-hint{font-size:12.5px;color:var(--ink-3,#5d636d)}.lpi-ok{display:flex;gap:10px;align-items:flex-start;background:var(--green-l,#e5f5f0);color:var(--green-d,#0b5c45);border-radius:10px;padding:10px 12px;font-size:13px}
+    .lpi-ok a{color:inherit;font-weight:650}`;document.head.appendChild(st)}
+  function preview(it){const t=it.table,rows=t?t.rows.slice(0,6):[];return `<div class="lpi-box"><b>${E(it.title||'Result')}</b>${it.lines&&it.lines.length?`<ul>${it.lines.slice(0,8).map(l=>`<li>${E(l)}</li>`).join('')}${it.lines.length>8?`<li>… ${it.lines.length-8} more</li>`:''}</ul>`:''}
+    ${t?`<table class="lpi-t"><tr>${t.cols.slice(0,7).map(c=>`<th>${E(c)}</th>`).join('')}${t.cols.length>7?'<th>…</th>':''}</tr>${rows.map(r=>`<tr>${r.slice(0,7).map(v=>`<td>${E(v)}</td>`).join('')}${t.cols.length>7?'<td>…</td>':''}</tr>`).join('')}</table>${t.rows.length>6?`<div class="lpi-hint">+ ${t.rows.length-6} more rows · ${t.cols.length} columns in all</div>`:''}`:''}
+    ${it.images&&it.images.length?`<div class="lpi-imgs" style="margin-top:8px">${it.images.map(im=>`<img src="${E(im.dataUrl)}" alt="${E(im.caption||im.name||'')}">`).join('')}</div>`:''}</div>`}
+  function sendDialog(build){css();Promise.resolve(typeof build==='function'?build():build).then(o=>{if(!o){return}
+    const ov=document.createElement('div');ov.className='lpi-ov';ov.innerHTML=`<div class="lpi" role="dialog" aria-modal="true" aria-label="Send to Lab Entry"><div class="lpi-h">Send to Lab Entry</div>
+      <div class="lpi-b"><div><span class="lpi-from">from ${E(o.from)} ${E(o.ver||'')}</span></div>${preview(o)}
+        <label class="lpi-hint">A note to go with it <span>(optional)</span><textarea id="lpiNote" placeholder="e.g. after the second Ni-NTA wash"></textarea></label>
+        <p class="lpi-hint">It waits in Lab Entry's <b>waiting room</b>. There you choose the experiment, and it goes into that experiment's Results: the text, the table and any picture.</p><div id="lpiOk"></div></div>
+      <div class="lpi-f"><button class="lpi-btn" data-x="file" title="For Lab Entry on another computer: open the file there">Download as file</button><span class="g"></span><button class="lpi-btn" data-x="close">Cancel</button><button class="lpi-btn p" data-x="send">Send to Lab Entry</button></div></div>`;
+    document.body.appendChild(ov);const close=()=>{ov.remove();document.removeEventListener('keydown',kd,true)},kd=e=>{if(e.key==='Escape'){e.stopPropagation();close()}};document.addEventListener('keydown',kd,true);
+    ov.addEventListener('mousedown',e=>{if(e.target===ov) close()});setTimeout(()=>{const n=ov.querySelector('#lpiNote');n&&n.focus()},30);
+    ov.addEventListener('click',e=>{const b=e.target.closest('[data-x]');if(!b) return;const note=ov.querySelector('#lpiNote').value.trim(),item=Object.assign({},o,note?{note}:{});
+      if(b.dataset.x==='close'){close();return}
+      if(b.dataset.x==='file'){const it=make(item);download(`${(o.tool||'result')}-${it.at.slice(0,10)}.labpotato.json`,fileText([it]));ov.querySelector('#lpiOk').innerHTML=`<div class="lpi-ok">Downloaded. In Lab Entry, open <b>Waiting room → Open a file…</b> (or drop the file on it).</div>`;return}
+      const r=send(item);if(!r.ok){download(`${(o.tool||'result')}-${r.item.at.slice(0,10)}.labpotato.json`,fileText([r.item]));ov.querySelector('#lpiOk').innerHTML=`<div class="lpi-ok">This browser's storage is full, so it was downloaded as a file instead. Open it from Lab Entry's waiting room.</div>`;return}
+      ov.querySelector('.lpi-f').innerHTML=`<span class="g"></span><button class="lpi-btn" data-x="close">Done</button>`;
+      ov.querySelector('#lpiOk').innerHTML=`<div class="lpi-ok">✓ Sent. It is waiting in Lab Entry (${read().length} in the waiting room). <a href="${LE_URL}#inbox" target="_blank" rel="noopener">Open Lab Entry</a></div>`})})}
+  return {read,send,remove,restore,accept,fileText,download,svgToPng,sendDialog,preview,css,on:f=>subs.add(f),KEY};
+})();
+
+/* ==================== v6 APP: one card per protein, readings as a growing list ==================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const escH=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* a number typed or pasted: "0.52", "0,52" (decimal comma), " 1e3 " */
+function numv(v){if(v===null||v===undefined) return null;let s=String(v).trim().replace(/\s+/g,'');if(!s) return null;
+  if(/^-?\d+,\d+$/.test(s)) s=s.replace(',','.');if(!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return null;const f=parseFloat(s);return isFinite(f)?f:null}
+const fmtN=(x,n=4)=>x===null||x===undefined||!isFinite(x)?'':sig(x,n);
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+let UIDN=0;const uid=()=>Date.now().toString(36).slice(-5)+(UIDN++).toString(36)+Math.random().toString(36).slice(2,5);
+const VOLO=[['µL','µL'],['mL','mL'],['L','L']];
+const EPSO=[['mass01','A0.1%'],['molar','Molar ε'],['e1pct','E1%']];
+const HOSTO=()=>Object.entries(HOSTS).map(([k,h])=>[k,h.label]);
+const MASSU=[['mgml','mg/mL'],['ugml','µg/mL'],['pct','% (w/v)']], MOLU=[['uM','µM'],['nM','nM'],['mM','mM'],['M','M']];
+const PATHO=[['10','Already 1 cm-equivalent (NanoDrop, most software)'],['5','Raw reading, 5 mm cuvette'],['2','Raw reading, 2 mm cuvette'],['1','Raw reading, 1 mm cuvette']];
+const COLORS=['#ff8a65','#4fd1c5','#ffcb6b','#b39ddb','#4fc3f7','#f48fb1','#aed581','#ff8fa3','#90caf9','#ffd54f'];
+
+/* ---------------- state, saved in this browser ---------------- */
+const KEY='labpotato-protein-quant-v6';
+const newA=o=>Object.assign({id:uid(),name:'',seq:'',seqOpen:false,mw:'',epsType:'mass01',eps:'',r:['','',''],dil:'',vol:'',volU:'mL',cult:'',cultU:'mL',host:'',start:'',open:true},o||{});
+const newStd=o=>Object.assign({id:uid(),conc:'',r:['','']},o||{});
+const newSmp=o=>Object.assign({id:uid(),name:'',r:['','',''],dil:'',mw:'',vol:'',volU:'mL',cult:'',cultU:'mL',host:'',start:'',open:true},o||{});
+function fresh(){return {v:6,ui:8,mode:'a280',a:{path:'10',unit:'uM',cys:'red',host:'ecoli',rows:[newA()]},c:{unit:'ugml',fit:'linear',blank:'zero',blankRaw:'',out:'mgml',host:'ecoli',stds:[],rows:[newSmp()]}}}
+function norm(s){const f=fresh();s=s&&typeof s==='object'?s:{};const o={v:6,ui:8,mode:['a280','curve'].includes(s.mode)?s.mode:'a280',a:Object.assign(f.a,s.a||{}),c:Object.assign(f.c,s.c||{})};if(!(s.ui>=8)) o.a.unit='uM';
+  const fix=(arr,mk)=>(Array.isArray(arr)?arr:[]).map(x=>{const y=mk(x);y.id=y.id||uid();y.r=(Array.isArray(y.r)?y.r:[]).map(v=>v==null?'':String(v));if(!y.r.length) y.r=[''];return y});
+  o.a.rows=fix(o.a.rows,newA);o.c.stds=fix(o.c.stds,newStd);o.c.rows=fix(o.c.rows,newSmp);if(!o.a.rows.length) o.a.rows=[newA()];if(!o.c.rows.length) o.c.rows=[newSmp()];delete o.a.reps;delete o.c.reps;return o}
+let S=fresh();try{const j=localStorage.getItem(KEY);if(j) S=norm(JSON.parse(j))}catch(e){}
+const undoS=[],redoS=[];
+function undoUI(){$('#undoBtn').disabled=!undoS.length;$('#redoBtn').disabled=!redoS.length}
+function snap(){undoS.push(JSON.stringify(S));if(undoS.length>150) undoS.shift();redoS.length=0;undoUI()}
+function undo(){if(!undoS.length){toast('Nothing to undo');return}redoS.push(JSON.stringify(S));S=norm(JSON.parse(undoS.pop()));save();renderAll();undoUI();toast('Undone')}
+function redo(){if(!redoS.length) return;undoS.push(JSON.stringify(S));S=norm(JSON.parse(redoS.pop()));save();renderAll();undoUI();toast('Redone')}
+let saveT=null;
+function save(){const st=$('#status');st.textContent='Saving';st.classList.add('busy');clearTimeout(saveT);
+  saveT=setTimeout(()=>{saveT=null;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}const d=new Date();st.textContent='Saved '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');st.classList.remove('busy')},250)}
+function flush(){if(saveT){clearTimeout(saveT);saveT=null;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}}
+window.addEventListener('pagehide',flush);window.addEventListener('beforeunload',flush);document.addEventListener('visibilitychange',()=>{if(document.hidden) flush()});
+
+/* ---------------- toast and dialog (same behaviour as the other tools) ---------------- */
+let toastT=null;
+function toast(msg,opt={}){const t=$('#toast');t.innerHTML=`<span>${msg}</span>${opt.undo?'<button data-act="undo">↶ Undo</button>':''}`;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,opt.undo?6500:3400)}
+function modal({title,body,ok='OK',cancel='Cancel',danger=false,wide=false,onOk,onOpen}){
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-label="${escH(title)}"><div class="dlg${wide?' wide':''}"><div class="dlg-h">${escH(title)}</div><div class="dlg-b">${body}</div>
+    <div class="dlg-f"><span class="grow"></span>${cancel?`<button class="btn ghost" data-m="cancel">${escH(cancel)}</button>`:''}${ok?`<button class="btn ${danger?'danger':'primary'}" data-m="ok">${escH(ok)}</button>`:''}</div></div></div>`;
+  const ov=$('.overlay',root),close=()=>{root.innerHTML='';document.removeEventListener('keydown',kd,true)};
+  const doOk=()=>{if(onOk&&onOk(ov)===false) return;close()};
+  const kd=e=>{if(e.key==='Escape'){e.stopPropagation();close()}if(e.key==='Enter'&&(e.ctrlKey||e.metaKey||e.target.tagName!=='TEXTAREA')&&e.target.tagName!=='BUTTON'){e.preventDefault();doOk()}};
+  document.addEventListener('keydown',kd,true);
+  ov.addEventListener('mousedown',e=>{if(e.target===ov) close()});
+  ov.addEventListener('click',e=>{const m=e.target.closest('[data-m]');if(!m) return;m.dataset.m==='ok'?doOk():close()});
+  if(onOpen) onOpen(ov);else{const f=$('textarea,input,select',ov);if(f) setTimeout(()=>f.focus(),30)}
+}
+
+/* ---------------- calculations: the v5 core, one protein at a time ---------------- */
+const SEQC=new Map();
+function seqInfo(seq){if(!seq) return null;let st=SEQC.get(seq);if(!st){st=seqStats(seq);SEQC.set(seq,st)}return st.len?st:null}
+const repsOf=p=>(p.r||[]).map(numv).filter(v=>v!==null);
+function concIn(mgml,molar,u){if(['M','mM','uM','nM'].includes(u)) return molar==null?null:molarToUnit(molar,u,null);if(mgml==null) return null;return u==='mgml'?mgml:u==='ugml'?mgml*1000:u==='pct'?mgml/10:null}
+const hostOf=(p,set)=>HOSTS[p.host]?p.host:set.host;
+function yieldInto(o,p,set){
+  const v=numv(p.vol);if(v===null||o.mgml==null) return;if(!(v>0)){o.flags.push({t:'err',m:'Final volume must be greater than zero.'});return}
+  const L=volToL(v,p.volU||'mL');o.totalMg=o.mgml*L*1e3;o.totalNmol=o.molar!=null?o.molar*L*1e9:null;
+  const c=numv(p.cult);if(c!==null){if(!(c>0)) o.flags.push({t:'err',m:'Culture volume must be greater than zero.'});else{o.yieldMgL=o.totalMg/volToL(c,p.cultU||'mL');o.verdict=classifyYield(o.yieldMgL,hostOf(p,set));
+    if(o.verdict&&o.verdict.tier==='impossible') o.flags.push({t:'warn',m:o.verdict.note})}}
+  const s=numv(p.start);if(s!==null&&s>0){o.recovery=100*o.totalMg/s;if(o.recovery>100) o.flags.push({t:'warn',m:'Recovery is over 100%: check the starting amount and units, since purification cannot increase total protein.'})}
+}
+/* MW and ε: typed values win; an empty box falls back to the sequence */
+function effA(p){const st=seqInfo(p.seq),ok=st&&st.ok;let mw=numv(p.mw),eps=numv(p.eps),type=p.epsType||'mass01',mwFrom=false,epsFrom=false;
+  if(mw===null&&ok){mw=st.mw;mwFrom=true}
+  if(eps===null&&ok){eps=S.a.cys==='ox'?st.a01Oxidised:st.a01Reduced;type='mass01';epsFrom=true}
+  return {mw,eps,type,mwFrom,epsFrom,st}}
+function calcA(p){
+  const e=effA(p),vals=repsOf(p),o={e,vals,flags:[]};
+  if(e.st&&e.st.flags) o.flags.push(...e.st.flags);
+  if(!vals.length&&e.eps===null){o.empty=true;return o}
+  if(!vals.length){o.flags.push({t:'info',m:'Type the A280 readings.'});return o}
+  if(e.eps===null){o.flags.push({t:'info',m:'Add ε (or paste the sequence) to get the concentration.'});return o}
+  const r=computeRow({mw:e.mw,eps:e.eps,epsType:e.type,a280raw:vals.join(' '),dil:numv(p.dil)??1},numv(S.a.path)||10);
+  o.flags.push(...r.flags.filter(f=>f.t!=='info'));if(!r.ok) return o;
+  o.ok=true;o.mean=r.meanA280;o.sd=r.sdA280;o.cv=r.sdA280!=null&&r.meanA280?100*r.sdA280/r.meanA280:null;o.mgml=r.mgml;o.molar=r.molar;
+  o.conc=concIn(o.mgml,o.molar,S.a.unit);o.relSD=o.sd!=null&&o.mean?o.sd/o.mean:null;
+  if(o.conc==null&&['M','mM','uM','nM'].includes(S.a.unit)) o.flags.push({t:'warn',m:'Molar units need a MW (type it, or paste the sequence).'});
+  if(o.cv!=null&&o.cv>10) o.flags.push({t:'warn',m:`The readings differ by ${sig(o.cv,2)}% (CV). Mix and re-read, or check for bubbles.`});
+  yieldInto(o,p,S.a);return o}
+function blankVal(){const c=S.c;if(c.blank==='none') return {v:0,txt:'none'};
+  if(c.blank==='zero'){const z=c.stds.filter(s=>numv(s.conc)===0).flatMap(repsOf);return z.length?{v:mean(z),n:z.length,txt:'mean of the 0 standard'}:{v:0,missing:'Add a standard with concentration 0 to use it as the blank.'}}
+  const r=parseReadings(c.blankRaw).values;return r.length?{v:mean(r),n:r.length,txt:'your blank readings'}:{v:0,missing:'Type the blank readings in the bar above.'}}
+function calcFit(){const c=S.c,b=blankVal(),pts=[],stds=c.stds.map(s=>{const x=numv(s.conc),v=repsOf(s),m=v.length?mean(v):null,o={x,vals:v,mean:m,sd:sampleSD(v),y:m==null?null:m-b.v};if(x!==null&&o.y!=null) pts.push({x,y:o.y});return o});
+  let fit={ok:false,flags:[]};if(pts.length) fit=c.fit==='quad'?quadreg(pts):Object.assign(linreg(pts),{model:'linear'});
+  if(fit.ok) stds.forEach(o=>{if(o.y!=null){const cx=invertCurve(fit,o.y);o.back=cx;o.err=o.x&&cx!=null?100*(cx-o.x)/o.x:null}});
+  return {fit,blank:b,stds}}
+function calcC(p,F){const c=S.c,v=repsOf(p),o={vals:v,flags:[]};if(!v.length){o.empty=true;return o}
+  o.mean=mean(v);o.sd=sampleSD(v);o.cv=o.sd!=null&&o.mean?100*o.sd/o.mean:null;o.relSD=o.sd!=null&&o.mean?o.sd/o.mean:null;o.corr=o.mean-F.blank.v;
+  if(!F.fit.ok){o.flags.push({t:'info',m:'The standard curve is not ready yet: it needs at least '+(c.fit==='quad'?3:2)+' standards with a concentration and a reading.'});return o}
+  const r=concFromCurve(F.fit,o.corr,numv(p.dil)??1);o.flags.push(...r.flags);if(!r.ok) return o;
+  o.ok=true;o.inAssay=r.cMeasured;o.cAct=r.cActual;o.mgml=c.unit==='ugml'?r.cActual/1000:r.cActual;const mw=numv(p.mw);o.molar=mw>0?o.mgml/mw:null;
+  o.conc=concIn(o.mgml,o.molar,c.out);if(o.conc==null&&['M','mM','uM','nM'].includes(c.out)) o.flags.push({t:'warn',m:'Molar units need the MW.'});
+  if(o.cv!=null&&o.cv>10) o.flags.push({t:'warn',m:`The readings differ by ${sig(o.cv,2)}% (CV).`});
+  yieldInto(o,p,c);return o}
+const flagTxt=R=>(R.flags||[]).filter(f=>f.t!=='info').map(f=>f.m).join(' ');
+let FIT=null;const fitNow=()=>FIT||(FIT=calcFit());
+const listOf=()=>S.mode==='a280'?S.a.rows:S.c.rows;
+const calcOf=p=>S.mode==='a280'?calcA(p):calcC(p,fitNow());
+const colorOf=p=>COLORS[Math.max(0,listOf().indexOf(p))%COLORS.length];
+
+/* ================= THE CULTURE FLASK =================
+   Each protein card has a small Erlenmeyer flask on an orbital shaker, drawn as smooth vector shapes (no pixels). The
+   flask rocks gently, the medium stays level and sloshes, and the cells swim in it: E. coli rods that run and tumble,
+   budding yeast, round CHO cells with a nucleus, boxy BY-2 plant cells. What the flask shows follows the numbers:
+     how many cells, how fast they swim and how coloured the medium is  <- the yield on a log scale against that host's
+                                                                           own benchmarks (or the concentration, before
+                                                                           the volumes are in)
+     bubbles and foam at the surface                                     <- the yield verdict: a thin culture barely
+                                                                           bubbles; a very good one foams; an impossible
+                                                                           one (check the units) boils over
+   A strip of label tape on the glass carries the protein's name. Fluorescent proteins (GFP, mCherry and friends) are
+   shown under a dark blue-light box and glow in their own colour; luciferase flickers; a protein called potato grows
+   potatoes. Purely decorative: nothing here feeds any number. */
+const Culture=(function(){
+  const TICK=50;
+  const GLOW=[[/\b(e|sf|ac|mem|t|super)?gfp\b|mneon|mgreen|emerald|azami|clover|mwasabi|zsgreen/i,'#3dff7a','green'],[/yfp|venus|citrine|ypet|topaz/i,'#ffe14d','yellow'],
+    [/cfp|cerulean|turquoise|mtfp|teal/i,'#4de1ff','cyan'],[/bfp|azurite|sapphire|ebfp/i,'#6e8bff','blue'],
+    [/mcherry|rfp|dsred|tdtomato|mscarlet|mkate|mruby|mapple|mplum|katushka|tagrfp|irfp/i,'#ff4d6d','red'],[/mko|morange|tdorange/i,'#ff9a3d','orange']];
+  const glowOf=name=>{for(const g of GLOW) if(g[0].test(name||'')) return {c:g[1],n:g[2]};return null};
+  const NMAX=120,NMIN=6;
+  const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lg=(v,a,b)=>{if(v==null||!isFinite(v)||v<=0) return 0;return clamp((Math.log10(Math.max(v,a))-Math.log10(a))/(Math.log10(b)-Math.log10(a)),0,1)};
+  const hex=c=>{const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255]};
+  const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'};
+  const rgba=(c,al)=>{const [r,g,b]=hex(c);return `rgba(${r},${g},${b},${al})`};
+  const cssv=(n,fb)=>{const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||fb};
+  let dishes={};
+  /* the flask, in CSS pixels of the box: a neck, sloping shoulders, a flat base; the medium fills about half */
+  function geom(W,H){const cx=W*.5,neckW=Math.max(14,W*.17),neckTop=H*.06,shoulder=H*.30,baseY=H*.86,baseW=Math.min(W*.74,H*1.1),lip=neckW*.62;
+    return {W,H,cx,neckW,neckTop,shoulder,baseY,baseW,lip,level:H*.56,r:Math.max(4,W*.035)}}
+  const halfW=(g,y)=>y<g.shoulder?g.neckW/2:g.neckW/2+(g.baseW/2-g.neckW/2)*clamp((y-g.shoulder)/(g.baseY-g.shoulder),0,1);
+  /* the medium stays level while the flask rocks: its surface tilts by minus the flask's angle, plus a slosh */
+  function surfaceY(d,x){const g=d.g;return g.level-(x-g.cx)*Math.tan(d.ang)+Math.sin(x/(g.W*.11)+d.t/5)*g.H*.012*d.slosh}
+  function inLiquid(d,x,y,m){const g=d.g;m=m||2;return y>surfaceY(d,x)+m&&y<g.baseY-m&&Math.abs(x-g.cx)<halfW(g,y)-m-(y>g.baseY-g.r?g.r*.6:0)}
+  function flaskPath(x,g){const {cx,neckW,neckTop,shoulder,baseY,baseW,r,lip}=g;x.beginPath();
+    x.moveTo(cx-neckW/2,neckTop);x.lineTo(cx-neckW/2,shoulder);x.lineTo(cx-baseW/2+r,baseY-r*.4);x.quadraticCurveTo(cx-baseW/2,baseY,cx-baseW/2+r,baseY);
+    x.lineTo(cx+baseW/2-r,baseY);x.quadraticCurveTo(cx+baseW/2,baseY,cx+baseW/2-r,baseY-r*.4);x.lineTo(cx+neckW/2,shoulder);x.lineTo(cx+neckW/2,neckTop);x.closePath()}
+  function targets(d,o){const H=HOSTS[o.host]||HOSTS.ecoli;let f,mood='typical';
+    if(!o.ok){f=0;mood='idle'}
+    else if(o.mgL!=null){f=lg(o.mgL/H.veryhigh,.0005,1);mood=o.mgL>=H.ceiling?'wow':o.mgL>=H.veryhigh?'party':o.mgL>=H.high?'star':o.mgL>=H.typical?'happy':o.mgL>=H.low?'typical':'low'}
+    else{f=lg(o.mgml,.03,40);mood=f<.25?'low':f<.6?'typical':'happy'}
+    d.mood=mood;d.tier=mood==='idle'?'idle':mood==='wow'?'wow':mood==='party'?'gold':'normal';d.f=f;
+    const room=d.g?(d.g.baseW*(d.g.baseY-d.g.level))/(200*60):1;
+    d.N=mood==='idle'?0:Math.round((mood==='wow'||mood==='party'?NMAX:NMIN+f*(NMAX-NMIN))*clamp(room,.5,1.6));
+    d.big=o.mw>100000?1.35:o.mw>30000?1.15:1;d.glow=glowOf(o.name);d.luc=/lucifer|nanoluc|nluc/i.test(o.name||'');d.label=(o.name||'').trim()}
+  function spawn(d){const g=d.g;for(let k=0;k<12;k++){const y=rnd(g.level+6,g.baseY-6),x=rnd(g.cx-halfW(g,y)+6,g.cx+halfW(g,y)-6);if(inLiquid(d,x,y,3)){const a=rnd(0,6.283);d.cells.push({x,y,a,v:rnd(.6,1),run:ri(10,40),bud:rnd(0,1),ph:rnd(0,6.283)});return}}}
+  const SPEED={idle:0,low:.22,typical:.4,happy:.55,star:.65,party:.75,wow:1.1};
+  function step(d){d.t=(d.t||0)+1;const g=d.g;
+    // the shaker: a slow rock, a little orbital slide, and the slosh that follows
+    d.ang=Math.sin(d.t/26)*.055*(d.mood==='wow'?1.6:1);d.dx=Math.sin(d.t/13)*g.W*.012;d.slosh=.6+.4*Math.abs(Math.cos(d.t/26));
+    if(d.cells.length<d.N&&(d.t%2===0||d.cells.length<d.N*.4)) spawn(d);
+    if(d.cells.length>d.N) d.cells.splice(0,Math.max(1,Math.round((d.cells.length-d.N)/6)));
+    const sp=(SPEED[d.mood]||.4)*Math.max(.8,Math.min(1.6,g.W/220));
+    d.cells.forEach(c=>{
+      // run and tumble: straight for a while, then a new heading; yeast and CHO just drift
+      if(--c.run<=0){c.run=ri(8,40);c.a+=rnd(-1.6,1.6)*(d.host==='ecoli'?1:.5)}
+      c.a+=rnd(-.08,.08)+Math.cos(d.t/26)*.004;   // the slosh pulls everyone a little
+      const s=sp*c.v,nx=c.x+Math.cos(c.a)*s,ny=c.y+Math.sin(c.a)*s*(d.host==='ecoli'?1:.7);
+      if(inLiquid(d,nx,ny,3)){c.x=nx;c.y=ny}else{c.a+=Math.PI+rnd(-.6,.6);c.run=ri(10,30);
+        if(!inLiquid(d,c.x,c.y,2)){c.y=clamp(c.y,surfaceY(d,c.x)+4,g.baseY-4);c.x=clamp(c.x,g.cx-halfW(g,c.y)+4,g.cx+halfW(g,c.y)-4)}}});
+    // bubbles: a few from the bottom, more the better the culture; foam gathers at the surface when it is very good
+    const rate={idle:0,low:70,typical:34,happy:20,star:12,party:6,wow:2}[d.mood]||0;
+    if(rate&&d.t%rate===0){const y=g.baseY-4,x=rnd(g.cx-halfW(g,y)*.8,g.cx+halfW(g,y)*.8),fast=d.mood==='wow'?2.4:d.mood==='party'?1.5:1;for(let k=0;k<(d.mood==='wow'?3:1);k++) d.bub.push({x:x+rnd(-6,6),y,r:rnd(1,2.2)*Math.max(1,g.W/260),vy:rnd(.5,1)*fast})}
+    d.bub.forEach(b=>{b.y-=b.vy;b.x+=Math.sin(d.t/6+b.r)*.3});
+    const foamy=d.mood==='star'||d.mood==='party'||d.mood==='wow';
+    d.bub=d.bub.filter(b=>{if(b.y>surfaceY(d,b.x)-b.r) return true;if(foamy&&d.foam.length<(d.mood==='wow'?160:d.mood==='party'?70:34)) d.foam.push({x:b.x,y:surfaceY(d,b.x)-b.r*.6,r:b.r*rnd(1,1.6),t:0});return false});
+    d.foam.forEach(f=>{f.t++;f.y=surfaceY(d,f.x)-f.r*.6-(d.mood==='wow'?Math.min(f.t*.25,g.level-g.neckTop+8):0);f.x+=Math.sin(f.t/9)*.15;if(d.mood==='wow'&&f.y<g.neckTop+4) f.x+=(f.x<g.cx?-1:1)*.9+rnd(-.3,.3)});
+    d.foam=d.foam.filter(f=>f.t<(d.mood==='wow'?260:400)&&f.y>-10&&Math.abs(f.x-g.cx)<g.W*.6);
+    if(!foamy) d.foam.splice(0,Math.ceil(d.foam.length/8));
+    if((d.mood==='star'||d.mood==='party')&&d.t%6===0) d.fx.push({x:rnd(g.cx-g.baseW*.55,g.cx+g.baseW*.55),y:rnd(g.neckTop,g.baseY),t:0});
+    d.fx.forEach(f=>f.t++);d.fx=d.fx.filter(f=>f.t<14)}
+  /* one cell of each host, drawn at (0,0) heading along +x */
+  function cell(x,d,c,base,edge){const k=d.big*Math.max(.8,Math.min(1.5,d.g.W/230));x.save();x.translate(c.x,c.y);x.rotate(c.a);x.scale(k,k);x.lineWidth=.8;x.strokeStyle=edge;x.fillStyle=base;
+    if(d.host==='ecoli'){x.beginPath();x.moveTo(-3,-1.3);x.lineTo(3,-1.3);x.arc(3,0,1.3,-Math.PI/2,Math.PI/2);x.lineTo(-3,1.3);x.arc(-3,0,1.3,Math.PI/2,Math.PI*1.5);x.closePath();x.fill();x.stroke();
+      x.beginPath();x.moveTo(-4.3,0);for(let i=1;i<=6;i++) x.lineTo(-4.3-i*1.1,Math.sin(i*1.3+d.t/2.5+c.ph)*1.1);x.strokeStyle=rgba(edge.startsWith('#')?edge:'#6b6b6b',.7);x.lineWidth=.6;x.stroke()}
+    else if(d.host==='yeast'){x.beginPath();x.ellipse(0,0,3.2,2.6,0,0,7);x.fill();x.stroke();if(c.bud>.4){const br=1+1.3*((c.bud-.4)/.6);x.beginPath();x.arc(3.2,-1.2,br,0,7);x.fill();x.stroke()}}
+    else if(d.host==='mammalian'){x.beginPath();x.arc(0,0,3.4,0,7);x.fill();x.stroke();x.fillStyle=rgba('#6b4f7a',.55);x.beginPath();x.arc(.6,-.3,1.3,0,7);x.fill()}
+    else if(d.host==='potato'){x.beginPath();x.ellipse(0,0,3.6,2.5,0,0,7);x.fillStyle='#c99a5c';x.fill();x.strokeStyle='#7a4f24';x.stroke();x.fillStyle='#7a4f24';[[-1.5,-.6],[.8,.9],[1.9,-.9]].forEach(p=>x.fillRect(p[0],p[1],.7,.7))}
+    else{x.beginPath();x.roundRect?x.roundRect(-3.4,-2.2,6.8,4.4,1.2):x.rect(-3.4,-2.2,6.8,4.4);x.fill();x.stroke();x.fillStyle='#5fae4e';x.beginPath();x.arc(-1.2,.4,.9,0,7);x.arc(1.4,-.6,.9,0,7);x.fill()}
+    x.restore()}
+  function draw(d){const x=d.ctx,g=d.g,W=g.W,H=g.H,dpr=d.dpr;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+    const dark=!!d.glow,ink=cssv('--ink','#121925'),line=cssv('--line-2','#c3ccd9'),muted=cssv('--ink-3','#566174');
+    // the blue-light box for fluorescent proteins
+    if(dark){x.fillStyle='#0f1a2e';if(x.roundRect){x.beginPath();x.roundRect(0,0,W,H,10);x.fill()}else x.fillRect(0,0,W,H)}
+    // the shaker platform
+    x.fillStyle=dark?'#1d2a42':mix(line,'#ffffff',.45);x.beginPath();x.roundRect?x.roundRect(g.cx-g.baseW*.62+d.dx*.3,g.baseY+2,g.baseW*1.24,Math.max(5,H*.05),4):x.fillRect(g.cx-g.baseW*.62,g.baseY+2,g.baseW*1.24,6);x.fill();
+    x.save();x.translate(g.cx+d.dx,g.baseY);x.rotate(d.ang);x.translate(-g.cx,-g.baseY);
+    // the medium: LB amber turning the protein's colour as the yield climbs; in the dark box it is the glow itself
+    const col=dark?d.glow.c:mix('#e7c977',d.color||'#ff8a65',.12+.55*d.f),fl=d.luc?(.55+.45*Math.abs(Math.sin(d.t/5))):1;
+    x.save();flaskPath(x,g);x.clip();
+    x.beginPath();x.moveTo(g.cx-g.W,g.baseY+2);x.lineTo(g.cx-g.W,surfaceY(d,g.cx-g.W));for(let px=g.cx-g.W;px<=g.cx+g.W;px+=4) x.lineTo(px,surfaceY(d,px));x.lineTo(g.cx+g.W,g.baseY+2);x.closePath();
+    if(dark){x.fillStyle=rgba(d.glow.c,(.28+.5*d.f)*fl)}else{x.fillStyle=col;x.globalAlpha=.72+.2*d.f}x.fill();x.globalAlpha=1;
+    if(dark){const gr=x.createRadialGradient(g.cx,g.baseY-(g.baseY-g.level)*.5,2,g.cx,g.baseY-(g.baseY-g.level)*.5,g.baseW*.7);gr.addColorStop(0,rgba(d.glow.c,.35*fl));gr.addColorStop(1,rgba(d.glow.c,0));x.fillStyle=gr;x.fillRect(0,0,W,H)}
+    // the cells
+    const base=dark?rgba(d.glow.c,.95):'#fbf7ee',edge=dark?rgba('#ffffff',.5):mix(ink,col,.45);
+    d.cells.forEach(c=>cell(x,d,c,base,edge));
+    // bubbles and foam
+    x.strokeStyle=dark?rgba('#ffffff',.55):rgba('#ffffff',.9);x.lineWidth=.8;d.bub.forEach(b=>{x.beginPath();x.arc(b.x,b.y,b.r,0,7);x.stroke()});
+    x.fillStyle=dark?rgba('#ffffff',.75):'rgba(255,255,255,.92)';x.strokeStyle=dark?rgba(d.glow.c,.6):rgba(mix(ink,col,.3),.5);x.lineWidth=.6;d.foam.forEach(f=>{x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill();x.stroke()});
+    x.restore();
+    // boil-over: foam outside the glass too
+    if(d.mood==='wow'){x.fillStyle='rgba(255,255,255,.92)';x.strokeStyle=rgba(mix(ink,col,.3),.5);d.foam.forEach(f=>{if(f.y<g.neckTop+6){x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill();x.stroke()}})}
+    // the glass: outline, a lip, and a soft highlight down the left side
+    flaskPath(x,g);x.lineWidth=Math.max(1.4,W/150);x.strokeStyle=dark?'rgba(190,210,255,.55)':mix(line,ink,.35);x.stroke();
+    x.beginPath();x.moveTo(g.cx-g.neckW/2-g.lip*.25,g.neckTop);x.lineTo(g.cx+g.neckW/2+g.lip*.25,g.neckTop);x.lineWidth=Math.max(2,W/110);x.lineCap='round';x.stroke();x.lineCap='butt';
+    x.strokeStyle=dark?'rgba(255,255,255,.18)':'rgba(255,255,255,.75)';x.lineWidth=Math.max(1.5,W/120);x.beginPath();x.moveTo(g.cx-g.neckW/2+3,g.neckTop+8);x.lineTo(g.cx-g.neckW/2+3,g.shoulder-2);x.lineTo(g.cx-g.baseW/2+g.r*1.6,g.baseY-g.r*1.3);x.stroke();
+    // the label tape
+    if(d.label){const tw=Math.min(g.baseW*.62,W*.5),th=Math.max(12,H*.11),tx=g.cx-tw/2,ty=g.level-th*1.35;x.save();x.translate(tx+tw/2,ty+th/2);x.rotate(-.04);x.fillStyle=dark?'#e8e2cf':'#f4ecd6';x.strokeStyle=dark?'#b8b09a':'#cfc3a0';x.lineWidth=.8;
+      x.beginPath();x.roundRect?x.roundRect(-tw/2,-th/2,tw,th,2):x.rect(-tw/2,-th/2,tw,th);x.fill();x.stroke();
+      x.fillStyle='#2a2a2a';x.font='600 '+Math.max(9,Math.round(th*.62))+'px '+cssv('--mono','ui-monospace,monospace');x.textAlign='center';x.textBaseline='middle';
+      let L=d.label;const maxc=Math.floor(tw/(th*.4));if(L.length>maxc) L=L.slice(0,Math.max(3,maxc-1))+'…';x.fillText(L,0,.5);x.restore()}
+    x.restore();
+    // sparkles for a very good culture, and the alarm tag for an impossible one
+    d.fx.forEach(f=>{const a=1-Math.abs(f.t-7)/7,s=2+a*2;x.strokeStyle=rgba('#ffd54f',a);x.lineWidth=1;x.beginPath();x.moveTo(f.x-s,f.y);x.lineTo(f.x+s,f.y);x.moveTo(f.x,f.y-s);x.lineTo(f.x,f.y+s);x.stroke()});
+    if(d.mood==='wow'&&d.t%20<12){const tx=g.cx+g.baseW*.42,ty=g.shoulder-4;x.fillStyle='#d70015';x.beginPath();x.roundRect?x.roundRect(tx-16,ty-10,32,18,4):x.rect(tx-16,ty-10,32,18);x.fill();x.fillStyle='#fff';x.font='800 12px '+cssv('--sans','system-ui');x.textAlign='center';x.textBaseline='middle';x.fillText('?!',tx,ty-1)}
+  }
+  const MOOD_TXT={idle:'waiting for your numbers',low:'a thin culture: low yield for this host',typical:'a typical culture for this host',happy:'a healthy culture: good yield',star:'foaming: a very good yield for this host',party:'overflowing with foam: an impressive yield',wow:'boiling over: more than this host can make, check the units'};
+  function caption(d){const cap=d.box.parentElement&&d.box.parentElement.querySelector('.dish-t');if(!cap) return;
+    const H={ecoli:'E. coli',yeast:'yeast',mammalian:'CHO',plant:'BY-2',potato:'potato'}[d.host]||'cells';
+    cap.textContent=`${H} · ${MOOD_TXT[d.mood]||''}${d.glow?` · glowing ${d.glow.n}`:''}${d.luc?' · glowing (luciferase)':''}`}
+  function fit(d){const r=d.box.getBoundingClientRect();if(!r.width||!r.height) return;const dpr=Math.min(2,window.devicePixelRatio||1);d.dpr=dpr;
+    if(d.g&&Math.abs(d.g.W-r.width)<1&&Math.abs(d.g.H-r.height)<1) return;
+    d.cv.width=Math.round(r.width*dpr);d.cv.height=Math.round(r.height*dpr);d.g=geom(r.width,r.height);d.cells=d.cells.filter(c=>inLiquid(d,c.x,c.y,2));if(d.last0) targets(d,d.last0);draw(d)}
+  const RO='ResizeObserver' in window?new ResizeObserver(es=>es.forEach(e=>{const d=Object.values(dishes).find(x=>x.box===e.target);if(d) fit(d)})):null;
+  const IO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{const d=dishes[e.target.dataset.dish];if(d) d.vis=e.isIntersecting})):null;
+  function sync(){const want={};$$('.culture[data-dish]').forEach(box=>{const id=box.dataset.dish;want[id]=1;let d=dishes[id];
+    if(!d||d.box!==box){const cv=document.createElement('canvas');cv.className='flask';box.innerHTML='';box.appendChild(cv);
+      const old=d;d={box,cv,ctx:cv.getContext('2d'),host:old?old.host:'ecoli',cells:old?old.cells:[],bub:[],foam:[],fx:[],vis:true,last:0,color:old?old.color:'#ff8a65',t:0,ang:0,dx:0,slosh:1,f:0,big:1,mood:old?old.mood:'idle',tier:old?old.tier:'idle',N:old?old.N:0,last0:old?old.last0:null,glow:old?old.glow:null,label:old?old.label:''};
+      dishes[id]=d;IO&&IO.observe(box);RO&&RO.observe(box);fit(d)}});
+    Object.keys(dishes).forEach(id=>{if(!want[id]) delete dishes[id]})}
+  function update(id,o){const d=dishes[id];if(!d) return;let host=HOSTS[o.host]?o.host:'ecoli';if(/potato/i.test(o.name||'')) host='potato';d.color=o.color||d.color;o=Object.assign({},o,{host:host==='potato'?(HOSTS[o.host]?o.host:'ecoli'):host});
+    if(host!==d.host){d.host=host;d.cells=[]}
+    if(!d.g) fit(d);d.last0=o;targets(d,o);if(!d.g) return;
+    d.cells=d.cells.filter(c=>inLiquid(d,c.x,c.y,2));
+    if(RM){for(let i=0;i<400;i++) step(d)}draw(d);caption(d)}
+  function tick(ts){Object.values(dishes).forEach(d=>{if(!d.vis||!d.box.isConnected||!d.g||RM) return;if(ts-d.last<TICK) return;d.last=ts;step(d);draw(d);if(d.t%10===0) caption(d)});requestAnimationFrame(tick)}
+  requestAnimationFrame(tick);
+  /* for tests: every cell must be in the medium */
+  function audit(id){const d=dishes[id];if(!d||!d.g) return null;let bad=0;d.cells.forEach(c=>{if(!inLiquid(d,c.x,c.y,0)) bad++});
+    return {cells:d.cells.length,N:d.N,protein:d.cells.length,outside:bad,tier:d.tier,mood:d.mood,host:d.host,glow:d.glow&&d.glow.n,W:d.g.W,H:d.g.H}}
+  return {sync,update,info:audit,count:()=>Object.keys(dishes).length};
+})();
+
+/* ---------------- layout ---------------- */
+function opt(list,v){return list.map(([k,l])=>`<option value="${escH(k)}"${k===v?' selected':''}>${escH(l)}</option>`).join('')}
+function renderAll(){FIT=null;$('#mA').classList.toggle('on',S.mode==='a280');$('#mC').classList.toggle('on',S.mode==='curve');$('#mA').setAttribute('aria-selected',S.mode==='a280');$('#mC').setAttribute('aria-selected',S.mode==='curve');
+  renderBar();renderMain();Culture.sync();refreshAll()}
+function renderBar(){const b=$('#bar');
+  if(S.mode==='a280'){const a=S.a;b.innerHTML=`<label>Your A280 reading is <select data-set="a.path">${opt(PATHO,a.path)}</select></label>
+    <label>Show concentration in <select data-set="a.unit"><optgroup label="Mass">${opt(MASSU,a.unit)}</optgroup><optgroup label="Molar (needs MW)">${opt(MOLU,a.unit)}</optgroup></select></label>
+    <label title="Only matters for ε worked out from a pasted sequence">Cysteines <select data-set="a.cys">${opt([['red','reduced (DTT, TCEP, cytoplasm)'],['ox','all paired (disulfides)']],a.cys)}</select></label>`}
+  else{const c=S.c;b.innerHTML=`<label>Standards in <select data-set="c.unit">${opt([['ugml','µg/mL'],['mgml','mg/mL']],c.unit)}</select></label>
+    <label>Fit <select data-set="c.fit">${opt([['linear','Straight line (BCA, linear range)'],['quad','Quadratic (Bradford, curving at the top)']],c.fit)}</select></label>
+    <label>Blank <select data-set="c.blank">${opt([['zero','The 0 standard'],['manual','My blank readings'],['none','Do not subtract']],c.blank)}</select></label>
+    ${c.blank==='manual'?`<label>Blank readings <input type="text" data-set="c.blankRaw" value="${escH(c.blankRaw)}" placeholder="0.42, 0.41" size="12"></label>`:''}
+    <label>Show concentration in <select data-set="c.out"><optgroup label="Mass">${opt(MASSU,c.out)}</optgroup><optgroup label="Molar (needs MW)">${opt(MOLU,c.out)}</optgroup></select></label>`}}
+const HELP="<details class=\"help\" id=\"help\">\n    <summary>How every number here is worked out, with sources</summary>\n    <div class=\"helpbody\">\n      <h4>Concentration from A280</h4>\n      <p>Beer&ndash;Lambert. The extinction coefficient can be given three ways, and they are <b>not</b> interchangeable:</p>\n      <p><b>A 0.1%</b> &mdash; absorbance of a 1&nbsp;mg/mL (1&nbsp;g/L) solution in a 1&nbsp;cm cuvette. This is what Benchling and ProtParam report, and the default here. <code>c (mg/mL) = A / A<sup>0.1%</sup></code>. No MW needed.</p>\n      <p><b>E 1%</b> &mdash; absorbance of a 10&nbsp;mg/mL (1% w/v) solution. Exactly ten times A&nbsp;0.1%, so mixing them up gives a 10-fold error. <code>c (mg/mL) = 10 &times; A / E<sup>1%</sup></code>.</p>\n      <p><b>Molar &epsilon;</b> (M&#8315;&sup1;cm&#8315;&sup1;) &mdash; <code>c (M) = A / &epsilon;</code>, then <code>c (mg/mL) = c (M) &times; MW</code>. MW required.</p>\n      <p>Replicate readings are averaged (SD shown for n&nbsp;&ge;&nbsp;2). Dilution factor multiplies the result. Path length: NanoDrop's Protein A280 mode already reports a 10&nbsp;mm-equivalent number, so no correction is applied by default.</p>\n\n      <h4>Yield</h4>\n      <p>Two steps. <code>total (mg) = concentration (mg/mL) &times; volume of your prep (mL)</code>. Then <code>yield (mg/L) = total (mg) &divide; culture volume (L)</code>, assuming the whole culture went into that one purification. Eluting into a bigger volume does not change how much protein you have &mdash; it is the same material spread thinner, so multiplying back out gives the same total.</p>\n      <p><b>What counts as a good yield depends entirely on the host</b>, so pick the host in the Host column (or the default in the bar above) and the Yield check adjusts. All figures in mg per litre of culture:</p>\n      <p style=\"font-family:var(--mono);font-size:11px;line-height:1.9\">\n        <b>E. coli</b> &nbsp;&lt;10 low &middot; 10&ndash;100 typical &middot; 100&ndash;500 high &middot; 0.5&ndash;10 g/L fed-batch &middot; &gt;10 g/L impressive &middot; &gt;100 g/L impossible<br>\n        <b>Yeast (P. pastoris)</b> &nbsp;&lt;10 low &middot; 10&ndash;100 typical &middot; 0.1&ndash;1 g/L high &middot; 1&ndash;15 g/L fermenter &middot; &gt;15 g/L impressive &middot; &gt;150 g/L impossible<br>\n        <b>Mammalian (CHO/HEK)</b> &nbsp;&lt;10 low &middot; 10&ndash;100 typical transient &middot; 0.1&ndash;1 g/L high &middot; 1&ndash;10 g/L routine fed-batch &middot; &gt;10 g/L impressive &middot; &gt;50 g/L impossible<br>\n        <b>Plant cell (BY-2)</b> &nbsp;&lt;10 low &middot; 10&ndash;100 typical &middot; 100&ndash;500 high &middot; 0.5&ndash;1.2 g/L very high &middot; &gt;1.2 g/L impressive &middot; &gt;20 g/L impossible\n      </p>\n      <p>Each ceiling is a real physical limit, not a round number. <i>E. coli</i> at &gt;100 gDCW/L still holds only ~55 g/L of total cellular protein (it is 52&ndash;55% protein by dry weight), so a single product above ~100 g/L cannot exist. CHO reaches far lower biomass than microbes, hence its lower ceiling. For plant suspension culture the highest titre ever reported, for any protein in any line, is 1.1 g/L in the BY-2 clone \"Hulk\" &mdash; so anything above that is genuinely remarkable, and 20 g/L is impossible.</p>\n\n      <h4>Protein sequence &rarr; MW and &epsilon;280</h4>\n      <p>MW is the sum of average residue masses plus one water (the values ExPASy ProtParam uses). &epsilon;280 follows Pace et al. 1995: <code>&epsilon; = 5500&middot;nTrp + 1490&middot;nTyr + 125&middot;nCystine</code> M&#8315;&sup1;cm&#8315;&sup1;. Only disulfide-bonded cysteine (cystine) absorbs, so pick the redox state that matches your buffer. A 0.1% = &epsilon; / MW.</p>\n      <h4>Blank and fit</h4>\n      <p>With a blank selected, its mean absorbance is subtracted from every standard and sample before fitting. The quadratic option fits <code>A = a&#8322;C&sup2; + a&#8321;C + a&#8320;</code> by least squares and solves for C on the rising part of the curve; it warns if the curve turns over inside your standards.</p>\n      <h4>Standard curve</h4>\n      <p>Ordinary least squares through your standards: <code>A = slope &times; C + intercept</code>, inverted as <code>C = (A &minus; intercept) / slope</code>. R&sup2; below 0.99 is flagged, and a sample landing outside the concentration range you actually tested is flagged as an extrapolation. R&sup2; is a useful QC indicator, not proof by itself that a curve is valid; inspect standards, blanks, replicates and residual behaviour as appropriate for your assay.</p>\n\n      <ul>\n        <li>&middot; <a href=\"https://doi.org/10.1002/pro.5560041120\" target=\"_blank\" rel=\"noopener\">Pace et al., Protein Sci 1995 &mdash; predicting the molar absorption coefficient from sequence</a></li>\n        <li>&middot; <a href=\"https://doi.org/10.1385/1-59259-890-0:571\" target=\"_blank\" rel=\"noopener\">Gasteiger et al. 2005 &mdash; ExPASy ProtParam</a></li>\n        <li>&middot; <a href=\"https://doi.org/10.1006/abio.1996.0171\" target=\"_blank\" rel=\"noopener\">Zor &amp; Selinger, Anal Biochem 1996 &mdash; non-linearity of the Bradford assay</a></li>\n        <li>&middot; <a href=\"https://doi.org/10.1002/0471140864.ps0301s33\" target=\"_blank\" rel=\"noopener\">Grimsley &amp; Pace, Curr Protoc Protein Sci 2003 &mdash; spectrophotometric determination</a></li>\n        <li>&middot; <a href=\"https://documents.thermofisher.com/TFS-Assets/CAD/manuals/NanoDrop-2000-User-Manual-EN.pdf\" target=\"_blank\" rel=\"noopener\">NanoDrop 2000/2000c manual &mdash; path-length normalisation</a></li>\n        <li>&middot; <a href=\"https://doi.org/10.1016/0003-2697(76)90527-3\" target=\"_blank\" rel=\"noopener\">Bradford 1976 &mdash; Coomassie dye-binding assay</a></li>\n        <li>&middot; <a href=\"https://doi.org/10.1016/0003-2697(85)90442-7\" target=\"_blank\" rel=\"noopener\">Smith et al. 1985 &mdash; BCA assay</a></li>\n        <li>&middot; <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC10014274/\" target=\"_blank\" rel=\"noopener\">Reilly et al. &mdash; per-litre soluble yields</a>; <a href=\"https://www.osti.gov/pages/servlets/purl/1771987\" target=\"_blank\" rel=\"noopener\">fed-batch titres to 8.1 g/L</a>; <a href=\"https://pubmed.ncbi.nlm.nih.gov/1809196/\" target=\"_blank\" rel=\"noopener\">Riesenberg et al. &mdash; &gt;100 gDCW/L</a></li>\n        <li>&middot; <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC10764063/\" target=\"_blank\" rel=\"noopener\">R&sup2; &gt; 0.99 linearity benchmark</a></li>\n        <li>&middot; CHO fed-batch mAb titres: <a href=\"https://www.mdpi.com/2311-5637/10/7/352\" target=\"_blank\" rel=\"noopener\">6.1&ndash;6.5 g/L, Fermentation 2024</a>; <a href=\"https://link.springer.com/article/10.1007/s10616-024-00669-4\" target=\"_blank\" rel=\"noopener\">12.6 g/L with CHO-MK, Cytotechnology 2024</a>; <a href=\"https://www.sigmaaldrich.com/US/en/technical-documents/technical-article/cell-culture-and-cell-culture-analysis/cell-culture-for-manufacturing/cho-fed-batch-system-comparison\" target=\"_blank\" rel=\"noopener\">&gt;5 g/L with commercial media</a></li>\n        <li>&middot; <i>P. pastoris</i>: <a href=\"https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2022.1059777/full\" target=\"_blank\" rel=\"noopener\">&gt;150 gDCW/L, high secreted yields</a>; <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC5379694/\" target=\"_blank\" rel=\"noopener\">285 mg/L secreted GM-CSF vs 64 mg/L in <i>S. cerevisiae</i></a></li>\n        <li>&middot; Plant cell suspension: <a href=\"https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2018.00045/full\" target=\"_blank\" rel=\"noopener\">1.1 g/L in BY-2 \"Hulk\", the highest ever reported; 10 mg/L R&amp;D and 100 mg/L profitability thresholds</a>; <a href=\"https://doi.org/10.3389/fpls.2016.00297\" target=\"_blank\" rel=\"noopener\">Santos et al. 2016 review</a></li>\n      </ul>\n    </div>\n  </details>\n<p class=\"wm\">Designed and generated by Dongmin Byun &middot; bdongmin10@gmail.com &middot; Claude was utilized in the generation.</p>";
+const HERO=`<svg class="pq-hero" viewBox="0 0 320 190" role="img" aria-label="A culture flask, a pipetted sample and a spectrophotometer reading it">
+      <defs>
+        <linearGradient id="pqBeamG" x1="0" x2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+        <radialGradient id="pqLamp"><stop offset="0" stop-color="#f5f3ff"/><stop offset=".5" stop-color="#c4b5fd"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+        <clipPath id="pqFlaskClip"><path d="M44 58h24v30l26 52a8 8 0 0 1-7 12H25a8 8 0 0 1-7-12l26-52z"/></clipPath>
+      </defs>
+      <!-- drifting protein molecules in the background -->
+      <g class="pq-mols">
+        <g class="pq-mol"><circle cx="0" cy="0" r="5"/><circle cx="7" cy="-3" r="4"/><circle cx="4" cy="5" r="3.5"/></g>
+        <g class="pq-mol m2"><circle cx="0" cy="0" r="4"/><circle cx="6" cy="2" r="3.5"/><circle cx="-5" cy="3" r="3"/></g>
+        <g class="pq-mol m3"><circle cx="0" cy="0" r="3.5"/><circle cx="5" cy="-2" r="3"/></g>
+      </g>
+      <ellipse cx="160" cy="176" rx="150" ry="7" class="pq-shadow"/>
+      <!-- culture flask with a gently moving surface -->
+      <g clip-path="url(#pqFlaskClip)">
+        <path class="pq-wave" d="M-40 112 q15 -6 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V200 H-40 Z"/>
+        <circle class="pq-fbub" cx="46" cy="148" r="2.4"/><circle class="pq-fbub d2" cx="58" cy="150" r="1.8"/><circle class="pq-fbub d3" cx="52" cy="146" r="1.4"/>
+      </g>
+      <path d="M44 58h24v30l26 52a8 8 0 0 1-7 12H25a8 8 0 0 1-7-12l26-52z" class="pq-glass"/>
+      <path d="M40 58h32" class="pq-rim"/>
+      <rect x="47" y="46" width="18" height="12" rx="3" class="pq-cap"/>
+      <!-- a drop travels from the flask to the cuvette -->
+      <path id="pqArc" d="M70 60 C 110 10, 170 10, 199 44" class="pq-arc"/>
+      <circle r="3" class="pq-travel"><animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#pqArc"/></animateMotion></circle>
+      <!-- spectrophotometer -->
+      <rect x="148" y="78" width="160" height="92" rx="14" class="pq-machine"/>
+      <rect x="236" y="92" width="58" height="30" rx="7" class="pq-screen"/>
+      <text x="243" y="104" class="pq-scrtxt">A280</text>
+      <text x="243" y="117" class="pq-scrnum"><tspan class="pq-n1">0.73</tspan><tspan class="pq-n2" x="243">0.74</tspan></text>
+      <circle cx="160" cy="97" r="11" fill="url(#pqLamp)" class="pq-glow"/>
+      <circle cx="160" cy="97" r="3.5" fill="#ede9fe"/>
+      <line x1="163" y1="97" x2="232" y2="97" stroke="url(#pqBeamG)" stroke-width="3" stroke-linecap="round" class="pq-beam"/>
+      <rect x="186" y="70" width="28" height="44" rx="4" class="pq-slot"/>
+      <circle cx="252" cy="148" r="6" class="pq-knob"/><circle cx="272" cy="148" r="6" class="pq-knob"/>
+      <rect x="160" y="140" width="60" height="16" rx="8" class="pq-btn"/>
+      <rect x="191" y="48" width="18" height="60" rx="2" class="pq-cuv"/>
+      <rect x="193" y="72" width="14" height="34" rx="1.5" class="pq-liquid"/>
+      <circle cx="197" cy="100" r="1.6" class="pq-bub"/><circle cx="203" cy="102" r="1.2" class="pq-bub d2"/>
+      <g class="pq-sparks"><path d="M112 34l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" class="pq-spark"/><path d="M292 40l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" class="pq-spark d2"/></g>
+    </svg>`;
+function heroCard(){const a=S.mode==='a280';return `<section class="hero-card card"><div class="hero-txt"><h2>${a?'How much protein is in your tube?':'Read your samples against a standard curve'}</h2>
+  <p>${a?'Give each protein its ε (or paste its sequence) and type your A280 readings. Add the volumes to see how much your culture made, and watch it grow in the dish.':'Type the standards (usually BSA), then one card per sample. The curve and every concentration update as you type.'}</p>
+  <div class="hero-btns"><button class="btn" data-act="example">Load a worked example</button><button class="btn" data-act="importBox">Paste from Excel…</button></div></div>${HERO}</section>`}
+function renderMain(){const m=$('#main'),a=S.mode==='a280',list=listOf();
+  let h='';if(!list.some(p=>p.name||repsOf(p).length)) h+=heroCard();
+  if(!a) h+=stdBlock();
+  h+=`<div class="sec-h big"><span class="n">${a?'01':'02'}</span>${a?'Proteins':'Your samples'}<span class="sub">${list.length} ${a?'protein':'sample'}${list.length===1?'':'s'} · one card each</span></div><div id="cards">${list.map((p,i)=>card(p,i)).join('')}</div>
+    <button class="addcard" data-act="add"><span>+</span> Add ${a?'another protein':'another sample'}</button>
+    <p class="hint tips"><b>Quick keys:</b> <kbd>Enter</kbd> in a reading adds the next one · paste a column of readings from Excel into any reading box · paste a whole table (or FASTA) into a name box to make one card per row · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes anything</p>${HELP}`;
+  m.innerHTML=h}
+function field(p,k,label,inner,opt2={}){return `<label class="fld${opt2.cls?' '+opt2.cls:''}"><span class="fl">${label}${opt2.all?`<button class="all" data-all="${k}" title="Use this for every ${S.mode==='a280'?'protein':'sample'}" tabindex="-1">→ all</button>`:''}</span>${inner}</label>`}
+const inp=(p,k,ph,cls='')=>`<input class="in ${cls}" data-f="${k}" value="${escH(p[k])}" placeholder="${escH(ph||'')}" autocomplete="off" spellcheck="false" inputmode="${['name','seq'].includes(k)?'text':'decimal'}">`;
+const sel=(p,k,list,blank)=>`<select class="in" data-f="${k}">${blank?`<option value="">${escH(blank)}</option>`:''}${opt(list,p[k])}</select>`;
+function readsInner(p,lab){return p.r.map((v,i)=>`<div class="rd"><span class="ri">${i+1}</span><input class="in" data-r="${i}" value="${escH(v)}" placeholder="${lab}" inputmode="decimal" autocomplete="off" aria-label="Reading ${i+1}"><button class="rx" data-rdel="${i}" tabindex="-1" title="Remove this reading" aria-label="Remove reading ${i+1}">×</button></div>`).join('')}
+function readingsHTML(p,lab){return `<div class="reads" data-reads>${readsInner(p,lab)}</div><button class="lnk addrd" data-act="addRead" tabindex="-1">+ Add a reading</button>`}
+function card(p,i){const a=S.mode==='a280',set=a?S.a:S.c,col=COLORS[i%COLORS.length],noun=a?'Protein':'Sample';
+  const head=`<div class="ch"><span class="swatch" style="background:${col}"></span><input class="in name" data-f="name" value="${escH(p.name)}" placeholder="${noun} ${i+1}: type a name" autocomplete="off" spellcheck="false" aria-label="${noun} name">
+    <span class="sum" data-sum></span><span class="ch-b"><button class="ib" data-act="dup" title="Duplicate this card (same settings, empty readings)" aria-label="Duplicate">⧉</button><button class="ib" data-act="fold" title="${p.open?'Fold':'Unfold'}" aria-label="Fold or unfold">${p.open?'▾':'▸'}</button><button class="ib del" data-act="del" title="Remove this ${noun.toLowerCase()} (Undo brings it back)" aria-label="Remove">🗑</button></span></div>`;
+  if(!p.open) return `<article class="pcard folded" data-id="${p.id}" style="--pc:${col}">${head}</article>`;
+  const prot=a?`<div class="grp"><div class="gt"><span>1</span>The protein</div>
+      ${field(p,'mw','MW (Da)',inp(p,'mw','e.g. 27900'))}
+      ${field(p,'eps','ε at 280 nm',`<div class="two e">${inp(p,'eps','e.g. 0.79')}${sel(p,'epsType',EPSO).replace('<select','<select title="A0.1% = absorbance of a 1 mg/mL solution (Benchling, ProtParam “Abs 0.1%”) · Molar ε in M⁻¹cm⁻¹ (needs the MW) · E1% = absorbance of a 1% (10 mg/mL) solution, ten times A0.1%"')}</div>`)}
+      <div class="seqrow">${p.seqOpen||p.seq?`<span class="fl">Sequence <small>MW and ε fill in by themselves</small></span><textarea class="in seq" data-f="seq" rows="3" placeholder="Paste the protein sequence, or FASTA (several sequences make several cards)" spellcheck="false">${escH(p.seq)}</textarea>`:`<button class="lnk" data-act="seqOpen">+ Or paste the sequence: MW and ε fill in by themselves</button>`}<div class="seqinfo" data-seq></div></div></div>`
+    :`<div class="grp"><div class="gt"><span>1</span>About it <small>optional</small></div>${field(p,'mw','MW (Da)',inp(p,'mw','only for µM and nM'))}<p class="hint">Everything else comes from the standard curve above.</p></div>`;
+  const reads=`<div class="grp"><div class="gt"><span>2</span>${a?'A280 readings':'Absorbance readings'}<small data-n></small></div>${readingsHTML(p,a?'A280':'Abs')}
+      ${field(p,'dil','Dilution (×)',inp(p,'dil','none'),{all:true,cls:'mt'})}</div>`;
+  const vols=`<div class="grp"><div class="gt"><span>3</span>For the yield <small>optional</small></div>
+      ${field(p,'vol','Final volume',`<div class="two u">${inp(p,'vol','the tube you read')}${sel(p,'volU',VOLO)}</div>`,{all:true})}
+      ${field(p,'cult','Culture volume',`<div class="two u">${inp(p,'cult','what you grew')}${sel(p,'cultU',VOLO)}</div>`,{all:true})}
+      ${field(p,'host','Expression host',sel(p,'host',HOSTO(),HOSTS[set.host].label+' (default)'),{all:true})}
+      ${field(p,'start','Start amount (mg)',inp(p,'start','optional, for % recovery'))}</div>`;
+  return `<article class="pcard" data-id="${p.id}" style="--pc:${col}">${head}<div class="cb"><div class="grps">${prot}${reads}${vols}</div>
+    <div class="res"><div class="res-n" data-res></div><div class="dish"><div class="culture" data-dish="${p.id}" role="img" aria-label="Live culture: decorative"></div><div class="dish-t">live culture</div></div></div></div></article>`}
+/* standards: rows of concentration + readings, plus the curve */
+function stdBlock(){const c=S.c,u=c.unit==='ugml'?'µg/mL':'mg/mL';
+  return `<div class="sec-h big"><span class="n">01</span>Standards<span class="sub">usually a BSA dilution series</span></div>
+  <div class="stdwrap"><section class="card stdcard"><div class="stds"><div class="std-h"><span>#</span><span>Conc. (${u})</span><span>Readings</span><span>Mean</span><span>Back-calc.</span><span></span></div>
+    <div id="stdRows">${c.stds.map((s,i)=>stdRow(s,i)).join('')}</div>
+    <div class="std-f"><button class="btn small" data-act="addStd">+ Add a standard</button><button class="btn small" data-act="bsa" title="Fills the concentrations of the usual BSA kit series">Use the BSA kit series</button></div>
+    <p class="hint"><kbd>Enter</kbd> goes down to the next standard · paste a block from Excel (concentrations and readings) into any box</p></div>
+    <div class="curve" id="curveBox"></div></section></div>`}
+function stdRow(s,i){return `<div class="std" data-sid="${s.id}"><span class="ri">${i+1}</span><input class="in" data-sf="conc" value="${escH(s.conc)}" placeholder="${i===0?'0':''}" inputmode="decimal" autocomplete="off" aria-label="Concentration of standard ${i+1}">
+  <div class="sreads">${s.r.map((v,j)=>`<input class="in" data-sr="${j}" value="${escH(v)}" placeholder="Abs" inputmode="decimal" autocomplete="off" aria-label="Standard ${i+1} reading ${j+1}">`).join('')}<button class="ib sm" data-act="stdAddRead" tabindex="-1" title="Add a reading to this standard" aria-label="Add a reading">+</button></div>
+  <span class="sm-v" data-sm></span><span class="sm-v" data-sb></span><button class="ib sm del" data-act="stdDel" tabindex="-1" title="Remove this standard" aria-label="Remove standard ${i+1}">×</button></div>`}
+
+/* ---------------- live results: only the result parts redraw, so typing never loses its place ---------------- */
+const flagList=f=>{f=(f||[]).filter(x=>x.t!=='info');return f.length?`<ul class="flags">${f.map(x=>`<li class="${x.t}">${escH(x.m)}</li>`).join('')}</ul>`:''};
+function resHTML(p,R){const a=S.mode==='a280',uk=a?S.a.unit:S.c.out,u=UNIT_LABEL[uk];
+  if(!R.ok){const why=(R.flags||[]).find(f=>f.t==='info');return `<div class="r-wait">${R.empty?(a?'Type the ε and the A280 readings, and the concentration appears here.':'Type the readings, and the concentration appears here.'):escH(why?why.m:'Check the numbers on the left.')}</div>${flagList(R.flags)}`}
+  const alt=[];if(R.mgml!=null&&uk!=='mgml') alt.push(fmtN(R.mgml,4)+' mg/mL');if(R.molar!=null&&uk!=='uM') alt.push(fmtN(R.molar*1e6,4)+' µM');
+  let h=`<div class="r-big"><b>${R.conc!=null?fmtN(R.conc,4):'—'}</b> <span>${escH(u)}</span></div>${alt.length?`<div class="r-alt">${alt.join(' · ')}</div>`:''}
+    <div class="r-line">mean ${fmtN(a?R.mean:R.corr,3)}${R.sd!=null?` ± ${fmtN(R.sd,2)}`:''} <small>(n = ${R.vals.length}${R.cv!=null?`, CV ${fmtN(R.cv,2)}%`:''})</small>${numv(p.dil)>1?` · × ${escH(p.dil)}`:''}${!a?`<br><small>${fmtN(R.inAssay,4)} ${S.c.unit==='ugml'?'µg/mL':'mg/mL'} in the assay</small>`:''}</div>`;
+  if(R.totalMg!=null) h+=`<div class="r-y"><div><small>Total</small><b>${fmtN(R.totalMg,3)} mg</b></div>${R.yieldMgL!=null?`<div><small>Yield</small><b>${fmtN(R.yieldMgL,3)} mg/L</b></div>`:''}${R.recovery!=null?`<div><small>Recovery</small><b>${fmtN(R.recovery,3)}%</b></div>`:''}</div>`;
+  else h+=`<div class="r-hint">Add the final volume and culture volume to see the yield.</div>`;
+  if(R.verdict) h+=`<div class="r-v"><span class="pill t-${R.verdict.tier}">${escH(R.verdict.label)}</span> <span>${escH(R.verdict.note)}</span></div>`;
+  return h+flagList(R.flags)}
+function sumHTML(R){if(!R.ok) return '';const u=UNIT_LABEL[S.mode==='a280'?S.a.unit:S.c.out];return `<b>${fmtN(R.conc,4)}</b> ${escH(u)}${R.yieldMgL!=null?` · ${fmtN(R.yieldMgL,3)} mg/L`:''}`}
+function refreshCard(p){const el=document.querySelector(`.pcard[data-id="${p.id}"]`);if(!el) return;const R=calcOf(p),a=S.mode==='a280';
+  const s=$('[data-sum]',el);if(s) s.innerHTML=p.open?'':sumHTML(R);if(!p.open) return;
+  $('[data-res]',el).innerHTML=resHTML(p,R);const n=$('[data-n]',el);if(n) n.textContent=R.vals.length?` · ${R.vals.length} read`:'';
+  if(a){const si=$('[data-seq]',el),st=R.e.st;if(si) si.innerHTML=!st?'':!st.ok?flagList(st.flags):`<span class="seqchip">${st.len} aa</span> MW ${fmtN(st.mw,6)} Da · ε ${S.a.cys==='ox'?st.epsOxidised:st.epsReduced} M⁻¹cm⁻¹ · A0.1% ${fmtN(S.a.cys==='ox'?st.a01Oxidised:st.a01Reduced,4)}${numv(p.mw)!==null||numv(p.eps)!==null?' <small>(your typed values are used)</small>':''}`;
+    const mw=$('[data-f="mw"]',el),ep=$('[data-f="eps"]',el);if(mw) mw.placeholder=R.e.mwFrom?fmtN(R.e.mw,6)+' (sequence)':'e.g. 27900';if(ep) ep.placeholder=R.e.epsFrom?fmtN(R.e.eps,4)+' (sequence)':'e.g. 0.79';
+    const et=$('[data-f="epsType"]',el);if(et) et.disabled=R.e.epsFrom}
+  Culture.update(p.id,{host:hostOf(p,a?S.a:S.c),mw:a?R.e&&R.e.mw:numv(p.mw),mgml:R.mgml,mgL:R.yieldMgL,ok:!!R.ok,color:colorOf(p),name:p.name})}
+function refreshStd(){if(S.mode!=='curve') return;FIT=calcFit();const F=FIT;S.c.stds.forEach((s,i)=>{const el=document.querySelector(`.std[data-sid="${s.id}"]`);if(!el) return;const o=F.stds[i];
+  $('[data-sm]',el).textContent=o.mean!=null?fmtN(o.mean,3):'';$('[data-sb]',el).innerHTML=o.back!=null?`${fmtN(o.back,4)}${o.err!=null?` <small class="${Math.abs(o.err)>15?'fl-warn':''}">${o.err>0?'+':''}${fmtN(o.err,2)}%</small>`:''}`:''});
+  const cb=$('#curveBox');if(cb) cb.innerHTML=curveHTML(F)}
+function refreshAll(){refreshStd();listOf().forEach(refreshCard);renderPanel()}
+function curveHTML(F){const f=F.fit,c=S.c,u=c.unit==='ugml'?'µg/mL':'mg/mL',Rs=c.rows.map(p=>calcC(p,F));
+  if(!f.ok) return `<div class="curve-empty"><svg viewBox="0 0 120 70" aria-hidden="true"><path d="M8 62 C40 50 70 26 112 10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="5 6"/><circle cx="20" cy="58" r="4"/><circle cx="50" cy="44" r="4"/><circle cx="82" cy="26" r="4"/></svg><b>The curve draws here</b><span>Type at least ${c.fit==='quad'?3:2} standards: a concentration and a reading each.</span></div>`;
+  const co=(v,first)=>{const x=Math.abs(v),t=x!==0&&(x<1e-3||x>=1e5)?x.toExponential(3).replace(/e([-+]?)(\d+)/,(m,sg,d)=>'×10'+(sg==='-'?'⁻':'')+[...d].map(ch=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[ch]).join('')):sig(x,4);return (v<0?(first?'−':' − '):(first?'':' + '))+t};
+  return `<div class="eq">A = ${f.model==='quad'?`${co(f.a2,1)}·C²${co(f.a1)}·C${co(f.a0)}`:`${co(f.slope,1)}·C${co(f.intercept)}`}</div>
+    <div class="kvs"><span>R² <b class="${f.r2<0.99?'fl-warn':''}">${fmtN(f.r2,5)}</b></span><span>range <b>${fmtN(f.xMin,3)}–${fmtN(f.xMax,3)}</b> ${u}</span><span>blank <b>${F.blank.missing?'not set':c.blank==='none'?'none':fmtN(F.blank.v,3)}</b></span></div>
+    ${curvePlot(F,Rs)}${flagList([...(F.blank.missing?[{t:'warn',m:F.blank.missing}]:[]),...(f.flags||[])])}`}
+function curvePlot(F,Rs){const f=F.fit,W=420,H=250,L=46,B=36,T=10,Rt=12,pts=F.stds.filter(o=>o.x!=null&&o.y!=null),sm=Rs.filter(r=>r.ok);
+  const xs=[...pts.map(o=>o.x),...sm.map(r=>r.inAssay)].filter(isFinite),ys=[...pts.map(o=>o.y),...sm.map(r=>r.corr)].filter(isFinite);
+  const x0=Math.min(0,...xs),x1=Math.max(...xs)*1.05||1,y0=Math.min(0,...ys),y1=Math.max(...ys)*1.08||1,px=x=>L+(W-L-Rt)*(x-x0)/(x1-x0),py=y=>H-B-(H-B-T)*(y-y0)/(y1-y0);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Standard curve">`;
+  for(let k=0;k<=4;k++){const xv=x0+(x1-x0)*k/4,yv=y0+(y1-y0)*k/4;s+=`<line class="gl" x1="${px(xv)}" x2="${px(xv)}" y1="${T}" y2="${H-B}"/><text x="${px(xv)}" y="${H-B+14}" font-size="10" text-anchor="middle">${fmtN(xv,3)}</text><line class="gl" x1="${L}" x2="${W-Rt}" y1="${py(yv)}" y2="${py(yv)}"/><text x="${L-6}" y="${py(yv)+3}" font-size="10" text-anchor="end">${fmtN(yv,2)}</text>`}
+  s+=`<line class="ax" x1="${L}" x2="${W-Rt}" y1="${H-B}" y2="${H-B}"/><line class="ax" x1="${L}" x2="${L}" y1="${T}" y2="${H-B}"/>`;
+  let d='';for(let k=0;k<=60;k++){const x=f.xMin+(f.xMax-f.xMin)*k/60;d+=(k?'L':'M')+px(x).toFixed(1)+' '+py(curveY(f,x)).toFixed(1)}s+=`<path class="fit" d="${d}"/>`;
+  pts.forEach(o=>{s+=`<circle class="std" cx="${px(o.x)}" cy="${py(o.y)}" r="4.5"><title>${fmtN(o.x,4)} → ${fmtN(o.y,3)}</title></circle>`});
+  S.c.rows.forEach((p,j)=>{const r=Rs[j];if(!r.ok) return;const X=px(r.inAssay),Y=py(r.corr),out=r.inAssay<f.xMin||r.inAssay>f.xMax,cl=COLORS[j%COLORS.length];s+=`<path d="M${X} ${Y-7}L${X+6} ${Y+4.5}L${X-6} ${Y+4.5}Z" fill="${cl}" stroke="#1d2433" stroke-width=".8"><title>${escH(p.name||'Sample '+(j+1))}</title></path>${out?`<circle class="out" cx="${X}" cy="${Y}" r="10"/>`:''}`});
+  return s+`<text x="${(L+W)/2}" y="${H-4}" font-size="10.5" text-anchor="middle">Concentration (${S.c.unit==='ugml'?'µg/mL':'mg/mL'}) · ● standards ▲ samples</text><text x="12" y="${(T+H-B)/2}" font-size="10.5" text-anchor="middle" transform="rotate(-90 12 ${(T+H-B)/2})">Absorbance${S.c.blank!=='none'?' − blank':''}</text></svg>`}
+
+/* ---------------- overview panel: every protein side by side ---------------- */
+function barChart(items,{val,err,unit}){if(!items.length) return '';const W=340,rh=26,L=112,R=58,H=items.length*rh+26,max=Math.max(...items.map(i=>val(i)+(err?err(i)||0:0)))*1.08||1,x=v=>L+(W-L-R)*v/max;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bar chart">`;for(let k=0;k<=4;k++){const v=max*k/4,X=x(v);s+=`<line class="gl" x1="${X}" x2="${X}" y1="4" y2="${H-20}"/><text x="${X}" y="${H-6}" font-size="9.5" text-anchor="middle">${fmtN(v,2)}</text>`}
+  items.forEach(it=>{const y=6+items.indexOf(it)*rh,v=val(it),e=err?err(it):null;s+=`<g data-go="${it.p.id}" style="cursor:pointer"><text x="${L-8}" y="${y+14}" font-size="11" text-anchor="end">${escH(String(it.p.name||'#'+(it.i+1)).slice(0,17))}</text><rect x="${L}" y="${y+3}" width="${Math.max(1.5,x(v)-L)}" height="${rh-10}" rx="4" fill="${COLORS[it.i%COLORS.length]}"/>`;
+    if(e){const a=x(Math.max(0,v-e)),b=x(v+e),c=y+11;s+=`<g class="errg"><line class="err-h" x1="${a}" x2="${b}" y1="${c}" y2="${c}"/><line class="err-h" x1="${a}" x2="${a}" y1="${c-5}" y2="${c+5}"/><line class="err-h" x1="${b}" x2="${b}" y1="${c-5}" y2="${c+5}"/><line class="err" x1="${a}" x2="${b}" y1="${c}" y2="${c}"/><line class="err" x1="${a}" x2="${a}" y1="${c-5}" y2="${c+5}"/><line class="err" x1="${b}" x2="${b}" y1="${c-5}" y2="${c+5}"/></g>`}
+    s+=`<text x="${x(v+(e||0))+5}" y="${y+14}" font-size="10.5" font-weight="650">${fmtN(v,3)}</text></g>`});return s+`<text x="${W-4}" y="${H-6}" font-size="9.5" text-anchor="end">${escH(unit)}</text></svg>`}
+function renderPanel(){const el=$('#panel'),a=S.mode==='a280',list=listOf(),u=UNIT_LABEL[a?S.a.unit:S.c.out];if(!a) fitNow();
+  const all=list.map((p,i)=>({p,i,R:calcOf(p)})),ok=all.filter(x=>x.R.ok&&x.R.conc!=null),yl=ok.filter(x=>x.R.yieldMgL!=null);
+  let h=`<div class="sec-h">Overview<span class="sub">${ok.length} of ${list.length} worked out</span></div>`;
+  h+=ok.length?`<div class="card"><div class="ct">Concentration <small>${escH(u)} · ± SD</small></div>${barChart(ok,{val:x=>x.R.conc,err:x=>x.R.relSD!=null?x.R.relSD*x.R.conc:null,unit:u})}</div>`
+    :`<div class="card empty">When a ${a?'protein':'sample'} has its numbers, it shows up here next to the others.</div>`;
+  if(yl.length) h+=`<div class="card"><div class="ct">Yield <small>mg per litre of culture</small></div>${barChart(yl,{val:x=>x.R.yieldMgL,unit:'mg/L'})}</div>`;
+  h+=`<div class="card"><div class="ct">All ${a?'proteins':'samples'} <small>click one to jump to it</small></div><table class="ov"><thead><tr><th></th><th>Name</th><th class="num">${escH(u)}</th><th class="num">mg/L</th></tr></thead><tbody>${all.map(x=>`<tr data-go="${x.p.id}"><td><span class="swatch" style="background:${COLORS[x.i%COLORS.length]}"></span></td><td>${escH(x.p.name||(a?'Protein ':'Sample ')+(x.i+1))}</td><td class="num">${x.R.ok?fmtN(x.R.conc,4):'<span class="hint">…</span>'}</td><td class="num">${x.R.yieldMgL!=null?fmtN(x.R.yieldMgL,3):''}</td></tr>`).join('')}</tbody></table>
+    <div class="ov-b"><button class="btn small primary" data-act="xlsx">Export to Excel</button><button class="btn small" data-act="toLE" title="Put these results in a Lab Entry experiment">↗ Send to Lab Entry</button><button class="btn small" data-act="copyTable">Copy as a table</button></div></div>`;
+  el.innerHTML=h}
+
+/* ---------------- typing: every box writes straight into the data ---------------- */
+let EDIT=null;   // one undo step per box you type in
+function findP(el){const c=el.closest('.pcard');return c&&listOf().find(p=>p.id===c.dataset.id)}
+function findStd(el){const r=el.closest('.std');return r&&S.c.stds.find(s=>s.id===r.dataset.sid)}
+function begin(el){if(EDIT!==el){snap();EDIT=el}}
+document.addEventListener('focusout',e=>{if(e.target===EDIT) EDIT=null});
+document.addEventListener('input',e=>{const t=e.target;
+  const s=t.closest('input[data-set]');if(s){const [g,k]=s.dataset.set.split('.');begin(t);S[g][k]=s.value;save();refreshAll();return}
+  const p=t.closest('.pcard')&&findP(t);
+  if(p&&t.dataset.f){begin(t);p[t.dataset.f]=t.value;save();if(t.dataset.f==='name') renderPanel();else{refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd()}return}
+  if(p&&t.dataset.r!=null){begin(t);p.r[+t.dataset.r]=t.value;save();refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd();return}
+  const sd=t.closest('.std')&&findStd(t);if(sd){begin(t);if(t.dataset.sf) sd.conc=t.value;else sd.r[+t.dataset.sr]=t.value;save();refreshStd();listOf().forEach(refreshCard);renderPanel()}});
+document.addEventListener('change',e=>{const t=e.target;const s=t.closest('select[data-set]');if(s){const [g,k]=s.dataset.set.split('.');snap();S[g][k]=s.value;save();if(k==='blank'||(k==='unit'&&g==='c')||k==='host'){renderAll()}else{renderBar();refreshAll()}return}
+  if(t.tagName==='SELECT'&&t.dataset.f){const p=findP(t);if(!p) return;snap();p[t.dataset.f]=t.value;save();refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd()}});
+/* keyboard: Enter goes on like Excel; readings grow as you go */
+function focusAt(el){if(!el) return;el.focus();if(el.setSelectionRange&&el.tagName!=='SELECT'){const n=el.value.length;try{el.setSelectionRange(n,n)}catch(_){}}}
+function nextField(t,back){const f=$$('#main input.in,#main select.in,#main textarea.in').filter(x=>x.offsetParent&&!x.disabled);const i=f.indexOf(t);focusAt(f[i+(back?-1:1)])}
+function redrawReads(p,focusI){const el=document.querySelector(`.pcard[data-id="${p.id}"] [data-reads]`);if(!el) return;el.innerHTML=readsInner(p,S.mode==='a280'?'A280':'Abs');
+  refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd();if(focusI!=null) focusAt(document.querySelector(`.pcard[data-id="${p.id}"] [data-r="${focusI}"]`))}
+function redrawStds(focusSel){const box=$('#stdRows');if(!box) return;box.innerHTML=S.c.stds.map((s,i)=>stdRow(s,i)).join('');refreshStd();listOf().forEach(refreshCard);renderPanel();if(focusSel) focusAt($(focusSel))}
+const rdEl=(p,i)=>document.querySelector(`.pcard[data-id="${p.id}"] [data-r="${i}"]`);
+document.addEventListener('keydown',e=>{const t=e.target;if(!t.classList||!t.classList.contains('in')||e.ctrlKey||e.metaKey||e.altKey) return;
+  const p=t.closest('.pcard')&&findP(t);
+  if(p&&t.dataset.r!=null){const i=+t.dataset.r;
+    if(e.key==='Enter'){e.preventDefault();if(e.shiftKey){if(i>0) focusAt(rdEl(p,i-1));return}
+      if(i<p.r.length-1){focusAt(rdEl(p,i+1));return}if(!t.value){nextField(t);return}snap();EDIT=null;p.r.push('');save();redrawReads(p,i+1);return}
+    if(e.key==='ArrowDown'&&i<p.r.length-1){e.preventDefault();focusAt(rdEl(p,i+1));return}
+    if(e.key==='ArrowUp'&&i>0){e.preventDefault();focusAt(rdEl(p,i-1));return}
+    if(e.key==='Backspace'&&!t.value&&p.r.length>1){e.preventDefault();snap();EDIT=null;p.r.splice(i,1);save();redrawReads(p,Math.max(0,i-1));return}
+    return}
+  const sd=t.closest('.std')&&findStd(t);
+  if(sd&&e.key==='Enter'){e.preventDefault();const si=S.c.stds.indexOf(sd),key=t.dataset.sf?'[data-sf="conc"]':`[data-sr="${t.dataset.sr}"]`;const nx=S.c.stds[si+(e.shiftKey?-1:1)];
+    if(nx) focusAt($(`.std[data-sid="${nx.id}"] ${key}`));else if(!e.shiftKey){snap();EDIT=null;const ns=newStd({r:Array(sd.r.length).fill('')});S.c.stds.push(ns);save();redrawStds(`.std[data-sid="${ns.id}"] ${key}`)}return}
+  if(e.key==='Enter'&&t.tagName==='INPUT'){e.preventDefault();nextField(t,e.shiftKey)}});
+/* pasting: a column of readings, a block of standards, or a whole table into a name box */
+function splitVals(t){t=t.replace(/\r\n?/g,'\n').trim();if(!t) return [];if(/[\t\n]/.test(t)) return t.split(/[\t\n]+/).map(x=>x.trim()).filter(Boolean);
+  if(/;/.test(t)||/\s/.test(t)) return t.split(/[;\s]+/).filter(Boolean);if(/,/.test(t)&&/\./.test(t)) return t.split(',').map(x=>x.trim()).filter(Boolean);if((t.match(/,/g)||[]).length>1) return t.split(',');return [t]}
+document.addEventListener('paste',e=>{const t=e.target;if(!t.classList||!t.classList.contains('in')) return;const txt=(e.clipboardData||window.clipboardData).getData('text/plain')||'';
+  const p=t.closest('.pcard')&&findP(t);
+  if(p&&t.dataset.r!=null){const vals=splitVals(txt);if(vals.length<2) return;e.preventDefault();snap();EDIT=null;const i=+t.dataset.r;vals.forEach((v,k)=>p.r[i+k]=v);save();redrawReads(p,i+vals.length-1);toast(`Pasted ${vals.length} readings`,{undo:true});return}
+  if(p&&t.dataset.f==='name'&&(/\t|\n\s*\S/.test(txt.trim())||/^\s*>/.test(txt))){e.preventDefault();if(/^\s*>/.test(txt)) addFasta(txt,p);else importRows(txt,p);return}
+  if(p&&t.dataset.f==='seq'&&/^\s*>/.test(txt)&&(txt.match(/^>/gm)||[]).length>1){e.preventDefault();addFasta(txt,p);return}
+  const sd=t.closest('.std')&&findStd(t);if(sd&&/[\t\n]/.test(txt.trim())){e.preventDefault();pasteStds(txt,sd,t);return}});
+function pasteStds(txt,sd,t){const grid=txt.replace(/\r\n?/g,'\n').replace(/\n+$/,'').split('\n').map(l=>l.split('\t').map(x=>x.trim()));snap();EDIT=null;const st=S.c.stds;const i=st.indexOf(sd);
+  const fromConc=!!t.dataset.sf,j0=fromConc?0:+t.dataset.sr;
+  grid.forEach((cells,k)=>{let s=st[i+k];if(!s){s=newStd({r:Array(sd.r.length).fill('')});st.push(s)}if(fromConc){s.conc=cells[0]??s.conc;cells.slice(1).forEach((v,m)=>s.r[m]=v)}else cells.forEach((v,m)=>s.r[j0+m]=v);s.r=Array.from(s.r,v=>v??'')});
+  save();redrawStds();toast(`Pasted ${grid.length} standard${grid.length===1?'':'s'}`,{undo:true})}
+/* FASTA: one card per sequence, the first fills the card you pasted into */
+function parseFasta(t){return t.split(/^>/m).map(x=>x.trim()).filter(Boolean).map(x=>{const [h,...s]=x.split('\n');return {name:h.trim().replace(/\s+/g,' ').slice(0,60),seq:s.join('').replace(/\s+/g,'')}}).filter(r=>r.seq)}
+function addFasta(t,p){const recs=parseFasta(t);if(!recs.length){toast('No sequences found in what you pasted');return}snap();EDIT=null;const L=S.a.rows;let at=p?L.indexOf(p):L.length-1;
+  recs.forEach((x,k)=>{let q=k===0&&p&&!p.seq?p:null;if(!q){q=newA();L.splice(++at,0,q)}if(!q.name) q.name=x.name;q.seq=x.seq;q.seqOpen=true});
+  save();renderAll();toast(`${recs.length} sequence${recs.length===1?'':'s'}: MW and ε came from ${recs.length===1?'it':'them'}`,{undo:true})}
+/* a table from Excel: column titles are matched (Name, MW, ε, A280, Dilution, Volume…); without titles the first column is the name and numbers are readings */
+const ALIAS={name:['name','protein','sample','id','construct','well'],seq:['sequence','seq','protein sequence'],mw:['mw','molecular weight','mass','da'],epsType:['ε type','eps type','ε given as'],
+  eps:['ε','eps','epsilon','extinction','extinction coefficient','abs 0.1%','a0.1%','ε value'],r:['a280','abs','absorbance','od','reading','a595','a562','rep','replicate'],dil:['dilution','dil','df','dilution factor'],
+  vol:['volume','final volume','vol','elution volume'],cult:['culture','culture volume'],host:['host','organism','expression host'],start:['start','start amount','input']};
+const keyOf=x=>{x=x.trim().toLowerCase().replace(/\s*\(.*\)$/,'');for(const [k,al] of Object.entries(ALIAS)) if(al.some(a=>x===a||x.startsWith(a+' ')||x.startsWith(a+'#')||x.startsWith(a+'_')||x.replace(/[\s#_]*\d+$/,'')===a)) return k;return null};
+function mapImport(t){t=t.replace(/\r\n?/g,'\n').replace(/\n+$/,'');if(!t.trim()) return null;const grid=t.split('\n').map(l=>l.split('\t')).filter(r=>r.some(x=>x.trim()));if(!grid.length) return null;
+  const keys=grid[0].map(keyOf),hits=keys.filter(Boolean).length,head=hits>=2||(hits>=1&&grid.length>1&&grid[0].some(x=>x.trim()&&numv(x)===null)&&grid[1].some(x=>numv(x)!==null));
+  const mk=S.mode==='a280'?newA:newSmp,HK=Object.keys(HOSTS);
+  const rows=(head?grid.slice(1):grid).map(cells=>{const o=mk({r:[]});cells.forEach((v,j)=>{v=v.trim();if(!v) return;const k=head?keys[j]:(j===0&&numv(v)===null?'name':'r');if(!k) return;
+    if(k==='r') o.r.push(v);else if(k==='host'){const h=HK.find(x=>HOSTS[x].label.toLowerCase().startsWith(v.toLowerCase().slice(0,4))||HOSTS[x].short.toLowerCase()===v.toLowerCase());if(h) o.host=h}
+    else if(k==='epsType'){const m=EPSO.find(x=>x[1].toLowerCase().startsWith(v.toLowerCase().slice(0,3))||x[0]===v);if(m) o.epsType=m[0]}else if(k in o) o[k]=v});if(!o.r.length) o.r=['','',''];return o});
+  return {head,used:head?[...new Set(keys.filter(Boolean))]:[],rows}}
+function importRows(txt,at){const m=mapImport(txt);if(!m||!m.rows.length){toast('Nothing to add');return}snap();EDIT=null;const L=listOf();let i=at?L.indexOf(at):L.length-1;
+  m.rows.forEach((o,k)=>{if(k===0&&at&&!at.name&&!repsOf(at).length){Object.assign(at,o,{id:at.id});i=L.indexOf(at)}else L.splice(++i,0,o)});save();renderAll();
+  toast(`Made ${m.rows.length} card${m.rows.length===1?'':'s'}${m.head?' (columns matched by their titles)':''}`,{undo:true})}
+function importDialog(){const a=S.mode==='a280';
+  modal({title:a?'Paste proteins from Excel':'Paste samples from Excel',ok:'Make the cards',wide:true,body:`<p>Copy rows in Excel, a plate-reader export, or a FASTA file, and paste them here: one ${a?'protein':'sample'} per row. If the first row has titles (Name, MW, ε, A280, A280, Dilution, Volume, Culture, Host) each column goes to the right box. Without titles, the first column is the name and the numbers are readings.</p>
+    <textarea id="impT" placeholder="Name&#9;MW&#9;ε&#9;A280&#9;A280&#9;A280&#10;GFP&#9;27900&#9;0.79&#9;0.71&#9;0.72&#9;0.70"></textarea><p class="hint" id="impN"></p>`,
+    onOpen(ov){const t=$('#impT',ov);t.focus();t.addEventListener('input',()=>{const v=t.value;if(/^\s*>/.test(v)){$('#impN',ov).textContent=parseFasta(v).length+' sequences';return}const m=mapImport(v);$('#impN',ov).textContent=m?`${m.rows.length} card${m.rows.length===1?'':'s'} · ${m.head?'columns matched by title: '+m.used.join(', '):'first column = name, numbers = readings'}`:''})},
+    onOk(ov){const v=$('#impT',ov).value;const L=listOf(),last=L[L.length-1],blank=last&&!last.name&&!repsOf(last).length&&!last.seq?last:null;if(/^\s*>/.test(v)&&a){addFasta(v,blank||last);return}const m=mapImport(v);if(!m||!m.rows.length){toast('Nothing to add');return false}importRows(v,blank)}})}
+
+/* ---------------- Excel, CSV and files ---------------- */
+/* ---- a small, dependency-free .xlsx writer (stored ZIP + SpreadsheetML) ---- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++) c=CRC_T[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zipStore(files){
+  const enc=new TextEncoder(); const parts=[], cd=[]; let off=0; const d=new Date();
+  const time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1), date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){
+    const nm=enc.encode(f.name), data=typeof f.data==='string'?enc.encode(f.data):f.data, crc=crc32(data), sz=data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,time,true);lh.setUint16(12,date,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nm,data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,time,true);ch.setUint16(14,date,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nm.length,true);ch.setUint16(30,0,true);ch.setUint16(32,0,true);
+    ch.setUint16(34,0,true);ch.setUint16(36,0,true);ch.setUint32(38,0,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nm); off+=30+nm.length+sz;
+  }
+  const cdSize=cd.reduce((a,u)=>a+u.length,0); const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(4,0,true);end.setUint16(6,0,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);
+  end.setUint32(12,cdSize,true);end.setUint32(16,off,true);end.setUint16(20,0,true);
+  return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const xe=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'');
+function colName(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s}
+function sheetXML(rows,widths,opt={}){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  if(opt.freeze) x+='<sheetViews><sheetView workbookViewId="0"><pane xSplit="'+(opt.freezeCol||0)+'" ySplit="1" topLeftCell="'+colName(opt.freezeCol||0)+'2" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>';
+  if(widths) x+='<cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';
+  x+='<sheetData>';
+  rows.forEach((r,ri)=>{x+=`<row r="${ri+1}"${opt.rowH&&ri>0?` ht="${opt.rowH}" customHeight="1"`:''}>`;r.forEach((v,ci)=>{if(v==null||v==='') return;const ref=colName(ci)+(ri+1);
+    const st=ri===0||(opt.boldCol0&&ci===0)?' s="1"':(opt.wrap?' s="2"':'');
+    if(typeof v==='number') x+=`<c r="${ref}"${st}><v>${v}</v></c>`; else x+=`<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xe(v)}</t></is></c>`});x+='</row>'});
+  x+='</sheetData>';
+  if(opt.filter&&rows.length>1) x+=`<autoFilter ref="A1:${colName(rows[0].length-1)}${rows.length}"/>`;
+  return x+'</worksheet>';
+}
+function makeXLSX(sheets){
+  const used=new Set(); sheets.forEach(s=>{let n=String(s.name).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31).trim()||'Sheet';let k=2,b=n;while(used.has(n.toLowerCase())){n=(b.slice(0,28)+' '+k++).slice(0,31)}used.add(n.toLowerCase());s.name=n});
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const files=[
+    {name:'[Content_Types].xml',data:H+`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`},
+    {name:'_rels/.rels',data:H+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:'xl/workbook.xml',data:H+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xe(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets>${sheets.some(s=>s.opt&&s.opt.filter)?`<definedNames>${sheets.map((s,i)=>s.opt&&s.opt.filter&&s.rows.length>1?`<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${xe(s.name).replace(/'/g,"''")}'!$A$1:$${colName(s.rows[0].length-1)}$${s.rows.length}</definedName>`:'').join('')}</definedNames>`:''}</workbook>`},
+    {name:'xl/_rels/workbook.xml.rels',data:H+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+    {name:'xl/styles.xml',data:H+`<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEEF1F4"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFC8CED4"/></left><right style="thin"><color rgb="FFC8CED4"/></right><top style="thin"><color rgb="FFC8CED4"/></top><bottom style="thin"><color rgb="FFC8CED4"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`}
+  ];
+  sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXML(s.rows,s.widths,s.opt||{})}));
+  return zipStore(files);
+}
+
+const maxReads=L=>Math.max(1,...L.map(p=>p.r.length));
+const RC=(n,lab)=>Array.from({length:n},(_,i)=>({label:lab+' '+(i+1),v:p=>numv(p.r[i])??(p.r[i]||'')}));
+const hostLabel=(p,set)=>HOSTS[hostOf(p,set)].label;
+const volC=set=>[{label:'Final volume',v:p=>numv(p.vol)??''},{label:'unit',v:p=>p.vol?p.volU:''},{label:'Culture volume',v:p=>numv(p.cult)??''},{label:'unit ',v:p=>p.cult?p.cultU:''},{label:'Host',v:p=>hostLabel(p,set)},{label:'Start amount (mg)',v:p=>numv(p.start)??''}];
+const resC=()=>[{label:'Total (mg)',r:R=>R.totalMg},{label:'Yield (mg/L culture)',r:R=>R.yieldMgL},{label:'Recovery (%)',r:R=>R.recovery},{label:'Yield check',r:R=>R.verdict?R.verdict.label:''},{label:'Notes',r:flagTxt,always:true}];
+function colsA(){const a=S.a,n=maxReads(keepRows(a.rows));return [{label:'Protein',v:p=>p.name},{label:'Sequence',v:p=>p.seq},{label:'MW (Da)',v:(p,R)=>R.e&&R.e.mw!=null?Number(sig(R.e.mw,7)):''},{label:'ε given as',v:(p,R)=>R.e&&R.e.epsFrom?'A0.1% (from sequence)':EPSO.find(o=>o[0]===p.epsType)[1]},{label:'ε value',v:(p,R)=>R.e&&R.e.eps!=null?Number(sig(R.e.eps,6)):''},
+  ...RC(n,'A280'),{label:'Dilution (×)',v:p=>numv(p.dil)??1},...volC(a),{label:'Mean A280',r:R=>R.mean},{label:'SD',r:R=>R.sd},{label:'CV (%)',r:R=>R.cv},{label:'Concentration ('+UNIT_LABEL[a.unit]+')',r:R=>R.conc},{label:'mg/mL',r:R=>R.mgml},{label:'µM',r:R=>R.molar!=null?R.molar*1e6:null},...resC()]}
+function colsSmp(){const c=S.c,n=maxReads(keepRows(c.rows)),u=c.unit==='ugml'?'µg/mL':'mg/mL';return [{label:'Sample',v:p=>p.name},...RC(n,'Abs'),{label:'Dilution (×)',v:p=>numv(p.dil)??1},{label:'MW (Da)',v:p=>numv(p.mw)??''},...volC(c),
+  {label:'Mean Abs',r:R=>R.mean},{label:'SD',r:R=>R.sd},{label:'Blank-corrected',r:R=>R.corr},{label:'In the assay ('+u+')',r:R=>R.inAssay},{label:'Concentration ('+UNIT_LABEL[c.out]+')',r:R=>R.conc},{label:'mg/mL',r:R=>R.mgml},...resC()]}
+function colsStd(){const c=S.c,n=maxReads(c.stds),u=c.unit==='ugml'?'µg/mL':'mg/mL';return [{label:'Standard',v:(p,R,i)=>'Std '+(i+1)},{label:'Concentration ('+u+')',v:p=>numv(p.conc)??''},...RC(n,'Abs'),{label:'Mean Abs',r:R=>R.mean},{label:'SD',r:R=>R.sd},{label:'Blank-corrected',r:R=>R.y},{label:'Back-calculated ('+u+')',r:R=>R.back},{label:'Error (%)',r:R=>R.err}]}
+function rowsOut(L,cols,calc){const out=[cols.map(c=>c.label)];L.forEach((p,i)=>{const R=calc(p,i);out.push(cols.map(c=>{if(c.r){const v=c.r(R);return v==null||v===''||(typeof v==='number'&&!isFinite(v))?'':typeof v==='number'?Number(sig(v,6)):String(v)}return c.v(p,R,i)}))});return out}
+const keepRows=L=>L.filter(p=>p.name||repsOf(p).length||p.seq);
+function exportXLSX(){const sheets=[],wid=r=>r[0].map((h,j)=>Math.min(40,Math.max(9,String(h).length+2,...r.slice(1).map(x=>String(x[j]??'').length+1))));
+  const A=keepRows(S.a.rows);if(A.length){const r=rowsOut(A,colsA(),p=>calcA(p));sheets.push({name:'A280',rows:r,widths:wid(r).map((w,j)=>j===1?24:w),opt:{freeze:true,freezeCol:1,filter:true}})}
+  const C=keepRows(S.c.rows),St=S.c.stds.filter(s=>s.conc!==''||repsOf(s).length);
+  if(St.length||C.length){const F=calcFit(),f=F.fit,u=S.c.unit==='ugml'?'µg/mL':'mg/mL';const st=rowsOut(St,colsStd(),p=>F.stds[S.c.stds.indexOf(p)]||{});
+    st.push([],['Fit',f.ok?(f.model==='quad'?'Quadratic: A = a2·C² + a1·C + a0':'Straight line: A = slope·C + intercept'):'not enough standards']);
+    if(f.ok){if(f.model==='quad') st.push(['a2',f.a2],['a1',f.a1],['a0',f.a0]);else st.push(['slope',f.slope],['intercept',f.intercept]);st.push(['R²',f.r2],['n',f.n],['Range ('+u+')',`${sig(f.xMin,4)} – ${sig(f.xMax,4)}`])}
+    st.push(['Blank',S.c.blank==='none'?'not subtracted':F.blank.missing?'not set':F.blank.v]);sheets.push({name:'Standards',rows:st,widths:wid(st.slice(0,St.length+1)),opt:{freeze:true}});
+    if(C.length){const r=rowsOut(C,colsSmp(),p=>calcC(p,F));sheets.push({name:'Samples (curve)',rows:r,widths:wid(r),opt:{freeze:true,freezeCol:1,filter:true}})}}
+  if(!sheets.length){toast('Nothing to export yet: fill in a card first');return}
+  sheets.push({name:'Method',rows:[['Protein Quant v6 · Lab Potato'],['Exported',today()],[],['A280 reading',PATHO.find(p=>p[0]===S.a.path)[1]],['ε from sequence, cysteines',S.a.cys==='ox'?'all paired':'reduced'],
+    ['Standards in',S.c.unit==='ugml'?'µg/mL':'mg/mL'],['Fit',S.c.fit==='quad'?'quadratic':'straight line'],['Blank',{zero:'the 0 standard',manual:'blank readings: '+S.c.blankRaw,none:'not subtracted'}[S.c.blank]],[],
+    ['Concentration from A280','c (mg/mL) = A(1 cm) × dilution / A0.1%  ·  = 10 × A × dilution / E1%  ·  c (M) = A × dilution / ε (M⁻¹cm⁻¹)'],['Total','concentration (mg/mL) × final volume (mL)'],['Yield','total (mg) / culture volume (L)'],
+    ['ε from sequence','Pace et al. 1995: ε = 5500·nTrp + 1490·nTyr + 125·nCystine; MW from average residue masses (ExPASy ProtParam)'],['Standard curve','least squares; the blank is subtracted first; concentration = inverse of the fit × dilution']],widths:[30,90],opt:{boldCol0:true}});
+  download(`protein-quant-${today()}.xlsx`,makeXLSX(sheets));toast(`Exported to Excel: ${sheets.map(s=>s.name).join(', ')}`)}
+function tableText(){const tsv=r=>r.map(x=>x.map(v=>String(v??'').replace(/[\t\n]/g,' ')).join('\t')).join('\n');
+  if(S.mode==='a280') return tsv(rowsOut(keepRows(S.a.rows),colsA(),p=>calcA(p)));const F=calcFit();
+  return 'Standards\n'+tsv(rowsOut(S.c.stds,colsStd(),(p,i)=>F.stds[i]||{}))+'\n\nSamples\n'+tsv(rowsOut(keepRows(S.c.rows),colsSmp(),p=>calcC(p,F)))}
+function download(name,data,type){const blob=data instanceof Blob?data:new Blob([data],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok}}
+function openFile(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{const f=i.files[0];if(!f) return;f.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){toast('That file is not a Protein Quant save');return}
+  if(!d||d.v!==6||!d.a){toast('That file is not a Protein Quant v6 save');return}snap();S=norm(d);save();renderAll();toast(`Opened ${escH(f.name)}`,{undo:true})})};i.click()}
+
+/* ---------------- send to Lab Entry (the waiting room) ---------------- */
+async function lpItem(){const a=S.mode==='a280',L=keepRows(listOf());if(!L.length){toast('Nothing to send yet: fill in a card first');return null}
+  const u=UNIT_LABEL[a?S.a.unit:S.c.out],F=a?null:calcFit(),Rs=L.map(p=>a?calcA(p):calcC(p,F)),ok=L.filter((p,i)=>Rs[i].ok);
+  const lines=L.map((p,i)=>{const R=Rs[i],nm=p.name||(a?'Protein ':'Sample ')+(listOf().indexOf(p)+1);if(!R.ok) return `${nm}: not worked out yet`;
+    return `${nm}: ${fmtN(R.conc,4)} ${u}${R.mgml!=null&&(a?S.a.unit:S.c.out)!=='mgml'?` (${fmtN(R.mgml,4)} mg/mL)`:''}, n = ${R.vals.length}${R.cv!=null?`, CV ${fmtN(R.cv,2)}%`:''}${numv(p.dil)>1?`, × ${p.dil} dilution`:''}${R.totalMg!=null?`; total ${fmtN(R.totalMg,3)} mg`:''}${R.yieldMgL!=null?`; yield ${fmtN(R.yieldMgL,3)} mg/L (${R.verdict?R.verdict.label.toLowerCase():''}, ${HOSTS[hostOf(p,a?S.a:S.c)].short})`:''}`});
+  if(!a&&F.fit.ok) lines.unshift(`Standard curve: ${F.fit.model==='quad'?'quadratic':'straight line'}, R² ${fmtN(F.fit.r2,4)}, ${F.fit.n} standards, ${fmtN(F.fit.xMin,3)}–${fmtN(F.fit.xMax,3)} ${S.c.unit==='ugml'?'µg/mL':'mg/mL'}`);
+  const tb=rowsOut(L,a?colsA():colsSmp(),(p,i)=>Rs[i]),cols=tb[0].map(String),keep=cols.map((c,j)=>j===0||tb.slice(1).some(r=>r[j]!==''&&r[j]!=null)&&!/^Sequence$/.test(c));
+  const table={cols:cols.filter((c,j)=>keep[j]),rows:tb.slice(1).map(r=>r.filter((v,j)=>keep[j]).map(v=>v==null?'':String(v)))};
+  const images=[];const ch=$('#panel svg.chart');if(ch){const png=await LPInbox.svgToPng(ch);if(png) images.push({name:'protein-quant-chart.png',dataUrl:png,caption:a?'Concentration by A280 (± SD)':'Concentration from the standard curve (± SD)'})}
+  if(!a){const cv=$('#curveBox svg.chart');if(cv){const png=await LPInbox.svgToPng(cv);if(png) images.push({name:'standard-curve.png',dataUrl:png,caption:'Standard curve with the samples'})}}
+  return {from:'Protein Quant',tool:'protein-quant',ver:'v6',title:a?`${L.length} protein${L.length===1?'':'s'} by A280 (${ok.length} worked out)`:`${L.length} sample${L.length===1?'':'s'} on a ${S.c.fit==='quad'?'quadratic':'linear'} standard curve`,lines,table,images}}
+
+/* ---------------- example ---------------- */
+const HEWL='KVFGRCELAAAMKRHGLDNYRGYSLGNWVCAAKFESNFNTQATNRNTDGSTDYGILQINSRWWCNDGRTPGSRNLCNIPCSALLSSDITASVNCAKKIVSDGNGMNAWVAWRNRCKGTDVQAWIRGCRL';
+function loadExample(){snap();
+  S.a.rows=[newA({name:'His6-GFP',mw:'27900',eps:'0.79',r:['0.732','0.741','0.728'],vol:'500',volU:'µL',cult:'200'}),
+    newA({name:'MBP fusion',mw:'70500',epsType:'molar',eps:'88000',r:['1.12','1.09','1.15','1.13'],dil:'2',vol:'12',cult:'1',cultU:'L'}),
+    newA({name:'Lysozyme (HEWL)',seq:HEWL,seqOpen:true,r:['0.95','0.97','0.96']}),
+    newA({name:'Secreted scFv',mw:'26500',eps:'1.6',r:['0.41','0.40','0.43'],vol:'2',cult:'50',host:'yeast'})];
+  S.c.stds=[['0',.095,.098],['125',.212,.205],['250',.322,.318],['500',.515,.524],['750',.702,.695],['1000',.861,.868],['1500',1.142,1.135],['2000',1.38,1.39]].map(([c,a,b])=>newStd({conc:c,r:[String(a),String(b)]}));
+  S.c.fit='quad';S.c.blank='zero';S.c.unit='ugml';
+  S.c.rows=[newSmp({name:'Clarified lysate',r:['0.951','0.968'],dil:'10'}),newSmp({name:'Ni-NTA eluate',r:['0.642','0.655','0.649'],dil:'2',vol:'5',cult:'500'}),newSmp({name:'Flow-through',r:['0.331','0.347'],dil:'5'})];
+  save();renderAll();toast('Example loaded: four proteins here, and a BSA curve with three samples under “Standard curve”.',{undo:true})}
+
+/* ---------------- buttons ---------------- */
+document.addEventListener('click',e=>{const go=e.target.closest('[data-go]');if(go){const c=document.querySelector(`.pcard[data-id="${go.dataset.go}"]`);if(c){c.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash')}return}
+  const al=e.target.closest('[data-all]');if(al){e.preventDefault();const p=findP(al);if(!p) return;const k=al.dataset.all,ks=k==='vol'?['vol','volU']:k==='cult'?['cult','cultU']:[k];snap();listOf().forEach(q=>ks.forEach(x=>q[x]=p[x]));save();renderAll();
+    toast(`${{dil:'Dilution',vol:'Final volume',cult:'Culture volume',host:'Host'}[k]} copied to all ${listOf().length} ${S.mode==='a280'?'proteins':'samples'}`,{undo:true});return}
+  const rd=e.target.closest('[data-rdel]');if(rd){const p=findP(rd);if(!p) return;const i=+rd.dataset.rdel;snap();p.r.splice(i,1);if(!p.r.length) p.r=[''];save();redrawReads(p);return}
+  const a=e.target.closest('[data-act]');const menu=$('#menu');if(!e.target.closest('.menu-wrap')) menu.hidden=true;if(!a) return;const p=findP(a);
+  switch(a.dataset.act){
+    case 'menu':menu.hidden=!menu.hidden;$('#moreBtn').setAttribute('aria-expanded',String(!menu.hidden));break;
+    case 'mode':if(S.mode!==a.dataset.arg){S.mode=a.dataset.arg;save();renderAll()}break;
+    case 'undo':undo();break;case 'redo':redo();break;
+    case 'add':{snap();const L=listOf(),last=L[L.length-1],base=last?{volU:last.volU,cultU:last.cultU,host:last.host,r:Array(Math.max(3,last.r.length)).fill('')}:{},q=S.mode==='a280'?newA(Object.assign(base,last?{epsType:last.epsType}:{})):newSmp(base);
+      L.push(q);save();renderAll();const c=document.querySelector(`.pcard[data-id="${q.id}"]`);c.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});focusAt($('.name',c));break}
+    case 'dup':{if(!p) break;snap();const L=listOf(),q=JSON.parse(JSON.stringify(p));q.id=uid();q.name=p.name?p.name+' (copy)':'';q.r=Array(p.r.length).fill('');L.splice(L.indexOf(p)+1,0,q);save();renderAll();focusAt($(`.pcard[data-id="${q.id}"] [data-r="0"]`));toast('Copied the settings into a new card; type its readings',{undo:true});break}
+    case 'fold':if(!p) break;p.open=!p.open;save();renderAll();break;
+    case 'del':{if(!p) break;snap();const L=listOf();L.splice(L.indexOf(p),1);if(!L.length) L.push(S.mode==='a280'?newA():newSmp());save();renderAll();toast(`Removed “${escH(p.name||'card')}”`,{undo:true});break}
+    case 'addRead':{if(!p) break;snap();p.r.push('');save();redrawReads(p,p.r.length-1);break}
+    case 'seqOpen':{if(!p) break;p.seqOpen=true;save();renderAll();focusAt($(`.pcard[data-id="${p.id}"] [data-f="seq"]`));break}
+    case 'addStd':{snap();const last=S.c.stds[S.c.stds.length-1],s=newStd({r:Array(last?last.r.length:2).fill('')});S.c.stds.push(s);save();redrawStds(`.std[data-sid="${s.id}"] [data-sf="conc"]`);break}
+    case 'stdAddRead':{const s=findStd(a);if(!s) break;snap();s.r.push('');save();redrawStds(`.std[data-sid="${s.id}"] [data-sr="${s.r.length-1}"]`);break}
+    case 'stdDel':{const s=findStd(a);if(!s) break;snap();S.c.stds.splice(S.c.stds.indexOf(s),1);save();redrawStds();toast('Standard removed',{undo:true});break}
+    case 'bsa':{snap();const V=['0','25','125','250','500','750','1000','1500','2000'].map(v=>S.c.unit==='mgml'?String(+v/1000):v),n=S.c.stds[0]?S.c.stds[0].r.length:2;
+      V.forEach((v,i)=>{if(!S.c.stds[i]) S.c.stds.push(newStd({r:Array(n).fill('')}));S.c.stds[i].conc=v});save();redrawStds(`.std[data-sid="${S.c.stds[0].id}"] [data-sr="0"]`);toast('Filled the usual kit series: 0, 25, 125, 250, 500, 750, 1000, 1500 and 2000 µg/mL. Now type the readings.',{undo:true});break}
+    case 'save':{flush();download(`protein-quant-${today()}.json`,JSON.stringify(S,null,1),'application/json');toast('Saved to your downloads. Open it again from More → Open a saved file.');break}
+    case 'open':openFile();break;
+    case 'xlsx':exportXLSX();break;
+    case 'toLE':LPInbox.sendDialog(lpItem);break;
+    case 'csv':{const t=tableText().split('\n').map(l=>l.split('\t').map(v=>/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v).join(',')).join('\n');download(`protein-quant-${S.mode}-${today()}.csv`,t,'text/csv');break}
+    case 'copyTable':copyText(tableText()).then(ok=>toast(ok?'Copied as a table with titles. Paste it into Excel.':'Copy did not work in this browser'));break;
+    case 'importBox':importDialog();break;
+    case 'example':loadExample();break;
+    case 'clear':modal({title:'Start over?',danger:true,ok:'Start over',body:`<p>This empties both pages: ${S.a.rows.length} protein${S.a.rows.length===1?'':'s'}, ${S.c.stds.length} standard${S.c.stds.length===1?'':'s'} and ${S.c.rows.length} sample${S.c.rows.length===1?'':'s'}. Your settings stay. You can undo it straight after.</p>`,
+      onOk(){snap();S.a.rows=[newA()];S.c.stds=[];S.c.rows=[newSmp()];save();renderAll();toast('Both pages are empty',{undo:true})}});break;
+  }});
+document.addEventListener('keydown',e=>{const mod=e.ctrlKey||e.metaKey,inText=e.target.closest&&e.target.closest('input,textarea');
+  if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();$('[data-act="save"]').click();return}
+  if(mod&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();if(inText) e.target.blur();undo();return}
+  if(mod&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo()}});
+/* resizable panel, remembered */
+(function(){const sp=$('#split'),app=$('#app');let w=0;try{w=+localStorage.getItem(KEY+'-pw')||0}catch(e){}if(w) app.style.setProperty('--pw',w+'px');
+  sp.addEventListener('mousedown',e=>{e.preventDefault();sp.classList.add('drag');const mv=ev=>{const x=Math.max(280,Math.min(window.innerWidth-560,window.innerWidth-ev.clientX));app.style.setProperty('--pw',x+'px');w=x},
+    up=()=>{sp.classList.remove('drag');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);try{localStorage.setItem(KEY+'-pw',w)}catch(e){}};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)});
+  sp.addEventListener('dblclick',()=>{app.style.removeProperty('--pw');try{localStorage.removeItem(KEY+'-pw')}catch(e){}})})();
+renderAll();undoUI();
+/* ---------------- table view: the same proteins (or samples) as rows of a spreadsheet ----------------
+   Every box of a card is a cell here. Enter moves down, Tab right, arrows move between cells, and a block copied from
+   Excel pastes across and down (new rows are made as needed). The grey columns are worked out, as in the cards. */
+const SHEET_COLS=a=>[['name','Name','t',104],...(a?[['mw','MW (Da)','n',54],['eps','ε · type','p',82,'epsType',[['mass01','A0.1%'],['molar','molar'],['e1pct','E1%']]]]:[['mw','MW (Da)','n',58]]),['R','Readings','r'],['dil','Dil.','n',42],['vol','Final vol','p',78,'volU',VOLO],['cult','Culture','p',78,'cultU',VOLO],['host','Host','s',54,HOSTO().map(([k,l])=>[k,HOSTS[k].short||l])]];
+function sheetHTML(){const a=S.mode==='a280',list=listOf(),cols=SHEET_COLS(a),nR=Math.max(3,...list.map(p=>(p.r||[]).length)),u=UNIT_LABEL[a?S.a.unit:S.c.out];
+  const sel=(p,k,opts,ri,dflt)=>`<select class="sc u" data-sc="${ri}:${k}">${dflt?`<option value="">default</option>`:''}${opts.map(([v,l])=>`<option value="${v}"${(p[k]||'')===v?' selected':''}>${escH(l)}</option>`).join('')}</select>`;
+  const colg=`<colgroup><col style="width:26px"><col style="width:104px">${cols.slice(1).map(c=>c[0]==='R'?Array.from({length:nR},()=>'<col style="width:44px">').join('')+'<col style="width:24px">':`<col style="width:${c[3]}px">`).join('')}<col style="width:56px"><col style="width:64px"><col style="width:20px"></colgroup>`;
+  const head=cols.map(c=>c[0]==='R'?Array.from({length:nR},(_,k)=>`<th class="num">${a?'A':'Abs '}${k+1}</th>`).join('')+`<th class="addc"><button class="sv-addr" data-sv="addR" title="Add a reading column">+</button></th>`:`<th${c[2]==='n'?' class="num"':''}>${c[1]}</th>`).join('');
+  const cell=(p,c,ri)=>{if(c[0]==='R') return Array.from({length:nR},(_,k)=>`<td><input class="sc num" data-sc="${ri}:r${k}" value="${escH((p.r||[])[k]||'')}" inputmode="decimal"></td>`).join('')+'<td></td>';
+    if(c[2]==='s') return `<td>${sel(p,c[0],c[4],ri,true)}</td>`;
+    if(c[2]==='p') return `<td><div class="pair"><input class="sc num" data-sc="${ri}:${c[0]}" value="${escH(p[c[0]]||'')}" inputmode="decimal">${sel(p,c[4],c[5],ri,false)}</div></td>`;
+    return `<td><input class="sc${c[2]==='n'?' num':''}" data-sc="${ri}:${c[0]}" value="${escH(p[c[0]]||'')}"${c[2]==='n'?' inputmode="decimal"':''}${c[0]==='name'?` placeholder="${a?'Protein':'Sample'} ${ri+1}"`:''}></td>`};
+  return `<div class="sheet-wrap"><table class="sheet">${colg}<thead><tr><th class="rn"></th>${head}<th class="out">${escH(u)}</th><th class="out">mg/L</th><th></th></tr></thead><tbody>${list.map((p,ri)=>`<tr data-id="${p.id}"><td class="rn"><i style="background:${colorOf(p)}"></i>${ri+1}</td>${cols.map(c=>cell(p,c,ri)).join('')}${sheetOut(p)}<td><button class="sv-del" data-sv="del" data-i="${ri}" title="Remove this row">×</button></td></tr>`).join('')}</tbody></table></div>`}
+function sheetOut(p){const R=calcOf(p),f=v=>v==null?'—':fmtN(v,4),bad=(R.flags||[]).find(x=>x.t==='err'),tier=R.verdict&&R.verdict.tier,dot=tier?`<i class="vd v-${tier}" title="${escH(R.verdict.label)}"></i>`:'';
+  const tip=escH([(R.totalMg!=null?'Total '+(R.totalMg<1?fmtN(R.totalMg*1000,3)+' µg':fmtN(R.totalMg,3)+' mg'):''),R.verdict?R.verdict.label:'',...(R.flags||[]).map(x=>x.m)].filter(Boolean).join(' · '));
+  return `<td class="out${bad?' bad':''}" data-o="conc" title="${tip}">${bad?'⚠':R.ok&&R.conc!=null?f(R.conc):'—'}</td><td class="out" data-o="yl" title="${tip}">${R.yieldMgL!=null?dot+f(R.yieldMgL):'—'}</td>`}
+function sheetRefreshRow(p){const tr=document.querySelector(`.sheet tr[data-id="${p.id}"]`);if(!tr) return;const t=document.createElement('tbody');t.innerHTML=`<tr>${sheetOut(p)}</tr>`;
+  [...t.firstChild.children].forEach(td=>{const o=tr.querySelector(`[data-o="${td.dataset.o}"]`);if(o) o.outerHTML=td.outerHTML})}
+function sheetSet(el){const [ri,k]=el.dataset.sc.split(':'),p=listOf()[+ri];if(!p) return null;if(k[0]==='r'&&/^r\d+$/.test(k)){const i=+k.slice(1);p.r=p.r||[];while(p.r.length<=i) p.r.push('');p.r[i]=el.value}else p[k]=el.value;return p}
+document.addEventListener('input',e=>{const el=e.target.closest&&e.target.closest('.sheet .sc');if(!el) return;e.stopImmediatePropagation();begin(el);const p=sheetSet(el);if(!p) return;save();sheetRefreshRow(p);renderPanel()},true);
+document.addEventListener('change',e=>{const el=e.target.closest&&e.target.closest('.sheet select.sc');if(!el) return;e.stopImmediatePropagation();snap();const p=sheetSet(el);if(p){save();sheetRefreshRow(p);renderPanel()}},true);
+function sheetCell(ri,ci){const tr=document.querySelectorAll('.sheet tbody tr')[ri];if(!tr) return null;return tr.querySelectorAll('.sc')[ci]||null}
+function sheetPos(el){const tr=el.closest('tr'),rows=[...document.querySelectorAll('.sheet tbody tr')];return [rows.indexOf(tr),[...tr.querySelectorAll('.sc')].indexOf(el)]}
+document.addEventListener('keydown',e=>{const el=e.target.closest&&e.target.closest('.sheet .sc');if(!el) return;const [ri,ci]=sheetPos(el);let t=null;
+  if(e.key==='Enter'||(e.key==='ArrowDown'&&el.tagName!=='SELECT')){e.preventDefault();t=sheetCell(ri+1,ci);if(!t&&e.key==='Enter'){snap();listOf().push((S.mode==='a280'?newA:newSmp)());save();renderMain();renderPanel();t=sheetCell(ri+1,ci)}}
+  else if(e.key==='ArrowUp'&&el.tagName!=='SELECT'){e.preventDefault();t=sheetCell(ri-1,ci)}
+  else if(e.key==='ArrowRight'&&el.tagName==='INPUT'&&el.selectionStart===el.value.length){t=sheetCell(ri,ci+1)}
+  else if(e.key==='ArrowLeft'&&el.tagName==='INPUT'&&el.selectionStart===0){t=sheetCell(ri,ci-1)}
+  if(t){if(e.key.startsWith('Arrow')) e.preventDefault();t.focus();if(t.select) t.select()}},true);
+document.addEventListener('paste',e=>{const el=e.target.closest&&e.target.closest('.sheet .sc');if(!el) return;const txt=(e.clipboardData||window.clipboardData).getData('text');
+  const rows=txt.replace(/\r/g,'').split('\n').filter((l,i,a)=>l!==''||i<a.length-1).map(l=>l.split('\t'));if(rows.length<2&&rows[0].length<2) return;e.preventDefault();e.stopImmediatePropagation();snap();
+  const [ri,ci]=sheetPos(el),list=listOf();
+  rows.forEach((cells,dr)=>{while(list.length<=ri+dr) list.push((S.mode==='a280'?newA:newSmp)());});
+  save();renderMain();
+  rows.forEach((cells,dr)=>cells.forEach((v,dc)=>{const t=sheetCell(ri+dr,ci+dc);if(!t) return;if(t.tagName==='SELECT'){const o=[...t.options].find(o=>o.value===v.trim()||o.text===v.trim());if(o) t.value=o.value}else t.value=v.trim();sheetSet(t)}));
+  save();renderMain();renderPanel();toast(`Pasted ${rows.length} row${rows.length===1?'':'s'} × ${Math.max(...rows.map(r=>r.length))} column${rows[0].length===1?'':'s'}`)},true);
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-sv]');if(!b) return;const v=b.dataset.sv;
+  if(v==='cards'||v==='table'){S.view=v;save();renderMain();return}
+  if(v==='addR'){snap();listOf().forEach(p=>{p.r=p.r||[];const n=Math.max(3,...listOf().map(q=>(q.r||[]).length));while(p.r.length<n+1) p.r.push('')});save();renderMain();return}
+  if(v==='del'){const list=listOf();if(list.length<2){toast('One row stays; clear its boxes instead');return}snap();list.splice(+b.dataset.i,1);save();renderMain();renderPanel();toast('Row removed',{undo:true})}});
+const _renderMain=renderMain;renderMain=function(){_renderMain.apply(this,arguments);const tbl=S.view==='table',h=document.querySelector('#main .sec-h.big:last-of-type')||[...document.querySelectorAll('#main .sec-h.big')].pop();
+  if(h&&!h.querySelector('.viewseg')) h.insertAdjacentHTML('beforeend',`<span class="viewseg" role="group" aria-label="View"><button data-sv="cards" class="${tbl?'':'on'}">Cards</button><button data-sv="table" class="${tbl?'on':''}">Table</button></span>`);
+  if(tbl){const c=$('#cards');if(c){c.innerHTML=sheetHTML();c.classList.add('as-sheet')}const s=h&&h.querySelector('.sub');if(s) s.textContent=listOf().length+' rows · Enter for the next row, paste a block from Excel';}
+  if(typeof Culture!=='undefined') Culture.sync()};
+
+if(/[?&]debug\b/.test(location.search)) window.PQ={lpItem,LPInbox,get S(){return S},calcA,calcC,calcFit,loadExample,exportXLSX,tableText,Culture,mapImport,makeXLSX};
+
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/protein-quant"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -78,10 +78,10 @@ function renderTools() {
       : "";
     const fresh = (latest.new || []).slice(0, 3);
     const newBlock = fresh.length
-      ? `<div class="tool-new">
-           <div class="tool-new-h">${sparkSvg}New in ${latest.v}</div>
+      ? `<details class="tool-new">
+           <summary class="tool-new-h">${sparkSvg}New in ${latest.v} <span class="tool-new-n">${fresh.length} change${fresh.length > 1 ? "s" : ""}</span></summary>
            <ul>${fresh.map((f, i) => `<li style="--i:${i + 3}">${f}</li>`).join("")}</ul>
-         </div>`
+         </details>`
       : "";
 
     const olderBlock = older.length
@@ -557,6 +557,12 @@ const APP_GLYPH = {
 };
 function appGlyph(tool) { const g = APP_GLYPH[tool.icon]; return g ? `<svg viewBox="0 0 48 48" aria-hidden="true">${g}</svg>` : iconSvg(tool.icon); }
 
+function renderFlow() {
+  document.querySelectorAll("[data-glyph]").forEach(el => {
+    const t = TOOLS.find(x => x.id === el.dataset.glyph); if (!t) return;
+    el.innerHTML = appGlyph(t); el.style.setProperty("--card", accentOf(t)); el.style.background = accentOf(t);
+  });
+}
 function renderQuick() {
   const row = document.getElementById("quick-grid");
   if (!row) return;
@@ -582,7 +588,7 @@ const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 renderTools();
-renderQuick();
+renderQuick(); renderFlow();
 renderFeedback();
 renderQuotes();
 renderSpecs();

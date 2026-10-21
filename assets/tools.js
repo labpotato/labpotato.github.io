@@ -41,7 +41,7 @@ const TOOLS = [
     name: "Lab Entry",
     tagline: "Write it down, or it did not happen",
     description:
-      "A lab notebook that lays out your experiments as tiles on a timeline, linked by the to-dos that lead from one to the next.",
+      "A lab notebook that lays out your experiments as tiles on a timeline, linked by their to-dos.",
     icon: "flask",
     accent: "rose",
     folder: "tools/lab-entry",
@@ -60,11 +60,12 @@ const TOOLS = [
       { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15" },
       { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20" },
       { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
-      { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21",
+      { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
+      { v: "v12", file: "lab-entry-v12.html", date: "2026-10-21",
         new: [
-          "Tables work like Excel: drag to select, copy and paste, reorder",
-          "Linked experiments get an arrow and share one colour",
-          "Keep samples and aim the same on every day of an experiment"
+          "Results from every Lab Potato tool arrive live in a waiting room",
+          "A more compact week: the whole week on one screen",
+          "Markdown for AI now carries the figures as PNGs"
         ] }
     ]
   },
@@ -75,7 +76,7 @@ const TOOLS = [
     name: "Colony Counter",
     tagline: "Stop squinting at plates",
     description:
-      "Drop in a plate photo and get your count and CFU/mL. Your eyes deserve better than tally marks on a Post-it.",
+      "Drop in a plate photo and get the count and CFU/mL. Your eyes deserve better than tally marks.",
     icon: "colony",
     accent: "emerald",
     folder: "tools/colony-counter",
@@ -86,10 +87,12 @@ const TOOLS = [
     ],
     versions: [
       { v: "v1", file: "colony-counter-v1.html" },
-      { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23",
+      { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
+      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-21",
         new: [
-          "Rebuilt detection: under 1% count error on test plates (was 48%)",
-          "Spot plates, manual count entry and replicate stats"
+          "Open several plates and step through them, or Count all",
+          "Blue and white colonies counted apart",
+          "Transformation efficiency, and Send to Lab Entry"
         ] }
     ]
   },
@@ -100,7 +103,7 @@ const TOOLS = [
     name: "Gel Labeler",
     tagline: "Gels that don't embarrass you",
     description:
-      "Label lanes and ladders, build blot figures and measure band intensity. No more arrows drawn in Word at 1am.",
+      "Label lanes and ladders, build blot figures and measure bands. No more arrows drawn in Word at 1am.",
     icon: "gel",
     accent: "violet",
     folder: "tools/gel-labeler",
@@ -115,10 +118,12 @@ const TOOLS = [
       { v: "v3", file: "gel-labeler-v3.html" },
       { v: "v4", file: "gel-labeler-v4.html" },
       { v: "v5", file: "gel-labeler-v5.html", date: "2026-09-22" },
-      { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26",
+      { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },
+      { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21",
         new: [
-          "Band quantification, ImageJ-style, with normalised intensity",
-          "Band panels: blot strip plus bar chart for the figure"
+          "GeneRuler 1 kb and one ladder list for every tool, your favourite first",
+          "Add the manufacturer’s photo of your ladder",
+          "Expected lane: check a digest or PCR against the gel"
         ] }
     ]
   },
@@ -147,11 +152,12 @@ const TOOLS = [
       { v: "v6", file: "gibson-assembly-v6.html" },
       { v: "v7", file: "gibson-assembly-v7.html", date: "2026-09-25" },
       { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" },
-      { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01",
+      { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01" },
+      { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21",
         new: [
-          "Click a junction on the map to move its overlap or add a spacer",
-          "Shorten a primer's overhang and have it re-checked",
-          "True Tm when the overhang also binds the template"
+          "Watch the fragments assemble, then the live map",
+          "A virtual gel of your PCRs at the bench step",
+          "No-tail primers, and Send to Lab Entry"
         ] }
     ]
   },
@@ -174,10 +180,12 @@ const TOOLS = [
     versions: [
       { v: "v1", file: "microscopy-image-labeler-v1.html" },
       { v: "v2", file: "microscopy-image-labeler-v2.html", date: "2026-09-22" },
-      { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26",
+      { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" },
+      { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21",
         new: [
-          "Scale bar measured from the bar printed in your image",
-          "Drag panels to reorder them"
+          "Line profile: draw a line, get the intensity plot",
+          "Send the figure to Lab Entry",
+          "An example figure to try it on"
         ] }
     ]
   },
@@ -188,7 +196,7 @@ const TOOLS = [
     name: "Protein Quant",
     tagline: "Numbers in, plot out",
     description:
-      "Concentration and yield from A280 or a standard curve, without slowly losing your will to live in a spreadsheet.",
+      "Concentration and yield from A280 or a standard curve, without losing your will to live in a spreadsheet.",
     icon: "protein",
     accent: "amber",
     folder: "tools/protein-quant",
@@ -202,10 +210,12 @@ const TOOLS = [
       { v: "v2", file: "protein-quant-v2.html" },
       { v: "v3", file: "protein-quant-v3.html" },
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
-      { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26",
+      { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" },
+      { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21",
         new: [
-          "Paste a sequence to get MW and extinction coefficient",
-          "Bradford/BCA curves with blank subtraction and quadratic fit"
+          "Several proteins at once, in cards or a spreadsheet table",
+          "A pixel cell that reacts to your yield (try naming one GFP)",
+          "µM by default, error bars both ways"
         ] }
     ]
   },
@@ -216,14 +226,14 @@ const TOOLS = [
     name: "Cryobox Labeler",
     tagline: "Find that glycerol stock",
     description:
-      "Track samples in 3D −80 °C and −20 °C freezers and on the bench, from rack to box to tube, and search them all.",
+      "Every tube in a 3D −80 °C or −20 °C freezer, from rack to box to tube, and one search across them all.",
     icon: "cryobox",
     accent: "indigo",
     folder: "tools/cryobox-labeler",
     features: [
-      "Freezers sized in cm around real racks, plus −20 °C drawers and bench spots",
-      "Edit a box like an Excel sheet; smart sort tells you what to move where",
-      "Import from Excel by pasting rows or loading .xlsx, and export to Excel"
+      "Freezers sized in cm around real racks, plus −20 °C drawers",
+      "Edit a box like an Excel sheet; smart sort says what to move",
+      "Import from and export to Excel"
     ],
     versions: [
       { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08" },

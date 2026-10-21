@@ -1478,3 +1478,41 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
 .tool-card .tool-icon.app-icon { width: 48px; height: 48px; margin: 0; border-radius: 23%; color: #fff; }
 .tool-card .tool-icon.app-icon svg { width: 42px; height: 42px; }
 .tool-card:hover .tool-icon.app-icon { transform: none; }
+
+
+/* ---------- Lab Potato house style (from Lab Entry): its colours and its system UI font ---------- */
+:root{--bg:#edf1f6;--bg-tint:#e3e8ef;--surface:#ffffff;--border:#dce2eb;--border-soft:#dce2eb;--text:#121925;--text-muted:#2b3443;--text-faint:#566174;--brand-ink:#121925;--accent:#1f66cc;--accent-hover:#1a56ad;--accent-soft:#e6effb;--lp-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-serif:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0e131a;--bg-tint:#222a36;--surface:#171d26;--border:#2a3442;--border-soft:#2a3442;--text:#eef2f7;--text-muted:#cfd7e3;--text-faint:#9aa7b9;--brand-ink:#eef2f7;--accent:#6aa8ff;--accent-hover:#8dbcff;--accent-soft:rgba(106,168,255,.16);--lp-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-serif:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif}}
+body,button,input,select,textarea{font-family:var(--lp-ui)}
+.section-head h2,.hero h1,.tool-name,.flow-node b{font-family:var(--lp-serif);letter-spacing:-.015em}
+
+/* explicit theme choice from the page's own switch still wins over the system setting */
+:root[data-theme="light"]{--bg:#edf1f6;--bg-tint:#e3e8ef;--surface:#fff;--border:#dce2eb;--border-soft:#dce2eb;--text:#121925;--text-muted:#2b3443;--text-faint:#566174;--brand-ink:#121925;--accent:#1f66cc;--accent-hover:#1a56ad;--accent-soft:#e6effb}
+:root[data-theme="dark"]{--bg:#0e131a;--bg-tint:#222a36;--surface:#171d26;--border:#2a3442;--border-soft:#2a3442;--text:#eef2f7;--text-muted:#cfd7e3;--text-faint:#9aa7b9;--brand-ink:#eef2f7;--accent:#6aa8ff;--accent-hover:#8dbcff;--accent-soft:rgba(106,168,255,.16)}
+body{font-family:var(--lp-ui)}
+.hero h1{letter-spacing:-.025em}
+
+/* ===================== INTEGRATIONS: how the tools hand results to each other ===================== */
+.flow{display:grid;grid-template-columns:1fr auto 1.3fr auto 1fr;align-items:center;gap:12px;margin:8px auto 0;max-width:1120px}
+.flow-col{display:grid;gap:10px}
+.flow-node{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm);color:inherit;text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.flow-node:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);text-decoration:none}
+.flow-node .app-icon{width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center}
+.flow-node .app-icon svg{width:30px;height:30px}
+.flow-node b{display:block;font-size:15px;line-height:1.2}.flow-node small{display:block;color:var(--text-faint);font-size:12px;line-height:1.35;margin-top:2px}
+.flow-arrow{font-size:22px;color:var(--text-faint);text-align:center}
+.flow-arrow small{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.flow-room{border-style:dashed}
+.flow-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:1120px;margin:22px auto 0}
+.flow-notes div{padding:12px 14px;border-radius:12px;background:var(--bg-tint);font-size:13.5px;line-height:1.5;color:var(--text-muted)}
+.flow-notes b{color:var(--text)}
+@media (max-width:980px){.flow{grid-template-columns:1fr}.flow-arrow{transform:rotate(90deg);height:22px}.flow-arrow small{display:none}.flow-notes{grid-template-columns:1fr}}
+/* shorter cards: the "New in" box is one line until opened */
+details.tool-new>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}
+details.tool-new>summary::-webkit-details-marker{display:none}
+details.tool-new>summary::after{content:"▸";margin-left:auto;font-size:12px;opacity:.7;transition:transform .2s var(--ease)}
+details.tool-new[open]>summary::after{transform:rotate(90deg)}
+details.tool-new:not([open]){padding-bottom:0}
+details.tool-new>ul{margin-top:8px}
+.tool-new-n{font-weight:500;opacity:.75;text-transform:none;letter-spacing:0;font-size:11.5px}
+

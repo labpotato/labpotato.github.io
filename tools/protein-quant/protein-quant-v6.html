@@ -1054,147 +1054,181 @@ const listOf=()=>S.mode==='a280'?S.a.rows:S.c.rows;
 const calcOf=p=>S.mode==='a280'?calcA(p):calcC(p,fitNow());
 const colorOf=p=>COLORS[Math.max(0,listOf().indexOf(p))%COLORS.length];
 
-/* ================= THE CULTURE FLASK =================
-   Each protein card has a small Erlenmeyer flask on an orbital shaker, drawn as smooth vector shapes (no pixels). The
-   flask rocks gently, the medium stays level and sloshes, and the cells swim in it: E. coli rods that run and tumble,
-   budding yeast, round CHO cells with a nucleus, boxy BY-2 plant cells. What the flask shows follows the numbers:
-     how many cells, how fast they swim and how coloured the medium is  <- the yield on a log scale against that host's
-                                                                           own benchmarks (or the concentration, before
-                                                                           the volumes are in)
-     bubbles and foam at the surface                                     <- the yield verdict: a thin culture barely
-                                                                           bubbles; a very good one foams; an impossible
-                                                                           one (check the units) boils over
-   A strip of label tape on the glass carries the protein's name. Fluorescent proteins (GFP, mCherry and friends) are
-   shown under a dark blue-light box and glow in their own colour; luciferase flickers; a protein called potato grows
-   potatoes. Purely decorative: nothing here feeds any number. */
+/* ================= THE PROTEIN GRINDER =================
+   Each protein card has a little machine: the culture slurry sits in a hopper, two toothed rollers grind it, and the
+   protein bursts out of the rollers as particles that fly around a box. The box is the same size on every card:
+     how many particles  <- total protein in mg (once the final volume is in), else the concentration in mg/mL, on one
+                            fixed log scale (0.01 to 1000 mg, or 0.001 to 100 mg/mL), so cards compare by eye
+     particle size       <- the protein's MW
+     speed               <- the yield verdict for the host: calm when low, lively when very good, frantic when it is
+                            more than the host can make (the grinder overheats and smokes, and a red "?!" shows)
+   Beside the box the number counts up to its value. When an input changes the grinder runs again: new particles burst
+   out of it (more) or fly out of the box (less), the number counts from the old value to the new one, and a chip shows
+   the difference: green ▲ for more, red ▼ for less. An impressive yield throws confetti.
+   Easter eggs, from the protein's name:
+     GFP, mCherry and friends   the box goes dark and the particles glow in their own colour
+     luciferase, NanoLuc        the glow flickers
+     antibody, IgG, Fab         Y-shaped particles
+     collagen, silk, elastin    long wiggling fibres
+     haemoglobin, myoglobin     red beads with an iron dot
+     insulin                    beads that fly in hexamers
+     ubiquitin                  beads that drag a little tag
+     potato                     potatoes go into the hopper and come out as little potatoes
+   Purely decorative: every number it shows is the one already worked out above it. */
 const Culture=(function(){
-  const TICK=50;
+  const TICK=40,RUN=40,NMAX=150;
   const GLOW=[[/\b(e|sf|ac|mem|t|super)?gfp\b|mneon|mgreen|emerald|azami|clover|mwasabi|zsgreen/i,'#3dff7a','green'],[/yfp|venus|citrine|ypet|topaz/i,'#ffe14d','yellow'],
     [/cfp|cerulean|turquoise|mtfp|teal/i,'#4de1ff','cyan'],[/bfp|azurite|sapphire|ebfp/i,'#6e8bff','blue'],
     [/mcherry|rfp|dsred|tdtomato|mscarlet|mkate|mruby|mapple|mplum|katushka|tagrfp|irfp/i,'#ff4d6d','red'],[/mko|morange|tdorange/i,'#ff9a3d','orange']];
   const glowOf=name=>{for(const g of GLOW) if(g[0].test(name||'')) return {c:g[1],n:g[2]};return null};
-  const NMAX=120,NMIN=6;
-  const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const lg=(v,a,b)=>{if(v==null||!isFinite(v)||v<=0) return 0;return clamp((Math.log10(Math.max(v,a))-Math.log10(a))/(Math.log10(b)-Math.log10(a)),0,1)};
+  const EGGS=[['potato',/potato/i,'potatoes'],['antibody',/antibod|\big[gmae]\b|\bmab\b|\bfab\b|\bscfv\b|nanobod/i,'Y-shaped antibodies'],['fibre',/collagen|silk|elastin|fibroin|keratin/i,'fibres'],
+    ['heme',/h(a)?emoglobin|myoglobin|cytochrome/i,'haem iron'],['insulin',/insulin/i,'hexamers'],['ubiquitin',/ubiquitin|\bsumo\b/i,'tags']];
+  const eggOf=name=>{for(const e of EGGS) if(e[1].test(name||'')) return {k:e[0],n:e[2]};return null};
+  const HOST={ecoli:{med:'#e7c977',cell:'#fbf7ee',edge:'#8a7a5c'},yeast:{med:'#d9b25f',cell:'#f7efdc',edge:'#8a6d33'},
+    mammalian:{med:'#f2b4c6',cell:'#fbf3f6',edge:'#9a5c78'},plant:{med:'#dfe6c4',cell:'#f3f8ea',edge:'#5e7a4a'}};
+  const SCALE={mg:{lo:.01,hi:1000,unit:'mg',what:'total protein'},mgml:{lo:.001,hi:100,unit:'mg/mL',what:'concentration'}};
+  const SPEED={idle:.4,low:.55,typical:.8,happy:1,star:1.25,party:1.5,wow:2.6};
+  const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),ease=x=>x<=0?0:x>=1?1:1-Math.pow(1-x,3);
   const hex=c=>{const n=parseInt(c.slice(1),16);return [n>>16&255,n>>8&255,n&255]};
-  const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'};
   const rgba=(c,al)=>{const [r,g,b]=hex(c);return `rgba(${r},${g},${b},${al})`};
+  const shade=(c,k)=>{const [r,g,b]=hex(c),f=v=>clamp(Math.round(v*k),0,255);return `rgb(${f(r)},${f(g)},${f(b)})`};
   const cssv=(n,fb)=>{const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||fb};
+  const fmt=v=>!isFinite(v)?'':v>=100?Math.round(v).toLocaleString():v>=10?v.toFixed(1):v>=1?v.toFixed(2):v>=.1?v.toFixed(3):v.toPrecision(2);
+  const rr=(x,X,Y,w,h,r)=>{x.beginPath();if(x.roundRect) x.roundRect(X,Y,w,h,r);else x.rect(X,Y,w,h)};
   let dishes={};
-  /* the flask, in CSS pixels of the box: a neck, sloping shoulders, a flat base; the medium fills about half */
-  function geom(W,H){const cx=W*.5,neckW=Math.max(14,W*.17),neckTop=H*.06,shoulder=H*.30,baseY=H*.86,baseW=Math.min(W*.74,H*1.1),lip=neckW*.62;
-    return {W,H,cx,neckW,neckTop,shoulder,baseY,baseW,lip,level:H*.56,r:Math.max(4,W*.035)}}
-  const halfW=(g,y)=>y<g.shoulder?g.neckW/2:g.neckW/2+(g.baseW/2-g.neckW/2)*clamp((y-g.shoulder)/(g.baseY-g.shoulder),0,1);
-  /* the medium stays level while the flask rocks: its surface tilts by minus the flask's angle, plus a slosh */
-  function surfaceY(d,x){const g=d.g;return g.level-(x-g.cx)*Math.tan(d.ang)+Math.sin(x/(g.W*.11)+d.t/5)*g.H*.012*d.slosh}
-  function inLiquid(d,x,y,m){const g=d.g;m=m||2;return y>surfaceY(d,x)+m&&y<g.baseY-m&&Math.abs(x-g.cx)<halfW(g,y)-m-(y>g.baseY-g.r?g.r*.6:0)}
-  function flaskPath(x,g){const {cx,neckW,neckTop,shoulder,baseY,baseW,r,lip}=g;x.beginPath();
-    x.moveTo(cx-neckW/2,neckTop);x.lineTo(cx-neckW/2,shoulder);x.lineTo(cx-baseW/2+r,baseY-r*.4);x.quadraticCurveTo(cx-baseW/2,baseY,cx-baseW/2+r,baseY);
-    x.lineTo(cx+baseW/2-r,baseY);x.quadraticCurveTo(cx+baseW/2,baseY,cx+baseW/2-r,baseY-r*.4);x.lineTo(cx+neckW/2,shoulder);x.lineTo(cx+neckW/2,neckTop);x.closePath()}
-  function targets(d,o){const H=HOSTS[o.host]||HOSTS.ecoli;let f,mood='typical';
-    if(!o.ok){f=0;mood='idle'}
-    else if(o.mgL!=null){f=lg(o.mgL/H.veryhigh,.0005,1);mood=o.mgL>=H.ceiling?'wow':o.mgL>=H.veryhigh?'party':o.mgL>=H.high?'star':o.mgL>=H.typical?'happy':o.mgL>=H.low?'typical':'low'}
-    else{f=lg(o.mgml,.03,40);mood=f<.25?'low':f<.6?'typical':'happy'}
-    d.mood=mood;d.tier=mood==='idle'?'idle':mood==='wow'?'wow':mood==='party'?'gold':'normal';d.f=f;
-    const room=d.g?(d.g.baseW*(d.g.baseY-d.g.level))/(200*60):1;
-    d.N=mood==='idle'?0:Math.round((mood==='wow'||mood==='party'?NMAX:NMIN+f*(NMAX-NMIN))*clamp(room,.5,1.6));
-    d.big=o.mw>100000?1.35:o.mw>30000?1.15:1;d.glow=glowOf(o.name);d.luc=/lucifer|nanoluc|nluc/i.test(o.name||'');d.label=(o.name||'').trim()}
-  function spawn(d){const g=d.g;for(let k=0;k<12;k++){const y=rnd(g.level+6,g.baseY-6),x=rnd(g.cx-halfW(g,y)+6,g.cx+halfW(g,y)-6);if(inLiquid(d,x,y,3)){const a=rnd(0,6.283);d.cells.push({x,y,a,v:rnd(.6,1),run:ri(10,40),bud:rnd(0,1),ph:rnd(0,6.283)});return}}}
-  const SPEED={idle:0,low:.22,typical:.4,happy:.55,star:.65,party:.75,wow:1.1};
-  function step(d){d.t=(d.t||0)+1;const g=d.g;
-    // the shaker: a slow rock, a little orbital slide, and the slosh that follows
-    d.ang=Math.sin(d.t/26)*.055*(d.mood==='wow'?1.6:1);d.dx=Math.sin(d.t/13)*g.W*.012;d.slosh=.6+.4*Math.abs(Math.cos(d.t/26));
-    if(d.cells.length<d.N&&(d.t%2===0||d.cells.length<d.N*.4)) spawn(d);
-    if(d.cells.length>d.N) d.cells.splice(0,Math.max(1,Math.round((d.cells.length-d.N)/6)));
-    const sp=(SPEED[d.mood]||.4)*Math.max(.8,Math.min(1.6,g.W/220));
-    d.cells.forEach(c=>{
-      // run and tumble: straight for a while, then a new heading; yeast and CHO just drift
-      if(--c.run<=0){c.run=ri(8,40);c.a+=rnd(-1.6,1.6)*(d.host==='ecoli'?1:.5)}
-      c.a+=rnd(-.08,.08)+Math.cos(d.t/26)*.004;   // the slosh pulls everyone a little
-      const s=sp*c.v,nx=c.x+Math.cos(c.a)*s,ny=c.y+Math.sin(c.a)*s*(d.host==='ecoli'?1:.7);
-      if(inLiquid(d,nx,ny,3)){c.x=nx;c.y=ny}else{c.a+=Math.PI+rnd(-.6,.6);c.run=ri(10,30);
-        if(!inLiquid(d,c.x,c.y,2)){c.y=clamp(c.y,surfaceY(d,c.x)+4,g.baseY-4);c.x=clamp(c.x,g.cx-halfW(g,c.y)+4,g.cx+halfW(g,c.y)-4)}}});
-    // bubbles: a few from the bottom, more the better the culture; foam gathers at the surface when it is very good
-    const rate={idle:0,low:70,typical:34,happy:20,star:12,party:6,wow:2}[d.mood]||0;
-    if(rate&&d.t%rate===0){const y=g.baseY-4,x=rnd(g.cx-halfW(g,y)*.8,g.cx+halfW(g,y)*.8),fast=d.mood==='wow'?2.4:d.mood==='party'?1.5:1;for(let k=0;k<(d.mood==='wow'?3:1);k++) d.bub.push({x:x+rnd(-6,6),y,r:rnd(1,2.2)*Math.max(1,g.W/260),vy:rnd(.5,1)*fast})}
-    d.bub.forEach(b=>{b.y-=b.vy;b.x+=Math.sin(d.t/6+b.r)*.3});
-    const foamy=d.mood==='star'||d.mood==='party'||d.mood==='wow';
-    d.bub=d.bub.filter(b=>{if(b.y>surfaceY(d,b.x)-b.r) return true;if(foamy&&d.foam.length<(d.mood==='wow'?160:d.mood==='party'?70:34)) d.foam.push({x:b.x,y:surfaceY(d,b.x)-b.r*.6,r:b.r*rnd(1,1.6),t:0});return false});
-    d.foam.forEach(f=>{f.t++;f.y=surfaceY(d,f.x)-f.r*.6-(d.mood==='wow'?Math.min(f.t*.25,g.level-g.neckTop+8):0);f.x+=Math.sin(f.t/9)*.15;if(d.mood==='wow'&&f.y<g.neckTop+4) f.x+=(f.x<g.cx?-1:1)*.9+rnd(-.3,.3)});
-    d.foam=d.foam.filter(f=>f.t<(d.mood==='wow'?260:400)&&f.y>-10&&Math.abs(f.x-g.cx)<g.W*.6);
-    if(!foamy) d.foam.splice(0,Math.ceil(d.foam.length/8));
-    if((d.mood==='star'||d.mood==='party')&&d.t%6===0) d.fx.push({x:rnd(g.cx-g.baseW*.55,g.cx+g.baseW*.55),y:rnd(g.neckTop,g.baseY),t:0});
-    d.fx.forEach(f=>f.t++);d.fx=d.fx.filter(f=>f.t<14)}
-  /* one cell of each host, drawn at (0,0) heading along +x */
-  function cell(x,d,c,base,edge){const k=d.big*Math.max(.8,Math.min(1.5,d.g.W/230));x.save();x.translate(c.x,c.y);x.rotate(c.a);x.scale(k,k);x.lineWidth=.8;x.strokeStyle=edge;x.fillStyle=base;
-    if(d.host==='ecoli'){x.beginPath();x.moveTo(-3,-1.3);x.lineTo(3,-1.3);x.arc(3,0,1.3,-Math.PI/2,Math.PI/2);x.lineTo(-3,1.3);x.arc(-3,0,1.3,Math.PI/2,Math.PI*1.5);x.closePath();x.fill();x.stroke();
-      x.beginPath();x.moveTo(-4.3,0);for(let i=1;i<=6;i++) x.lineTo(-4.3-i*1.1,Math.sin(i*1.3+d.t/2.5+c.ph)*1.1);x.strokeStyle=rgba(edge.startsWith('#')?edge:'#6b6b6b',.7);x.lineWidth=.6;x.stroke()}
-    else if(d.host==='yeast'){x.beginPath();x.ellipse(0,0,3.2,2.6,0,0,7);x.fill();x.stroke();if(c.bud>.4){const br=1+1.3*((c.bud-.4)/.6);x.beginPath();x.arc(3.2,-1.2,br,0,7);x.fill();x.stroke()}}
-    else if(d.host==='mammalian'){x.beginPath();x.arc(0,0,3.4,0,7);x.fill();x.stroke();x.fillStyle=rgba('#6b4f7a',.55);x.beginPath();x.arc(.6,-.3,1.3,0,7);x.fill()}
-    else if(d.host==='potato'){x.beginPath();x.ellipse(0,0,3.6,2.5,0,0,7);x.fillStyle='#c99a5c';x.fill();x.strokeStyle='#7a4f24';x.stroke();x.fillStyle='#7a4f24';[[-1.5,-.6],[.8,.9],[1.9,-.9]].forEach(p=>x.fillRect(p[0],p[1],.7,.7))}
-    else{x.beginPath();x.roundRect?x.roundRect(-3.4,-2.2,6.8,4.4,1.2):x.rect(-3.4,-2.2,6.8,4.4);x.fill();x.stroke();x.fillStyle='#5fae4e';x.beginPath();x.arc(-1.2,.4,.9,0,7);x.arc(1.4,-.6,.9,0,7);x.fill()}
-    x.restore()}
-  function draw(d){const x=d.ctx,g=d.g,W=g.W,H=g.H,dpr=d.dpr;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
-    const dark=!!d.glow,ink=cssv('--ink','#121925'),line=cssv('--line-2','#c3ccd9'),muted=cssv('--ink-3','#566174');
-    // the blue-light box for fluorescent proteins
-    if(dark){x.fillStyle='#0f1a2e';if(x.roundRect){x.beginPath();x.roundRect(0,0,W,H,10);x.fill()}else x.fillRect(0,0,W,H)}
-    // the shaker platform
-    x.fillStyle=dark?'#1d2a42':mix(line,'#ffffff',.45);x.beginPath();x.roundRect?x.roundRect(g.cx-g.baseW*.62+d.dx*.3,g.baseY+2,g.baseW*1.24,Math.max(5,H*.05),4):x.fillRect(g.cx-g.baseW*.62,g.baseY+2,g.baseW*1.24,6);x.fill();
-    x.save();x.translate(g.cx+d.dx,g.baseY);x.rotate(d.ang);x.translate(-g.cx,-g.baseY);
-    // the medium: LB amber turning the protein's colour as the yield climbs; in the dark box it is the glow itself
-    const col=dark?d.glow.c:mix('#e7c977',d.color||'#ff8a65',.12+.55*d.f),fl=d.luc?(.55+.45*Math.abs(Math.sin(d.t/5))):1;
-    x.save();flaskPath(x,g);x.clip();
-    x.beginPath();x.moveTo(g.cx-g.W,g.baseY+2);x.lineTo(g.cx-g.W,surfaceY(d,g.cx-g.W));for(let px=g.cx-g.W;px<=g.cx+g.W;px+=4) x.lineTo(px,surfaceY(d,px));x.lineTo(g.cx+g.W,g.baseY+2);x.closePath();
-    if(dark){x.fillStyle=rgba(d.glow.c,(.28+.5*d.f)*fl)}else{x.fillStyle=col;x.globalAlpha=.72+.2*d.f}x.fill();x.globalAlpha=1;
-    if(dark){const gr=x.createRadialGradient(g.cx,g.baseY-(g.baseY-g.level)*.5,2,g.cx,g.baseY-(g.baseY-g.level)*.5,g.baseW*.7);gr.addColorStop(0,rgba(d.glow.c,.35*fl));gr.addColorStop(1,rgba(d.glow.c,0));x.fillStyle=gr;x.fillRect(0,0,W,H)}
-    // the cells
-    const base=dark?rgba(d.glow.c,.95):'#fbf7ee',edge=dark?rgba('#ffffff',.5):mix(ink,col,.45);
-    d.cells.forEach(c=>cell(x,d,c,base,edge));
-    // bubbles and foam
-    x.strokeStyle=dark?rgba('#ffffff',.55):rgba('#ffffff',.9);x.lineWidth=.8;d.bub.forEach(b=>{x.beginPath();x.arc(b.x,b.y,b.r,0,7);x.stroke()});
-    x.fillStyle=dark?rgba('#ffffff',.75):'rgba(255,255,255,.92)';x.strokeStyle=dark?rgba(d.glow.c,.6):rgba(mix(ink,col,.3),.5);x.lineWidth=.6;d.foam.forEach(f=>{x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill();x.stroke()});
+  /* the hopper and rollers on top, the box under them, the number on the right */
+  function geom(W,H){const bw=W*.56,bx=6,cx=bx+bw/2,rollR=Math.max(7,Math.min(W*.035,H*.05));
+    return {W,H,bx,bw,cx,by:H*.34,bh:H*.66-6,hTop:H*.03,hBot:H*.2,hTopW:bw*.26,hBotW:Math.max(5,bw*.04),rollY:H*.25,rollR,numX:W*.62}}
+  const hopperHalf=(g,y)=>g.hTopW+(g.hBotW-g.hTopW)*clamp((y-g.hTop)/(g.hBot-g.hTop),0,1);
+  function frac(d,v){const S=SCALE[d.unit]||SCALE.mg;if(!(v>0)) return 0;return clamp((Math.log10(v)-Math.log10(S.lo))/(Math.log10(S.hi)-Math.log10(S.lo)),0,1)}
+  function verdict(o){const H=HOSTS[o.host]||HOSTS.ecoli;if(!o.ok) return 'idle';if(o.mgL!=null) return o.mgL>=H.ceiling?'wow':o.mgL>=H.veryhigh?'party':o.mgL>=H.high?'star':o.mgL>=H.typical?'happy':o.mgL>=H.low?'typical':'low';return 'typical'}
+  function targets(d,o){const old=d.val,oldUnit=d.unit;
+    if(o.ok&&o.totalMg>0){d.unit='mg';d.val=o.totalMg}else if(o.ok&&o.mgml>0){d.unit='mgml';d.val=o.mgml}else d.val=null;
+    d.mood=verdict(o);d.tier=d.mood==='idle'?'idle':d.mood==='wow'?'wow':d.mood==='party'?'gold':'normal';
+    d.glow=glowOf(o.name);d.egg=eggOf(o.name);d.luc=/lucifer|nanoluc|nluc/i.test(o.name||'');d.mgL=o.mgL;
+    d.r=o.mw>150000?4.6:o.mw>80000?4:o.mw>40000?3.5:o.mw>20000?3.1:2.8;
+    d.N=d.val==null?0:Math.max(3,Math.round(NMAX*frac(d,d.val)));if(d.egg&&d.egg.k==='insulin') d.N=Math.max(6,Math.round(d.N/6)*6);
+    if(d.val!=null&&(old==null||oldUnit!==d.unit||Math.abs(d.val-old)>Math.abs(old)*1e-3)){
+      d.from=old!=null&&oldUnit===d.unit?d.shown:0;d.run=0;d.delta=old!=null&&oldUnit===d.unit?d.val-old:null;d.deltaAge=0}
+    if(d.val==null){d.run=RUN;d.delta=null}}
+  /* a new particle leaves the rollers heading down into the box, then wanders off on its own */
+  function spawn(d,quiet){const g=d.g,a=Math.PI/2+rnd(-.9,.9),s=rnd(2.5,4.5);
+    const p={x:g.cx+rnd(-3,3),y:quiet?rnd(g.by+10,g.by+g.bh-10):g.by+4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,ph:a,k:rnd(.8,1.2),out:false,trail:[],rot:rnd(0,6.28)};
+    if(quiet) p.x=rnd(g.bx+10,g.bx+g.bw-10);d.ps.push(p)}
+  function spawnCell(d){const g=d.g,y=rnd(g.hTop+3,g.hBot-3),hw=hopperHalf(g,y)-3;d.cells.push({x:g.cx+rnd(-hw,hw),y,a:rnd(0,6.28),s:rnd(.8,1.1)})}
+  function step(d){d.t=(d.t||0)+1;const g=d.g,running=d.run<RUN;if(running) d.run++;
+    const k=ease(d.run/RUN);d.shown=d.val==null?0:(running?d.from+(d.val-d.from)*k:d.val);if(d.delta!=null) d.deltaAge++;
+    d.spin=running?.34:d.spin*.9;d.ang+=d.spin;
+    if(running&&d.cells.length<16&&d.t%2===0) spawnCell(d);
+    d.cells.forEach(c=>{c.y+=running?.7+.5*c.s:0;c.a+=running?.1:0;const hw=hopperHalf(g,c.y)-2;c.x=g.cx+clamp(c.x-g.cx,-hw,hw)});d.cells=d.cells.filter(c=>c.y<g.hBot+2);
+    // particles come out of the rollers, or fly out of the box, until the count matches the amount
+    const live=d.ps.filter(p=>!p.out);
+    if(live.length<d.N){const n=Math.min(d.N-live.length,running?4:d.N);for(let i=0;i<n;i++) spawn(d,!running)}
+    else if(live.length>d.N){const n=Math.min(live.length-d.N,running?4:live.length);const cx=g.bx+g.bw/2,cy=g.by+g.bh/2;
+      for(let i=0;i<n;i++){const p=live[live.length-1-i];p.out=true;const a=Math.atan2(p.y-cy,p.x-cx);p.vx=Math.cos(a)*5;p.vy=Math.sin(a)*5}}
+    // the bits that fly from the rollers to the box mouth while it runs
+    if(running&&d.t%2===0) d.spray.push({x:g.cx+rnd(-2,2),y:g.rollY+g.rollR*.6,vy:rnd(1.5,3)});
+    d.spray.forEach(p=>{p.vy+=.3;p.y+=p.vy});d.spray=d.spray.filter(p=>p.y<g.by+2);
+    const sp=SPEED[d.mood]||1,m=d.r+3,egg=d.egg&&d.egg.k;
+    // insulin flies in hexamers: every sixth particle leads, the next five follow it
+    live.forEach((p,i)=>{p.lead=egg==='insulin'&&i%6?live[i-i%6]:null});
+    d.ps.forEach((p,i)=>{p.trail.push([p.x,p.y]);if(p.trail.length>(egg==='fibre'?8:5)) p.trail.shift();
+      if(!p.out){if(p.lead&&!p.lead.out){const j=d.ps.indexOf(p)%6,a=j*Math.PI/3+d.t*.05,tx=p.lead.x+Math.cos(a)*d.r*2.4,ty=p.lead.y+Math.sin(a)*d.r*2.4;p.vx=(tx-p.x)*.35;p.vy=(ty-p.y)*.35}
+        else{p.ph+=rnd(-.35,.35);const lim=1.5*sp*p.k;p.vx+=(Math.cos(p.ph)*lim-p.vx)*.12;p.vy+=(Math.sin(p.ph)*lim-p.vy)*.12}
+        p.x+=p.vx;p.y+=p.vy;p.rot+=.04*sp;
+        if(p.x<g.bx+m){p.x=g.bx+m;p.vx=Math.abs(p.vx);p.ph=Math.PI-p.ph}if(p.x>g.bx+g.bw-m){p.x=g.bx+g.bw-m;p.vx=-Math.abs(p.vx);p.ph=Math.PI-p.ph}
+        if(p.y<g.by+m){p.y=g.by+m;p.vy=Math.abs(p.vy);p.ph=-p.ph}if(p.y>g.by+g.bh-m){p.y=g.by+g.bh-m;p.vy=-Math.abs(p.vy);p.ph=-p.ph}}
+      else{p.x+=p.vx;p.y+=p.vy;p.vx*=1.06;p.vy*=1.06}});
+    d.ps=d.ps.filter(p=>!p.out||(p.x>-20&&p.x<g.W+20&&p.y>-20&&p.y<g.H+20));
+    // mood effects: sparkles for very good, confetti for impressive, smoke from an overheating grinder for impossible
+    if((d.mood==='star'||d.mood==='party')&&d.t%10===0) d.fx.push({k:'s',x:rnd(g.bx+10,g.bx+g.bw-10),y:rnd(g.by+10,g.by+g.bh-10),t:0});
+    if(d.mood==='party'&&running&&d.t%1===0) for(let i=0;i<2;i++) d.fx.push({k:'c',x:g.cx+rnd(-8,8),y:g.rollY,vx:rnd(-2.6,2.6),vy:rnd(-3.5,-1),c:['#ff5c8a','#ffd54f','#4fc3f7','#7ee081','#b39ddb'][Math.floor(rnd(0,5))],t:0});
+    if(d.mood==='wow'&&d.t%3===0) d.fx.push({k:'m',x:g.cx+rnd(-g.rollR,g.rollR),y:g.rollY-g.rollR,r:rnd(3,5),t:0});
+    d.fx.forEach(f=>{f.t++;if(f.k==='c'){f.vy+=.18;f.x+=f.vx;f.y+=f.vy}else if(f.k==='m'){f.y-=.7;f.x+=Math.sin(f.t/4)*.4;f.r+=.15}});
+    d.fx=d.fx.filter(f=>f.k==='s'?f.t<14:f.k==='m'?f.t<40:f.y<g.H+4)}
+  function hostCell(x,d,c){const hc=HOST[d.host]||HOST.ecoli,s=Math.max(.8,d.g.W/300)*c.s;x.save();x.translate(c.x,c.y);x.rotate(c.a);x.scale(s,s);x.lineWidth=.7;
+    if(d.egg&&d.egg.k==='potato'){potatoShape(x,0,0,3.2);x.restore();return}
+    x.fillStyle=hc.cell;x.strokeStyle=hc.edge;x.beginPath();
+    if(d.host==='ecoli'){x.moveTo(-2.6,-1.1);x.lineTo(2.6,-1.1);x.arc(2.6,0,1.1,-Math.PI/2,Math.PI/2);x.lineTo(-2.6,1.1);x.arc(-2.6,0,1.1,Math.PI/2,Math.PI*1.5)}
+    else if(d.host==='yeast') x.ellipse(0,0,2.8,2.2,0,0,7);else if(d.host==='mammalian') x.arc(0,0,2.9,0,7);else{if(x.roundRect) x.roundRect(-3,-2,6,4,1);else x.rect(-3,-2,6,4)}
+    x.fill();x.stroke();x.restore()}
+  function potatoShape(x,X,Y,r){x.fillStyle='#c99a5c';x.strokeStyle='#7a4f24';x.lineWidth=.8;x.beginPath();x.ellipse(X,Y,r*1.25,r*.9,0,0,7);x.fill();x.stroke();x.fillStyle='#7a4f24';[[-.5,-.3],[.35,.35],[.7,-.35]].forEach(q=>{x.beginPath();x.arc(X+q[0]*r,Y+q[1]*r,r*.13,0,7);x.fill()})}
+  function roller(x,cx,cy,r,ang,col,edge){x.save();x.translate(cx,cy);x.rotate(ang);x.fillStyle=col;x.strokeStyle=edge;x.lineWidth=1;x.beginPath();
+    const n=10;for(let i=0;i<n*2;i++){const a=i*Math.PI/n,R=i%2?r*.78:r;x.lineTo(Math.cos(a)*R,Math.sin(a)*R)}x.closePath();x.fill();x.stroke();x.fillStyle=edge;x.beginPath();x.arc(0,0,r*.22,0,7);x.fill();x.restore()}
+  /* one particle, in the shape its name asks for */
+  function particle(x,d,p,col,a,fl){const r=d.r*(p.out?1.15:1),egg=d.egg&&d.egg.k,dark=!!d.glow;x.globalAlpha=a*fl;
+    if(egg==='potato'){potatoShape(x,p.x,p.y,r*1.05);x.globalAlpha=1;return}
+    if(egg==='antibody'){x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.strokeStyle=col;x.lineWidth=Math.max(1.6,r*.55);x.lineCap='round';x.beginPath();x.moveTo(0,r*1.4);x.lineTo(0,0);x.lineTo(-r*1.1,-r*1.2);x.moveTo(0,0);x.lineTo(r*1.1,-r*1.2);x.stroke();x.restore();x.globalAlpha=1;return}
+    if(egg==='fibre'){if(p.trail.length>2){x.strokeStyle=col;x.lineWidth=Math.max(1.4,r*.6);x.lineCap='round';x.beginPath();x.moveTo(p.trail[0][0],p.trail[0][1]);p.trail.forEach((q,i)=>x.lineTo(q[0]+Math.sin(i+d.t/3)*.8,q[1]+Math.cos(i+d.t/3)*.8));x.lineTo(p.x,p.y);x.stroke()}x.globalAlpha=1;return}
+    if(dark){x.fillStyle=rgba(col,.22);x.beginPath();x.arc(p.x,p.y,r*2.2,0,7);x.fill()}
+    x.fillStyle=shade(col,.62);x.beginPath();x.arc(p.x,p.y,r+.6,0,7);x.fill();x.fillStyle=col;x.beginPath();x.arc(p.x-r*.15,p.y-r*.15,r*.8,0,7);x.fill();
+    x.fillStyle='rgba(255,255,255,.75)';x.beginPath();x.arc(p.x-r*.38,p.y-r*.38,r*.28,0,7);x.fill();
+    if(egg==='heme'){x.fillStyle='#6b1d12';x.beginPath();x.arc(p.x+r*.15,p.y+r*.15,r*.32,0,7);x.fill()}
+    if(egg==='ubiquitin'&&p.trail.length){const q=p.trail[0];x.strokeStyle=shade(col,.6);x.lineWidth=.8;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q[0],q[1]);x.stroke();x.fillStyle='#f5c542';x.beginPath();x.arc(q[0],q[1],r*.55,0,7);x.fill()}
+    x.globalAlpha=1}
+  function draw(d){const x=d.ctx,g=d.g,W=g.W,H=g.H,dpr=d.dpr,hc=HOST[d.host]||HOST.ecoli;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+    const dark=!!d.glow,ink=dark?'#e6ecf7':cssv('--ink','#121925'),muted=dark?'#9fb0cc':cssv('--ink-3','#566174'),line=dark?'rgba(190,210,255,.35)':cssv('--line-2','#c3ccd9');
+    const metal=d.mood==='wow'&&d.t%8<4?'#d36a4a':dark?'#7d8aa3':'#9aa4b3',metalD=dark?'#4d5870':'#6b7686';
+    const egg=d.egg&&d.egg.k,col=dark?d.glow.c:egg==='heme'?'#c0392b':(d.color||'#ff8a65'),fl=d.luc?(.55+.45*Math.abs(Math.sin(d.t/5))):1,S=SCALE[d.unit]||SCALE.mg;
+    if(dark){x.fillStyle='#0f1a2e';rr(x,0,0,W,H,10);x.fill()}
+    // the hopper with its slurry (or its potatoes)
+    const tl=g.cx-g.hTopW,tr=g.cx+g.hTopW,bl=g.cx-g.hBotW,br=g.cx+g.hBotW;
+    x.save();x.beginPath();x.moveTo(tl,g.hTop);x.lineTo(tr,g.hTop);x.lineTo(br,g.hBot);x.lineTo(bl,g.hBot);x.closePath();x.clip();
+    const top=g.hTop+(g.hBot-g.hTop)*(.2+.05*Math.sin(d.t/7));x.fillStyle=egg==='potato'?'rgba(150,110,60,.35)':rgba(hc.med,dark?.35:.8);x.fillRect(0,top,W,g.hBot-top);
+    d.cells.forEach(c=>{if(c.y>top) hostCell(x,d,c)});
+    if(!d.cells.length){for(let i=0;i<6;i++){const y=top+3+((i*7)%Math.max(3,(g.hBot-top-4))),hw=hopperHalf(g,y)-4;hostCell(x,d,{x:g.cx+(((i*37)%100)/50-1)*hw*.8,y,a:i,s:1})}}
     x.restore();
-    // boil-over: foam outside the glass too
-    if(d.mood==='wow'){x.fillStyle='rgba(255,255,255,.92)';x.strokeStyle=rgba(mix(ink,col,.3),.5);d.foam.forEach(f=>{if(f.y<g.neckTop+6){x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill();x.stroke()}})}
-    // the glass: outline, a lip, and a soft highlight down the left side
-    flaskPath(x,g);x.lineWidth=Math.max(1.4,W/150);x.strokeStyle=dark?'rgba(190,210,255,.55)':mix(line,ink,.35);x.stroke();
-    x.beginPath();x.moveTo(g.cx-g.neckW/2-g.lip*.25,g.neckTop);x.lineTo(g.cx+g.neckW/2+g.lip*.25,g.neckTop);x.lineWidth=Math.max(2,W/110);x.lineCap='round';x.stroke();x.lineCap='butt';
-    x.strokeStyle=dark?'rgba(255,255,255,.18)':'rgba(255,255,255,.75)';x.lineWidth=Math.max(1.5,W/120);x.beginPath();x.moveTo(g.cx-g.neckW/2+3,g.neckTop+8);x.lineTo(g.cx-g.neckW/2+3,g.shoulder-2);x.lineTo(g.cx-g.baseW/2+g.r*1.6,g.baseY-g.r*1.3);x.stroke();
-    // the label tape
-    if(d.label){const tw=Math.min(g.baseW*.62,W*.5),th=Math.max(12,H*.11),tx=g.cx-tw/2,ty=g.level-th*1.35;x.save();x.translate(tx+tw/2,ty+th/2);x.rotate(-.04);x.fillStyle=dark?'#e8e2cf':'#f4ecd6';x.strokeStyle=dark?'#b8b09a':'#cfc3a0';x.lineWidth=.8;
-      x.beginPath();x.roundRect?x.roundRect(-tw/2,-th/2,tw,th,2):x.rect(-tw/2,-th/2,tw,th);x.fill();x.stroke();
-      x.fillStyle='#2a2a2a';x.font='600 '+Math.max(9,Math.round(th*.62))+'px '+cssv('--mono','ui-monospace,monospace');x.textAlign='center';x.textBaseline='middle';
-      let L=d.label;const maxc=Math.floor(tw/(th*.4));if(L.length>maxc) L=L.slice(0,Math.max(3,maxc-1))+'…';x.fillText(L,0,.5);x.restore()}
+    x.strokeStyle=line;x.lineWidth=1.5;x.beginPath();x.moveTo(tl,g.hTop);x.lineTo(bl,g.hBot);x.moveTo(tr,g.hTop);x.lineTo(br,g.hBot);x.stroke();
+    x.fillStyle=muted;x.font='600 '+Math.max(8.5,Math.round(W/38))+'px '+cssv('--sans','system-ui');x.textAlign='left';x.textBaseline='middle';x.fillText(egg==='potato'?'potatoes':'slurry',tr+5,(g.hTop+g.hBot)/2);
+    roller(x,g.cx-g.rollR*1.02,g.rollY,g.rollR,d.ang,metal,metalD);roller(x,g.cx+g.rollR*1.02,g.rollY,g.rollR,-d.ang+.31,metal,metalD);
+    x.fillStyle=rgba(col.startsWith('#')?col:'#ff8a65',.9);d.spray.forEach(p=>{x.beginPath();x.arc(p.x,p.y,1.4,0,7);x.fill()});
+    // the box, the same size on every card, with a mouth under the rollers
+    rr(x,g.bx,g.by,g.bw,g.bh,10);x.fillStyle=dark?'rgba(255,255,255,.03)':cssv('--card','#ffffff');x.fill();x.strokeStyle=line;x.lineWidth=1.2;x.stroke();
+    x.fillStyle=dark?'#0f1a2e':cssv('--card','#ffffff');x.fillRect(g.cx-g.rollR*.8,g.by-1.5,g.rollR*1.6,3);
+    x.save();rr(x,g.bx,g.by,g.bw,g.bh,10);x.clip();
+    d.ps.forEach(p=>{const a=p.out?.55:1;if(p.trail.length>1&&!['fibre','antibody','potato'].includes(egg)){x.strokeStyle=rgba(col.startsWith('#')?col:'#ff8a65',(dark?.35:.22)*a*fl);x.lineWidth=d.r*.9;x.lineCap='round';x.beginPath();x.moveTo(p.trail[0][0],p.trail[0][1]);p.trail.forEach(q=>x.lineTo(q[0],q[1]));x.stroke()}
+      particle(x,d,p,col,a,fl)});
+    d.fx.forEach(f=>{if(f.k==='s'){const a=1-Math.abs(f.t-7)/7,s=2+a*2;x.strokeStyle=rgba('#ffd54f',a);x.lineWidth=1;x.beginPath();x.moveTo(f.x-s,f.y);x.lineTo(f.x+s,f.y);x.moveTo(f.x,f.y-s);x.lineTo(f.x,f.y+s);x.stroke()}});
+    if(d.val==null){x.fillStyle=muted;x.font='500 '+Math.max(10,Math.round(W/30))+'px '+cssv('--sans','system-ui');x.textAlign='center';x.textBaseline='middle';x.fillText('no protein yet',g.bx+g.bw/2,g.by+g.bh/2)}
     x.restore();
-    // sparkles for a very good culture, and the alarm tag for an impossible one
-    d.fx.forEach(f=>{const a=1-Math.abs(f.t-7)/7,s=2+a*2;x.strokeStyle=rgba('#ffd54f',a);x.lineWidth=1;x.beginPath();x.moveTo(f.x-s,f.y);x.lineTo(f.x+s,f.y);x.moveTo(f.x,f.y-s);x.lineTo(f.x,f.y+s);x.stroke()});
-    if(d.mood==='wow'&&d.t%20<12){const tx=g.cx+g.baseW*.42,ty=g.shoulder-4;x.fillStyle='#d70015';x.beginPath();x.roundRect?x.roundRect(tx-16,ty-10,32,18,4):x.rect(tx-16,ty-10,32,18);x.fill();x.fillStyle='#fff';x.font='800 12px '+cssv('--sans','system-ui');x.textAlign='center';x.textBaseline='middle';x.fillText('?!',tx,ty-1)}
-  }
-  const MOOD_TXT={idle:'waiting for your numbers',low:'a thin culture: low yield for this host',typical:'a typical culture for this host',happy:'a healthy culture: good yield',star:'foaming: a very good yield for this host',party:'overflowing with foam: an impressive yield',wow:'boiling over: more than this host can make, check the units'};
+    d.fx.forEach(f=>{if(f.k==='c'){x.fillStyle=f.c;x.fillRect(f.x,f.y,3,2)}else if(f.k==='m'){x.fillStyle=`rgba(120,120,130,${.45*(1-f.t/40)})`;x.beginPath();x.arc(f.x,f.y,f.r,0,7);x.fill()}});
+    if(d.mood==='wow'&&d.t%16<9){x.fillStyle='#d70015';rr(x,g.bx+g.bw-34,g.by+6,28,17,4);x.fill();x.fillStyle='#fff';x.font='800 12px '+cssv('--sans','system-ui');x.textAlign='center';x.textBaseline='middle';x.fillText('?!',g.bx+g.bw-20,g.by+15)}
+    // the number, counting, and the difference from the last value
+    const nx=g.numX,big=Math.max(18,Math.round(W/11));x.textAlign='left';x.textBaseline='alphabetic';
+    if(d.val==null){x.fillStyle=muted;x.font='600 '+Math.round(big*.55)+'px '+cssv('--sans','system-ui');x.fillText('waiting for',nx,H*.5);x.fillText('your numbers',nx,H*.5+big*.65);return}
+    x.fillStyle=d.mood==='wow'?'#d70015':ink;let bf=big;x.font='750 '+bf+'px '+cssv('--sans','system-ui');const nw=x.measureText(fmt(d.shown)).width;if(nw>W-nx-4){bf=Math.max(12,Math.floor(bf*(W-nx-4)/nw));x.font='750 '+bf+'px '+cssv('--sans','system-ui')}x.fillText(fmt(d.shown),nx,H*.55);
+    x.fillStyle=muted;x.font='600 '+Math.round(big*.42)+'px '+cssv('--sans','system-ui');x.fillText(S.unit+' '+S.what,nx,H*.55+big*.58);
+    if(d.mgL!=null){const t='yield '+fmt(d.mgL)+' mg/L',room=W-nx-4;let fs=Math.round(big*.38);x.font='500 '+fs+'px '+cssv('--sans','system-ui');const w=x.measureText(t).width;if(w>room){fs=Math.max(8,Math.floor(fs*room/w));x.font='500 '+fs+'px '+cssv('--sans','system-ui')}x.fillText(t,nx,H*.55+big*1.08)}
+    if(d.delta!=null&&d.deltaAge<90){const up=d.delta>0,a=d.deltaAge<70?1:1-(d.deltaAge-70)/20,txt=(up?'▲ +':'▼ −')+fmt(Math.abs(d.delta))+' '+S.unit,fs=Math.round(big*.42);
+      x.font='700 '+fs+'px '+cssv('--sans','system-ui');const tw=x.measureText(txt).width,cy=H*.55-big*1.25-(1-ease(Math.min(1,d.deltaAge/10)))*6;
+      x.globalAlpha=a;x.fillStyle=up?'#e4f3e8':'#fde7e9';rr(x,nx-4,cy-fs*.95,tw+8,fs*1.35,fs*.4);x.fill();x.fillStyle=up?'#248a3d':'#d70015';x.fillText(txt,nx,cy);x.globalAlpha=1}}
+  const MOOD_TXT={idle:'waiting for your numbers',low:'low yield for this host',typical:'a typical yield for this host',happy:'good yield for this host',star:'a very good yield for this host',party:'an impressive yield for this host',wow:'more than this host can make: check the units'};
   function caption(d){const cap=d.box.parentElement&&d.box.parentElement.querySelector('.dish-t');if(!cap) return;
-    const H={ecoli:'E. coli',yeast:'yeast',mammalian:'CHO',plant:'BY-2',potato:'potato'}[d.host]||'cells';
-    cap.textContent=`${H} · ${MOOD_TXT[d.mood]||''}${d.glow?` · glowing ${d.glow.n}`:''}${d.luc?' · glowing (luciferase)':''}`}
+    const H={ecoli:'E. coli',yeast:'yeast',mammalian:'CHO',plant:'BY-2'}[d.host]||'cells',n=d.ps.filter(p=>!p.out).length;
+    cap.textContent=`${H} · ${MOOD_TXT[d.mood]||''}${d.val!=null?` · ${n} particle${n===1?'':'s'}`:''}${d.glow?` · glowing ${d.glow.n}`:''}${d.luc?' · flickering (luciferase)':''}${d.egg?` · ${d.egg.n}`:''}`}
   function fit(d){const r=d.box.getBoundingClientRect();if(!r.width||!r.height) return;const dpr=Math.min(2,window.devicePixelRatio||1);d.dpr=dpr;
     if(d.g&&Math.abs(d.g.W-r.width)<1&&Math.abs(d.g.H-r.height)<1) return;
-    d.cv.width=Math.round(r.width*dpr);d.cv.height=Math.round(r.height*dpr);d.g=geom(r.width,r.height);d.cells=d.cells.filter(c=>inLiquid(d,c.x,c.y,2));if(d.last0) targets(d,d.last0);draw(d)}
+    d.cv.width=Math.round(r.width*dpr);d.cv.height=Math.round(r.height*dpr);d.g=geom(r.width,r.height);d.ps=[];d.cells=[];draw(d)}
   const RO='ResizeObserver' in window?new ResizeObserver(es=>es.forEach(e=>{const d=Object.values(dishes).find(x=>x.box===e.target);if(d) fit(d)})):null;
   const IO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{const d=dishes[e.target.dataset.dish];if(d) d.vis=e.isIntersecting})):null;
   function sync(){const want={};$$('.culture[data-dish]').forEach(box=>{const id=box.dataset.dish;want[id]=1;let d=dishes[id];
-    if(!d||d.box!==box){const cv=document.createElement('canvas');cv.className='flask';box.innerHTML='';box.appendChild(cv);
-      const old=d;d={box,cv,ctx:cv.getContext('2d'),host:old?old.host:'ecoli',cells:old?old.cells:[],bub:[],foam:[],fx:[],vis:true,last:0,color:old?old.color:'#ff8a65',t:0,ang:0,dx:0,slosh:1,f:0,big:1,mood:old?old.mood:'idle',tier:old?old.tier:'idle',N:old?old.N:0,last0:old?old.last0:null,glow:old?old.glow:null,label:old?old.label:''};
+    if(!d||d.box!==box){const cv=document.createElement('canvas');cv.className='particles';box.innerHTML='';box.appendChild(cv);
+      const old=d;d={box,cv,ctx:cv.getContext('2d'),host:old?old.host:'ecoli',ps:[],cells:[],spray:[],fx:[],vis:true,last:0,color:old?old.color:'#ff8a65',t:0,ang:0,spin:0,r:3.1,N:old?old.N:0,
+        val:old?old.val:null,unit:old?old.unit:'mg',shown:old?old.shown:0,from:0,run:RUN,delta:null,deltaAge:0,mood:old?old.mood:'idle',tier:old?old.tier:'idle',glow:old?old.glow:null,egg:old?old.egg:null,mgL:null};
       dishes[id]=d;IO&&IO.observe(box);RO&&RO.observe(box);fit(d)}});
     Object.keys(dishes).forEach(id=>{if(!want[id]) delete dishes[id]})}
-  function update(id,o){const d=dishes[id];if(!d) return;let host=HOSTS[o.host]?o.host:'ecoli';if(/potato/i.test(o.name||'')) host='potato';d.color=o.color||d.color;o=Object.assign({},o,{host:host==='potato'?(HOSTS[o.host]?o.host:'ecoli'):host});
-    if(host!==d.host){d.host=host;d.cells=[]}
-    if(!d.g) fit(d);d.last0=o;targets(d,o);if(!d.g) return;
-    d.cells=d.cells.filter(c=>inLiquid(d,c.x,c.y,2));
-    if(RM){for(let i=0;i<400;i++) step(d)}draw(d);caption(d)}
+  function update(id,o){const d=dishes[id];if(!d) return;d.host=HOSTS[o.host]?o.host:'ecoli';d.color=o.color||d.color;d.last0=o;
+    if(!d.g) fit(d);targets(d,o);if(!d.g) return;
+    if(RM){d.run=RUN;d.shown=d.val||0;d.ps=d.ps.filter(p=>!p.out).slice(0,d.N);while(d.ps.length<d.N) spawn(d,true);for(let i=0;i<60;i++) step(d)}draw(d);caption(d)}
   function tick(ts){Object.values(dishes).forEach(d=>{if(!d.vis||!d.box.isConnected||!d.g||RM) return;if(ts-d.last<TICK) return;d.last=ts;step(d);draw(d);if(d.t%10===0) caption(d)});requestAnimationFrame(tick)}
   requestAnimationFrame(tick);
-  /* for tests: every cell must be in the medium */
-  function audit(id){const d=dishes[id];if(!d||!d.g) return null;let bad=0;d.cells.forEach(c=>{if(!inLiquid(d,c.x,c.y,0)) bad++});
-    return {cells:d.cells.length,N:d.N,protein:d.cells.length,outside:bad,tier:d.tier,mood:d.mood,host:d.host,glow:d.glow&&d.glow.n,W:d.g.W,H:d.g.H}}
-  return {sync,update,info:audit,count:()=>Object.keys(dishes).length};
+  /* for tests: what the box and the number show */
+  function audit(id){const d=dishes[id];if(!d||!d.g) return null;const live=d.ps.filter(p=>!p.out);let outside=0;const g=d.g;
+    live.forEach(p=>{if(p.x<g.bx||p.x>g.bx+g.bw||p.y<g.by||p.y>g.by+g.bh) outside++});
+    return {host:d.host,mood:d.mood,tier:d.tier,unit:d.unit,value:d.val,shown:d.shown,target:d.N,level:live.length,particles:live.length,running:d.run<RUN,delta:d.delta,radius:d.r,glow:d.glow&&d.glow.n,egg:d.egg&&d.egg.k,outside,W:g.W,H:g.H}}
+  /* a new name may change the look (glow, Y-shapes, potatoes) but not a single number */
+  function rename(id,name){const d=dishes[id];if(!d||!d.last0) return;d.last0=Object.assign({},d.last0,{name});const v=d.val,u=d.unit,sh=d.shown,run=d.run,dl=d.delta,da=d.deltaAge;targets(d,d.last0);d.val=v;d.unit=u;d.shown=sh;d.run=run;d.delta=dl;d.deltaAge=da;draw(d);caption(d)}
+  return {sync,update,rename,info:audit,count:()=>Object.keys(dishes).length};
 })();
 
 /* ---------------- layout ---------------- */
@@ -1283,7 +1317,7 @@ function card(p,i){const a=S.mode==='a280',set=a?S.a:S.c,col=COLORS[i%COLORS.len
       ${field(p,'host','Expression host',sel(p,'host',HOSTO(),HOSTS[set.host].label+' (default)'),{all:true})}
       ${field(p,'start','Start amount (mg)',inp(p,'start','optional, for % recovery'))}</div>`;
   return `<article class="pcard" data-id="${p.id}" style="--pc:${col}">${head}<div class="cb"><div class="grps">${prot}${reads}${vols}</div>
-    <div class="res"><div class="res-n" data-res></div><div class="dish"><div class="culture" data-dish="${p.id}" role="img" aria-label="Live culture: decorative"></div><div class="dish-t">live culture</div></div></div></div></article>`}
+    <div class="res"><div class="res-n" data-res></div><div class="dish"><div class="culture" data-dish="${p.id}" role="img" aria-label="Protein grinder: decorative"></div><div class="dish-t">protein grinder</div></div></div></div></article>`}
 /* standards: rows of concentration + readings, plus the curve */
 function stdBlock(){const c=S.c,u=c.unit==='ugml'?'µg/mL':'mg/mL';
   return `<div class="sec-h big"><span class="n">01</span>Standards<span class="sub">usually a BSA dilution series</span></div>
@@ -1314,7 +1348,7 @@ function refreshCard(p){const el=document.querySelector(`.pcard[data-id="${p.id}
   if(a){const si=$('[data-seq]',el),st=R.e.st;if(si) si.innerHTML=!st?'':!st.ok?flagList(st.flags):`<span class="seqchip">${st.len} aa</span> MW ${fmtN(st.mw,6)} Da · ε ${S.a.cys==='ox'?st.epsOxidised:st.epsReduced} M⁻¹cm⁻¹ · A0.1% ${fmtN(S.a.cys==='ox'?st.a01Oxidised:st.a01Reduced,4)}${numv(p.mw)!==null||numv(p.eps)!==null?' <small>(your typed values are used)</small>':''}`;
     const mw=$('[data-f="mw"]',el),ep=$('[data-f="eps"]',el);if(mw) mw.placeholder=R.e.mwFrom?fmtN(R.e.mw,6)+' (sequence)':'e.g. 27900';if(ep) ep.placeholder=R.e.epsFrom?fmtN(R.e.eps,4)+' (sequence)':'e.g. 0.79';
     const et=$('[data-f="epsType"]',el);if(et) et.disabled=R.e.epsFrom}
-  Culture.update(p.id,{host:hostOf(p,a?S.a:S.c),mw:a?R.e&&R.e.mw:numv(p.mw),mgml:R.mgml,mgL:R.yieldMgL,ok:!!R.ok,color:colorOf(p),name:p.name})}
+  Culture.update(p.id,{host:hostOf(p,a?S.a:S.c),mw:a?R.e&&R.e.mw:numv(p.mw),mgml:R.mgml,mgL:R.yieldMgL,totalMg:R.totalMg,ok:!!R.ok,color:colorOf(p),name:p.name})}
 function refreshStd(){if(S.mode!=='curve') return;FIT=calcFit();const F=FIT;S.c.stds.forEach((s,i)=>{const el=document.querySelector(`.std[data-sid="${s.id}"]`);if(!el) return;const o=F.stds[i];
   $('[data-sm]',el).textContent=o.mean!=null?fmtN(o.mean,3):'';$('[data-sb]',el).innerHTML=o.back!=null?`${fmtN(o.back,4)}${o.err!=null?` <small class="${Math.abs(o.err)>15?'fl-warn':''}">${o.err>0?'+':''}${fmtN(o.err,2)}%</small>`:''}`:''});
   const cb=$('#curveBox');if(cb) cb.innerHTML=curveHTML(F)}
@@ -1361,7 +1395,7 @@ document.addEventListener('focusout',e=>{if(e.target===EDIT) EDIT=null});
 document.addEventListener('input',e=>{const t=e.target;
   const s=t.closest('input[data-set]');if(s){const [g,k]=s.dataset.set.split('.');begin(t);S[g][k]=s.value;save();refreshAll();return}
   const p=t.closest('.pcard')&&findP(t);
-  if(p&&t.dataset.f){begin(t);p[t.dataset.f]=t.value;save();if(t.dataset.f==='name') renderPanel();else{refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd()}return}
+  if(p&&t.dataset.f){begin(t);p[t.dataset.f]=t.value;save();if(t.dataset.f==='name'){renderPanel();Culture.rename(p.id,p.name)}else{refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd()}return}
   if(p&&t.dataset.r!=null){begin(t);p.r[+t.dataset.r]=t.value;save();refreshCard(p);renderPanel();if(S.mode==='curve') refreshStd();return}
   const sd=t.closest('.std')&&findStd(t);if(sd){begin(t);if(t.dataset.sf) sd.conc=t.value;else sd.r[+t.dataset.sr]=t.value;save();refreshStd();listOf().forEach(refreshCard);renderPanel()}});
 document.addEventListener('change',e=>{const t=e.target;const s=t.closest('select[data-set]');if(s){const [g,k]=s.dataset.set.split('.');snap();S[g][k]=s.value;save();if(k==='blank'||(k==='unit'&&g==='c')||k==='host'){renderAll()}else{renderBar();refreshAll()}return}
@@ -1509,7 +1543,7 @@ function tableText(){const tsv=r=>r.map(x=>x.map(v=>String(v??'').replace(/[\t\n
 function download(name,data,type){const blob=data instanceof Blob?data:new Blob([data],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok}}
 function openFile(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{const f=i.files[0];if(!f) return;f.text().then(t=>{let d;try{d=JSON.parse(t)}catch(e){toast('That file is not a Protein Quant save');return}
-  if(!d||d.v!==6||!d.a){toast('That file is not a Protein Quant v6 save');return}snap();S=norm(d);save();renderAll();toast(`Opened ${escH(f.name)}`,{undo:true})})};i.click()}
+  if(!d||d.v!==6||!d.a){toast('That file is not a Protein Quant save');return}snap();S=norm(d);save();renderAll();toast(`Opened ${escH(f.name)}`,{undo:true})})};i.click()}
 
 /* ---------------- send to Lab Entry (the waiting room) ---------------- */
 async function lpItem(){const a=S.mode==='a280',L=keepRows(listOf());if(!L.length){toast('Nothing to send yet: fill in a card first');return null}

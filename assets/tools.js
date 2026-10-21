@@ -59,9 +59,12 @@ const TOOLS = [
       { v: "v7", file: "lab-entry-v7.html", date: "2026-10-15" },
       { v: "v8", file: "lab-entry-v8.html", date: "2026-10-15" },
       { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20" },
-      { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20",
+      { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
+      { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21",
         new: [
-          "Autofill: Tab fills one word at a time, the right arrow takes it all"
+          "Tables work like Excel: drag to select, copy and paste, reorder",
+          "Linked experiments get an arrow and share one colour",
+          "Keep samples and aim the same on every day of an experiment"
         ] }
     ]
   },
@@ -226,11 +229,12 @@ const TOOLS = [
       { v: "v1", file: "cryobox-labeler-v1.html", date: "2026-10-08" },
       { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13" },
       { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14" },
-      { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20",
+      { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20" },
+      { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21",
         new: [
-          "Sheet view like Excel: copy and paste, fill down, drag columns",
-          "Smart sort with a list of moves, labelled groups, find duplicates",
-          "Fill across or down (A1 to I1), colony number, wider table"
+          "Move, reorder or remove any drawer; Add, Move, Remove work the same everywhere",
+          "Caps without names: point at a vial to see it, or press Names",
+          "Black grid lines in the box; colour key moved off the box"
         ] }
     ]
   }

@@ -214,7 +214,7 @@ const TOOLS = [
       { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21",
         new: [
           "Several proteins at once, in cards or a spreadsheet table",
-          "A pixel cell that reacts to your yield (try naming one GFP)",
+          "A protein grinder: the amount flies around as particles (try naming one GFP)",
           "µM by default, error bars both ways"
         ] }
     ]

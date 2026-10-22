@@ -248,9 +248,9 @@ const TOOLS = [
         ] },
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-22",
         new: [
-          "A plain 2D plan of the box, for when 3D gets in the way",
-          "Shift-click ranges, one cap colour for many vials, editable groups that move with their vials",
-          "Date right after Colony # (4 digits there? it asks if that was the date); sort A → Z"
+          "A plain 2D plan of the box; the 3D view stays where you turn it",
+          "Shift-click ranges, one cap colour for many, new caps follow the last; groups move with their vials",
+          "Date after Colony # (a date hidden in it? it asks); sort A → Z; “Caps by …” ignores hand-picked colours"
         ] }
     ]
   }

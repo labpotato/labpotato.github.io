@@ -232,7 +232,7 @@ const TOOLS = [
     folder: "tools/cryobox-labeler",
     features: [
       "Freezers sized in cm around real racks, plus −20 °C drawers",
-      "Edit a box like an Excel sheet; smart sort says what to move",
+      "Edit a box like an Excel sheet, or switch to a plain 2D plan",
       "Import from and export to Excel"
     ],
     versions: [
@@ -245,6 +245,12 @@ const TOOLS = [
           "Move, reorder or remove any drawer; Add, Move, Remove work the same everywhere",
           "Caps without names: point at a vial to see it, or press Names",
           "Black grid lines in the box; colour key moved off the box"
+        ] },
+      { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-22",
+        new: [
+          "A plain 2D plan of the box, for when 3D gets in the way",
+          "Shift-click ranges, one cap colour for many vials, editable groups that move with their vials",
+          "Date right after Colony # (4 digits there? it asks if that was the date); sort A → Z"
         ] }
     ]
   }

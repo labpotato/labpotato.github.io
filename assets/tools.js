@@ -248,9 +248,10 @@ const TOOLS = [
         ] },
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-22",
         new: [
-          "A plain 2D plan of the box; the 3D view stays where you turn it",
-          "Shift-click ranges, one cap colour for many, new caps follow the last; groups move with their vials",
-          "Date after Colony # (a date hidden in it? it asks); sort A → Z; “Caps by …” ignores hand-picked colours"
+          "A plain 2D plan of the box (with the bin); the 3D view stays where you turn it",
+          "Box rows skip I (A–H, J); change a box's type later; unordered boxes in cryobox size",
+          "Glossary for search; antibiotics written out (Kan → kanamycin); a date in the colony # fills the date",
+          "Shift-click ranges, one cap colour for many; groups move with their vials; sort A → Z"
         ] }
     ]
   }

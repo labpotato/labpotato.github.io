@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#07080b" />
+<title>Flappy Phage v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #07080b; --p0: #0b0d12; --p1: #11141c; --line: #2a3142; --text: #e8eef5; --muted: #8a97a8; --acc: #5ab4e0; --gold: #ffd166; --red: #ff6b6b; --green: #7cf29a; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.3 "Pixelify Sans", monospace; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
+#ov { position: fixed; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); display: none; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 12px; z-index: 5; pointer-events: none; }
+#ov.show { display: flex; }
+.btn { pointer-events: auto; font: 12px "Silkscreen", monospace; color: var(--text); background: #1a1f2b; border: 0; box-shadow: inset 0 0 0 2px var(--line), 0 3px 0 #05060a; padding: 9px 13px; cursor: pointer; }
+.btn:hover { box-shadow: inset 0 0 0 2px var(--acc), 0 3px 0 #05060a; color: #fff; }
+.btn:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px var(--acc), 0 1px 0 #05060a; }
+.btn.pri { background: #1f6f8f; box-shadow: inset 0 0 0 2px #5ab4e0, 0 3px 0 #05060a; }
+#top { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; z-index: 5; }
+#top .btn { padding: 6px 9px; font-size: 11px; }
+#chip { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; z-index: 5; font: 10px "Silkscreen", monospace; color: var(--muted); background: rgba(11,13,18,.8); box-shadow: inset 0 0 0 2px var(--line); padding: 6px 8px; display: flex; gap: 8px; align-items: center; }
+#chip b { color: var(--gold); font-weight: normal; }
+#toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font: 12px "Silkscreen", monospace; background: #1f6f8f; color: #fff; box-shadow: inset 0 0 0 2px #5ab4e0, 0 4px 0 #05060a; padding: 10px 16px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 6; text-align: center; max-width: 92vw; }
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="chip"><span>FLAPPY PHAGE <b>v1</b></span><span id="chipmode"></span></div>
+<div id="top"><button class="btn" id="bsnd" title="Sound">SOUND ON</button></div>
+<div id="ov">
+  <button class="btn" id="bskin">SKIN: PHAGE</button>
+  <button class="btn" id="bmode">MODE: CLASSIC</button>
+  <button class="btn pri" id="bcopy">COPY SCORE</button>
+</div>
+<div id="toast"></div>
+<script>
+/* =====================================================================
+   FLAPPY PHAGE — one button, zero mercy.
+   A bacteriophage pulses through a microfluidic channel full of pipette
+   tips. Pass a tip: +1. Infect a bacterium sitting in the gap: +3.
+   Die: the game tells you what it thinks of you.
+   ===================================================================== */
+"use strict";
+const $ = (id) => document.getElementById(id);
+const DEBUG = /[?&]debug\b/.test(location.search);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const dstr = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const today = () => dstr(new Date());
+
+/* ---------- persistence ---------- */
+const KEY = "flappyPhage";
+let M = { best: 0, attempts: 0, infections: 0, streak: 0, lastDay: "", skin: "phage", skins: ["phage"], lastTaunt: -1, dailyBest: {}, mode: "classic", sound: 1, totalScore: 0, bestCombo: 0 };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s && typeof s === "object") M = Object.assign(M, s); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(M)); } catch (e) {} };
+(function streak() {
+  const t = today();
+  if (M.lastDay === t) return;
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  M.streak = M.lastDay === dstr(y) ? M.streak + 1 : 1;
+  M.lastDay = t; save();
+})();
+
+/* ---------- skins: unlocked by the classic best score ---------- */
+const SKINS = [
+  { id: "phage", n: "Phage", need: 0, note: "Bacteriophage T4. Head, tail, fibres. Classic." },
+  { id: "ecoli", n: "E. coli", need: 10, note: "Escherichia coli. Flagella optional, enthusiasm mandatory." },
+  { id: "tardi", n: "Tardigrade", need: 25, note: "Survives vacuum, radiation, your lab's freezer. Not pipette tips." },
+  { id: "mouse", n: "Lab mouse", need: 50, note: "Model organism. Model behaviour not included." },
+  { id: "tip", n: "Pipette tip", need: 100, note: "You have become the obstacle." }
+];
+
+/* ---------- daily mutation: one per calendar day, from the date ---------- */
+const MUTS = [
+  { id: "invert", n: "Inverted gravity", d: "Up is down. The channel is upside down today." },
+  { id: "tiny", n: "Tiny gaps", d: "Narrow gaps, slower flow. Precision day." },
+  { id: "night", n: "Night mode", d: "Someone turned the lights off. You see only what is near you." },
+  { id: "heavy", n: "Heavy buffer", d: "Thicker medium: you fall faster and pulse harder." },
+  { id: "hyper", n: "Hyperflow", d: "The pump is set too high. Wide gaps, no time." },
+  { id: "swarm", n: "Swarm", d: "Every gap has a bacterium in it. Infect everything." }
+];
+const dayHash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
+const dailyMut = () => MUTS[dayHash(today()) % MUTS.length];
+
+/* ---------- taunts: by score tier; a new best gets a slightly nicer one ---------- */
+const TAUNTS = {
+  t0: [ // 0–2
+    "Reviewer 2: \"The authors did not even attempt to fly.\"",
+    "Your PI saw that. They are drafting an email.",
+    "Score: a negative control. Congratulations.",
+    "That was the practice run, right? Right?",
+    "The plasmid you forgot in the fridge has lasted longer.",
+    "A pipette tip. You died to a pipette tip.",
+    "Statistically indistinguishable from not playing.",
+    "n = 1, p = 0.99. Conclusion: skill issue.",
+    "Your labmate just asked if you need the protocol.",
+    "Flap. It is one button. One.",
+    "Reviewer 2: \"Reject. Do not resubmit.\"",
+    "The undergrad on the next bench got further. Blindfolded.",
+    "That run was shorter than a 30-second spin.",
+    "Methods section: 'we tapped once and hoped'.",
+    "Even the autoclave did not take that long to kill you.",
+    "You were out-competed by a stationary pipette tip.",
+    "Your PI: \"Is this the preliminary data you mentioned?\"",
+    "Lysed before the first tip. Textbook.",
+    "A phage with no host, no plan, no survival.",
+    "That is not a learning curve. That is a flat line."
+  ],
+  t1: [ // 3–9
+    "Promising preliminary data. Not publishable.",
+    "Reviewer 2: \"Minor revisions: everything.\"",
+    "Your contamination lasted longer than that run.",
+    "That is a poster, not a paper.",
+    "Nice. Now do it again with three biological replicates.",
+    "Your PI nodded. Then went back to their phone.",
+    "A decent pilot. Shame about the ending.",
+    "The error bars on that performance are enormous.",
+    "Reviewer 2: \"The trend is suggestive but not significant.\"",
+    "You passed some tips. The tips remain undefeated.",
+    "A single colony on the plate. Pick it and move on.",
+    "Mid. Respectably mid.",
+    "That is one figure. A paper needs five.",
+    "Your labmate: \"Oh, you are still playing that?\"",
+    "Good control. Now show me the experiment.",
+    "Your PI has seen worse. Barely."
+  ],
+  t2: [ // 10–24
+    "Reviewer 2: \"Interesting, but what does it mean?\"",
+    "A solid supplementary figure.",
+    "Your PI: \"Good. Why did you stop?\"",
+    "Acceptable. Not for Nature, but acceptable.",
+    "Reviewer 2 requests one more replicate. Of the whole run.",
+    "That was almost competent. Almost.",
+    "Your labmate is pretending not to be impressed.",
+    "The data are robust. The pilot is not.",
+    "Nearly a full lane on the gel. Nearly.",
+    "Your PI mentioned you in group meeting. Briefly.",
+    "A clean run until the moment it was not.",
+    "Reviewer 2: \"Figure 3 is fine. The rest, less so.\"",
+    "Competent flapping. Faint praise, still praise.",
+    "Not bad. Say that to yourself, nobody else will."
+  ],
+  t3: [ // 25+
+    "Fine. You can fly. Can you write a thesis?",
+    "Reviewer 2 has accepted. Reviewer 3 has entered the chat.",
+    "Your PI: \"Great. Do it again, we lost the file.\"",
+    "Impressive. The tips are taking it personally.",
+    "That run was longer than most postdoc contracts.",
+    "Reviewer 2: \"I have no further comments.\" (Suspicious.)",
+    "Your labmate has quietly started a rival project.",
+    "The ethics board would like a word about those bacteria.",
+    "Nearly a lab legend. Then, a tip.",
+    "Cite yourself. Nobody else will.",
+    "Your PI is updating the grant. You are 'preliminary data'.",
+    "That deserves a lab-meeting cake. Not a big one."
+  ],
+  best: [
+    "New record. Your PI will still ask about the controls.",
+    "Personal best. Figure 1 material.",
+    "Reviewer 2 is... quiet. Suspicious, but take it.",
+    "A new best. Write it in the notebook before you forget.",
+    "Record run. Reproduce it or it did not happen.",
+    "Best yet. Your labmate says it was luck. Your labmate is jealous.",
+    "New high score. Somewhere, a pipette tip weeps.",
+    "Personal best. Save the raw data this time."
+  ]
+};
+
+/* ---------- audio: everything synthesized ---------- */
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } } if (AC && AC.state === "suspended") AC.resume(); return AC; }
+function tone(f0, f1, dur, type, vol, delay) {
+  const a = AC; if (!a || !M.sound) return;
+  const t = a.currentTime + (delay || 0), o = a.createOscillator(), g = a.createGain();
+  o.type = type || "square"; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  g.gain.setValueAtTime(vol || .08, t); g.gain.exponentialRampToValueAtTime(.0005, t + dur);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function noise(dur, vol) {
+  const a = AC; if (!a || !M.sound) return;
+  const n = Math.floor(a.sampleRate * dur), b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(), g = a.createGain(), f = a.createBiquadFilter();
+  f.type = "lowpass"; f.frequency.value = 900; s.buffer = b; g.gain.value = vol || .2;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+}
+const SFX = {
+  flap: () => tone(380, 640, .08, "square", .05),
+  score: () => { tone(880, 880, .06, "square", .06); tone(1320, 1320, .08, "square", .05, .06); },
+  close: () => tone(1500, 2200, .05, "triangle", .05),
+  infect: () => { [660, 880, 1100, 1480].forEach((f, i) => tone(f, f, .07, "square", .06, i * .05)); },
+  die: () => { noise(.35, .25); tone(300, 60, .4, "sawtooth", .12); },
+  best: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, f, .12, "square", .07, i * .09)); },
+  unlock: () => { [784, 988, 1175, 1568].forEach((f, i) => tone(f, f * 1.01, .1, "triangle", .07, i * .08)); },
+  tap: () => tone(500, 500, .04, "square", .04)
+};
+
+/* ---------- pixel sprites ---------- */
+const PAL = { X: "#0b0d12", B: "#5ab4e0", L: "#c6ecff", D: "#2f6f8f", W: "#f4f8ff", G: "#7cf29a", g: "#2e8a4a", Y: "#ffd166", O: "#d9955a", o: "#8c5a2e", P: "#f3a7c4", R: "#ff6b6b", M: "#c9d2dc", m: "#8a97a8", C: "#bfe6f5", c: "#6fb9d6", K: "#1a1f2b" };
+const SPR = {
+  phage: [
+    ".....XXX.....",
+    "....XLBBX....",
+    "...XLBBBBX...",
+    "...XBBBBBX...",
+    "...XBBBBBX...",
+    "....XBBBX....",
+    ".....XXX.....",
+    ".....XDX.....",
+    ".....XDX.....",
+    ".....XDX.....",
+    ".....XDX.....",
+    "....XXDXX....",
+    "...XD.D.DX...",
+    "..XD..D..DX..",
+    ".XD...X...DX.",
+    ".X.........X."
+  ],
+  ecoli: [
+    "......XXXXXXXXX..",
+    "..X..XGGGGGGGGGX.",
+    "...X.XGggGGGGGGXX",
+    "....XXGGGGGGLGGGX",
+    "..X..XGGGGGGGGGXX",
+    "...X.XGGGGGGGGGX.",
+    "....XXGGggGGGGGX.",
+    ".....XGGGGGGGGGX.",
+    "......XXXXXXXXX.."
+  ],
+  tardi: [
+    ".....XXXXXXXXX...",
+    "...XXOOOOOOOOOXX.",
+    "..XOOOOOOOOOOOOX.",
+    "..XOOXOOOOOOOXOOX",
+    "..XOOOOOOOOOOOOOX",
+    "..XOOoOOoOOoOOOX.",
+    "...XOOOOOOOOOOXX.",
+    "....XXoXXoXXoXX..",
+    ".....XX.XX.XX...."
+  ],
+  mouse: [
+    "......XXX.XXX....",
+    ".....XPPXXPPX....",
+    "....XWWWWWWWWX...",
+    "XX.XWWWWWWWWWWX..",
+    "..XWWWWWWWWWWXWX.",
+    "...XWWWWWWWWWWXX.",
+    "....XWWXWWWWXWWX.",
+    ".....XXX.XXX.XXX."
+  ],
+  tip: [
+    "XXXXXXXXXXX",
+    "XCCCCCCCCCX",
+    "XCCCCLCCCCX",
+    ".XCCCLCCCX.",
+    ".XCCCLCCCX.",
+    "..XCCLCCX..",
+    "..XCCLCCX..",
+    "...XCLCX...",
+    "...XCLCX...",
+    "....XLX....",
+    "....XLX....",
+    ".....X....."
+  ],
+  bact: [
+    "..XXXXX..",
+    ".XGGGGGXX",
+    "XGGLGGGGX",
+    ".XGGGGGXX",
+    "..XXXXX.."
+  ]
+};
+const BAKED = {};
+function bake(name, rows) {
+  const w = rows[0].length, h = rows.length, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  rows.forEach((r, y) => { for (let x = 0; x < w; x++) { const ch = r[x]; if (ch !== ".") { g.fillStyle = PAL[ch] || "#f0f"; g.fillRect(x, y, 1, 1); } } });
+  return (BAKED[name] = c);
+}
+Object.keys(SPR).forEach((k) => bake(k, SPR[k]));
+
+/* ---------- canvas: low-res buffer scaled up with hard pixels ---------- */
+const cv = $("cv"), X = cv.getContext("2d");
+const buf = document.createElement("canvas"), B = buf.getContext("2d");
+const LH = 256; let LW = 320, SC = 1, DPR = 1, VW = 320, VH = 256;
+function resize() {
+  VW = Math.max(1, window.innerWidth); VH = Math.max(1, window.innerHeight); DPR = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  LW = clamp(Math.round(LH * VW / VH), 144, 480); buf.width = LW; buf.height = LH;
+  SC = VH / LH; B.imageSmoothingEnabled = false; X.imageSmoothingEnabled = false;
+  if (G) G.x = Math.min(LW * 0.3, 110);
+}
+window.addEventListener("resize", resize);
+
+/* ---------- game state ---------- */
+let G = null;
+const R = 5; // phage collision radius
+function mut() { return G && G.mode === "daily" ? dailyMut() : null; }
+const is = (id) => { const m = mut(); return !!m && m.id === id; };
+const gravSign = () => (is("invert") ? -1 : 1);
+
+function newGame() {
+  G = {
+    st: "title", t: 0, x: Math.min(LW * 0.3, 110), y: LH / 2, vy: 0, score: 0, obs: [], parts: [], texts: [], combo: 0,
+    shake: 0, flash: 0, stretch: 0, trail: [], dist: 0, nextX: LW + 40, deadT: 0, taunt: "", newBest: false, mode: M.mode || "classic",
+    bg: { cells: [], bubbles: [], gx: 0 }, bestAt: 0, infected: 0, lastGap: LH / 2, runBestCombo: 0, unlockQ: []
+  };
+  for (let i = 0; i < 14; i++) G.bg.cells.push({ x: rnd(0, 480), y: rnd(0, LH), r: rnd(3, 9), s: rnd(.15, .4), ph: rnd(0, 6.3) });
+  for (let i = 0; i < 12; i++) G.bg.bubbles.push({ x: rnd(0, 480), y: rnd(0, LH), r: rnd(1, 2.5), s: rnd(8, 20) });
+  return G;
+}
+
+function start() {
+  const keepBg = G.bg;
+  newGame(); G.bg = keepBg; G.st = "play"; G.y = LH / 2; G.vy = 0;
+  M.attempts++; save();
+  flap();
+  $("ov").classList.remove("show");
+}
+
+/* ---------- difficulty curve ---------- */
+function diff(s) {
+  const m = mut();
+  let speed = 85 + Math.min(s, 60) * 0.9, gap = Math.max(52, 80 - s * 0.55), spacing = Math.max(92, 118 - s * 0.45);
+  if (m) {
+    if (m.id === "tiny") { gap *= 0.78; speed *= 0.82; spacing *= 0.95; }
+    if (m.id === "hyper") { speed *= 1.35; gap *= 1.22; }
+    if (m.id === "swarm") { gap += 4; }
+  }
+  return { speed, gap, spacing };
+}
+function phys() {
+  const m = mut(); let grav = 720, fl = 215;
+  if (m && m.id === "heavy") { grav *= 1.3; fl *= 1.12; }
+  if (m && m.id === "tiny") { grav *= 0.9; fl *= 0.95; }
+  return { grav, fl };
+}
+
+/* ---------- obstacles ---------- */
+function spawnOb() {
+  const s = G.score, d = diff(s), m = mut();
+  const w = 22, margin = 24;
+  const gy = clamp(G.lastGap + rnd(-70, 70), margin + d.gap / 2, LH - margin - d.gap / 2);
+  G.lastGap = gy;
+  const ob = { x: G.nextX, w, gapY: gy, gap: d.gap, kind: s >= 5 && Math.random() < 0.3 ? "agar" : "tip", wig: s >= 8 && Math.random() < 0.35, ph: rnd(0, 6.3), move: 0, dir: 1, cloud: null, bact: null, passed: false, id: Math.random() };
+  if (s >= 18 && Math.random() < 0.3) { ob.move = rnd(14, 26); ob.dir = Math.random() < .5 ? 1 : -1; ob.wig = false; }
+  const wantBact = (m && m.id === "swarm") || (s >= 3 && Math.random() < 0.3);
+  if (wantBact) ob.bact = { alive: true, ph: rnd(0, 6.3) };
+  else if (s >= 12 && Math.random() < 0.25) ob.cloud = Math.random() < .5 ? "top" : "bot";
+  G.obs.push(ob);
+  G.nextX += d.spacing;
+}
+function gapCentre(ob) {
+  let gy = ob.gapY;
+  if (ob.wig) gy += Math.sin(G.t * 2.2 + ob.ph) * 9;
+  return gy;
+}
+const CLOUD = 0.38; // fraction of the gap an antibiotic cloud blocks
+
+/* ---------- actions ---------- */
+function flap() {
+  if (!G || G.st !== "play") return;
+  G.vy = -phys().fl * gravSign(); G.stretch = 1; SFX.flap();
+  for (let i = 0; i < 3; i++) G.parts.push({ x: G.x - 4, y: G.y + 4 * gravSign(), vx: rnd(-40, -10), vy: rnd(10, 40) * gravSign(), life: rnd(.2, .4), col: "#5ab4e0", sz: 1 });
+}
+function addText(s, x, y, col, big) { G.texts.push({ s, x, y, col: col || "#fff", life: 1, big: !!big, vy: -22 }); }
+function burst(x, y, col, n, spd) { for (let i = 0; i < n; i++) { const a = rnd(0, 6.283), v = rnd(20, spd || 90); G.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(.3, .8), col, sz: Math.random() < .3 ? 2 : 1, grav: 1 }); } }
+function toast(s) { const t = $("toast"); t.textContent = s; t.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 2600); }
+
+function die(why) {
+  if (G.st !== "play") return;
+  G.st = "dead"; G.deadT = 0; G.shake = 1; G.flash = 1; G.why = why;
+  SFX.die(); burst(G.x, G.y, "#5ab4e0", 22, 140); burst(G.x, G.y, "#ffffff", 8, 60);
+  M.totalScore += G.score; M.infections += G.infected; M.bestCombo = Math.max(M.bestCombo, G.runBestCombo);
+  const d = today();
+  if (G.mode === "daily") {
+    const cur = (M.dailyBest[d] || 0);
+    if (G.score > cur) { M.dailyBest[d] = G.score; G.newBest = cur > 0 || G.score >= 3; }
+    Object.keys(M.dailyBest).forEach((k) => { if (k !== d) delete M.dailyBest[k]; });
+  } else if (G.score > M.best) { G.newBest = M.best > 0 || G.score >= 3; M.best = G.score; }
+  // skins unlocked by the classic best
+  SKINS.forEach((sk) => { if (M.best >= sk.need && !M.skins.includes(sk.id)) { M.skins.push(sk.id); G.unlockQ.push(sk); } });
+  G.taunt = pickTaunt(G.score, G.newBest);
+  save();
+  if (G.newBest) setTimeout(SFX.best, 350);
+  G.unlockQ.forEach((sk, i) => setTimeout(() => { toast("UNLOCKED: " + sk.n.toUpperCase() + " · " + sk.note); SFX.unlock(); refreshButtons(); }, 900 + i * 2800));
+  G.unlockQ = [];
+}
+function pickTaunt(score, best) {
+  const pool = best ? TAUNTS.best : score < 3 ? TAUNTS.t0 : score < 10 ? TAUNTS.t1 : score < 25 ? TAUNTS.t2 : TAUNTS.t3;
+  const all = [].concat(TAUNTS.t0, TAUNTS.t1, TAUNTS.t2, TAUNTS.t3, TAUNTS.best);
+  let s, tries = 0;
+  do { s = pick(pool); tries++; } while (all.indexOf(s) === M.lastTaunt && tries < 10);
+  M.lastTaunt = all.indexOf(s);
+  return s;
+}
+
+/* ---------- update (fixed timestep) ---------- */
+const DT = 1 / 120;
+function step(dt) {
+  G.t += dt;
+  const d = diff(G.score), p = phys(), gs = gravSign();
+  // background
+  G.bg.gx = (G.bg.gx + d.speed * 0.2 * dt) % 16;
+  G.bg.cells.forEach((c) => { c.x -= d.speed * c.s * dt; if (c.x < -12) { c.x = LW + 12; c.y = rnd(0, LH); } });
+  G.bg.bubbles.forEach((b) => { b.y -= b.s * dt; b.x -= d.speed * 0.5 * dt; if (b.y < -3 || b.x < -3) { b.y = LH + 3; b.x = rnd(0, LW); } });
+  G.parts.forEach((q) => { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.grav) q.vy += 160 * dt; });
+  G.parts = G.parts.filter((q) => q.life > 0);
+  G.texts.forEach((t) => { t.life -= dt * 1.1; t.y += t.vy * dt; });
+  G.texts = G.texts.filter((t) => t.life > 0);
+  G.shake = Math.max(0, G.shake - dt * 2.5); G.flash = Math.max(0, G.flash - dt * 3); G.stretch = Math.max(0, G.stretch - dt * 5);
+
+  if (G.st === "title") { G.y = LH / 2 + Math.sin(G.t * 2.5) * 6; return; }
+  if (G.st === "dead") {
+    G.deadT += dt;
+    // the corpse keeps falling
+    G.vy = clamp(G.vy + p.grav * gs * dt, -300, 300); G.y += G.vy * dt;
+    const floorY = gs > 0 ? LH - 6 - R : 6 + R;
+    if (gs > 0 ? G.y > floorY : G.y < floorY) { G.y = floorY; G.vy = 0; }
+    if (G.deadT > 0.45) $("ov").classList.add("show");
+    return;
+  }
+  if (G.st !== "play") return;
+
+  // phage
+  G.vy = clamp(G.vy + p.grav * gs * dt, -300, 300);
+  G.y += G.vy * dt;
+  G.trail.unshift({ x: G.x, y: G.y }); if (G.trail.length > 9) G.trail.pop();
+  // the channel walls: you may scrape the ceiling, the floor kills (inverted: the other way round)
+  if (gs > 0) { if (G.y < 6 + R) { G.y = 6 + R; G.vy = Math.max(G.vy, 0); } if (G.y > LH - 6 - R) { G.y = LH - 6 - R; return die("the channel wall"); } }
+  else { if (G.y > LH - 6 - R) { G.y = LH - 6 - R; G.vy = Math.min(G.vy, 0); } if (G.y < 6 + R) { G.y = 6 + R; return die("the channel wall"); } }
+
+  // scroll
+  G.dist += d.speed * dt;
+  G.obs.forEach((o) => { o.x -= d.speed * dt; if (o.move) { o.gapY += o.move * o.dir * dt; const lo = 24 + o.gap / 2, hi = LH - 24 - o.gap / 2; if (o.gapY < lo) { o.gapY = lo; o.dir = 1; } if (o.gapY > hi) { o.gapY = hi; o.dir = -1; } } });
+  G.nextX -= d.speed * dt;
+  while (G.nextX < LW + 40) spawnOb();
+  G.obs = G.obs.filter((o) => o.x + o.w > -30);
+
+  // collisions
+  for (const o of G.obs) {
+    const gy = gapCentre(o), top = gy - o.gap / 2, bot = gy + o.gap / 2;
+    const cx = clamp(G.x, o.x, o.x + o.w);
+    const inX = Math.abs(G.x - cx) < R;
+    if (inX) {
+      const inside = G.x >= o.x && G.x <= o.x + o.w, dx2 = (G.x - cx) ** 2;
+      const hitTop = G.y - R < top && (inside || dx2 + Math.max(0, G.y - top) ** 2 < R * R);
+      const hitBot = G.y + R > bot && (inside || dx2 + Math.max(0, bot - G.y) ** 2 < R * R);
+      if (hitTop || hitBot) return die(o.kind === "agar" ? "an agar slab" : "a pipette tip");
+      if (o.cloud) {
+        const ch = o.gap * CLOUD;
+        const cTop = o.cloud === "top" ? top : bot - ch, cBot = o.cloud === "top" ? top + ch : bot;
+        if (G.y + R * 0.6 > cTop && G.y - R * 0.6 < cBot) return die("an antibiotic cloud");
+      }
+    }
+    if (o.bact && o.bact.alive) {
+      const bx = o.x + o.w / 2, by = gy + Math.sin(G.t * 3 + o.bact.ph) * 3;
+      if ((G.x - bx) ** 2 + (G.y - by) ** 2 < (R + 5) ** 2) {
+        o.bact.alive = false; G.combo++; G.infected++; G.runBestCombo = Math.max(G.runBestCombo, G.combo);
+        const bonus = 3 + (G.combo >= 3 ? G.combo - 2 : 0);
+        G.score += bonus; SFX.infect(); burst(bx, by, "#7cf29a", 16, 110); burst(bx, by, "#ffffff", 6, 50);
+        addText("INFECTED! +" + bonus, bx, by - 14, "#7cf29a", true);
+        if (G.combo >= 2) addText("COMBO x" + G.combo, bx, by - 26, "#ffd166");
+        G.shake = Math.max(G.shake, 0.25);
+      }
+    }
+    if (!o.passed && G.x > o.x + o.w) {
+      o.passed = true; G.score++; SFX.score();
+      const margin = Math.min(G.y - top, bot - G.y) - R;
+      if (margin < 4) { G.score++; SFX.close(); addText("CLOSE +1", G.x + 8, G.y - 16, "#ffd166"); }
+      if (o.bact && o.bact.alive) { if (G.combo > 0) addText("combo lost", G.x + 8, G.y + 10, "#8a97a8"); G.combo = 0; }
+      const bestRef = G.mode === "daily" ? (M.dailyBest[today()] || 0) : M.best;
+      if (bestRef > 0 && G.score > bestRef && !G.bestAt) { G.bestAt = G.t; addText("NEW BEST", G.x, G.y - 24, "#ffd166", true); setTimeout(SFX.best, 0); }
+    }
+  }
+}
+
+/* ---------- render ---------- */
+function px(x, y, w, h, col) { B.fillStyle = col; B.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function sprite(name, x, y, sx, sy, rot, flipY) {
+  const c = BAKED[name]; if (!c) return;
+  B.save(); B.translate(Math.round(x), Math.round(y)); B.rotate(rot || 0); B.scale(sx || 1, (sy || 1) * (flipY ? -1 : 1));
+  B.drawImage(c, -Math.round(c.width / 2), -Math.round(c.height / 2)); B.restore();
+}
+function drawTip(o, gy) {
+  const top = gy - o.gap / 2, bot = gy + o.gap / 2, w = o.w;
+  if (o.kind === "agar") {
+    // agar slabs: amber gel with a wavy cut edge
+    for (const [y0, y1] of [[0, top], [bot, LH]]) {
+      px(o.x, y0, w, y1 - y0, "#8c6a2e"); px(o.x + 2, y0 + (y0 === 0 ? 0 : 2), w - 4, y1 - y0 - 2, "#d9b86b"); px(o.x + 3, y0 + (y0 === 0 ? 0 : 3), 3, y1 - y0 - 4, "#f0d28a");
+      for (let x = 0; x < w; x += 4) { const wy = Math.sin((x + G.t * 10) * .9) > 0 ? 1 : 0; if (y0 === 0) px(o.x + x, top - 1 - wy, 4, 1 + wy, "#8c6a2e"); else px(o.x + x, bot, 4, 1 + wy, "#8c6a2e"); }
+      for (let k = 0; k < 4; k++) { const cy = y0 + 10 + ((k * 37 + o.id * 100) % Math.max(12, y1 - y0 - 20)); if (cy > y0 + 4 && cy < y1 - 4) px(o.x + 6 + (k * 5) % 10, cy, 3, 2, "#e8c97a"); }
+    }
+    return;
+  }
+  // pipette tips: a shaft that narrows to the point. Top one points down, bottom one points up.
+  const cone = 34;
+  const drawCone = (yPoint, dir) => {
+    for (let i = 0; i < cone; i++) {
+      const y = yPoint - dir * i - (dir > 0 ? 1 : 0);
+      if (y < 0 || y > LH) continue;
+      const f = i / cone, ww = Math.max(4, Math.round(w * (0.3 + 0.7 * f)));
+      const x0 = o.x + Math.round((w - ww) / 2);
+      px(x0, y, ww, 1, "#2a3142"); if (ww > 2) px(x0 + 1, y, ww - 2, 1, i < 3 ? "#9fd8ef" : "#bfe6f5"); if (ww > 6) px(x0 + 2, y, 2, 1, "#e9f8ff");
+    }
+    const shaftTop = dir > 0 ? 0 : yPoint + cone, shaftH = dir > 0 ? yPoint - cone : LH - shaftTop;
+    if (shaftH > 0) { px(o.x, shaftTop, w, shaftH, "#2a3142"); px(o.x + 1, shaftTop, w - 2, shaftH, "#bfe6f5"); px(o.x + 2, shaftTop, 2, shaftH, "#e9f8ff"); px(o.x + w - 4, shaftTop, 1, shaftH, "#86c4dc"); }
+    // the collar where the tip meets the pipette
+    const cy = dir > 0 ? yPoint - cone - 6 : yPoint + cone + 1;
+    if (cy > -6 && cy < LH) { px(o.x - 2, cy, w + 4, 5, "#2a3142"); px(o.x - 1, cy + 1, w + 2, 3, "#5ab4e0"); }
+  };
+  drawCone(top, 1); drawCone(bot, -1);
+}
+function panel(x, y, w, h) { X.fillStyle = "rgba(11,13,18,.92)"; X.fillRect(x, y, w, h); X.fillStyle = "#2a3142"; X.fillRect(x, y, w, 1); X.fillRect(x, y + h - 1, w, 1); X.fillRect(x, y, 1, h); X.fillRect(x + w - 1, y, 1, h); }
+function splitLines(s, maxW, max) {
+  const words = s.split(" "), lines = []; let cur = "";
+  words.forEach((w) => { const t = cur ? cur + " " + w : w; if (X.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
+  if (cur) lines.push(cur);
+  return lines.slice(0, max || 4);
+}
+function wrap(s, cx, y, maxW, lh, max) { const lines = splitLines(s, maxW, max); lines.forEach((l, i) => X.fillText(l, cx, y + i * lh)); return lines.length; }
+
+function draw() {
+  const gs = gravSign(), m = mut(), night = !!m && m.id === "night";
+  // background
+  B.fillStyle = "#07080b"; B.fillRect(0, 0, LW, LH);
+  const grd = B.createLinearGradient(0, 0, 0, LH); grd.addColorStop(0, "#0b1018"); grd.addColorStop(1, "#070a0e"); B.fillStyle = grd; B.fillRect(0, 0, LW, LH);
+  B.fillStyle = "#0f1420";
+  for (let x = -G.bg.gx; x < LW; x += 16) B.fillRect(Math.round(x), 0, 1, LH);
+  for (let y = 0; y < LH; y += 16) B.fillRect(0, y, LW, 1);
+  G.bg.cells.forEach((c) => { const yy = c.y + Math.sin(G.t * .8 + c.ph) * 3; B.fillStyle = "rgba(90,180,224,.08)"; B.beginPath(); B.arc(c.x, yy, c.r, 0, 6.283); B.fill(); B.fillStyle = "rgba(90,180,224,.16)"; B.fillRect(Math.round(c.x - 1), Math.round(yy - 1), 2, 2); });
+  G.bg.bubbles.forEach((b) => { B.fillStyle = "rgba(198,236,255,.25)"; B.fillRect(Math.round(b.x), Math.round(b.y), b.r > 1.8 ? 2 : 1, b.r > 1.8 ? 2 : 1); });
+  // channel walls
+  px(0, 0, LW, 6, "#1a1f2b"); px(0, 5, LW, 1, "#3a4356"); px(0, 2, LW, 1, "#262c3a");
+  px(0, LH - 6, LW, 6, "#1a1f2b"); px(0, LH - 6, LW, 1, "#3a4356"); px(0, LH - 3, LW, 1, "#262c3a");
+  for (let x = -G.bg.gx * 2; x < LW; x += 24) { px(x, 1, 8, 1, "#2f3747"); px(x + 12, LH - 2, 8, 1, "#2f3747"); }
+
+  // obstacles
+  for (const o of G.obs) {
+    const gy = gapCentre(o);
+    drawTip(o, gy);
+    if (o.cloud) {
+      const top = gy - o.gap / 2, bot = gy + o.gap / 2, ch = o.gap * CLOUD;
+      const cTop = o.cloud === "top" ? top : bot - ch;
+      B.fillStyle = "rgba(124,242,154,.22)"; B.fillRect(o.x - 4, cTop, o.w + 8, ch);
+      B.fillStyle = "rgba(124,242,154,.5)";
+      for (let k = 0; k < 9; k++) { const xx = o.x - 3 + ((k * 7 + Math.floor(G.t * 6 + k)) % (o.w + 6)), yy = cTop + 1 + ((k * 5 + Math.floor(G.t * 4)) % Math.max(2, ch - 2)); B.fillRect(Math.round(xx), Math.round(yy), 2, 2); }
+      B.fillStyle = "#7cf29a"; B.font = "6px Silkscreen, monospace"; B.textAlign = "center"; B.fillText("Ab", o.x + o.w / 2, cTop + ch / 2 + 2);
+    }
+    if (o.bact && o.bact.alive) {
+      const by = gy + Math.sin(G.t * 3 + o.bact.ph) * 3;
+      sprite("bact", o.x + o.w / 2, by, 1, 1, Math.sin(G.t * 2 + o.bact.ph) * .2);
+      // a wiggling flagellum
+      for (let k = 1; k < 5; k++) px(o.x + o.w / 2 - 5 - k, by + Math.round(Math.sin(G.t * 12 + k) * 1.5), 1, 1, "#7cf29a");
+    }
+  }
+
+  // trail
+  if (G.st === "play") G.trail.forEach((t, i) => { B.fillStyle = "rgba(90,180,224," + (0.35 * (1 - i / 9)).toFixed(2) + ")"; B.fillRect(Math.round(t.x - 1 - i * 1.2), Math.round(t.y - 1), 2, 2); });
+
+  // phage
+  if (G.st !== "dead" || G.deadT < 3) {
+    const rot = G.st === "title" ? Math.sin(G.t * 2.5) * .08 : clamp(G.vy / 320, -.55, 1.1) * gs;
+    // drawn a touch larger than the hitbox (radius R): a forgiving hitbox feels fair
+    const sx = 1.25 * (1 + G.stretch * .22), sy = 1.25 * (1 - G.stretch * .22);
+    sprite(M.skin, G.x, G.y, sx, sy, rot + (M.skin === "phage" ? Math.PI / 2 : 0), gs < 0);
+  }
+
+  // particles
+  G.parts.forEach((q) => { B.globalAlpha = clamp(q.life * 2, 0, 1); px(q.x, q.y, q.sz, q.sz, q.col); });
+  B.globalAlpha = 1;
+
+  // night mode: only what is near you
+  if (night) {
+    const rg = B.createRadialGradient(G.x, G.y, 28, G.x, G.y, 85);
+    rg.addColorStop(0, "rgba(3,4,6,0)"); rg.addColorStop(1, "rgba(3,4,6,.97)");
+    B.fillStyle = rg; B.fillRect(0, 0, LW, LH);
+  }
+
+  // scale up
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  X.fillStyle = "#07080b"; X.fillRect(0, 0, cv.width, cv.height);
+  const shx = G.shake > 0 ? (Math.random() - .5) * 10 * G.shake * SC * DPR : 0, shy = G.shake > 0 ? (Math.random() - .5) * 10 * G.shake * SC * DPR : 0;
+  X.drawImage(buf, shx, shy, cv.width, cv.height);
+  if (G.flash > 0) { X.fillStyle = "rgba(255,255,255," + (G.flash * .8).toFixed(2) + ")"; X.fillRect(0, 0, cv.width, cv.height); }
+
+  // crisp text layer in logical coordinates
+  X.setTransform(SC * DPR, 0, 0, SC * DPR, shx, shy);
+  X.textAlign = "center"; X.textBaseline = "middle";
+  G.texts.forEach((t) => {
+    X.globalAlpha = clamp(t.life * 1.5, 0, 1); X.font = (t.big ? 9 : 7) + "px Silkscreen, monospace";
+    X.fillStyle = "#000"; X.fillText(t.s, t.x + 1, t.y + 1); X.fillStyle = t.col; X.fillText(t.s, t.x, t.y);
+  });
+  X.globalAlpha = 1;
+  const best = G.mode === "daily" ? (M.dailyBest[today()] || 0) : M.best;
+  if (G.st === "play") {
+    const pop = G.texts.length && G.texts[0].life > .9 ? 1 : 0;
+    X.font = (22 + pop) + "px Silkscreen, monospace"; X.fillStyle = "#000"; X.fillText(String(G.score), LW / 2 + 2, 30); X.fillStyle = G.bestAt ? "#ffd166" : "#fff"; X.fillText(String(G.score), LW / 2, 28);
+    X.font = "6px Silkscreen, monospace"; X.fillStyle = "#8a97a8"; X.fillText("BEST " + best + (G.combo >= 2 ? "   COMBO x" + G.combo : ""), LW / 2, 46);
+  }
+  if (G.st === "title") {
+    const pw = Math.min(LW - 12, 200), p0 = LW / 2 - pw / 2, mw = pw - 12;
+    const lines = [["tap, click or space to pulse upward", "#8a97a8"], ["pass a tip +1 · infect a bacterium +3", "#8a97a8"], ["night-before-deadline energy, one button", "#8a97a8"], ["BEST " + M.best + " · TRIES " + M.attempts + " · " + M.streak + "D STREAK", "#ffd166"]];
+    if (M.infections) lines.push([M.infections + " bacteria infected lifetime", "#8a97a8"]);
+    if (G.mode === "daily" && m) lines.push(["DAILY: " + m.n.toUpperCase() + " · " + m.d, "#7cf29a"]);
+    X.font = "6px Silkscreen, monospace";
+    const counts = lines.map(([t]) => splitLines(t, mw).length);
+    const hgt = 44 + counts.reduce((a, b) => a + b, 0) * 8 + 26, py = LH / 2 - hgt / 2;
+    panel(p0, py, pw, hgt);
+    X.font = (pw < 170 ? 11 : 15) + "px Silkscreen, monospace"; X.fillStyle = "#1f6f8f"; X.fillText("FLAPPY PHAGE", LW / 2 + 1, py + 17); X.fillStyle = "#e8eef5"; X.fillText("FLAPPY PHAGE", LW / 2, py + 15);
+    let yy = py + 34;
+    lines.forEach(([t, col], i) => { X.font = "6px Silkscreen, monospace"; X.fillStyle = col; wrap(t, LW / 2, yy, mw, 8); yy += counts[i] * 8 + (i === 2 ? 4 : 0); });
+    X.font = "8px Silkscreen, monospace"; X.fillStyle = Math.sin(G.t * 5) > 0 ? "#fff" : "#5ab4e0"; X.fillText("TAP TO START", LW / 2, py + hgt - 14);
+  }
+  if (G.st === "dead" && G.deadT > 0.35) {
+    const a = clamp((G.deadT - 0.35) * 4, 0, 1); X.globalAlpha = a;
+    const pw = Math.min(LW - 16, 230), ph = 118, p0 = LW / 2 - pw / 2, py = LH / 2 - 64;
+    panel(p0, py, pw, ph);
+    X.font = "13px Silkscreen, monospace"; X.fillStyle = "#ff6b6b"; X.fillText(G.newBest ? "NEW BEST" : "LYSED", LW / 2, py + 14);
+    X.font = "6px Silkscreen, monospace"; X.fillStyle = "#8a97a8"; X.fillText("by " + (G.why || "circumstance"), LW / 2, py + 26);
+    const cols = [["SCORE", G.score], [G.mode === "daily" ? "DAILY BEST" : "BEST", best], ["ATTEMPT", M.attempts]];
+    cols.forEach(([k, v], i) => { const cx = p0 + pw * (i + .5) / 3; X.font = "13px Silkscreen, monospace"; X.fillStyle = i === 0 && G.newBest ? "#ffd166" : "#e8eef5"; X.fillText(String(v), cx, py + 44); X.font = "5px Silkscreen, monospace"; X.fillStyle = "#8a97a8"; X.fillText(k, cx, py + 56); });
+    X.font = "6px Silkscreen, monospace"; X.fillStyle = G.newBest ? "#7cf29a" : "#ffd166";
+    wrap(G.taunt, LW / 2, py + 70, pw - 16, 8, 3);
+    X.font = "6px Silkscreen, monospace"; X.fillStyle = "#8a97a8"; X.fillText(G.infected + " infected · " + M.streak + "d streak", LW / 2, py + 98);
+    X.font = "7px Silkscreen, monospace"; X.fillStyle = Math.sin(G.t * 5) > 0 ? "#fff" : "#5ab4e0"; X.fillText("TAP TO RETRY", LW / 2, py + 110);
+    X.globalAlpha = 1;
+  }
+  if (G.st === "pause") {
+    panel(LW / 2 - 60, LH / 2 - 20, 120, 40);
+    X.font = "10px Silkscreen, monospace"; X.fillStyle = "#e8eef5"; X.fillText("PAUSED", LW / 2, LH / 2 - 5);
+    X.font = "6px Silkscreen, monospace"; X.fillStyle = "#8a97a8"; X.fillText("tap to continue", LW / 2, LH / 2 + 9);
+  }
+  X.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ---------- loop ---------- */
+let last = 0, acc = 0;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  if (!last) last = ts;
+  let dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+  if (G.st === "pause") dt = 0;
+  acc += dt;
+  while (acc >= DT) { step(DT); acc -= DT; }
+  draw();
+}
+
+/* ---------- input ---------- */
+function onTap() {
+  ac();
+  if (!G) return;
+  if (G.st === "title") return start();
+  if (G.st === "dead") { if (G.deadT > 0.35) start(); return; }
+  if (G.st === "pause") { G.st = "play"; return; }
+  flap();
+}
+cv.addEventListener("pointerdown", (e) => { e.preventDefault(); onTap(); });
+window.addEventListener("keydown", (e) => { if (e.repeat) return; if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW" || e.code === "Enter") { e.preventDefault(); onTap(); } else if (e.code === "KeyP" || e.code === "Escape") { if (G.st === "play") G.st = "pause"; else if (G.st === "pause") G.st = "play"; } });
+window.addEventListener("blur", () => { if (G && G.st === "play") G.st = "pause"; });
+document.addEventListener("visibilitychange", () => { if (document.hidden && G && G.st === "play") G.st = "pause"; });
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+/* ---------- buttons ---------- */
+function modeLabel() { const m = dailyMut(); return M.mode === "daily" ? "DAILY: " + m.n.toUpperCase() : "MODE: CLASSIC"; }
+function refreshButtons() {
+  const sk = SKINS.find((s) => s.id === M.skin) || SKINS[0];
+  $("bskin").textContent = "SKIN: " + sk.n.toUpperCase() + (M.skins.length > 1 ? " ▸" : "");
+  $("bmode").textContent = modeLabel();
+  $("bsnd").textContent = M.sound ? "SOUND ON" : "SOUND OFF";
+  $("chipmode").textContent = M.mode === "daily" ? "· " + dailyMut().n : "";
+}
+$("bskin").addEventListener("click", (e) => {
+  e.stopPropagation(); ac(); SFX.tap();
+  const un = SKINS.filter((s) => M.skins.includes(s.id));
+  const i = un.findIndex((s) => s.id === M.skin), nx = un[(i + 1) % un.length];
+  M.skin = nx.id; save(); refreshButtons();
+  const locked = SKINS.find((s) => !M.skins.includes(s.id));
+  toast(nx.n.toUpperCase() + " · " + nx.note + (locked ? "  (next: " + locked.n + " at " + locked.need + ")" : ""));
+});
+$("bmode").addEventListener("click", (e) => {
+  e.stopPropagation(); ac(); SFX.tap();
+  M.mode = M.mode === "daily" ? "classic" : "daily"; if (G) G.mode = M.mode; save(); refreshButtons();
+  const m = dailyMut(); toast(M.mode === "daily" ? "DAILY MUTATION: " + m.n.toUpperCase() + " · " + m.d : "CLASSIC · wild type, no excuses");
+});
+$("bsnd").addEventListener("click", (e) => { e.stopPropagation(); M.sound = M.sound ? 0 : 1; save(); ac(); SFX.tap(); refreshButtons(); });
+$("bcopy").addEventListener("click", async (e) => {
+  e.stopPropagation(); ac(); SFX.tap();
+  const m = dailyMut();
+  const s = "Flappy Phage: I scored " + (G ? G.score : 0) + " (best " + M.best + ") in " + M.attempts + " attempts" + (M.mode === "daily" ? ", daily mutation \"" + m.n + "\"" : "") + ". " + (G && G.taunt ? G.taunt : "") + " labpotato.github.io/tools/flappy-phage/";
+  try { await navigator.clipboard.writeText(s); toast("COPIED. Go bother a labmate."); }
+  catch (err) { toast("Clipboard blocked. Screenshot it like it's 2009."); }
+});
+
+/* ---------- boot ---------- */
+resize(); newGame(); refreshButtons();
+requestAnimationFrame(frame);
+if (DEBUG) window.FP = { get state() { return G; }, get meta() { return M; }, reset: () => { newGame(); refreshButtons(); }, flap, start, step, die, taunts: TAUNTS, skins: SKINS, muts: MUTS, dailyMut, gapCentre, diff, save, get LW() { return LW; }, LH };
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/flappy-phage"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

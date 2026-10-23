@@ -161,7 +161,7 @@ function spark(per, color, labels) {
 /* the world map: countries shaded by visitors, one blue, light (few) to dark (many) */
 let WORLD = null;
 async function world() { if (WORLD) return WORLD; if (typeof window !== "undefined" && window.USAGE_WORLD) return (WORLD = window.USAGE_WORLD); try { const r = await fetch(WORLD_FILE); WORLD = r.ok ? await r.json() : false; } catch (e) { WORLD = false; } return WORLD; }
-async function drawMap(el, listEl, locs) {
+async function drawMap(el, listEl, locs, wait) {
   const w = await world();
   const by = {}; (locs || []).forEach(l => { const id = String(l.id || "").slice(0, 2).toUpperCase(); if (id) by[id] = (by[id] || 0) + l.count; });
   const total = Object.values(by).reduce((a, v) => a + v, 0), mx = Math.max(1, ...Object.values(by));
@@ -176,7 +176,8 @@ async function drawMap(el, listEl, locs) {
     svg.addEventListener("pointerleave", () => { tip.hidden = true; });
   } else el.innerHTML = `<p class="use-empty">The map could not be loaded.</p>`;
   const top = (locs || []).slice().sort((a, b) => b.count - a.count);
-  listEl.innerHTML = top.length ? barList(top, 10, total, "country") : `<p class="use-empty">No country data yet.</p>`;
+  listEl.innerHTML = top.length ? barList(top, 10, total, "country") : (wait && w ? "" : `<p class="use-empty">${wait || "No visits yet."}</p>`);
+  if (wait && w) el.insertAdjacentHTML("beforeend", `<p class="use-wait">${wait}</p>`);
 }
 
 /* how people found the site: every referrer sorted into four groups.
@@ -191,15 +192,15 @@ function srcGroup(x) {
   if (SOCIAL.test(nm) || x.scheme === "c") return "Social";
   return "Other sites";
 }
-function drawSources(groupsEl, topEl, refs) {
+function drawSources(groupsEl, topEl, refs, wait) {
   refs = refs || [];
   const total = refs.reduce((a, x) => a + x.count, 0), by = { Search: 0, Social: 0, "Other sites": 0, Direct: 0 };
   refs.forEach(x => { by[srcGroup(x)] += x.count; });
   const hint = { Search: "Google, Bing, Naver …", Social: "Instagram, Reddit, X …", "Other sites": "links on other pages", Direct: "typed, bookmarked, or sent in a chat" };
   groupsEl.innerHTML = total ? `<ol class="use-bl">${Object.entries(by).sort((a, b) => b[1] - a[1]).map(([g, v]) =>
-    `<li title="${g}: ${nf(v)} visits"><span class="use-bl-n"><b>${g}</b> <small>${hint[g]}</small></span><span class="use-bl-v">${(100 * v / total).toFixed(v && v / total < .1 ? 1 : 0)}%</span><span class="use-bl-b"><i style="width:${(100 * v / total).toFixed(1)}%"></i></span></li>`).join("")}</ol>` : `<p class="use-empty">No visits yet.</p>`;
+    `<li title="${g}: ${nf(v)} visits"><span class="use-bl-n"><b>${g}</b> <small>${hint[g]}</small></span><span class="use-bl-v">${(100 * v / total).toFixed(v && v / total < .1 ? 1 : 0)}%</span><span class="use-bl-b"><i style="width:${(100 * v / total).toFixed(1)}%"></i></span></li>`).join("")}</ol>` : `<p class="use-empty">${wait || "No visits yet."}</p>`;
   const named = refs.filter(x => srcGroup(x) !== "Direct").sort((a, b) => b.count - a.count);
-  topEl.innerHTML = named.length ? barList(named.map(x => ({ name: x.name, count: x.count })), 6, total) : `<p class="use-empty">No referring sites yet.</p>`;
+  topEl.innerHTML = named.length ? barList(named.map(x => ({ name: x.name, count: x.count })), 6, total) : `<p class="use-empty">${wait ? "" : "No referring sites yet."}</p>`;
 }
 
 /* a short ranked list with share bars (one quiet hue), the rest folded into "Other" */
@@ -247,9 +248,11 @@ function renderUsage(data) {
     document.getElementById("usage-geo-sum").textContent = tot ? `${nf(tot)} visits from ${(s.locations || []).length} countr${(s.locations || []).length === 1 ? "y" : "ies"} ${R.noun}` : "";
   } else {
     demo.hidden = false;
-    document.getElementById("usage-map").innerHTML = `<p class="use-empty">The world map appears once the daily usage report is switched on (see HOW-TO-UPDATE.md).</p>`;
-    document.getElementById("usage-src").hidden = true;
-    document.getElementById("usage-countries").innerHTML = ""; document.getElementById("usage-geo-sum").textContent = "";
+    const wait = "appear after the first daily update";
+    drawMap(document.getElementById("usage-map"), document.getElementById("usage-countries"), [], `Countries ${wait}.`);
+    drawSources(document.getElementById("usage-src-groups"), document.getElementById("usage-src-top"), [], `Sources ${wait}.`);
+    document.getElementById("usage-src").hidden = false;
+    document.getElementById("usage-geo-sum").textContent = "";
   }
   const sum = rows.reduce((a, r) => a + r.sum, 0), when = new Date(data.at), whenTxt = `${fmtD(when)}, ${when.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}`;
   foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated daily, last " + whenTxt : "checked " + whenTxt}`;
@@ -266,8 +269,7 @@ function usageDebug() {
 function initUsage() {
   const sec = document.getElementById("usage"); if (!sec) return;
   sec.hidden = false;
-  let range = "month"; try { range = localStorage.getItem("lp-usage-range") || "month"; } catch (e) { /* storage blocked */ }
-  if (!RANGES[range]) range = "month";
+  let range = "month";   // always opens on the last 30 days
   const seg = document.getElementById("usage-range"), box = document.getElementById("usage-grid");
   seg.innerHTML = Object.entries(RANGES).map(([k, r]) => `<button type="button" data-range="${k}" aria-pressed="${k === range}">${r.label}</button>`).join("");
   let current = null;
@@ -278,7 +280,7 @@ function initUsage() {
     current = f ? fromFile(f, range) : await fromCounter(range, fresh);
     sec.classList.remove("loading"); renderUsage(current);
   };
-  seg.addEventListener("click", e => { const b = e.target.closest("[data-range]"); if (!b || b.dataset.range === range) return; range = b.dataset.range; try { localStorage.setItem("lp-usage-range", range); } catch (er) { /* storage blocked */ } go(false); });
+  seg.addEventListener("click", e => { const b = e.target.closest("[data-range]"); if (!b || b.dataset.range === range) return; range = b.dataset.range; go(false); });
   sec.addEventListener("click", e => {
     if (e.target.closest(".use-retry")) { go(true); return; }
     const c = e.target.closest("[data-focus]"); if (c && current) { sec.dataset.focus = c.dataset.focus; renderUsage(current); }

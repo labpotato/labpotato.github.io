@@ -213,6 +213,24 @@ top of the contribute block in `tools/gibson-assembly/gibson-assembly-v8.html`.
 
 ---
 
+## 6b. The usage numbers at the end of the homepage
+
+The "Who is using this, and where" section reads `assets/usage.json`. A GitHub
+Action (`.github/workflows/usage.yml`) rewrites that file once a day from your
+GoatCounter statistics, using `tools/build_usage.py`. Until the file exists, the
+section falls back to GoatCounter's public counter (line graph only, no map).
+
+One-time setup:
+
+1. In GoatCounter (labpotato.goatcounter.com), open your name in the top menu → **API**,
+   create a key and tick only **Read statistics**. Copy the key.
+2. In this GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**.
+   Name it `GOATCOUNTER_TOKEN` and paste the key.
+3. **Actions → Update usage numbers → Run workflow** to make the first file now
+   (after that it runs every day at 10:17 Singapore time).
+
+The key never appears on the website: only the Action can read it.
+
 ## 7. If something breaks
 
 - **Card disappeared / page looks empty** → almost always a typo in

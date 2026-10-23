@@ -1,0 +1,35 @@
+# Once a day: read the visit statistics from GoatCounter and save them as
+# assets/usage.json, which the homepage's usage section reads.
+# Needs the repository secret GOATCOUNTER_TOKEN (a GoatCounter API key that
+# can only read statistics). Run it by hand from the Actions tab any time.
+name: Update usage numbers
+
+on:
+  schedule:
+    - cron: "17 2 * * *"   # 02:17 UTC = 10:17 in Singapore
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usage
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read GoatCounter
+        env:
+          GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
+        run: python3 tools/build_usage.py
+      - name: Save if anything changed
+        run: |
+          git config user.name "labpotato-bot"
+          git config user.email "labpotato-bot@users.noreply.github.com"
+          git add assets/usage.json
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -m "Update usage numbers"
+          git push

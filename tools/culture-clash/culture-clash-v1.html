@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culture Clash v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080b;--p0:#0b0d12;--p1:#11141c;--p2:#182030;--line:#2a3142;--text:#e8eef5;--muted:#8a97a8;--faint:#4a5568;--acc:#5ab4e0;--gold:#ffd166;--red:#ff6b6b;--green:#7cf29a;--pur:#b59cff;--pink:#ff8ad0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#030405;color:var(--text);font:15px/1.3 "Pixelify Sans",monospace;overflow:hidden;user-select:none;-webkit-user-select:none}
+#wrap{position:fixed;inset:0;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;background:var(--bg);overflow:hidden}
+.pf{font-family:"Silkscreen",monospace}
+h1{font:44px/1 "Silkscreen",monospace;margin:0;color:#e8eef5;text-shadow:4px 4px 0 #1f6f8f}
+h2{font:22px/1.1 "Silkscreen",monospace;margin:0 0 6px}
+h3{font:12px "Silkscreen",monospace;color:var(--muted);margin:16px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.lbl{font:11px "Silkscreen",monospace;color:var(--muted);letter-spacing:.04em}
+.muted{color:var(--muted)}.gold{color:var(--gold)}.acc{color:var(--acc)}.red{color:var(--red)}.green{color:var(--green)}
+.btn{font:13px "Silkscreen",monospace;color:var(--text);background:#1a1f2b;border:0;box-shadow:inset 0 0 0 2px var(--line),0 4px 0 #05060a;padding:10px 18px;cursor:pointer}
+.btn:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--acc),0 4px 0 #05060a;color:#fff}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--acc),0 2px 0 #05060a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.pri{background:#1f6f8f;box-shadow:inset 0 0 0 2px #5ab4e0,0 4px 0 #05060a}
+.btn.off{color:var(--faint)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.scr{position:absolute;inset:0;padding:30px 40px;overflow-y:auto}
+.center{text-align:center}
+.panel{background:var(--p1);box-shadow:inset 0 0 0 2px var(--line);padding:14px}
+.grid{display:grid;gap:12px}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+/* ---------- cards ---------- */
+.card{position:relative;width:124px;height:176px;background:#161b26;box-shadow:inset 0 0 0 2px var(--line),0 4px 0 #05060a;color:var(--text);font-size:11px;line-height:1.15;padding:6px 6px 4px;cursor:pointer;flex:none}
+.card.spell{background:#1a1828}
+.card .cost{position:absolute;left:-6px;top:-6px;width:26px;height:26px;background:#1f6f8f;box-shadow:inset 0 0 0 2px #5ab4e0;display:grid;place-items:center;font:13px "Silkscreen",monospace;color:#fff;z-index:2}
+.card .art{height:46px;display:grid;place-items:center;background:#0b0d12;margin:8px 0 4px}
+.card .art svg{width:60px;height:44px}
+.card .nm{font:9px "Silkscreen",monospace;line-height:1.1;height:22px;overflow:hidden;color:#fff}
+.card .tx{font-size:11px;color:#c9d2dc;height:64px;overflow:hidden}
+.card .tx b{color:var(--gold)}
+.card .tr{position:absolute;left:6px;bottom:4px;font-size:9px;color:var(--muted)}
+.card .at,.card .hp{position:absolute;bottom:-6px;width:26px;height:24px;display:grid;place-items:center;font:13px "Silkscreen",monospace;color:#fff}
+.card .at{left:-6px;background:#8f3a1f;box-shadow:inset 0 0 0 2px #ffb070}
+.card .hp{right:-6px;background:#8f1f2e;box-shadow:inset 0 0 0 2px #ff7a8a}
+.card.can{box-shadow:inset 0 0 0 2px var(--green),0 0 14px rgba(124,242,154,.5),0 4px 0 #05060a}
+.card.sel{box-shadow:inset 0 0 0 2px var(--gold),0 0 16px rgba(255,209,102,.6),0 4px 0 #05060a;transform:translateY(-12px)}
+.card.rar2 .nm{color:#8fe3ff}.card.rar3 .nm{color:var(--pur)}
+.card.pick{width:170px;height:240px;font-size:13px}.card.pick .art{height:70px}.card.pick .art svg{width:90px;height:64px}.card.pick .nm{font-size:11px;height:28px}.card.pick .tx{font-size:13px;height:92px}.card.pick .cost,.card.pick .at,.card.pick .hp{width:30px;height:28px;font-size:14px}
+.card.pick:hover{box-shadow:inset 0 0 0 2px var(--acc),0 0 16px rgba(90,180,224,.5),0 4px 0 #05060a}
+.card.dim{opacity:.35}
+/* ---------- minions ---------- */
+.min{position:relative;width:98px;height:132px;background:#141924;box-shadow:inset 0 0 0 2px var(--line);font-size:10px;padding:5px;cursor:pointer;flex:none;transition:transform .12s}
+.min .art{height:50px;display:grid;place-items:center;background:#0b0d12}
+.min .art svg{width:64px;height:46px}
+.min .nm{font:8px "Silkscreen",monospace;line-height:1.1;height:20px;margin-top:3px;color:#fff;overflow:hidden}
+.min .kws{display:flex;gap:2px;flex-wrap:wrap;height:26px;overflow:hidden}
+.min .kws i{font:8px "Silkscreen",monospace;font-style:normal;background:#2a3142;color:#dfe7f0;padding:1px 3px}
+.min .at,.min .hp{position:absolute;bottom:-6px;width:24px;height:22px;display:grid;place-items:center;font:12px "Silkscreen",monospace;color:#fff}
+.min .at{left:-6px;background:#8f3a1f;box-shadow:inset 0 0 0 2px #ffb070}
+.min .hp{right:-6px;background:#8f1f2e;box-shadow:inset 0 0 0 2px #ff7a8a}
+.min .hp.hurt{color:#ffb3b3}.min .at.buff{color:#9cffb0}
+.min.can{box-shadow:inset 0 0 0 2px var(--green),0 0 12px rgba(124,242,154,.5)}
+.min.sel{box-shadow:inset 0 0 0 2px var(--gold),0 0 16px rgba(255,209,102,.7);transform:translateY(-6px)}
+.min.biofilm{box-shadow:inset 0 0 0 3px #7f8a6a}
+.min.biofilm.can{box-shadow:inset 0 0 0 3px #7f8a6a,0 0 12px rgba(124,242,154,.5)}
+.min.frozen{filter:saturate(.3) brightness(1.3);outline:2px solid #9ad0ff}
+.min.sick:not(.can){opacity:.78}
+.min.ops::after{content:"Y";position:absolute;right:3px;top:2px;font:10px "Silkscreen",monospace;color:var(--gold)}
+.min.stealth{opacity:.6;outline:2px dashed #6c7a90}
+.min.pop{animation:pop .25s ease-out}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.min.shake,.hero.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-4px,2px)}50%{transform:translate(4px,-2px)}75%{transform:translate(-2px,-2px)}}
+.tgt{outline:3px solid var(--red)!important;cursor:crosshair}
+.tgt::before{content:"";position:absolute;inset:0;background:rgba(255,107,107,.18);pointer-events:none}
+/* ---------- board ---------- */
+.hero{position:absolute;width:250px;background:var(--p1);box-shadow:inset 0 0 0 2px var(--line);padding:10px 12px;cursor:pointer}
+.hero .nm{font:12px "Silkscreen",monospace;color:#fff}
+.hero .hpbig{font:30px "Silkscreen",monospace;color:#ff7a8a}
+.hero .sub{font-size:12px;color:var(--muted)}
+.hero.active{box-shadow:inset 0 0 0 2px var(--acc)}
+#ehero{left:20px;top:14px}#phero{left:20px;top:520px;height:182px}
+.brow{position:absolute;left:290px;width:700px;height:150px;display:flex;gap:10px;justify-content:center;align-items:center}
+#eboard{top:120px}#pboard{top:300px}
+.divider{position:absolute;left:290px;top:283px;width:700px;height:2px;background:var(--line)}
+#hand{position:absolute;left:290px;top:525px;width:700px;height:190px;display:flex;align-items:flex-start;justify-content:center}
+#hand .card{margin-right:var(--ov,0px)}
+#side{position:absolute;left:1010px;top:14px;width:250px;bottom:14px}
+.mana{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}
+.mana i{width:16px;height:16px;background:#1f6f8f;box-shadow:inset 0 0 0 2px #5ab4e0;display:block}
+.mana i.used{background:#141924;box-shadow:inset 0 0 0 2px #2a3142}
+#endturn{width:100%;font-size:15px;padding:16px 10px}
+#endturn.wait{background:#141924;color:var(--faint)}
+.power{background:#1a1f2b;box-shadow:inset 0 0 0 2px var(--gold);padding:8px 10px;margin-top:10px;cursor:pointer;font-size:12px}
+.power.used,.power.no{opacity:.4;cursor:not-allowed}
+.power.sel{box-shadow:inset 0 0 0 2px #fff,0 0 12px var(--gold)}
+.power b{font:11px "Silkscreen",monospace;color:var(--gold)}
+#log{position:absolute;left:0;right:0;bottom:0;font-size:11px;color:var(--muted);line-height:1.25;max-height:150px;overflow:hidden}
+#log div:last-child{color:#dfe7f0}
+.passive{font-size:12px;color:#ffd166;margin-top:4px}
+.turnbanner{position:absolute;left:290px;top:250px;width:700px;text-align:center;font:26px "Silkscreen",monospace;color:#fff;text-shadow:3px 3px 0 #1f6f8f;pointer-events:none;animation:fadeb 1.4s forwards}
+@keyframes fadeb{0%{opacity:0;transform:scale(.8)}15%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+.fx{position:absolute;font:22px "Silkscreen",monospace;color:#ff7a8a;text-shadow:2px 2px 0 #000;pointer-events:none;z-index:50;animation:fxup .9s ease-out forwards;white-space:nowrap}
+.fx.heal{color:#9cffb0}.fx.info{color:#ffd166;font-size:13px}
+@keyframes fxup{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-50px);opacity:0}}
+#note{position:absolute;left:290px;bottom:200px;width:700px;background:#0b0d12;box-shadow:inset 0 0 0 2px var(--gold);padding:10px 14px;font-size:14px;color:#ffe9b0;z-index:60;display:none}
+#note b{font:11px "Silkscreen",monospace;color:var(--gold);display:block;margin-bottom:4px}
+#tip{position:absolute;width:260px;background:#0b0d12;box-shadow:inset 0 0 0 2px var(--acc);padding:10px 12px;font-size:13px;z-index:70;pointer-events:none;display:none;line-height:1.3}
+#tip .nm{font:12px "Silkscreen",monospace;color:#fff;margin-bottom:4px}
+#tip .tx b{color:var(--gold)}
+#tip .fact{margin-top:8px;color:#9ad0ff;border-top:1px solid var(--line);padding-top:6px;font-size:12px}
+#tip .kw{color:var(--muted);font-size:11px;margin-top:4px}
+.modal{position:absolute;inset:0;background:rgba(3,4,6,.88);z-index:80;padding:30px 40px;overflow-y:auto}
+.spec{background:var(--p1);box-shadow:inset 0 0 0 2px var(--line);padding:16px;cursor:pointer;text-align:left}
+.spec:hover{box-shadow:inset 0 0 0 2px var(--acc)}
+.spec h2{font-size:18px}
+.spec .pw{color:var(--gold);font-size:13px;margin:8px 0}
+.gcard{display:grid;grid-template-columns:60px 1fr;gap:10px;background:var(--p1);box-shadow:inset 0 0 0 2px var(--line);padding:8px;font-size:12px}
+.gcard.unseen{opacity:.35}
+.gcard svg{width:56px;height:42px}
+.gcard b{font:10px "Silkscreen",monospace;color:#fff}
+.gcard .fact{color:#9ad0ff;font-size:11px;margin-top:3px}
+.stat{background:var(--p1);box-shadow:inset 0 0 0 2px var(--line);padding:10px;text-align:center}
+.stat b{display:block;font:22px "Silkscreen",monospace;color:var(--gold)}
+.stat span{font-size:11px;color:var(--muted)}
+.tabs button{font:11px "Silkscreen",monospace;background:#141924;border:0;color:var(--muted);padding:6px 10px;cursor:pointer;box-shadow:inset 0 0 0 2px var(--line)}
+.tabs button.on{color:#fff;box-shadow:inset 0 0 0 2px var(--acc)}
+.ent{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ent b{color:var(--gold);font-size:12px}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage"></div></div>
+<script>
+"use strict";
+/* =====================================================================
+   CULTURE CLASH v1 — a biology card battler.
+   Hearthstone-style board combat against eight lab bosses; choose a
+   specialty after the third and draft cards whose interactions are
+   narrower but stronger. Every card carries a true fact; notable
+   interactions explain their biology the first time they fire.
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n), pick=a=>a[rnd(a.length)], shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const DEBUG=/[?&]debug\b/.test(location.search);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const META=Object.assign({runs:0,wins:{micro:0,immuno:0,mol:0},best:0,seen:[],notes:[],kills:0},store.get('cc_meta',{}));
+const PREFS=Object.assign({sfx:true,fast:false},store.get('cc_prefs',{}));
+const saveMeta=()=>store.set('cc_meta',META), savePrefs=()=>store.set('cc_prefs',PREFS);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+/* ---------- sound: everything synthesised ---------- */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function tone(f,d=.08,type='square',v=.12,slide=0){if(!PREFS.sfx)return;const c=ac();if(!c)return;try{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,c.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),c.currentTime+d);g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
+const SFX={play:()=>{tone(520,.07);setTimeout(()=>tone(780,.08),60)},hit:()=>tone(170,.12,'sawtooth',.16,-90),die:()=>tone(220,.22,'sawtooth',.12,-160),draw:()=>tone(900,.04,'triangle',.06),turn:()=>{tone(440,.06);setTimeout(()=>tone(660,.08),70)},win:()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.18,'square',.1),i*120)),lose:()=>[400,330,262,196].forEach((f,i)=>setTimeout(()=>tone(f,.25,'sawtooth',.1),i*160)),err:()=>tone(120,.15,'square',.1),heal:()=>tone(700,.1,'sine',.08,300),note:()=>{tone(880,.08,'triangle',.07);setTimeout(()=>tone(1320,.12,'triangle',.07),90)},sel:()=>tone(600,.03,'triangle',.05),power:()=>tone(300,.1,'square',.08,200)};
+
+/* ---------- keywords (Hearthstone mechanics with their biology names) ---------- */
+const KW={
+ biofilm:{n:'Biofilm',d:'Enemies must attack this minion first.'},
+ motile:{n:'Motile',d:'Can attack the turn it is played.'},
+ capsule:{n:'Capsule',d:'The first time it would take damage, it takes none.'},
+ toxin:{n:'Toxin',d:'Destroys any minion it damages.'},
+ phagocytic:{n:'Phagocytic',d:'Damage it deals also heals your hero. Double damage to Opsonized targets.'},
+ intracellular:{n:'Intracellular',d:'Cannot be attacked or targeted by the enemy until it attacks.'},
+ fastrep:{n:'Fast replication',d:'Can attack twice each turn.'},
+ persister:{n:'Persister',d:'Immune to antibiotic spells.'},
+ memory:{n:'Memory',d:'When it dies, it returns to your hand.'},
+ spore:{n:'Spore',d:'When it dies, it leaves a 1/1 Spore.'},
+ ampr:{n:'ampR',d:'β-lactamase plasmid: β-lactam antibiotics (Ampicillin, Penicillium) make it +1/+1 instead of hurting it.'},
+ conj:{n:'Conjugative',d:'At the end of your turn, copies its plasmid (+1/+1, ampR) to adjacent Bacteria.'},
+ gfp:{n:'GFP-tagged',d:'Whenever it attacks, draw a card.'},
+ nowall:{n:'Wall-less',d:'Cell-wall agents (Ampicillin, Vancomycin, Lysozyme, Penicillium) do nothing to it.'},
+ lysores:{n:'Lysozyme-resistant',d:'Lysozyme only deals damage to it; it is not destroyed.'},
+ nk:{n:'Missing-self',d:'Can attack Intracellular minions.'},
+ elusive:{n:'Elusive',d:'Cannot be targeted by spells or hero powers.'},
+ catalyst:{n:'Catalyst',d:'Your spells deal extra damage.'}
+};
+const GLOSS=[['On plating','Happens when you play the card from your hand (battlecry).'],['Lysis','Happens when the minion dies (deathrattle).'],['Opsonized','Marked by antibody: Phagocytic minions deal double damage to it, and some spells finish it.'],['Cold shock','Frozen: the minion skips its next attack.'],['Knockout','Silenced: loses its text, keywords and buffs.'],['Antibiotic','A spell that hits Bacteria on BOTH sides. Persisters ignore it; the right plasmid turns it into a buff.'],['Gram+ / Gram−','Purple cards are Gram-positive (thick exposed wall); pink cards are Gram-negative (outer membrane).']];
+
+/* ---------- card art: one procedural glyph per tribe ---------- */
+const TRIBE={bact:'Bacterium',phage:'Phage',virus:'Virus',immune:'Immune cell',enzyme:'Enzyme',fungus:'Fungus',parasite:'Parasite',reagent:'Reagent',instr:'Instrument',plasmid:'Plasmid',mouse:'Animal',prion:'Prion',ice:'Hazard',misc:'Misc',review:'Reviewer'};
+function tribeCol(d){if(d.t==='bact')return d.g==='+'?'#b59cff':'#ff8ad0';return {phage:'#5ab4e0',virus:'#ff6b6b',immune:'#7cf29a',enzyme:'#ffd166',fungus:'#c9a27e',parasite:'#9ad0ff',reagent:'#8fe3ff',instr:'#c9d2dc',plasmid:'#ffd166',mouse:'#e8c8a0',prion:'#ff9a4d',ice:'#bfe6ff',misc:'#dfe7f0',review:'#ff8a8a'}[d.t]||'#dfe7f0'}
+function glyph(d){const c=tribeCol(d),k='#05060a';let b='';
+ switch(d.t){
+ case 'bact': if(d.shape==='cocci') b=`<circle cx="22" cy="20" r="9" fill="${c}"/><circle cx="40" cy="18" r="9" fill="${c}"/><circle cx="31" cy="32" r="9" fill="${c}"/><circle cx="22" cy="20" r="3" fill="${k}" opacity=".4"/><circle cx="40" cy="18" r="3" fill="${k}" opacity=".4"/>`;
+  else if(d.shape==='curve') b=`<path d="M12 34 Q 32 8 52 30" stroke="${c}" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M52 30 q6 -8 8 -16" stroke="${c}" stroke-width="2" fill="none"/>`;
+  else b=`<rect x="10" y="15" width="44" height="18" rx="9" fill="${c}"/><rect x="18" y="20" width="6" height="8" fill="${k}" opacity=".35"/><rect x="34" y="20" width="6" height="8" fill="${k}" opacity=".35"/>${d.flag?`<path d="M54 24 q6 -10 10 0 t-4 10" stroke="${c}" stroke-width="2" fill="none"/>`:''}`;
+  break;
+ case 'phage': b=`<polygon points="32,3 43,9 43,21 32,27 21,21 21,9" fill="${c}"/><rect x="29" y="27" width="6" height="12" fill="${c}"/><path d="M32 39 l-10 7 M32 39 l10 7 M32 39 l-4 8 M32 39 l4 8" stroke="${c}" stroke-width="2"/><polygon points="32,9 37,12 37,18 32,21 27,18 27,12" fill="${k}" opacity=".35"/>`;break;
+ case 'virus': b=`<circle cx="32" cy="24" r="13" fill="${c}"/>${[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;return `<line x1="${32+Math.cos(r)*12}" y1="${24+Math.sin(r)*12}" x2="${32+Math.cos(r)*19}" y2="${24+Math.sin(r)*19}" stroke="${c}" stroke-width="3"/><circle cx="${32+Math.cos(r)*20}" cy="${24+Math.sin(r)*20}" r="2.5" fill="${c}"/>`}).join('')}<path d="M26 22 q6 -6 12 0 q-6 6 -12 0" fill="${k}" opacity=".35"/>`;break;
+ case 'immune': b=`<circle cx="32" cy="24" r="19" fill="${c}"/><circle cx="26" cy="22" r="6" fill="${k}" opacity=".45"/><circle cx="36" cy="26" r="6" fill="${k}" opacity=".45"/><circle cx="32" cy="18" r="5" fill="${k}" opacity=".45"/>`;break;
+ case 'enzyme': b=`<path d="M32 24 L50 12 A20 20 0 1 0 50 36 Z" fill="${c}"/><circle cx="26" cy="18" r="3" fill="${k}" opacity=".5"/>`;break;
+ case 'fungus': b=`<circle cx="22" cy="30" r="8" fill="${c}"/><circle cx="34" cy="22" r="8" fill="${c}"/><circle cx="46" cy="16" r="6" fill="${c}"/><circle cx="42" cy="34" r="5" fill="${c}"/><path d="M8 44 q10 -10 20 -2 M30 44 q8 -6 16 -2" stroke="${c}" stroke-width="2" fill="none"/>`;break;
+ case 'parasite': b=`<path d="M8 28 q8 -16 16 0 t16 0 t16 0" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="56" cy="28" r="5" fill="${c}"/>`;break;
+ case 'reagent': b=`<path d="M26 6 h12 v12 l12 20 q2 6 -4 6 h-28 q-6 0 -4 -6 l12 -20 z" fill="${c}"/><rect x="26" y="4" width="12" height="4" fill="${c}"/><path d="M18 36 h28" stroke="${k}" stroke-width="3" opacity=".4"/>`;break;
+ case 'instr': b=`<rect x="28" y="4" width="8" height="26" fill="${c}"/><rect x="24" y="2" width="16" height="6" fill="${c}"/><polygon points="26,30 38,30 33,46 31,46" fill="${c}"/><rect x="30" y="12" width="4" height="10" fill="${k}" opacity=".4"/>`;break;
+ case 'plasmid': b=`<circle cx="32" cy="24" r="15" stroke="${c}" stroke-width="6" fill="none"/><rect x="40" y="8" width="8" height="8" fill="${c}"/><rect x="14" y="30" width="8" height="8" fill="${c}"/>`;break;
+ case 'mouse': b=`<ellipse cx="34" cy="30" rx="18" ry="12" fill="${c}"/><circle cx="18" cy="20" r="7" fill="${c}"/><circle cx="30" cy="16" r="6" fill="${c}"/><circle cx="20" cy="22" r="2" fill="${k}"/><path d="M52 32 q10 2 8 12" stroke="${c}" stroke-width="2" fill="none"/>`;break;
+ case 'prion': b=`<path d="M10 20 l8 -10 l8 12 l8 -14 l8 14 l8 -10 l6 10" stroke="${c}" stroke-width="5" fill="none"/><path d="M12 36 l10 -8 l10 8 l10 -8 l10 8" stroke="${c}" stroke-width="4" fill="none" opacity=".7"/>`;break;
+ case 'ice': b=`<path d="M32 4 v40 M12 14 l40 20 M12 34 l40 -20" stroke="${c}" stroke-width="4"/><circle cx="32" cy="24" r="5" fill="${c}"/>`;break;
+ case 'review': b=`<rect x="16" y="6" width="32" height="38" fill="#e8eef5"/><path d="M22 14 h20 M22 20 h20 M22 26 h14" stroke="${k}" stroke-width="2"/><path d="M20 34 l24 6" stroke="${c}" stroke-width="4"/>`;break;
+ default: b=`<polygon points="32,4 38,18 54,20 42,30 46,46 32,37 18,46 22,30 10,20 26,18" fill="${c}"/>`;
+ }
+ return `<svg viewBox="0 0 64 48" shape-rendering="crispEdges">${b}</svg>`;
+}
+
+/* =====================================================================
+   CARDS. One table; effects are hooks the engine calls:
+   play(ctx)   on plating / spell effect   ctx = {me, side, t, sp}
+   death(ctx)  lysis                        start/end(ctx) turn hooks
+   attack(ctx) after this minion attacks    aura(m, other) -> {atk, kw:[]}
+   handMod(inst, side) cost change for cards in hand while on the board
+   cost(side) dynamic cost     tgt/tf: target kind and extra filter
+   s = gen | micro | immuno | mol | boss (boss cards are never drafted)
+   ===================================================================== */
+const CARDS={};
+function C(d){d.type=d.type||(d.a!=null?'minion':'spell');d.kw=d.kw||[];d.r=d.r||1;d.s=d.s||'gen';CARDS[d.id]=d;return d}
+const isM=t=>!!t&&!t.isSide, isBact=m=>isM(m)&&m.d.t==='bact', gram=(m,g)=>isBact(m)&&m.d.g===g, tribe=(m,t)=>isM(m)&&m.d.t===t;
+const BACT='Bacterium';
+
+/* ---------- GENERAL BIOLOGY (starter deck and common drafts) ---------- */
+C({id:'ecoli',n:'E. coli',c:1,a:1,h:2,t:'bact',g:'-',flag:1,txt:'<b>On plating:</b> if you control another Bacterium, gain +1/+0.',fact:'Escherichia coli divides about every 20 minutes in rich medium at 37 °C. It is a Gram-negative rod: a thin wall hidden behind an outer membrane.',
+ play(c){if(c.side.board.some(m=>m!==c.me&&isBact(m)))buff(c.me,1,0)}});
+C({id:'bsub',n:'Bacillus subtilis',c:2,a:2,h:2,t:'bact',g:'+',kw:['spore'],txt:'<b>Spore</b> (when it dies, leave a 1/1 Spore).',fact:'Bacillus subtilis forms endospores when starved: dehydrated, dormant cells that survive heat, radiation and disinfectants for years.'});
+C({id:'yeast',n:'Baker\'s yeast',c:2,a:1,h:3,t:'fungus',txt:'At the end of your turn, gain +0/+1 (budding).',fact:'Saccharomyces cerevisiae divides by budding; a mother cell produces roughly 25 daughters before it ages out. It was the first eukaryote with a sequenced genome (1996).',
+ end(c){buff(c.me,0,1)}});
+C({id:'amoeba',n:'Amoeba',c:3,a:2,h:4,t:'parasite',kw:['phagocytic'],txt:'<b>Phagocytic.</b>',fact:'Amoebae engulf bacteria with pseudopods. Legionella evolved to survive inside amoebae, which pre-adapted it to survive inside our macrophages.'});
+C({id:'macro',n:'Macrophage',c:3,a:3,h:3,t:'immune',kw:['phagocytic'],tgt:'enemyMinion',txt:'<b>Phagocytic. On plating:</b> deal 1 damage to an enemy minion.',fact:'Macrophages engulf microbes and debris, then present fragments on MHC class II to T cells, bridging innate and adaptive immunity.',
+ play(c){if(c.t)damage(c.t,1,c.me)}});
+C({id:'neut',n:'Neutrophil',c:2,a:2,h:1,t:'immune',kw:['motile'],txt:'<b>Motile.</b>',fact:'Neutrophils make up 50–70% of white blood cells and reach an infection within hours; most live only about a day in circulation.'});
+C({id:'antibody',n:'Antibody',c:1,t:'reagent',tgt:'enemyMinion',txt:'<b>Opsonize</b> an enemy minion and remove <b>Intracellular</b> from it. Draw a card.',fact:'Antibodies grip antigen with their Fab arms; the Fc stem is recognised by phagocyte receptors, which flags the target for engulfment (opsonisation).',
+ play(c){opsonize(c.t);c.t.kw.delete('intracellular');draw(c.side,1)}});
+C({id:'lysozyme',n:'Lysozyme',c:2,t:'reagent',tgt:'minion',tf:m=>isBact(m),txt:'Deal 2 damage to a Bacterium. If it is <b>Gram+</b>, destroy it instead (not S. aureus).',fact:'Lysozyme, in tears and saliva, cuts the β-1,4 bond between NAM and NAG in peptidoglycan. Gram-positive walls are exposed; the Gram-negative outer membrane shields its thin layer.',
+ play(c){const m=c.t;if(hasKw(m,'nowall')){note('nowall');fx(m.uid,'no wall');return}if(gram(m,'+')&&!hasKw(m,'lysores')){destroy(m);note('lysozyme')}else damage(m,2+c.sp)}});
+C({id:'phage',n:'Bacteriophage',c:3,a:2,h:1,t:'phage',txt:'<b>On plating:</b> deal 1 damage to every enemy Bacterium.',fact:'Phages are the most abundant biological entities on Earth, an estimated 10^31 particles, and kill a large share of ocean bacteria every day.',
+ play(c){enemy(c.side).board.filter(isBact).forEach(m=>damage(m,1,null))}});
+C({id:'agar',n:'Agar plate',c:2,t:'instr',txt:'Summon two 1/1 Colonies.',fact:'Agar comes from red seaweed. Bacteria cannot digest it and it stays solid at 37 °C, which is why Fanny Hesse\'s suggestion replaced gelatin in Koch\'s lab in 1881.',
+ play(c){summon(c.side,'colony');summon(c.side,'colony')}});
+C({id:'colony',n:'Colony',c:1,a:1,h:1,t:'bact',g:'-',s:'token',txt:'',fact:'A colony is a visible pile of millions of cells descended from one cell; counting colonies (CFU) is still the standard way to count live bacteria.'});
+C({id:'pipette',n:'Pipette',c:1,t:'instr',tgt:'any',txt:'Deal 1 damage.',fact:'Air-displacement micropipettes are accurate to about 1% at full volume, less with volatile or viscous liquids. Change the tip; nobody enjoys cross-contamination.',
+ play(c){damage(c.t,1+c.sp)}});
+C({id:'centrifuge',n:'Centrifuge',c:2,t:'instr',txt:'Draw 2 cards (pellet and supernatant).',fact:'A centrifuge separates by density: cells pellet at the bottom, the supernatant stays above. Relative centrifugal force scales with the square of rotor speed.',
+ play(c){draw(c.side,2)}});
+C({id:'autoclave',n:'Autoclave',c:6,t:'instr',r:2,txt:'Destroy all minions. Prions survive.',fact:'An autoclave sterilises at 121 °C and 15 psi with saturated steam for at least 15 minutes, enough to kill endospores. Prions are not reliably inactivated by standard cycles.',
+ play(c){allMinions().filter(m=>m.d.t!=='prion').forEach(destroy)},ai:(e)=>boardValue(F.p)-boardValue(e)-4});
+C({id:'pcr',n:'PCR',c:3,t:'instr',tgt:'friendlyMinion',txt:'Add two copies of a friendly minion\'s card to your hand.',fact:'PCR doubles the target each cycle: 30 cycles make about a billion copies of one molecule. It depends on heat-stable Taq polymerase from Thermus aquaticus.',
+ play(c){addToHand(c.side,c.t.id);addToHand(c.side,c.t.id)}});
+C({id:'plasmid',n:'Plasmid',c:1,t:'plasmid',tgt:'friendlyMinion',tf:isBact,txt:'Give a friendly Bacterium +1/+1 and <b>ampR</b>.',fact:'Plasmids are small circular DNAs that replicate independently of the chromosome, often carrying resistance genes such as bla (β-lactamase, ampR).',
+ play(c){attachPlasmid(c.t,1,1)}});
+C({id:'staph',n:'Staphylococcus aureus',c:3,a:3,h:2,t:'bact',g:'+',shape:'cocci',kw:['toxin','lysores'],txt:'<b>Toxin. Lysozyme-resistant.</b>',fact:'Staphylococcus aureus grows in grape-like clusters; its O-acetylated peptidoglycan resists lysozyme, and it secretes toxins such as TSST-1.'});
+C({id:'amp',n:'Ampicillin',c:3,t:'reagent',txt:'<b>Antibiotic:</b> deal 2 damage to every Bacterium on both sides. <b>ampR</b> carriers gain +1/+1 instead.',fact:'Ampicillin, a β-lactam, blocks the transpeptidases that cross-link peptidoglycan, so growing cells burst. β-lactamase (ampR) hydrolyses the ring before it gets there.',
+ play(c){antibiotic(c,m=>true,2+c.sp,{wall:1,res:'ampr'})},ai:(e)=>abScore(e,m=>true,2)});
+C({id:'tardigrade',n:'Tardigrade',c:4,a:2,h:6,t:'parasite',r:2,kw:['capsule','persister'],txt:'<b>Capsule. Persister.</b>',fact:'Tardigrades survive desiccation, vacuum and radiation by entering cryptobiosis (the "tun" state), protected partly by intrinsically disordered proteins.'});
+C({id:'mouse',n:'Lab mouse',c:4,a:4,h:4,t:'mouse',txt:'<b>On plating:</b> draw a card.',fact:'The laboratory mouse shares about 85% of its protein-coding genes with humans; inbred strains such as C57BL/6 are near-identical twins of each other.',
+ play(c){draw(c.side,1)}});
+C({id:'microscope',n:'Microscope',c:2,t:'instr',txt:'Draw a card. Enemy minions lose <b>Intracellular</b>.',fact:'Light microscopes resolve about 200 nm (the Abbe limit): enough to see bacteria (1–5 µm) but not viruses.',
+ play(c){draw(c.side,1);enemy(c.side).board.forEach(m=>m.kw.delete('intracellular'))}});
+C({id:'incubator',n:'Incubator',c:3,t:'instr',txt:'Give your Bacteria +1/+1.',fact:'Most clinical bacteria grow fastest at 37 °C; shaking keeps oxygen dissolved, often the limiting factor for aerobic growth.',
+ play(c){c.side.board.filter(isBact).forEach(m=>buff(m,1,1))},ai:(e)=>e.board.filter(isBact).length*4-6});
+C({id:'bunsen',n:'Bunsen burner',c:2,t:'instr',tgt:'minion',txt:'Deal 3 damage to a minion.',fact:'Flaming the loop and working in the burner\'s updraft keeps airborne spores off the plate. The inner blue cone reaches about 1,500 °C.',
+ play(c){damage(c.t,3+c.sp)}});
+C({id:'ctl',n:'Killer T cell',c:4,a:3,h:3,t:'immune',kw:['toxin'],sub:'T',txt:'<b>Toxin.</b>',fact:'Cytotoxic (CD8+) T cells recognise peptides on MHC class I and kill the presenting cell with perforin and granzymes, triggering apoptosis.'});
+C({id:'penicillium',n:'Penicillium',c:3,a:1,h:4,t:'fungus',txt:'At the end of your turn, <b>Antibiotic:</b> 1 damage to every <b>Gram+</b> Bacterium.',fact:'In 1928 Alexander Fleming noticed a Penicillium mould had cleared the staphylococci around it. Penicillin works mainly on Gram-positives.',
+ end(c){antibiotic(c,m=>gram(m,'+'),1,{wall:1,res:'ampr'})}});
+C({id:'flu',n:'Influenza',c:3,a:2,h:2,t:'virus',txt:'<b>Lysis:</b> summon a 1/1 Virion.',fact:'Influenza\'s eight RNA segments can reassort when two strains infect one cell, which is how pandemic strains such as 2009 H1N1 arise.',
+ death(c){summon(c.side,'virion',c.pos)}});
+C({id:'virion',n:'Virion',c:1,a:1,h:1,t:'virus',s:'token',txt:'',fact:'A virion is the complete particle outside a cell: genome, capsid, sometimes an envelope. It does nothing until it finds a host.'});
+C({id:'protk',n:'Proteinase K',c:1,t:'reagent',tgt:'minion',txt:'<b>Knockout</b> a minion (silence).',fact:'Proteinase K is a broad serine protease used to strip protein during DNA extraction; it stays active in SDS and urea.',
+ play(c){silence(c.t)}});
+C({id:'gloves',n:'Nitrile gloves',c:1,t:'instr',tgt:'friendlyMinion',txt:'Give a friendly minion <b>Capsule</b>.',fact:'Nitrile replaced latex in most labs: it resists solvents better and does not cause latex allergy.',
+ play(c){c.t.kw.add('capsule')}});
+C({id:'spore',n:'Spore',c:1,a:1,h:1,t:'bact',g:'+',s:'token',kw:['persister'],txt:'<b>Persister.</b>',fact:'An endospore keeps its DNA dry and bound by small acid-soluble proteins, with calcium dipicolinate filling the core; some have germinated after decades.'});
+C({id:'hydra',n:'Hydra',c:5,a:4,h:5,t:'parasite',r:2,txt:'At the start of your turn, restore it to full health (regeneration).',fact:'Hydra regenerates from fragments and shows no measurable ageing; its stem cells keep dividing indefinitely.',
+ start(c){heal(c.me,99)}});
+
+/* ---------- MICROBIOLOGY: narrow, brutal ---------- */
+C({id:'t4',n:'T4 phage',c:3,a:2,h:2,t:'phage',s:'micro',r:2,tgt:'enemyMinion',tf:m=>gram(m,'-'),txt:'<b>On plating:</b> destroy an enemy <b>Gram−</b> Bacterium. <b>Lytic burst:</b> if you do, summon two more T4.',fact:'T4 is strictly lytic on E. coli: it injects DNA through a contractile tail, assembles about 150 new virions in 25 minutes, then lyses the host. It cannot touch a Gram-positive.',
+ play(c){if(!c.t)return;destroy(c.t);note('lytic');summon(c.side,'t4');summon(c.side,'t4')}});
+C({id:'lambda',n:'Lambda phage',c:4,a:1,h:2,t:'phage',s:'micro',r:2,tgt:'enemyMinion',tf:m=>gram(m,'-'),txt:'<b>On plating: lysogenize</b> an enemy <b>Gram−</b> Bacterium: at the start of your next turn it joins your side. If it dies first, add a copy to your hand.',fact:'Phage lambda can lyse E. coli or integrate into its chromosome as a prophage (lysogeny). Stress such as UV damage induces the prophage to excise and go lytic.',
+ play(c){if(c.t){c.t.lyso=c.side;fx(c.t.uid,'prophage')}}});
+C({id:'phagek',n:'Staph phage K',c:3,a:2,h:2,t:'phage',s:'micro',tgt:'enemyMinion',tf:m=>gram(m,'+')&&m.hp<=4,txt:'<b>On plating:</b> destroy an enemy <b>Gram+</b> Bacterium with 4 or less health.',fact:'Phage K is a broad-host-range Staphylococcus phage used in therapy against MRSA; phages work where β-lactams fail, because they do not care about PBP2a.',
+ play(c){if(c.t){destroy(c.t);note('phagek')}}});
+C({id:'cocktail',n:'Phage cocktail',c:4,t:'reagent',s:'micro',txt:'Deal 2 damage to every enemy Bacterium, +1 for each Phage you control.',fact:'Phage therapy uses cocktails because each phage has a narrow host range; mixing them makes resistance harder for the bacteria to evolve.',
+ play(c){const n=2+c.side.board.filter(m=>tribe(m,'phage')).length+c.sp;enemy(c.side).board.filter(isBact).forEach(m=>damage(m,n))},ai:(e)=>F.p.board.filter(isBact).length*3-5});
+C({id:'vanco',n:'Vancomycin',c:3,t:'reagent',s:'micro',txt:'<b>Antibiotic:</b> deal 4 damage to every <b>Gram+</b> Bacterium on both sides. <b>Gram−</b> are immune (outer membrane).',fact:'Vancomycin binds the D-Ala-D-Ala tail of peptidoglycan precursors. At about 1.45 kDa it cannot cross the Gram-negative outer membrane, so it only works on Gram-positives.',
+ play(c){antibiotic(c,m=>gram(m,'+'),4+c.sp,{wall:1});if(allMinions().some(m=>gram(m,'-')))note('vanco')},ai:(e)=>abScore(e,m=>gram(m,'+'),4)});
+C({id:'colistin',n:'Colistin',c:3,t:'reagent',s:'micro',txt:'<b>Antibiotic:</b> deal 4 damage to every <b>Gram−</b> Bacterium on both sides (lipid A).',fact:'Colistin (polymyxin E) binds lipid A of lipopolysaccharide and tears open the Gram-negative outer membrane. It is a last-resort drug because it damages the kidneys.',
+ play(c){antibiotic(c,m=>gram(m,'-'),4+c.sp,{});note('colistin')},ai:(e)=>abScore(e,m=>gram(m,'-'),4)});
+C({id:'fplasmid',n:'F plasmid',c:2,t:'plasmid',s:'micro',tgt:'friendlyMinion',tf:isBact,txt:'Give a friendly Bacterium +1/+1, <b>ampR</b> and <b>Conjugative</b>.',fact:'The F plasmid encodes a pilus that reels a recipient in, then transfers one strand of itself across: conjugation, the main road for spreading resistance.',
+ play(c){attachPlasmid(c.t,1,1);c.t.kw.add('conj')}});
+C({id:'pseudo',n:'Pseudomonas aeruginosa',c:4,a:3,h:4,t:'bact',g:'-',s:'micro',r:2,flag:1,kw:['biofilm'],txt:'<b>Biofilm.</b> Adjacent Bacteria also have <b>Biofilm</b>.',fact:'Pseudomonas aeruginosa builds biofilms of alginate and other polysaccharides that make it up to 1,000 times more tolerant of antibiotics than free-swimming cells.',
+ aura(me,o){return adjacent(me).includes(o)&&isBact(o)?{kw:['biofilm']}:null}});
+C({id:'vibrio',n:'Vibrio cholerae',c:3,a:3,h:2,t:'bact',g:'-',s:'micro',shape:'curve',kw:['toxin'],txt:'<b>Toxin.</b> Has +2 attack while you control 3 or more Bacteria (<b>quorum</b>).',fact:'Vibrio cholerae is a curved rod with one polar flagellum. Cholera toxin is encoded by the CTXφ prophage: a phage gave it its weapon.',
+ aura(me,o){return o===me&&me.side.board.filter(isBact).length>=3?{atk:2}:null}});
+C({id:'quorum',n:'Quorum sensing',c:2,t:'reagent',s:'micro',txt:'If you control 3 or more Bacteria, give them all +2/+1.',fact:'Bacteria release autoinducers and switch on group behaviour only when the signal, and so the population, crosses a threshold. Vibrio fischeri lighting up inside squid was the first example.',
+ play(c){const b=c.side.board.filter(isBact);if(b.length>=3){b.forEach(m=>buff(m,2,1));note('quorum')}else fx('hero-'+c.side.id,'too few')},ai:(e)=>e.board.filter(isBact).length>=3?12:-1});
+C({id:'cdiff',n:'C. difficile',c:3,a:2,h:3,t:'bact',g:'+',s:'micro',kw:['toxin','spore'],txt:'<b>Toxin. Spore.</b>',fact:'Clostridioides difficile is an anaerobic spore-former; its spores shrug off alcohol hand gel, which is why soap and water are required. Toxins A and B wreck the gut lining.'});
+C({id:'tb',n:'M. tuberculosis',c:5,a:3,h:6,t:'bact',g:'+',s:'micro',r:2,kw:['persister','intracellular'],txt:'<b>Persister. Intracellular.</b> At the end of your turn, restore 2 health.',fact:'Mycobacterium tuberculosis has a waxy mycolic-acid wall, survives inside macrophages and divides only every 15–20 hours, which is why treatment takes six months.',
+ end(c){heal(c.me,2)}});
+C({id:'strepto',n:'Streptomyces',c:4,a:2,h:5,t:'bact',g:'+',s:'micro',txt:'At the end of your turn, deal 1 damage to every enemy Bacterium (secretes streptomycin).',fact:'Streptomyces, filamentous soil bacteria, make about two-thirds of natural antibiotics, including streptomycin, tetracycline and the vancomycin family.',
+ end(c){enemy(c.side).board.filter(isBact).forEach(m=>damage(m,1))}});
+C({id:'lacto',n:'Lactobacillus',c:2,a:1,h:3,t:'bact',g:'+',s:'micro',txt:'At the end of your turn, restore 2 health to your hero (lactic acid).',fact:'Lactobacilli ferment sugars to lactic acid, dropping the local pH below what most pathogens tolerate; they dominate a healthy vaginal microbiome.',
+ end(c){heal(c.side,2)}});
+C({id:'sporulate',n:'Sporulation',c:1,t:'reagent',s:'micro',tgt:'friendlyMinion',tf:isBact,txt:'Give a friendly Bacterium <b>Spore</b> and <b>Persister</b>.',fact:'Sporulation in Bacillus is an asymmetric division: the mother cell engulfs the forespore, coats it in protein layers, then lyses to release it.',
+ play(c){c.t.kw.add('spore');c.t.kw.add('persister')}});
+C({id:'transduce',n:'Transduction',c:2,t:'reagent',s:'micro',tgt:'friendlyMinion',tf:m=>isBact(m)&&m.plasmid,txt:'Copy a friendly Bacterium\'s plasmid to every other friendly Bacterium.',fact:'In transduction a phage packages host DNA by mistake and carries it to the next cell; Zinder and Lederberg found it in Salmonella in 1952.',
+ play(c){c.side.board.filter(m=>isBact(m)&&m!==c.t&&!m.plasmid).forEach(m=>attachPlasmid(m,1,1))}});
+C({id:'gramstain',n:'Gram stain',c:1,t:'reagent',s:'micro',txt:'Draw a Bacterium from your deck.',fact:'Gram\'s 1884 stain: crystal violet is trapped in thick Gram-positive walls (purple); the thin Gram-negative wall loses it on the alcohol wash and takes the pink counterstain.',
+ play(c){drawWhere(c.side,d=>d.t==='bact')}});
+C({id:'colicin',n:'Colicin',c:2,t:'reagent',s:'micro',tgt:'enemyMinion',tf:isBact,txt:'Deal 3 damage to an enemy Bacterium.',fact:'Colicins are protein toxins E. coli makes to kill rival E. coli strains; an immunity protein protects the producer. They are a model for narrow-spectrum antibiotics.',
+ play(c){damage(c.t,3+c.sp)}});
+C({id:'hpylori',n:'Helicobacter pylori',c:2,a:2,h:2,t:'bact',g:'-',s:'micro',shape:'curve',kw:['motile'],txt:'<b>Motile.</b>',fact:'Helicobacter pylori survives stomach acid by making urease, which turns urea into ammonia; Barry Marshall drank a culture in 1984 to prove it causes gastritis.'});
+C({id:'salmonella',n:'Salmonella',c:3,a:3,h:3,t:'bact',g:'-',s:'micro',flag:1,kw:['intracellular'],txt:'<b>Intracellular.</b>',fact:'Salmonella injects effector proteins through a type III secretion system, a molecular syringe, forcing gut cells to engulf it; it then lives inside a vacuole.'});
+C({id:'thermus',n:'Thermus aquaticus',c:3,a:2,h:4,t:'bact',g:'-',s:'micro',cat:1,txt:'<b>Catalyst +1. Persister.</b>',kw:['persister'],fact:'Thermus aquaticus was found in a Yellowstone hot spring in 1969; its heat-stable Taq polymerase made PCR practical because it survives the 95 °C melting step.'});
+C({id:'persist',n:'Persister cells',c:1,t:'reagent',s:'micro',txt:'Give your Bacteria <b>Persister</b> until the end of the enemy turn.',fact:'Persisters are dormant cells that tolerate antibiotics without any resistance gene; once the drug is gone they wake up and regrow the infection.',
+ play(c){c.side.board.filter(isBact).forEach(m=>{if(!m.kw.has('persister')){m.kw.add('persister');m.tmpPersist=1}});note('persister')}});
+
+/* ---------- IMMUNOLOGY: cells that cooperate ---------- */
+C({id:'dendritic',n:'Dendritic cell',c:3,a:1,h:4,t:'immune',s:'immuno',r:2,txt:'<b>Antigen presentation:</b> T cells in your hand cost (1) less, and T cells you play get +1/+1.',fact:'Dendritic cells capture antigen in tissue, migrate to lymph nodes and present it on MHC to naive T cells; Ralph Steinman\'s discovery won the 2011 Nobel Prize.',
+ handMod(inst,side){return CARDS[inst.id].sub==='T'?-1:0},onSummon(me,m){if(m.d.sub==='T'&&m.side===me.side&&m!==me)buff(m,1,1)}});
+C({id:'thelper',n:'Helper T cell',c:3,a:2,h:3,t:'immune',s:'immuno',sub:'T',txt:'At the end of your turn, give another random friendly Immune cell +1/+1 (cytokines).',fact:'CD4+ helper T cells coordinate the response with cytokines: Th1 cells activate macrophages, Th2 cells help B cells, Tfh cells drive antibody maturation.',
+ end(c){const o=c.side.board.filter(m=>tribe(m,'immune')&&m!==c.me);if(o.length)buff(pick(o),1,1)}});
+C({id:'ctl2',n:'Cytotoxic T cell',c:4,a:3,h:3,t:'immune',s:'immuno',sub:'T',kw:['toxin','nk'],txt:'<b>Toxin. Missing-self</b> (can attack Intracellular minions).',fact:'Viruses hiding inside cells cannot hide from CD8+ T cells: infected cells display viral peptides on MHC class I and are killed by perforin and granzymes.'});
+C({id:'bcell',n:'B cell',c:3,a:2,h:4,t:'immune',s:'immuno',txt:'At the end of your turn, add an <b>Antibody</b> to your hand.',fact:'B cells that bind antigen and get T-cell help become plasma cells, each secreting about 2,000 antibody molecules per second.',
+ end(c){addToHand(c.side,'antibody')}});
+C({id:'plasma',n:'Plasma cell',c:4,a:1,h:5,t:'immune',s:'immuno',txt:'At the end of your turn, <b>Opsonize</b> a random enemy minion.',fact:'Long-lived plasma cells in bone marrow keep secreting antibody for decades, which is why one measles infection usually gives lifelong immunity.',
+ end(c){const o=enemy(c.side).board.filter(m=>!m.ops);if(o.length)opsonize(pick(o))}});
+C({id:'membcell',n:'Memory B cell',c:3,a:2,h:3,t:'immune',s:'immuno',kw:['memory'],txt:'<b>Memory. On plating:</b> add an <b>Antibody</b> to your hand.',fact:'Memory B cells persist for decades and respond faster, with higher-affinity antibody, on re-exposure: the basis of vaccination.',
+ play(c){addToHand(c.side,'antibody')}});
+C({id:'memt',n:'Memory T cell',c:4,a:3,h:4,t:'immune',s:'immuno',sub:'T',kw:['memory','motile'],txt:'<b>Memory. Motile.</b>',fact:'Tissue-resident memory T cells stay in skin, gut and lung for years and respond within hours when the same pathogen returns.'});
+C({id:'nets',n:'NETosis',c:2,t:'reagent',s:'immuno',tgt:'friendlyMinion',tf:m=>m.id==='neut',txt:'Destroy a friendly Neutrophil: deal 3 damage to every enemy Bacterium and <b>Cold shock</b> them (trapped).',fact:'Neutrophils can throw out their own chromatin as neutrophil extracellular traps (NETs): sticky webs laced with antimicrobial proteins that trap bacteria.',
+ play(c){destroy(c.t);enemy(c.side).board.filter(isBact).forEach(m=>{damage(m,3+c.sp);freeze(m)})}});
+C({id:'nkcell',n:'Natural killer cell',c:4,a:4,h:3,t:'immune',s:'immuno',kw:['toxin','nk'],txt:'<b>Toxin. Missing-self.</b>',fact:'Natural killer cells kill cells that have lost MHC class I ("missing self"), a trick viruses and tumours use to hide from T cells.'});
+C({id:'mast',n:'Mast cell',c:2,a:1,h:3,t:'immune',s:'immuno',txt:'<b>Lysis:</b> deal 1 damage to every enemy minion (histamine).',fact:'Mast cells release histamine within seconds of IgE cross-linking, widening blood vessels; it is also what drives allergy and anaphylaxis.',
+ death(c){enemy(c.side).board.forEach(m=>damage(m,1))}});
+C({id:'eos',n:'Eosinophil',c:3,a:3,h:2,t:'immune',s:'immuno',tgt:'enemyMinion',tf:m=>tribe(m,'parasite')||tribe(m,'fungus'),txt:'<b>On plating:</b> deal 4 damage to an enemy Parasite or Fungus.',fact:'Eosinophils release major basic protein onto parasitic worms too big to engulf; their counts rise in helminth infection and allergy.',
+ play(c){if(c.t)damage(c.t,4,c.me)}});
+C({id:'complement',n:'Complement cascade',c:3,t:'reagent',s:'immuno',txt:'Deal 1 damage to every enemy minion. <b>Opsonized</b> minions take 4 instead (membrane attack complex).',fact:'Complement tags microbes with C3b (opsonisation) and punches pores with the membrane attack complex (C5b-9); people lacking C5–C9 get recurrent Neisseria infections.',
+ play(c){enemy(c.side).board.forEach(m=>damage(m,(m.ops?4:1)+c.sp))},ai:(e)=>F.p.board.length*3-4});
+C({id:'igg',n:'IgG',c:2,t:'reagent',s:'immuno',txt:'<b>Opsonize</b> every enemy minion.',fact:'IgG is the most abundant antibody in blood and the only class that crosses the placenta, giving newborns passive immunity for months.',
+ play(c){enemy(c.side).board.forEach(opsonize)},ai:(e)=>F.p.board.length*2-3});
+C({id:'storm',n:'Cytokine storm',c:5,t:'reagent',s:'immuno',r:2,txt:'Deal 4 damage to ALL minions and 2 damage to both heroes.',fact:'A cytokine storm is runaway release of IL-6, TNF and other cytokines; in severe COVID-19 and sepsis it harms the host more than the pathogen does.',
+ play(c){allMinions().forEach(m=>damage(m,4+c.sp));damage(F.p,2);damage(F.e,2);note('storm')},ai:(e)=>boardValue(F.p)-boardValue(e)-3});
+C({id:'ifn',n:'Interferon',c:2,t:'reagent',s:'immuno',txt:'Deal 2 damage to every enemy Virus and <b>Cold shock</b> them.',fact:'Interferons are secreted by infected cells and warn neighbours to make antiviral proteins, degrading RNA and halting translation before the virus arrives.',
+ play(c){enemy(c.side).board.filter(m=>tribe(m,'virus')).forEach(m=>{damage(m,2+c.sp);freeze(m)});note('interferon')},ai:(e)=>F.p.board.filter(m=>tribe(m,'virus')).length*4-2});
+C({id:'vaccine',n:'Vaccine',c:3,t:'reagent',s:'immuno',txt:'Give your Immune cells <b>Memory</b> and +1/+1.',fact:'Vaccines show the immune system antigen without the disease; Jenner\'s 1796 cowpox inoculation led to smallpox eradication, declared in 1980.',
+ play(c){c.side.board.filter(m=>tribe(m,'immune')).forEach(m=>{m.kw.add('memory');buff(m,1,1)})},ai:(e)=>e.board.filter(m=>tribe(m,'immune')).length*4-5});
+C({id:'fever',n:'Fever',c:1,t:'reagent',s:'immuno',txt:'Deal 1 damage to every enemy minion. Your Immune cells get +1 attack this turn.',fact:'Fever is set by IL-1 and prostaglandin E2 acting on the hypothalamus; a few extra degrees slows many bacteria and speeds up immune cells.',
+ play(c){enemy(c.side).board.forEach(m=>damage(m,1+c.sp));c.side.board.filter(m=>tribe(m,'immune')).forEach(m=>{m.atk+=1;m.tmpAtk=(m.tmpAtk||0)+1})},ai:(e)=>F.p.board.length*2-1});
+C({id:'treg',n:'Regulatory T cell',c:2,a:1,h:3,t:'immune',s:'immuno',sub:'T',txt:'<b>On plating:</b> restore 5 health to your hero.',fact:'Regulatory T cells (FOXP3+) hold other immune cells back; without them, as in IPEX syndrome, the body attacks its own organs.',
+ play(c){heal(c.side,5)}});
+C({id:'lymph',n:'Lymph node',c:2,t:'reagent',s:'immuno',txt:'Draw two Immune cells from your deck.',fact:'Lymph nodes filter lymph and concentrate antigen, dendritic cells and lymphocytes; the swelling you feel in infection is clonal expansion.',
+ play(c){drawWhere(c.side,d=>d.t==='immune');drawWhere(c.side,d=>d.t==='immune')}});
+C({id:'phago',n:'Phagocytosis',c:2,t:'reagent',s:'immuno',tgt:'enemyMinion',tf:m=>m.ops,txt:'Destroy an <b>Opsonized</b> enemy minion. Restore 3 health to your hero.',fact:'The phagosome fuses with a lysosome to form a phagolysosome, where acid, reactive oxygen and enzymes digest the microbe.',
+ play(c){destroy(c.t);heal(c.side,3);note('opson')}});
+C({id:'inflam',n:'Inflammation',c:3,t:'reagent',s:'immuno',txt:'Summon two 2/1 Neutrophils with <b>Motile</b>.',fact:'Redness, heat, swelling and pain were listed by Celsus in the first century; they reflect vasodilation and leaky vessels recruiting neutrophils.',
+ play(c){summon(c.side,'neut');summon(c.side,'neut')}});
+
+/* ---------- MOLECULAR BIOLOGY: edit the board ---------- */
+C({id:'crispr',n:'CRISPR-Cas9',c:5,t:'reagent',s:'mol',r:2,tgt:'enemyMinion',txt:'Destroy an enemy minion. Costs (2) less if you control a Bacterium.',fact:'CRISPR is a bacterial immune system: spacers copied from past phage infections guide Cas nucleases to cut matching DNA. Repurposed as a genome editor in 2012 (Nobel 2020).',
+ cost(side){return side.board.some(isBact)?3:5},play(c){destroy(c.t);note('crispr')}});
+C({id:'gibson',n:'Gibson assembly',c:2,t:'reagent',s:'mol',r:2,tgt:'friendlyMinion',tf:m=>adjacent(m)[1],txt:'Fuse a friendly minion with its right-hand neighbour: combined attack, health and keywords.',fact:'Gibson assembly (2009) joins DNA fragments with overlapping ends in one isothermal reaction using an exonuclease, a polymerase and a ligase.',
+ play(c){const a=c.t,b=adjacent(a)[1];if(!b)return;a.atk+=atkOf(b);a.hp+=b.hp;a.max+=b.max;b.kw.forEach(k=>a.kw.add(k));if(b.cat)a.cat=(a.cat||0)+b.cat;a.fused=(a.fused||[a.d.n]).concat(b.d.n);removeMinion(b);fx(a.uid,'fused');note('gibson')}});
+C({id:'ecori',n:'Restriction enzyme',c:3,t:'reagent',s:'mol',tgt:'enemyMinion',tf:m=>m.hp>=2,txt:'Cut an enemy minion into two Fragments with half its stats and no abilities.',fact:'Restriction enzymes evolved to chop phage DNA; EcoRI recognises GAATTC and leaves 4-base sticky ends. The host protects its own DNA by methylation.',
+ play(c){const m=c.t,s=m.side,pos=s.board.indexOf(m),a=Math.floor(atkOf(m)/2),h=Math.ceil(m.hp/2);removeMinion(m);const f1=summon(s,'fragment',pos);if(f1){f1.atk=a;f1.hp=f1.max=h}const f2=summon(s,'fragment',pos+1);if(f2){f2.atk=a;f2.hp=f2.max=Math.max(1,m.hp-h)}}});
+C({id:'fragment',n:'Fragment',c:1,a:1,h:1,t:'misc',s:'token',txt:'',fact:'A restriction fragment is a defined piece of DNA; running fragments on a gel gives the pattern used in fingerprinting and in checking a clone.'});
+C({id:'overexp',n:'Overexpression',c:1,t:'reagent',s:'mol',tgt:'friendlyMinion',txt:'Give a friendly minion +3/+3. <b>Inclusion bodies:</b> it dies at the end of your next turn.',fact:'Overexpressed proteins in E. coli often misfold into insoluble inclusion bodies; lower temperature or a weaker promoter improves folding.',
+ play(c){buff(c.t,3,3);c.t.incl=2;fx(c.t.uid,'IPTG')}});
+C({id:'gfptag',n:'GFP tag',c:1,t:'reagent',s:'mol',tgt:'friendlyMinion',txt:'Give a friendly minion <b>GFP-tagged</b> (draw a card whenever it attacks) and +1/+0.',fact:'Green fluorescent protein from the jellyfish Aequorea victoria glows without cofactors, so it reports where a protein is inside a living cell (Nobel 2008).',
+ play(c){c.t.kw.add('gfp');buff(c.t,1,0)}});
+C({id:'transform',n:'Transformation',c:2,t:'reagent',s:'mol',tgt:'minion',txt:'Transform a minion into a random minion of the same cost.',fact:'Griffith (1928) showed harmless pneumococci were "transformed" by dead virulent ones; Avery, MacLeod and McCarty showed in 1944 the transforming principle was DNA.',
+ play(c){const m=c.t,pool=Object.values(CARDS).filter(d=>d.type==='minion'&&d.s!=='boss'&&d.s!=='token'&&d.c===m.d.c&&d.id!==m.id);if(pool.length)transformM(m,pick(pool).id)},aiT:(vt)=>vt.filter(m=>m.side===F.p).sort((a,b)=>value(b)-value(a))[0]||null});
+C({id:'kanr',n:'Selection plate',c:2,t:'reagent',s:'mol',txt:'<b>Antibiotic:</b> deal 3 damage to every Bacterium on both sides that carries no plasmid.',fact:'After transformation only cells that took up the plasmid grow on the antibiotic plate: the resistance gene is the selection marker.',
+ play(c){antibiotic(c,m=>!m.plasmid,3+c.sp,{})},ai:(e)=>abScore(e,m=>!m.plasmid,3)});
+C({id:'ligase',n:'T4 DNA ligase',c:1,t:'reagent',s:'mol',tgt:'friendlyMinion',txt:'Give a friendly minion and its neighbours +1/+1.',fact:'T4 DNA ligase, from phage T4, seals nicks in the backbone using ATP; it is the workhorse enzyme of cloning.',
+ play(c){buff(c.t,1,1);adjacent(c.t).forEach(m=>m&&buff(m,1,1))}});
+C({id:'taq',n:'Taq polymerase',c:2,a:2,h:2,t:'enzyme',s:'mol',cat:1,kw:['persister'],txt:'<b>Catalyst +1. Persister.</b>',fact:'Taq polymerase has no proofreading and makes roughly one error per 10,000–100,000 bases; high-fidelity enzymes such as Pfu are used when sequence accuracy matters.'});
+C({id:'rt',n:'Reverse transcriptase',c:3,a:2,h:3,t:'enzyme',s:'mol',txt:'<b>On plating:</b> add a copy of a random enemy minion\'s card to your hand (cDNA).',fact:'Reverse transcriptase copies RNA into DNA, against the original direction of the central dogma; retroviruses such as HIV use it, and labs use it to make cDNA.',
+ play(c){const o=enemy(c.side).board;if(o.length)addToHand(c.side,pick(o).id)}});
+C({id:'pet',n:'pET vector',c:2,t:'plasmid',s:'mol',tgt:'friendlyMinion',tf:isBact,txt:'Give a friendly Bacterium +3/+1, <b>ampR</b> and <b>Catalyst +1</b>.',fact:'pET vectors put the gene behind a T7 promoter; the BL21(DE3) host makes T7 RNA polymerase when IPTG is added, driving very high expression.',
+ play(c){attachPlasmid(c.t,3,1);c.t.cat=(c.t.cat||0)+1}});
+C({id:'komouse',n:'Knockout mouse',c:5,a:5,h:5,t:'mouse',s:'mol',r:2,tgt:'enemyMinion',txt:'<b>On plating: Knockout</b> an enemy minion.',fact:'Knockout mice are made by homologous recombination in embryonic stem cells (Capecchi, Evans and Smithies, Nobel 2007); CRISPR now does it in weeks.',
+ play(c){if(c.t)silence(c.t)}});
+C({id:'luc',n:'Luciferase assay',c:1,t:'reagent',s:'mol',txt:'Draw a card. If you control an Enzyme, draw 2 instead.',fact:'Firefly luciferase oxidises luciferin to emit light; as a reporter gene it shows when and how strongly a promoter is switched on.',
+ play(c){draw(c.side,c.side.board.some(m=>tribe(m,'enzyme'))?2:1)}});
+C({id:'sirna',n:'siRNA',c:2,t:'reagent',s:'mol',tgt:'enemyMinion',txt:'Set an enemy minion\'s attack to 0 (knockdown).',fact:'Small interfering RNAs guide the RISC complex to cut matching mRNA and silence the gene; Fire and Mello found RNA interference in C. elegans (Nobel 2006).',
+ play(c){c.t.atk=0;c.t.atkZero=1;fx(c.t.uid,'knockdown')},aiT:(vt)=>vt.sort((a,b)=>atkOf(b)-atkOf(a))[0]});
+C({id:'miniprep',n:'Miniprep',c:1,t:'reagent',s:'mol',txt:'Add two <b>Plasmid</b> cards to your hand.',fact:'A miniprep uses alkaline lysis: NaOH/SDS denatures everything, then acidic potassium acetate lets small plasmid DNA renature while chromosomal DNA precipitates.',
+ play(c){addToHand(c.side,'plasmid');addToHand(c.side,'plasmid')}});
+C({id:'clone',n:'Molecular cloning',c:4,t:'reagent',s:'mol',tgt:'friendlyMinion',txt:'Summon a copy of a friendly minion (current stats and keywords).',fact:'Cloning inserts a fragment into a vector and amplifies it in E. coli; Cohen and Boyer made the first recombinant plasmid in 1973.',
+ play(c){const m=c.t,n=summon(c.side,m.id);if(n){n.atk=m.atk;n.hp=m.hp;n.max=m.max;n.kw=new Set(m.kw);n.plasmid=m.plasmid;n.cat=m.cat}}});
+C({id:'seq',n:'Sequencing',c:2,t:'reagent',s:'mol',txt:'Draw 2 cards. Your next card this turn costs (1) less.',fact:'Sanger sequencing (1977) uses chain-terminating dideoxynucleotides; nanopore sequencers read single DNA strands threading through a protein pore.',
+ play(c){draw(c.side,2);c.side.discount=1}});
+C({id:'recprot',n:'Recombinant protein',c:4,a:4,h:4,t:'enzyme',s:'mol',txt:'<b>On plating:</b> if you control a Bacterium, gain +2/+2 (expressed in E. coli).',fact:'Recombinant human insulin, expressed in E. coli, was approved in 1982 as the first biotech drug, replacing insulin purified from pig and cow pancreases.',
+ play(c){if(c.side.board.some(m=>isBact(m)&&m!==c.me))buff(c.me,2,2)}});
+C({id:'heatshock',n:'Heat shock',c:2,t:'reagent',s:'mol',txt:'Deal 1 damage to every enemy minion. Your Bacteria with plasmids gain +1/+1.',fact:'Competent E. coli take up plasmid DNA after a 42 °C heat shock of about 45 seconds; calcium chloride neutralises the charge between DNA and membrane.',
+ play(c){enemy(c.side).board.forEach(m=>damage(m,1+c.sp));c.side.board.filter(m=>isBact(m)&&m.plasmid).forEach(m=>buff(m,1,1))},ai:(e)=>F.p.board.length*2-1});
+
+/* ---------- BOSS-ONLY ---------- */
+C({id:'aspergillus',n:'Aspergillus',c:3,a:2,h:3,t:'fungus',s:'boss',kw:['spore'],txt:'<b>Spore.</b>',fact:'Aspergillus spores are everywhere in air; a healthy person inhales hundreds a day without harm, but they cause invasive disease in immunocompromised patients.'});
+C({id:'hyphae',n:'Mould hyphae',c:2,a:1,h:4,t:'fungus',s:'boss',kw:['biofilm'],txt:'<b>Biofilm.</b>',fact:'Hyphae grow only at their tips and branch into a mycelium; a single mould colony on a plate can be one connected organism.'});
+C({id:'yeastcont',n:'Contaminant yeast',c:2,a:2,h:2,t:'fungus',s:'boss',txt:'',fact:'Wild yeasts ride in on skin and air; a cloudy broth with a bready smell is the usual giveaway.'});
+C({id:'sporecloud',n:'Spore cloud',c:2,t:'reagent',s:'boss',txt:'Summon two 1/1 Spores.',fact:'Opening a mouldy plate near your bench seeds the whole room; mould spores stay airborne for hours.',play(c){summon(c.side,'spore');summon(c.side,'spore')}});
+C({id:'overgrowth',n:'Overgrowth',c:3,t:'reagent',s:'boss',txt:'Give your Fungi +1/+1.',fact:'Moulds outgrow bacteria on old plates because they tolerate drying and low nutrients.',play(c){c.side.board.filter(m=>tribe(m,'fungus')).forEach(m=>buff(m,1,1))},ai:(e)=>e.board.filter(m=>tribe(m,'fungus')).length*4-5});
+C({id:'myco',n:'Mycoplasma',c:2,a:2,h:1,t:'bact',g:'-',s:'boss',shape:'cocci',kw:['nowall','intracellular'],txt:'<b>Wall-less. Intracellular.</b>',fact:'Mycoplasma has no cell wall, so β-lactams do nothing; at about 0.2 µm it slips through sterile filters and silently contaminates an estimated 15–35% of cell cultures.'});
+C({id:'mycobig',n:'Mycoplasma swarm',c:4,a:3,h:3,t:'bact',g:'-',s:'boss',shape:'cocci',kw:['nowall'],txt:'<b>Wall-less. Lysis:</b> summon a Mycoplasma.',fact:'Mycoplasma contamination changes cell metabolism and gene expression without turning the medium cloudy; PCR tests are the only reliable check.',death(c){summon(c.side,'myco',c.pos)}});
+C({id:'badserum',n:'Contaminated serum',c:3,t:'reagent',s:'boss',txt:'Summon two Mycoplasma.',fact:'Fetal bovine serum was once a common source of Mycoplasma; suppliers now filter and test every lot.',play(c){summon(c.side,'myco');summon(c.side,'myco')}});
+C({id:'mrsa',n:'MRSA',c:4,a:4,h:4,t:'bact',g:'+',s:'boss',shape:'cocci',kw:['persister','lysores'],txt:'<b>Persister. Lysozyme-resistant.</b>',fact:'MRSA carries mecA, encoding an altered penicillin-binding protein (PBP2a) with low affinity for β-lactams, which makes the whole drug class useless.'});
+C({id:'matrix',n:'Biofilm matrix',c:2,t:'reagent',s:'boss',txt:'Give your Bacteria <b>Biofilm</b>.',fact:'A biofilm matrix of polysaccharide, protein and extracellular DNA shields cells from antibiotics and immune cells; most chronic infections involve one.',play(c){c.side.board.filter(isBact).forEach(m=>m.kw.add('biofilm'))},ai:(e)=>e.board.filter(isBact).length*3-4});
+C({id:'tss',n:'Toxic shock',c:4,t:'reagent',s:'boss',txt:'Deal 2 damage to every enemy minion and 2 to the enemy hero.',fact:'TSST-1 is a superantigen: it cross-links MHC class II to T-cell receptors regardless of antigen, activating up to 20% of all T cells at once.',play(c){enemy(c.side).board.forEach(m=>damage(m,2));damage(enemy(c.side),2)},ai:(e)=>F.p.board.length*3});
+C({id:'rhino',n:'Rhinovirus',c:1,a:1,h:1,t:'virus',s:'boss',kw:['motile'],txt:'<b>Motile.</b>',fact:'Over 160 rhinovirus types cause most colds; they grow best at 33 °C, the temperature of the nose, not the lungs.'});
+C({id:'noro',n:'Norovirus',c:2,a:2,h:1,t:'virus',s:'boss',txt:'<b>Lysis:</b> summon two 1/1 Virions.',fact:'As few as 18 norovirus particles can infect; it is the leading cause of gastroenteritis outbreaks and survives on surfaces for days.',death(c){summon(c.side,'virion',c.pos);summon(c.side,'virion',c.pos)}});
+C({id:'corona',n:'Coronavirus',c:4,a:3,h:3,t:'virus',s:'boss',txt:'At the end of your turn, summon a 1/1 Virion.',fact:'Coronaviruses have the largest RNA genomes of any virus (about 30 kb) and, unusually for RNA viruses, a proofreading exonuclease.',end(c){summon(c.side,'virion')}});
+C({id:'hiv',n:'HIV',c:5,a:3,h:4,t:'virus',s:'boss',kw:['intracellular'],tgt:'enemyMinion',tf:m=>tribe(m,'immune'),txt:'<b>Intracellular. On plating:</b> destroy an enemy Immune cell.',fact:'HIV enters CD4+ T cells via CD4 and CCR5; people homozygous for the CCR5-Δ32 deletion are largely resistant to infection.',play(c){if(c.t)destroy(c.t)}});
+C({id:'mutation',n:'Antigenic drift',c:2,t:'reagent',s:'boss',txt:'Give your Viruses +1/+1.',fact:'Antigenic drift is the slow accumulation of mutations in surface proteins; it is why the flu vaccine is reformulated every year.',play(c){c.side.board.filter(m=>tribe(m,'virus')).forEach(m=>buff(m,1,1))},ai:(e)=>e.board.filter(m=>tribe(m,'virus')).length*4-5});
+C({id:'kleb',n:'Klebsiella',c:4,a:3,h:4,t:'bact',g:'-',s:'boss',kw:['capsule'],txt:'<b>Capsule.</b>',fact:'Klebsiella pneumoniae\'s thick polysaccharide capsule blocks phagocytosis; carbapenem-resistant strains (KPC) are a major hospital threat.'});
+C({id:'endotoxin',n:'Endotoxin',c:3,t:'reagent',s:'boss',txt:'Deal 2 damage to every enemy minion and 2 to the enemy hero.',fact:'Endotoxin is the lipid A of Gram-negative LPS; released on lysis it triggers TLR4, and nanogram amounts in the blood cause fever and shock.',play(c){enemy(c.side).board.forEach(m=>damage(m,2));damage(enemy(c.side),2)},ai:(e)=>F.p.board.length*3});
+C({id:'shock',n:'Septic shock',c:5,t:'reagent',s:'boss',txt:'Deal 3 damage to every enemy minion.',fact:'Sepsis kills about 11 million people a year; the shock is vasodilation and leaky vessels driven by the host\'s own cytokines.',play(c){enemy(c.side).board.forEach(m=>damage(m,3))},ai:(e)=>F.p.board.length*4-3});
+C({id:'reviewer',n:'Anonymous reviewer',c:3,a:2,h:4,t:'review',s:'boss',kw:['biofilm'],txt:'<b>Biofilm.</b>',fact:'Peer review as a formal gate dates mostly from the mid-20th century; Nature only made it systematic in 1973.'});
+C({id:'editor',n:'Handling editor',c:5,a:4,h:4,t:'review',s:'boss',txt:'<b>Lysis:</b> the enemy discards a random card.',fact:'Desk rejection, a decision by the editor without review, accounts for the majority of rejections at top journals.',death(c){discardRandom(enemy(c.side))}});
+C({id:'majorrev',n:'Major revision',c:2,t:'reagent',s:'boss',txt:'The enemy discards a random card.',fact:'"Major revision" usually means more experiments; the median time from submission to publication across journals is well over six months.',play(c){discardRandom(enemy(c.side))},ai:(e)=>F.p.hand.length*2});
+C({id:'reject',n:'Reject',c:5,t:'reagent',s:'boss',tgt:'enemyMinion',txt:'Destroy an enemy minion.',fact:'Rejection is not the end: most rejected papers are eventually published elsewhere, often in a journal of similar standing.',play(c){destroy(c.t)}});
+C({id:'moreexp',n:'More experiments',c:3,t:'reagent',s:'boss',txt:'<b>Cold shock</b> every enemy minion.',fact:'Reviewer 2 is a meme because it is true often enough: one harsh review can stall a paper for a year.',play(c){enemy(c.side).board.forEach(freeze)},ai:(e)=>F.p.board.length*3-2});
+C({id:'citation',n:'Citation needed',c:1,t:'reagent',s:'boss',txt:'Draw 2 cards.',fact:'The average paper is cited only a handful of times; a large share are never cited at all.',play(c){draw(c.side,2)}});
+C({id:'prion',n:'Prion',c:5,a:3,h:7,t:'prion',s:'boss',kw:['persister','elusive'],txt:'<b>Persister. Elusive.</b>',fact:'Prions are misfolded PrP proteins that template normal PrP to misfold; they contain no nucleic acid and survive autoclaving, formalin and protease.'});
+C({id:'misfold',n:'Misfolded protein',c:1,a:1,h:1,t:'prion',s:'token',kw:['elusive'],txt:'<b>Elusive.</b>',fact:'Protein misfolding underlies prion disease, Alzheimer\'s and Parkinson\'s; the aggregates spread from cell to cell in a prion-like way.'});
+C({id:'amyloid',n:'Amyloid plaque',c:3,a:0,h:6,t:'prion',s:'boss',kw:['biofilm','elusive'],txt:'<b>Biofilm. Elusive.</b> At the end of your turn, summon a Misfolded protein.',fact:'Amyloid is a cross-β fibril; it stains with Congo red and shows apple-green birefringence under polarised light.',end(c){summon(c.side,'misfold')}});
+C({id:'seeding',n:'Seeding',c:2,t:'reagent',s:'boss',txt:'Give your Prions +2/+2.',fact:'Seeded aggregation: a small misfolded seed recruits normal protein, which is why tiny prion doses can start disease after years.',play(c){c.side.board.filter(m=>tribe(m,'prion')).forEach(m=>buff(m,2,2))},ai:(e)=>e.board.filter(m=>tribe(m,'prion')).length*4-5});
+C({id:'icecrystal',n:'Ice crystal',c:1,a:0,h:3,t:'ice',s:'boss',kw:['biofilm'],txt:'<b>Biofilm.</b>',fact:'Slow freezing grows large ice crystals that pierce membranes; glycerol or DMSO and a controlled −1 °C per minute keep cells alive.'});
+C({id:'frostbite',n:'Frostbite',c:2,t:'reagent',s:'boss',tgt:'enemyMinion',txt:'Deal 2 damage to an enemy minion and <b>Cold shock</b> it.',fact:'Below about −40 °C water nucleates ice spontaneously; vitrification needs cooling fast enough to skip that window.',play(c){damage(c.t,2);freeze(c.t)}});
+C({id:'outage',n:'Power outage',c:4,t:'reagent',s:'boss',txt:'<b>Cold shock</b> every enemy minion and deal 1 damage to them.',fact:'A −80 °C freezer warms to −20 °C within hours of losing power; most labs chain a CO2 backup and an alarm to it.',play(c){enemy(c.side).board.forEach(m=>{freeze(m);damage(m,1)})},ai:(e)=>F.p.board.length*3-2});
+C({id:'thawed',n:'Thawed sample',c:3,a:3,h:3,t:'ice',s:'boss',txt:'<b>Lysis: Cold shock</b> a random enemy minion.',fact:'Repeated freeze-thaw cycles degrade proteins and DNA; aliquot once, thaw once.',death(c){const o=enemy(c.side).board;if(o.length)freeze(pick(o))}});
+C({id:'ln2',n:'Liquid nitrogen',c:5,t:'reagent',s:'boss',txt:'Deal 3 damage to every enemy minion and <b>Cold shock</b> them.',fact:'Liquid nitrogen boils at −196 °C; in a closed room a spill displaces oxygen silently, which is why dewars live in ventilated spaces.',play(c){enemy(c.side).board.forEach(m=>{damage(m,3);freeze(m)})},ai:(e)=>F.p.board.length*4-3});
+C({id:'frozenstock',n:'Frozen stock',c:6,a:5,h:6,t:'ice',s:'boss',kw:['biofilm','capsule'],txt:'<b>Biofilm. Capsule.</b>',fact:'A glycerol stock at −80 °C keeps bacteria viable for years; the glycerol stops ice crystals forming inside the cells.'});
+C({id:'degraded',n:'Degraded sample',c:4,a:4,h:2,t:'ice',s:'boss',kw:['motile'],txt:'<b>Motile.</b>',fact:'RNA degrades within minutes once thawed in the presence of RNases; RNA work is a race against your own fingertips.'});
+
+/* ---------- specialties and hero powers ---------- */
+const SPECS={
+ micro:{n:'Microbiology',hero:'Microbiologist',col:'#ff8ad0',d:'Bacteria, phages and antibiotics. The right phage deletes the right bacterium; the wrong antibiotic bounces off an outer membrane. Plasmids spread, quorums form, spores come back.',show:['t4','vanco','fplasmid'],
+  power:{n:'Streak plate',c:2,d:'Summon a 1/1 Colony.',use(side){summon(side,'colony')},ai:(e)=>e.board.length<6?3:-1}},
+ immuno:{n:'Immunology',hero:'Immunologist',col:'#7cf29a',d:'Cells that cooperate. Present antigen, opsonize, phagocytose, remember. Your army heals you and chains together; cytokines cut both ways.',show:['dendritic','complement','phago'],
+  power:{n:'Antibody titre',c:2,d:'Deal 1 damage to an enemy minion and Opsonize it.',tgt:'enemyMinion',use(side,t){opsonize(t);damage(t,1)},ai:(e)=>F.p.board.length?3:-1}},
+ mol:{n:'Molecular biology',hero:'Molecular biologist',col:'#ffd166',d:'Edit the board. Cut, copy, fuse and transform; fewer bodies, more tricks. Enzymes amplify your spells; plasmids make your bacteria into factories.',show:['crispr','gibson','overexp'],
+  power:{n:'Mutagenesis',c:2,d:'Give a friendly minion +1/+1.',tgt:'friendlyMinion',use(side,t){buff(t,1,1)},ai:(e)=>e.board.length?3:-1}}
+};
+const GEN_POWER={n:'Pipette',c:2,d:'Deal 1 damage to anything.',tgt:'any',use(side,t){damage(t,1)},ai:(e)=>2,aiT:(vt)=>{const p=vt.find(t=>t.isSide&&t===F.p);const low=vt.filter(t=>!t.isSide&&t.side===F.p&&t.hp===1);return low[0]||p||null}};
+const STARTER=['ecoli','ecoli','bsub','bsub','yeast','neut','neut','macro','amoeba','staph','phage','mouse','pipette','pipette','agar','lysozyme','centrifuge','plasmid','amp','bunsen'];
+
+/* ---------- lab notes: shown the first time an interaction fires in a run ---------- */
+const NOTES={
+ lytic:'T4 is lytic: it hijacked the E. coli, built ~150 virions and burst the cell. Phages are host-specific: T4 cannot touch a Gram-positive.',
+ phagek:'Phage K killed a Gram-positive that antibiotics could not: a phage does not care about PBP2a or β-lactamase.',
+ vanco:'Vancomycin bounced off a Gram-negative: at ~1.45 kDa it cannot cross the outer membrane. It only works on Gram-positives.',
+ colistin:'Colistin binds lipid A of the Gram-negative outer membrane. Gram-positives have none, so it ignores them.',
+ ampr:'A β-lactamase (ampR) carrier shrugged off the β-lactam: the enzyme hydrolyses the ring before it reaches the wall.',
+ opson:'Opsonized: antibody Fc regions are gripped by phagocyte Fc receptors, so engulfment is far more efficient.',
+ lyso:'Lysogeny: lambda integrated into the host chromosome as a prophage. Stress induced it, and the cell changed sides.',
+ lysocopy:'The lysogen died with lambda still inside it; the prophage DNA came back to you as a copy.',
+ conj:'Conjugation: the F pilus pulled a neighbour close and transferred the plasmid, resistance gene and all.',
+ quorum:'Quorum sensing: with enough cells the autoinducer crossed its threshold and the population switched on group behaviour.',
+ spore:'Sporulation: the dying cell left an endospore. Spores survive boiling, alcohol and years of drought.',
+ incl:'Inclusion bodies: the overexpressed protein misfolded into insoluble clumps and the cell gave up.',
+ lysozyme:'Lysozyme cut the exposed peptidoglycan of a Gram-positive. A Gram-negative hides its thin wall behind an outer membrane.',
+ storm:'Cytokine storm: the response, not the pathogen, is doing the damage. IL-6 and TNF hit friend and foe alike.',
+ nowall:'Mycoplasma has no cell wall, so a cell-wall agent found nothing to attack.',
+ mrsa:'MRSA: PBP2a ignores β-lactams and the strain carries more resistance besides. Antibiotics are useless here; phages and immune cells still work.',
+ crispr:'CRISPR-Cas9 cut the gene. Bacteria evolved it as an adaptive immune system against phages, which is why it is cheaper with a Bacterium around.',
+ gibson:'Gibson assembly: overlapping ends were chewed back, annealed and sealed into one molecule, in one tube at 50 °C.',
+ persister:'Persisters are dormant cells that tolerate antibiotics without a resistance gene; when the drug is gone they wake up.',
+ fatigue:'Fatigue: an empty deck hurts more each draw. In the lab this is called running out of reagent on a Friday.',
+ prion:'Prions have no genome to cut and no wall to breach; spells cannot target them. Only brute force (attacks, board-wide damage) works.',
+ freeze:'Cold shock: ice crystals and stalled ribosomes. The minion thaws at the end of its owner\'s next turn.',
+ interferon:'Interferon put neighbouring cells into an antiviral state before the virus arrived.',
+ virusrep:'Viruses do not divide; the infected cell assembles them in bulk. Each virus the boss plays leaves a copy in its deck.',
+ nk:'Missing-self: the target was hiding inside a cell, but an NK or cytotoxic T cell recognises an infected cell anyway.',
+ dendritic:'Antigen presentation: the dendritic cell showed the T cell its target, so the T cell arrived primed and cheaper.',
+ reviewer:'Reviewer 2 has made one of your cards cost more. There is no biology here, only pain.',
+ sepsis:'Sepsis: every turn the boss\'s cytokines hit both heroes and every minion. Kill fast or heal faster.',
+ freezer:'The freezer is failing: at the end of each of your turns, one of your minions is cold-shocked. Spend them before they freeze.'
+};
+const NOTE_T={lytic:'LYTIC BURST',phagek:'PHAGE THERAPY',vanco:'OUTER MEMBRANE',colistin:'LIPID A',ampr:'β-LACTAMASE',opson:'OPSONIZATION',lyso:'LYSOGENY',lysocopy:'PROPHAGE',conj:'CONJUGATION',quorum:'QUORUM SENSING',spore:'ENDOSPORE',incl:'INCLUSION BODIES',lysozyme:'PEPTIDOGLYCAN',storm:'CYTOKINE STORM',nowall:'WALL-LESS',mrsa:'MRSA',crispr:'CRISPR',gibson:'GIBSON ASSEMBLY',persister:'PERSISTERS',fatigue:'FATIGUE',prion:'PRION',freeze:'COLD SHOCK',interferon:'INTERFERON',virusrep:'REPLICATION',nk:'MISSING SELF',dendritic:'ANTIGEN PRESENTATION',reviewer:'REVIEWER 2',sepsis:'SEPSIS',freezer:'FREEZER FAILURE'};
+
+/* ---------- bosses: one passive each, stated on the intro card ---------- */
+const BOSSES=[
+ {id:'plate',n:'The Contaminated Plate',sub:'Level 1 · a forgotten agar plate',hp:18,passive:'At the start of its turn, if it controls fewer than 4 minions, summons a 1/1 Spore.',fact:'A plate left in the incubator over a long weekend becomes a mould garden. Fungal spores are everywhere; fungi simply grow slower than bacteria until the bacteria run out of food.',
+  deck:[['aspergillus',3],['hyphae',3],['yeastcont',3],['sporecloud',2],['overgrowth',2],['penicillium',1],['yeast',2],['pipette',2],['bunsen',1],['agar',1]],power:{n:'Sporulate',c:2,d:'Summon a 1/1 Spore.',use(s){summon(s,'spore')},ai:(e)=>e.board.length<6?2:-1},
+  onStart(s){if(s.board.length<4)summon(s,'spore')}},
+ {id:'myco',n:'Mycoplasma Contamination',sub:'Level 2 · the cell line that lied to you',hp:22,passive:'Its minions enter play with Intracellular. Cell-wall antibiotics do nothing to Mycoplasma.',fact:'Mycoplasma is the contamination you cannot see: no turbidity, no colour change, just cells that quietly behave differently. One in five cultures in some surveys carried it.',
+  deck:[['myco',5],['mycobig',3],['badserum',2],['ecoli',2],['colony',0],['centrifuge',2],['pipette',2],['microscope',1],['bunsen',2],['protk',1],['yeastcont',2]],power:{n:'Passage',c:2,d:'Draw a card.',use(s){draw(s,1)},ai:(e)=>e.hand.length<4?2:-1},
+  onSummon(m){m.kw.add('intracellular')}},
+ {id:'mrsa',n:'MRSA',sub:'Level 3 · methicillin-resistant Staphylococcus aureus',hp:28,passive:'Its Bacteria are immune to antibiotic spells (Persister). Phages, enzymes and immune cells still work.',fact:'MRSA was first reported in 1961, two years after methicillin reached the clinic. Its PBP2a transpeptidase has low affinity for every β-lactam, so the whole class fails.',
+  deck:[['mrsa',3],['staph',3],['ecoli',2],['matrix',1],['tss',1],['pipette',1],['bsub',2],['incubator',2],['bunsen',2],['pipette',2],['agar',2],['gloves',1]],power:{n:'Resist',c:2,d:'Give a friendly Bacterium +1/+1.',tgt:'friendlyMinion',use(s,t){buff(t,1,1)},ai:(e)=>e.board.some(isBact)?3:-1},
+  abImmune(m){return isBact(m)}},
+ {id:'virus',n:'Viral Outbreak',sub:'Level 4 · the whole floor is coughing',hp:30,passive:'Whenever it plays a Virus, a copy of that card goes back into its deck (replication).',fact:'Viruses do not grow or divide. The host cell assembles them in bulk, hundreds to thousands per cell, and the only way to stop that is to kill or warn the cell.',
+  deck:[['rhino',4],['noro',3],['flu',3],['corona',2],['hiv',1],['mutation',2],['pipette',2],['centrifuge',2],['bunsen',1],['mouse',1],['virion',0]],power:{n:'Shed',c:2,d:'Summon a 1/1 Virion.',use(s){summon(s,'virion')},ai:(e)=>e.board.length<6?2:-1},
+  onPlay(m){if(m.d.t==='virus'){F.e.deck.splice(rnd(F.e.deck.length+1),0,mkCard(m.id));note('virusrep')}}},
+ {id:'sepsis',n:'Sepsis',sub:'Level 5 · the response is the disease',hp:35,passive:'At the end of its turn, deals 1 damage to every minion and to both heroes (cytokines).',fact:'In sepsis the patient\'s own inflammatory response goes systemic: vasodilation, leaky capillaries, clotting in the wrong places. Every hour of delayed antibiotics measurably raises mortality.',
+  deck:[['ecoli',3],['kleb',3],['staph',2],['pseudo',2],['endotoxin',2],['shock',1],['neut',2],['macro',1],['incubator',2],['pipette',2],['amp',1],['agar',1]],power:{n:'Fever spike',c:2,d:'Deal 1 damage to the enemy hero.',use(s){damage(enemy(s),1)},ai:(e)=>2},
+  onEnd(s){allMinions().forEach(m=>damage(m,1));damage(F.p,1);damage(F.e,1);note('sepsis')}},
+ {id:'rev2',n:'Reviewer 2',sub:'Level 6 · anonymous, and not in a hurry',hp:35,passive:'At the start of your turn, a random card in your hand costs (1) more. Reviewers hide behind Biofilm.',fact:'Reviewer 2 is folklore, but review really is slow: median time to first decision is one to three months, and a single hostile review can cost a paper a year.',
+  deck:[['reviewer',4],['editor',2],['majorrev',3],['reject',2],['moreexp',2],['citation',3],['mouse',2],['centrifuge',2],['protk',1],['bunsen',2],['tardigrade',1]],power:{n:'Desk reject',c:2,d:'Deal 2 damage to an enemy minion.',tgt:'enemyMinion',use(s,t){damage(t,2)},ai:(e)=>F.p.board.length?3:-1},
+  onPlayerStart(){const h=F.p.hand;if(h.length){const c=pick(h);c.cm=(c.cm||0)+1;note('reviewer')}}},
+ {id:'prion',n:'The Prion',sub:'Level 7 · a protein that cannot be killed',hp:40,passive:'Its Prions are Elusive (no spell can target them). Whenever one of YOUR minions dies, it gains a 1/1 Misfolded protein.',fact:'Stanley Prusiner\'s "proteinaceous infectious particle" (Nobel 1997) broke the rule that infection needs nucleic acid. Prions resist protease, formalin and standard autoclaving.',
+  deck:[['prion',3],['amyloid',2],['misfold',3],['seeding',2],['mouse',2],['moreexp',1],['bunsen',2],['pipette',2],['centrifuge',2],['tardigrade',1],['hydra',1]],power:{n:'Template',c:2,d:'Give a friendly Prion +1/+1.',tgt:'friendlyMinion',tf:m=>tribe(m,'prion'),use(s,t){buff(t,1,1)},ai:(e)=>e.board.some(m=>tribe(m,'prion'))?3:-1},
+  onDeath(m){if(m.side===F.p){summon(F.e,'misfold');note('prion')}}},
+ {id:'freezer',n:'The −80 °C Freezer Failure',sub:'Level 8 · everything you ever binned, thawing at once',hp:45,passive:'At the end of your turn, one of your minions is Cold-shocked. Starts with two Ice crystals.',fact:'A −80 °C freezer failure is the lab nightmare: years of glycerol stocks, cell lines and plasmids thaw in a night. Alarms, CO2 backup and a second freezer are the only defence.',
+  deck:[['icecrystal',3],['frostbite',3],['thawed',3],['degraded',2],['outage',2],['ln2',1],['frozenstock',2],['mrsa',1],['corona',1],['prion',1],['centrifuge',2],['mouse',1],['citation',1]],power:{n:'Freeze',c:2,d:'Cold shock an enemy minion.',tgt:'enemyMinion',use(s,t){freeze(t)},ai:(e)=>F.p.board.some(m=>!m.frozen)?3:-1},
+  onFightStart(s){summon(s,'icecrystal');summon(s,'icecrystal')},onPlayerEnd(){const o=F.p.board.filter(m=>!m.frozen);if(o.length){freeze(pick(o));note('freezer')}}}
+];
+
+/* =====================================================================
+   ENGINE
+   ===================================================================== */
+let F=null,G=null,UID=1,AIBUSY=false,SEL=null,SCREEN='title',FXQ=[],RUN=null;
+const enemy=s=>s===F.p?F.e:F.p;
+const allMinions=()=>F.p.board.concat(F.e.board);
+function mkCard(id){return {uid:UID++,id,cm:0}}
+function mkSide(id,hero,ids,hp){return {id,isSide:true,hero,hp,max:hp,mana:0,maxMana:0,hand:[],deck:shuffle(ids.map(mkCard)),board:[],fatigue:0,powerUsed:false,discount:0,deaths:0}}
+function mkMinion(side,id){const d=CARDS[id];return {uid:UID++,id,d,side,atk:d.a,hp:d.h,max:d.h,kw:new Set(d.kw),cat:d.cat||0,sick:true,att:0,frozen:false,ops:false,silenced:false,lyso:null,incl:0,plasmid:false,tmpAtk:0}}
+function auraOf(m){let atk=0;const kw=new Set();for(const o of m.side.board){if(o.silenced||!o.d.aura)continue;const r=o.d.aura(o,m);if(r){atk+=r.atk||0;(r.kw||[]).forEach(k=>kw.add(k))}}return {atk,kw}}
+const hasKw=(m,k)=>!!m&&!m.isSide&&(m.kw.has(k)||auraOf(m).kw.has(k));
+const atkOf=m=>Math.max(0,m.atk+auraOf(m).atk);
+const value=m=>atkOf(m)+m.hp+m.kw.size;
+const boardValue=s=>s.board.reduce((a,m)=>a+value(m),0);
+const adjacent=m=>{const b=m.side.board,i=b.indexOf(m);return [b[i-1]||null,b[i+1]||null]};
+const sp=side=>side.board.reduce((a,m)=>a+(m.silenced?0:m.cat||0),0);
+function log(s){F.log.push(s);if(F.log.length>60)F.log.shift()}
+function fx(uid,txt){FXQ.push({uid,txt})}
+function seen(id){if(META.seen.indexOf(id)<0){META.seen.push(id);saveMeta()}}
+function note(k){if(!F||F.notes.has(k)||!NOTES[k])return;F.notes.add(k);if(META.notes.indexOf(k)<0){META.notes.push(k);saveMeta()}F.noteQ.push(k)}
+
+function costOf(side,inst){const d=CARDS[inst.id];let c=d.cost?d.cost(side):d.c;c+=inst.cm||0;for(const m of side.board)if(m.d.handMod&&!m.silenced)c+=m.d.handMod(inst,side);if(side.discount)c-=side.discount;return Math.max(0,c)}
+function validTargets(side,d,src){const en=enemy(side),k=d.tgt;let arr=[];if(!k)return arr;
+ if(k==='enemyMinion'||k==='minion'||k==='any'||k==='enemy')arr=arr.concat(en.board.filter(m=>!hasKw(m,'intracellular')&&!hasKw(m,'elusive')));
+ if(k==='friendlyMinion'||k==='minion'||k==='any')arr=arr.concat(side.board.filter(m=>m!==src));
+ if(k==='any'||k==='enemy')arr.push(en);if(k==='any')arr.push(side);
+ if(d.tf)arr=arr.filter(t=>d.tf(t,side));return arr}
+function canPlay(side,inst){const d=CARDS[inst.id];if(F.over||costOf(side,inst)>side.mana)return false;if(d.type==='minion'&&side.board.length>=6)return false;if(d.type==='spell'&&d.tgt&&validTargets(side,d).length===0)return false;return true}
+function needsTarget(side,inst){const d=CARDS[inst.id];return !!d.tgt&&validTargets(side,d).length>0}
+
+function play(side,inst,target){const d=CARDS[inst.id];if(!canPlay(side,inst))return false;if(d.tgt&&target&&!validTargets(side,d).includes(target))target=null;if(d.type==='spell'&&d.tgt&&!target)return false;
+ side.mana-=costOf(side,inst);side.discount=0;side.hand.splice(side.hand.indexOf(inst),1);SFX.play();log(`${side.hero} plays ${d.n}`);if(side===F.p)seen(inst.id);
+ if(d.type==='minion'){const m=mkMinion(side,inst.id);side.board.push(m);if(hasKw(m,'motile'))m.sick=false;fx(m.uid,'pop');onSummon(m);if(d.play&&!m.silenced)d.play({me:m,side,t:target,sp:sp(side)});if(side===F.e&&F.e.boss.onPlay)F.e.boss.onPlay(m)}
+ else{d.play({side,t:target,sp:sp(side),card:d});F.spells++}
+ resolve();return true}
+function onSummon(m){for(const o of m.side.board)if(o!==m&&o.d.onSummon&&!o.silenced)o.d.onSummon(o,m);if(m.side===F.e&&F.e.boss.onSummon)F.e.boss.onSummon(m);if(m.d.sub==='T'&&m.side.board.some(o=>o.id==='dendritic'&&o!==m))note('dendritic')}
+function summon(side,id,pos){if(side.board.length>=6)return null;const m=mkMinion(side,id);if(pos==null||pos>side.board.length)pos=side.board.length;side.board.splice(pos,0,m);if(hasKw(m,'motile'))m.sick=false;fx(m.uid,'pop');onSummon(m);if(side===F.p)seen(id);return m}
+function removeMinion(m){const b=m.side.board,i=b.indexOf(m);if(i>=0)b.splice(i,1);m.gone=true}
+function destroy(m){if(!m||m.isSide)return;m.dead=true}
+function damage(t,n,src,opts={}){n=Math.max(0,Math.floor(n));if(n<=0||!t)return 0;
+ if(t.isSide){t.hp-=n;fx('hero-'+t.id,'-'+n);SFX.hit();if(src&&!src.isSide&&hasKw(src,'phagocytic'))heal(src.side,n);return n}
+ if(t.gone||t.dead)return 0;
+ if(src&&!src.isSide&&hasKw(src,'phagocytic')&&t.ops){n*=2;note('opson')}
+ if(t.kw.has('capsule')){t.kw.delete('capsule');fx(t.uid,'capsule');return 0}
+ t.hp-=n;fx(t.uid,'-'+n);SFX.hit();
+ if(src&&!src.isSide){if(hasKw(src,'phagocytic'))heal(src.side,n);if(hasKw(src,'toxin'))t.dead=true}
+ return n}
+function heal(t,n){if(t.isSide){const b=t.hp;t.hp=Math.min(t.max,t.hp+n);if(t.hp>b){fx('hero-'+t.id,'+'+(t.hp-b));SFX.heal()}}else{const b=t.hp;t.hp=Math.min(t.max,t.hp+n);if(t.hp>b)fx(t.uid,'+'+(t.hp-b))}}
+function buff(m,a,h){if(!m||m.isSide)return;m.atk+=a;m.max+=h;m.hp+=h;if(a||h)fx(m.uid,`+${a}/+${h}`)}
+function attachPlasmid(m,a,h){buff(m,a,h);m.kw.add('ampr');m.plasmid=true}
+function opsonize(m){if(!m||m.isSide)return;m.ops=true;fx(m.uid,'opsonized')}
+function freeze(m){if(!m||m.isSide)return;m.frozen=true;fx(m.uid,'frozen');note('freeze')}
+function silence(m){if(!m||m.isSide)return;m.silenced=true;m.kw.clear();m.atk=m.d.a;m.max=m.d.h;m.hp=Math.min(m.hp,m.max);m.cat=0;m.incl=0;m.lyso=null;m.plasmid=false;fx(m.uid,'knockout')}
+function transformM(m,id){const d=CARDS[id];m.id=id;m.d=d;m.atk=d.a;m.hp=m.max=d.h;m.kw=new Set(d.kw);m.cat=d.cat||0;m.silenced=false;m.ops=false;m.plasmid=false;m.incl=0;m.lyso=null;fx(m.uid,'transformed')}
+function draw(side,n=1){for(let i=0;i<n;i++){if(!side.deck.length){side.fatigue++;damage(side,side.fatigue);log(`${side.hero} fatigue ${side.fatigue}`);note('fatigue');continue}const c=side.deck.pop();if(side.hand.length>=10){log(`${side.hero} burns ${CARDS[c.id].n}`);continue}side.hand.push(c);if(side===F.p){seen(c.id);SFX.draw()}}}
+function drawWhere(side,f){const i=side.deck.map((c,i)=>f(CARDS[c.id])?i:-1).filter(i=>i>=0);if(!i.length){draw(side,1);return}const c=side.deck.splice(pick(i),1)[0];if(side.hand.length<10){side.hand.push(c);if(side===F.p)seen(c.id)}}
+function addToHand(side,id){if(side.hand.length>=10)return null;const c=mkCard(id);side.hand.push(c);if(side===F.p)seen(id);return c}
+function discardRandom(side){if(!side.hand.length)return;const c=side.hand.splice(rnd(side.hand.length),1)[0];log(`${side.hero} discards ${CARDS[c.id].n}`);fx('hero-'+side.id,'discard')}
+function antibiotic(ctx,filter,n,opts){for(const s of [F.p,F.e])for(const m of [...s.board]){if(!isBact(m)||!filter(m))continue;
+ if(hasKw(m,'persister')){fx(m.uid,'persister');note('persister');continue}
+ if(opts.wall&&hasKw(m,'nowall')){fx(m.uid,'no wall');note('nowall');continue}
+ if(s===F.e&&F.e.boss.abImmune&&F.e.boss.abImmune(m)){fx(m.uid,'resistant');note('mrsa');continue}
+ if(opts.res&&m.kw.has(opts.res)){buff(m,1,1);note('ampr');continue}
+ damage(m,n)}}
+function abScore(e,filter,n){let s=0;for(const m of F.p.board)if(isBact(m)&&filter(m)&&!hasKw(m,'persister'))s+=m.kw.has('ampr')?-3:(m.hp<=n?value(m):2);for(const m of e.board)if(isBact(m)&&filter(m)&&!hasKw(m,'persister')&&!(e.boss.abImmune&&e.boss.abImmune(m)))s-=m.kw.has('ampr')?-2:(m.hp<=n?value(m):2);return s-2}
+
+function canAttack(m){if(F.over||m.frozen||(m.sick&&!hasKw(m,'motile'))||atkOf(m)<=0)return false;return m.att<(hasKw(m,'fastrep')?2:1)}
+function attackTargets(m){const en=enemy(m.side),taunts=en.board.filter(x=>hasKw(x,'biofilm'));let list=(taunts.length?taunts:en.board).filter(x=>!hasKw(x,'intracellular')||hasKw(m,'nk'));if(!taunts.length)list=list.concat([en]);return list}
+function attack(m,t){if(!canAttack(m)||!attackTargets(m).includes(t))return false;m.att++;if(m.kw.has('intracellular'))m.kw.delete('intracellular');m.sick=false;
+ if(!t.isSide&&t.kw.has('intracellular')&&hasKw(m,'nk'))note('nk');
+ log(`${m.d.n} attacks ${t.isSide?t.hero:t.d.n}`);fx(m.uid,'lunge');
+ const a=atkOf(m);if(t.isSide)damage(t,a,m);else{const b=atkOf(t);damage(t,a,m);damage(m,b,t)}
+ if(m.kw.has('gfp')&&!m.gone)draw(m.side,1);if(m.d.attack&&!m.silenced)m.d.attack({me:m,side:m.side,t});
+ resolve();return true}
+function resolve(){let loop=0;while(loop++<30){const dead=[];for(const s of [F.p,F.e])for(const m of s.board)if(m.hp<=0||m.dead)dead.push(m);if(!dead.length)break;
+ for(const m of dead){const s=m.side,idx=s.board.indexOf(m);if(idx<0)continue;s.board.splice(idx,1);m.gone=true;s.deaths++;log(`${m.d.n} dies`);SFX.die();
+  if(!m.silenced&&m.d.death)m.d.death({me:m,side:s,pos:idx,sp:sp(s)});
+  if(m.kw.has('spore')){summon(s,'spore',idx);note('spore')}
+  if(m.kw.has('memory')){addToHand(s,m.id);fx('hero-'+s.id,'memory')}
+  if(m.lyso&&m.lyso!==s){addToHand(m.lyso,m.id);note('lysocopy')}
+  if(F.e.boss.onDeath)F.e.boss.onDeath(m)}}
+ checkEnd()}
+function checkEnd(){if(F.over)return;if(F.p.hp<=0){F.over=true;F.won=false}else if(F.e.hp<=0){F.over=true;F.won=true}}
+
+function usePower(side,t){const pw=side.power;if(F.over||side.powerUsed||side.mana<pw.c)return false;if(pw.tgt){const vt=validTargets(side,pw);if(!t||!vt.includes(t))return false}side.mana-=pw.c;side.powerUsed=true;SFX.power();log(`${side.hero} uses ${pw.n}`);pw.use(side,t);resolve();return true}
+
+function startTurn(side){F.active=side;F.turn++;side.maxMana=Math.min(10,side.maxMana+1);side.mana=side.maxMana;side.powerUsed=false;side.discount=0;
+ for(const m of side.board){m.sick=false;m.att=0}
+ const en=enemy(side);for(const m of [...en.board])if(m.lyso===side&&side.board.length<6){removeMinion(m);m.gone=false;m.side=side;m.lyso=null;m.sick=true;m.att=0;side.board.push(m);fx(m.uid,'induced');note('lyso')}
+ draw(side,1);
+ for(const m of [...side.board])if(m.d.start&&!m.silenced&&!m.gone)m.d.start({me:m,side});
+ if(side===F.e&&F.e.boss.onStart)F.e.boss.onStart(side);if(side===F.p&&F.e.boss.onPlayerStart)F.e.boss.onPlayerStart();
+ resolve();SFX.turn();if(side===F.p)F.banner='YOUR TURN';render();if(side===F.e&&!F.over)aiTurn()}
+function endTurn(){if(!F||F.over)return;const side=F.active;SEL=null;
+ for(const m of [...side.board]){if(m.gone)continue;if(m.d.end&&!m.silenced)m.d.end({me:m,side,sp:sp(side)});if(m.incl>0){m.incl--;if(m.incl===0){m.dead=true;fx(m.uid,'inclusion bodies');note('incl')}}if(m.tmpAtk){m.atk-=m.tmpAtk;m.tmpAtk=0}}
+ for(const m of [...side.board]){if(m.gone||!m.kw.has('conj'))continue;adjacent(m).forEach(o=>{if(o&&isBact(o)&&!o.kw.has('conj')){attachPlasmid(o,1,1);o.kw.add('conj');note('conj')}})}
+ for(const m of side.board)m.frozen=false;
+ for(const m of enemy(side).board)if(m.tmpPersist){m.kw.delete('persister');m.tmpPersist=0}
+ if(side===F.e&&F.e.boss.onEnd)F.e.boss.onEnd(side);if(side===F.p&&F.e.boss.onPlayerEnd)F.e.boss.onPlayerEnd();
+ resolve();if(F.over){render();return}startTurn(enemy(side))}
+
+/* =====================================================================
+   BOSS AI: lethal check, favourable trades, respects Biofilm, else face
+   ===================================================================== */
+const wait=ms=>new Promise(r=>setTimeout(r,PREFS.fast||DEBUG&&window.CC_FAST?0:ms));
+function aiPickTarget(d,vt,e){if(!vt.length)return null;if(d.aiT)return d.aiT(vt,e);const k=d.tgt;
+ if(k==='friendlyMinion')return vt.filter(t=>!t.isSide&&t.side===e).sort((a,b)=>value(b)-value(a))[0]||null;
+ const em=vt.filter(t=>!t.isSide&&t.side===F.p);if(em.length)return em.sort((a,b)=>value(b)-value(a))[0];
+ return vt.find(t=>t.isSide&&t===F.p)||null}
+function aiScore(d,t,e){if(d.ai)return d.ai(e,t);if(d.type==='minion')return d.c*10+d.a+d.h;if(d.tgt==='friendlyMinion')return t?6+d.c:-1;if(d.tgt==='enemyMinion'||d.tgt==='minion'||d.tgt==='any'||d.tgt==='enemy')return t?6+d.c*2:-1;return d.c*4+2}
+function aiAttackTarget(m,ts){const p=F.p,a=atkOf(m),face=ts.find(t=>t.isSide),ms=ts.filter(t=>!t.isSide);
+ if(face){const total=F.e.board.filter(canAttack).reduce((s,x)=>s+atkOf(x),0);if(total>=p.hp)return face}
+ const kills=ms.filter(t=>(a>=t.hp||m.kw.has('toxin'))&&!t.kw.has('capsule'));
+ const safe=kills.filter(t=>atkOf(t)<m.hp&&!hasKw(t,'toxin'));if(safe.length)return safe.sort((x,y)=>value(y)-value(x))[0];
+ const up=kills.filter(t=>value(t)>value(m)+2);if(up.length)return up.sort((x,y)=>value(y)-value(x))[0];
+ if(face)return face;return ms.sort((x,y)=>x.hp-y.hp)[0]}
+async function aiTurn(){if(AIBUSY)return;AIBUSY=true;const e=F.e;try{await wait(700);let guard=0;
+ while(!F.over&&guard++<30){let best=null,bs=-1;for(const c of e.hand){if(!canPlay(e,c))continue;const d=CARDS[c.id];let t=null;if(d.tgt){t=aiPickTarget(d,validTargets(e,d),e);if(!t&&d.type==='spell')continue}const sc=aiScore(d,t,e);if(sc>bs){bs=sc;best={c,t}}}
+  if(!best||bs<0)break;play(e,best.c,best.t);render();await wait(650)}
+ if(!F.over&&e.power&&!e.powerUsed&&e.mana>=e.power.c&&(!e.power.ai||e.power.ai(e)>0)){let t=null;if(e.power.tgt)t=aiPickTarget(e.power,validTargets(e,e.power),e);if(!e.power.tgt||t){usePower(e,t);render();await wait(500)}}
+ guard=0;while(!F.over&&guard++<20){const m=e.board.find(x=>canAttack(x));if(!m)break;const ts=attackTargets(m);if(!ts.length){m.att=9;continue}attack(m,aiAttackTarget(m,ts));render();await wait(650)}
+ }catch(err){console.error(err)}AIBUSY=false;if(!F.over)endTurn();else render()}
+
+/* =====================================================================
+   RUN: eight bosses, a draft after each, a specialty after the third
+   ===================================================================== */
+function newRun(){G={level:1,spec:null,deck:STARTER.slice(),turns:0,kills:0,picked:[]};META.runs++;saveMeta();SCREEN='intro';render()}
+function startFight(){const B=BOSSES[G.level-1];const pw=G.spec?SPECS[G.spec].power:GEN_POWER;const hero=G.spec?SPECS[G.spec].hero:'Undergrad';
+ const eDeck=[];B.deck.forEach(([id,n])=>{for(let i=0;i<n;i++)eDeck.push(id)});
+ F={p:mkSide('p',hero,G.deck,30),e:mkSide('e',B.n,eDeck,B.hp),turn:0,active:null,over:false,won:false,log:[],notes:new Set(),noteQ:[],spells:0,banner:''};
+ F.p.power=pw;F.e.power=B.power;F.e.boss=B;F.p.boss={};
+ draw(F.p,4);draw(F.e,G.level<3?3:4);if(B.onFightStart)B.onFightStart(F.e);SCREEN='fight';SEL=null;startTurn(F.p)}
+function fightOver(){if(F.won){G.kills++;META.kills++;if(G.level>META.best){META.best=G.level}saveMeta();SFX.win();if(G.level===8){META.wins[G.spec]=(META.wins[G.spec]||0)+1;saveMeta();SCREEN='victory'}else if(G.level===3){SCREEN='spec'}else{makeDraft();SCREEN='draft'}}
+ else{SFX.lose();SCREEN='gameover'}render()}
+function draftPool(){const gen=Object.values(CARDS).filter(d=>d.s==='gen'&&STARTER.indexOf(d.id)<0||d.s==='gen'&&d.r>1);let pool=[];const w=d=>d.r===1?3:d.r===2?2:1;
+ const genAll=Object.values(CARDS).filter(d=>d.s==='gen');
+ if(G.spec){Object.values(CARDS).filter(d=>d.s===G.spec).forEach(d=>{for(let i=0;i<w(d)*3;i++)pool.push(d.id)});genAll.forEach(d=>{for(let i=0;i<w(d);i++)pool.push(d.id)})}
+ else genAll.forEach(d=>{for(let i=0;i<w(d);i++)pool.push(d.id)});return pool}
+function makeDraft(){const pool=shuffle(draftPool()),out=[];for(const id of pool){if(out.indexOf(id)<0)out.push(id);if(out.length===3)break}G.draft=out;G.cleanup=[2,4,6].indexOf(G.level)>=0}
+function pickDraft(id){G.deck.push(id);G.picked.push(id);seen(id);if(G.cleanup){SCREEN='cleanup'}else{nextLevel()}render()}
+function nextLevel(){G.level++;SCREEN='intro'}
+function chooseSpec(k){G.spec=k;makeDraft();SCREEN='draft';render()}
+function removeCard(i){if(i>=0&&i<G.deck.length)G.deck.splice(i,1);nextLevel();render()}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const stage=()=>$('#stage');
+function fmt(s){return s||''}
+function cardHTML(d,opts={}){const cls=['card',d.type==='spell'?'spell':'','rar'+d.r,opts.cls||''].join(' ');const cost=opts.cost!=null?opts.cost:d.c;
+ return `<div class="${cls}" ${opts.attrs||''} data-card="${d.id}"><div class="cost">${cost}</div><div class="art">${glyph(d)}</div><div class="nm">${esc(d.n)}</div><div class="tx">${fmt(d.txt)}</div><div class="tr">${TRIBE[d.t]||''}${d.t==='bact'?' · Gram'+(d.g==='+'?'+':'−'):''}${d.sub==='T'?' · T cell':''}</div>${d.type==='minion'?`<div class="at">${d.a}</div><div class="hp">${d.h}</div>`:''}</div>`}
+function minionHTML(m,cls=''){const kws=[...m.kw];auraOf(m).kw.forEach(k=>{if(kws.indexOf(k)<0)kws.push(k)});const a=atkOf(m);
+ const c=['min',cls,hasKw(m,'biofilm')?'biofilm':'',m.frozen?'frozen':'',m.sick&&!hasKw(m,'motile')?'sick':'',m.ops?'ops':'',hasKw(m,'intracellular')?'stealth':'',m.justPlayed?'pop':''].join(' ');
+ return `<div class="${c}" data-uid="${m.uid}" data-card="${m.id}" data-minion="1"><div class="art">${glyph(m.d)}</div><div class="nm">${esc(m.fused?m.fused.join('+'):m.d.n)}</div><div class="kws">${m.silenced?'<i>KO</i>':kws.map(k=>`<i>${KW[k]?KW[k].n:k}</i>`).join('')}${m.cat&&!m.silenced?`<i>Catalyst +${m.cat}</i>`:''}${m.lyso?'<i>prophage</i>':''}${m.incl?'<i>IPTG '+m.incl+'</i>':''}</div><div class="at ${a>m.d.a?'buff':''}">${a}</div><div class="hp ${m.hp<m.max?'hurt':''}">${m.hp}</div></div>`}
+function targetsFor(){if(!SEL||!F)return [];if(SEL.k==='hand'){const inst=F.p.hand.find(c=>c.uid===SEL.uid);return inst?validTargets(F.p,CARDS[inst.id]):[]}if(SEL.k==='min'){const m=F.p.board.find(x=>x.uid===SEL.uid);return m?attackTargets(m):[]}if(SEL.k==='power')return validTargets(F.p,F.p.power);return []}
+function renderFight(){const p=F.p,e=F.e,B=e.boss,my=F.active===p&&!AIBUSY&&!F.over,tg=targetsFor();const isT=t=>tg.includes(t)?'tgt':'';
+ const n=p.hand.length,ov=n>6?-(Math.ceil((n*128-700)/(n-1))):0;
+ let h=`<div class="hero ${F.active===e?'active':''} ${isT(e)}" id="ehero" data-hero="e" data-uid="hero-e"><div class="nm">${esc(B.n)}</div><div class="hpbig">${e.hp}</div><div class="sub">${e.hand.length} in hand · ${e.deck.length} in deck · ${e.maxMana} mana</div><div class="passive">${esc(B.passive)}</div></div>`;
+ h+=`<div class="brow" id="eboard">${e.board.map(m=>minionHTML(m,isT(m))).join('')||'<span class="muted">—</span>'}</div><div class="divider"></div>`;
+ h+=`<div class="brow" id="pboard">${p.board.map(m=>minionHTML(m,[isT(m),SEL&&SEL.k==='min'&&SEL.uid===m.uid?'sel':'',my&&canAttack(m)&&!SEL?'can':''].join(' '))).join('')||'<span class="muted">your bench is empty</span>'}</div>`;
+ h+=`<div class="hero ${F.active===p?'active':''} ${isT(p)}" id="phero" data-hero="p" data-uid="hero-p"><div class="nm">${esc(p.hero)} · level ${G.level}/8</div><div class="hpbig">${p.hp}</div><div class="sub">${p.deck.length} in deck</div><div class="power ${p.powerUsed?'used':p.mana<p.power.c?'no':''} ${SEL&&SEL.k==='power'?'sel':''}" data-power="1"><b>${esc(p.power.n)} (${p.power.c})</b><br>${esc(p.power.d)}</div></div>`;
+ h+=`<div id="hand" style="--ov:${ov}px">${p.hand.map(c=>cardHTML(CARDS[c.id],{cost:costOf(p,c),cls:(my&&canPlay(p,c)?'can':'')+(SEL&&SEL.k==='hand'&&SEL.uid===c.uid?' sel':''),attrs:`data-hand="${c.uid}"`})).join('')}</div>`;
+ h+=`<div id="side"><button class="btn pri ${my?'':'wait'}" id="endturn" ${my?'':'disabled'}>${F.over?'FIGHT OVER':my?'END TURN':'ENEMY TURN…'}</button><div class="lbl" style="margin-top:10px">MANA ${p.mana}/${p.maxMana}</div><div class="mana">${Array.from({length:p.maxMana},(_,i)=>`<i class="${i<p.mana?'':'used'}"></i>`).join('')}</div>
+  <div class="lbl">TURN ${Math.ceil(F.turn/2)} · ${G.spec?SPECS[G.spec].n:'General biology'}</div><div class="row" style="margin-top:8px"><button class="btn" data-act="deck" style="padding:6px 10px;font-size:11px">Deck</button><button class="btn" data-act="help" style="padding:6px 10px;font-size:11px">?</button><button class="btn" data-act="concede" style="padding:6px 10px;font-size:11px;color:#ff8a8a">Withdraw</button></div>
+  <div id="log">${F.log.slice(-9).map(x=>`<div>${esc(x)}</div>`).join('')}</div></div>`;
+ if(F.banner){h+=`<div class="turnbanner">${esc(F.banner)}</div>`;F.banner=''}
+ h+=`<div id="note"></div><div id="tip"></div>`;
+ if(F.over)h+=`<div class="modal center" style="padding-top:200px"><h1>${F.won?'CULTURE CLEARED':'CONTAMINATED'}</h1><p class="muted" style="font-size:16px">${F.won?esc(B.n)+' is down.':esc(B.n)+' overran you at level '+G.level+'.'}</p><button class="btn pri" data-act="fightover">Continue</button></div>`;
+ return h}
+function renderTitle(){const nCards=Object.values(CARDS).filter(d=>d.s!=='token').length;
+ return `<div class="scr center" style="padding-top:70px"><div class="row" style="justify-content:center;gap:16px;margin-bottom:10px">${['ecoli','t4','macro','crispr'].map(id=>`<span style="width:70px">${glyph(CARDS[id])}</span>`).join('')}</div><div class="lbl">A biology card battler</div><h1 style="margin-top:8px">CULTURE CLASH</h1><p class="muted" style="font-size:15px;margin:14px auto 28px;max-width:640px">Eight lab bosses, one board. Fight with bacteria, phages and immune cells; after the third boss, pick a specialty and learn why the right phage kills the right bacterium.</p>
+ <div class="row" style="justify-content:center"><button class="btn pri" data-act="new">Begin a run</button><button class="btn" data-act="guide">Field guide</button><button class="btn" data-act="help">How to play</button></div>
+ <div class="row" style="justify-content:center;margin-top:12px"><button class="btn ${PREFS.sfx?'':'off'}" data-act="sfx">Sound: ${PREFS.sfx?'on':'off'}</button><button class="btn ${PREFS.fast?'':'off'}" data-act="fast">Fast enemy turns: ${PREFS.fast?'on':'off'}</button><button class="btn" style="color:#ff8a8a" data-act="clear">Clear history</button></div>
+ <div class="lbl" style="margin-top:40px;letter-spacing:.08em">RUNS ${META.runs} · BEST LEVEL ${META.best}/8 · GRADUATIONS micro ${META.wins.micro||0} · immuno ${META.wins.immuno||0} · mol ${META.wins.mol||0} · CARDS SEEN ${META.seen.filter(id=>CARDS[id]&&CARDS[id].s!=='token').length}/${nCards} · LAB NOTES ${META.notes.length}/${Object.keys(NOTES).length}</div>
+ <div class="lbl" style="margin-top:30px;color:#4a5568">v1 · labpotato.github.io</div></div>`}
+function renderHelp(){const back=F&&SCREEN==='fight'?'fight':'title';
+ return `<div class="scr"><div class="lbl">How to play</div><h2>The short version</h2>
+ <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px"><div>${[['Goal','Bring the boss from its health to 0 before yours hits 0. Eight bosses, one after another; between them you draft one card.'],['Mana','Starts at 1 and grows by 1 each turn, to 10. Cards cost mana; it refills every turn.'],['Minions','Click a card to put it on your bench. It can attack from your next turn (unless it is Motile). Click it, then click an enemy minion or the boss.'],['Spells','Reagents and instruments resolve at once; if one needs a target, valid targets light up red.'],['Hero power','Once a turn, for 2 mana. The Undergrad has a Pipette; each specialty has its own.'],['Specialty','After the third boss you pick Microbiology, Immunology or Molecular biology. Drafts then offer mostly that specialty\'s cards: narrower interactions, bigger payoffs.'],['Learning','Hover (or tap) any card for the real biology behind it. The first time a notable interaction fires, a lab note explains it. Everything you meet goes into the Field guide.']].map(([a,b])=>`<div class="ent"><b>${a}</b><span>${b}</span></div>`).join('')}</div>
+ <div><h3>Keywords</h3>${Object.keys(KW).map(k=>`<div class="ent"><b>${KW[k].n}</b><span>${KW[k].d}</span></div>`).join('')}<h3>Terms</h3>${GLOSS.map(([a,b])=>`<div class="ent"><b>${a}</b><span>${b}</span></div>`).join('')}</div></div>
+ <div class="row" style="margin-top:18px"><button class="btn" data-act="${back}">Back</button></div></div>`}
+let GUIDE_TAB='gen';
+function renderGuide(){const tabs=[['gen','General'],['micro','Microbiology'],['immuno','Immunology'],['mol','Molecular'],['boss','Bosses'],['notes','Lab notes']];
+ let body='';if(GUIDE_TAB==='notes')body=`<div class="grid" style="grid-template-columns:1fr 1fr">${Object.keys(NOTES).map(k=>`<div class="gcard ${META.notes.indexOf(k)<0?'unseen':''}" style="grid-template-columns:1fr"><b>${NOTE_T[k]}</b><div>${META.notes.indexOf(k)<0?'Not yet triggered in a run.':esc(NOTES[k])}</div></div>`).join('')}</div>`;
+ else if(GUIDE_TAB==='boss')body=`<div class="grid" style="grid-template-columns:1fr 1fr">${BOSSES.map((b,i)=>`<div class="gcard ${META.best>=i?'':'unseen'}" style="grid-template-columns:1fr"><b>${i+1}. ${esc(b.n)}</b><div>${esc(b.sub)} · ${b.hp} health</div><div class="gold">${esc(b.passive)}</div><div class="fact">${esc(b.fact)}</div></div>`).join('')}</div>`;
+ else{const list=Object.values(CARDS).filter(d=>d.s===GUIDE_TAB);body=`<div class="grid" style="grid-template-columns:1fr 1fr 1fr">${list.map(d=>{const s=META.seen.indexOf(d.id)>=0;return `<div class="gcard ${s?'':'unseen'}"><div>${glyph(d)}</div><div><b>${esc(d.n)}</b> <span class="muted">(${d.c})${d.type==='minion'?' '+d.a+'/'+d.h:''} · ${TRIBE[d.t]}${d.t==='bact'?' Gram'+(d.g==='+'?'+':'−'):''}</span><div>${s?fmt(d.txt):'Not yet seen.'}</div>${s?`<div class="fact">${esc(d.fact)}</div>`:''}</div></div>`}).join('')}</div>`}
+ return `<div class="scr"><div class="row" style="justify-content:space-between"><div><div class="lbl">Field guide</div><h2>Everything you have met</h2></div><button class="btn" data-act="title">Back</button></div><div class="tabs row" style="gap:4px;margin:10px 0">${tabs.map(([k,n])=>`<button class="${GUIDE_TAB===k?'on':''}" data-tab="${k}">${n}</button>`).join('')}</div>${body}</div>`}
+function renderIntro(){const B=BOSSES[G.level-1];return `<div class="scr center" style="padding-top:90px"><div class="lbl">LEVEL ${G.level} OF 8 · ${esc(B.sub)}</div><h1 style="font-size:36px;margin:10px 0">${esc(B.n)}</h1><div class="panel" style="max-width:640px;margin:16px auto;text-align:left"><div class="lbl">BOSS MECHANIC</div><div class="gold" style="font-size:16px;margin:4px 0 10px">${esc(B.passive)}</div><div class="lbl">HEALTH</div><div style="font-size:16px;margin-bottom:10px">${B.hp}</div><div class="lbl">WHY</div><div style="color:#9ad0ff;font-size:14px">${esc(B.fact)}</div></div><div class="muted" style="margin-bottom:14px">Your deck: ${G.deck.length} cards · ${G.spec?SPECS[G.spec].n:'General biology'}</div><button class="btn pri" data-act="fight">Plate out</button> <button class="btn" data-act="deck">View deck</button></div>`}
+function renderDraft(){return `<div class="scr center" style="padding-top:60px"><div class="lbl">${esc(BOSSES[G.level-1].n)} cleared</div><h2>Add one card to your deck</h2><p class="muted">${G.spec?SPECS[G.spec].n+' cards come up three times as often now.':'General biology until you specialise after level 3.'}</p><div class="row" style="justify-content:center;gap:30px;margin-top:30px">${G.draft.map(id=>cardHTML(CARDS[id],{cls:'pick',attrs:`data-pick="${id}"`})).join('')}</div><div id="tip"></div></div>`}
+function renderSpec(){return `<div class="scr center" style="padding-top:40px"><div class="lbl">MRSA cleared · year 3</div><h2>Choose your specialty</h2><p class="muted">From now on, drafts favour this field. Its interactions are narrower and stronger.</p><div class="grid g3" style="margin-top:20px;text-align:left">${Object.keys(SPECS).map(k=>{const s=SPECS[k];return `<div class="spec" data-spec="${k}"><h2 style="color:${s.col}">${s.n}</h2><div style="font-size:13px">${s.d}</div><div class="pw"><b>Hero power · ${esc(s.power.n)} (${s.power.c}):</b> ${esc(s.power.d)}</div><div class="row" style="gap:6px;justify-content:center">${s.show.map(id=>cardHTML(CARDS[id],{cls:'',attrs:'style="transform:scale(.85);margin:-8px -6px"'})).join('')}</div></div>`}).join('')}</div><div id="tip"></div></div>`}
+function renderCleanup(){return `<div class="scr"><div class="row" style="justify-content:space-between"><div><div class="lbl">Lab cleanup</div><h2>Remove one card from your deck (optional)</h2><p class="muted">A thinner deck draws its best cards more often.</p></div><button class="btn" data-act="skipclean">Keep everything</button></div><div class="row" style="gap:14px;margin-top:10px">${G.deck.map((id,i)=>cardHTML(CARDS[id],{attrs:`data-remove="${i}"`})).join('')}</div><div id="tip"></div></div>`}
+function renderDeck(){const counts={};G.deck.forEach(id=>counts[id]=(counts[id]||0)+1);const ids=Object.keys(counts).sort((a,b)=>CARDS[a].c-CARDS[b].c||CARDS[a].n.localeCompare(CARDS[b].n));
+ return `<div class="modal"><div class="row" style="justify-content:space-between"><h2>Your deck · ${G.deck.length} cards${F&&SCREEN==='fight'?' · '+F.p.deck.length+' still to draw':''}</h2><button class="btn" data-act="closedeck">Close</button></div><div class="grid g4" style="margin-top:10px">${ids.map(id=>{const d=CARDS[id];return `<div class="gcard" data-card="${id}"><div>${glyph(d)}</div><div><b>${esc(d.n)}</b> <span class="muted">(${d.c})${d.type==='minion'?' '+d.a+'/'+d.h:''} ×${counts[id]}</span><div>${fmt(d.txt)}</div></div></div>`}).join('')}</div><div id="tip"></div></div>`}
+function renderEnd(won){const s=G.spec?SPECS[G.spec].n:'General biology';
+ return `<div class="scr center" style="padding-top:60px"><div class="lbl">${won?'RUN COMPLETE':'RUN OVER'}</div><h1 style="font-size:40px;margin:8px 0">${won?'Tenure':'Contaminated'}</h1><p class="muted" style="font-size:15px">${won?'The freezer is back at −80 °C. '+s+' did it.':'Stopped by '+esc(BOSSES[G.level-1].n)+' at level '+G.level+'.'}</p>
+ <div class="grid g4" style="max-width:700px;margin:16px auto">${[['LEVEL',G.level+'/8'],['BOSSES',G.kills],['DECK',G.deck.length],['NOTES',F?F.notes.size:0]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+ ${G.picked.length?`<h3 style="max-width:700px;margin:16px auto 8px">Drafted this run</h3><div class="row" style="justify-content:center;gap:6px;max-width:900px;margin:auto">${G.picked.map(id=>`<span style="width:44px" title="${esc(CARDS[id].n)}">${glyph(CARDS[id])}</span>`).join('')}</div>`:''}
+ <div class="row" style="justify-content:center;margin-top:24px"><button class="btn pri" data-act="new">Again</button><button class="btn" data-act="guide">Field guide</button><button class="btn" data-act="title">Title</button></div></div>`}
+
+let DECKOPEN=false;
+function render(){const st=stage();let h='';
+ switch(SCREEN){case 'title':h=renderTitle();break;case 'help':h=renderHelp();break;case 'guide':h=renderGuide();break;case 'intro':h=renderIntro();break;case 'fight':h=renderFight();break;case 'draft':h=renderDraft();break;case 'spec':h=renderSpec();break;case 'cleanup':h=renderCleanup();break;case 'gameover':h=renderEnd(false);break;case 'victory':h=renderEnd(true);break}
+ if(DECKOPEN&&G)h+=renderDeck();st.innerHTML=h;flushFx();flushNotes()}
+function flushFx(){const st=stage();const q=FXQ;FXQ=[];for(const f of q){const el=st.querySelector(`[data-uid="${f.uid}"]`);if(!el)continue;if(f.txt==='pop'){el.classList.add('pop');continue}if(f.txt==='lunge'){el.style.transform='translateY(-10px)';setTimeout(()=>{el.style.transform=''},150);continue}
+  const d=document.createElement('div');d.className='fx'+(f.txt[0]==='+'?' heal':/^-\d/.test(f.txt)?'':' info');d.textContent=f.txt;d.style.left=(el.offsetLeft+el.offsetWidth/2-20+rnd(20)-10)+'px';d.style.top=(el.offsetTop+20)+'px';(el.offsetParent||st).appendChild(d);if(/^-\d/.test(f.txt))el.classList.add('shake');setTimeout(()=>d.remove(),900)}}
+let NOTE_T0=null;
+function flushNotes(){if(!F||!F.noteQ.length)return;const el=$('#note');if(!el)return;if(NOTE_T0)clearTimeout(NOTE_T0);const k=F.noteQ.shift();el.innerHTML=`<b>LAB NOTE · ${NOTE_T[k]}</b>${esc(NOTES[k])}`;el.style.display='block';SFX.note();NOTE_T0=setTimeout(()=>{const e2=$('#note');if(e2)e2.style.display='none';NOTE_T0=null;if(F&&F.noteQ.length)flushNotes()},F.noteQ.length?3200:5200)}
+function showTip(el){const id=el.dataset.card,d=CARDS[id];if(!d)return;const tip=el.closest('#stage, .modal, .scr')?.querySelector('#tip')||$('#tip');if(!tip)return;
+ const uid=el.dataset.uid;let m=null;if(uid&&F)m=allMinions().find(x=>String(x.uid)===uid);
+ const kws=new Set(d.kw);if(m){m.kw.forEach(k=>kws.add(k));auraOf(m).kw.forEach(k=>kws.add(k))}
+ tip.innerHTML=`<div class="nm">${esc(d.n)} <span class="muted">(${d.c})${d.type==='minion'?' '+d.a+'/'+d.h:''}</span></div><div class="tx">${fmt(d.txt)||'<span class="muted">No text.</span>'}</div>${m&&m.silenced?'<div class="red">Knocked out.</div>':''}${[...kws].filter(k=>KW[k]).map(k=>`<div class="kw"><b>${KW[k].n}:</b> ${KW[k].d}</div>`).join('')}${m&&m.ops?'<div class="kw"><b>Opsonized:</b> Phagocytic attackers deal double damage.</div>':''}<div class="fact">${esc(d.fact)}</div>`;
+ const st=stage(),r=el.getBoundingClientRect(),sr=st.getBoundingClientRect(),sc=sr.width/1280;let x=(r.right-sr.left)/sc+8,y=(r.top-sr.top)/sc-10;if(x>1280-270)x=(r.left-sr.left)/sc-270;if(y>720-240)y=720-240;if(y<0)y=0;tip.style.left=x+'px';tip.style.top=y+'px';tip.style.display='block'}
+function hideTip(){document.querySelectorAll('#tip').forEach(t=>t.style.display='none')}
+
+/* ---------- clicks ---------- */
+function onClick(e){const st=stage();hideTip();const t=e.target.closest('[data-act],[data-hand],[data-minion],[data-hero],[data-power],[data-pick],[data-spec],[data-remove],[data-tab]');if(!t){if(SEL){SEL=null;render()}return}
+ const ds=t.dataset;ac();
+ if(ds.act){act(ds.act);return}
+ if(ds.tab){GUIDE_TAB=ds.tab;render();return}
+ if(ds.pick){pickDraft(ds.pick);return}
+ if(ds.spec){chooseSpec(ds.spec);return}
+ if(ds.remove!=null){removeCard(+ds.remove);return}
+ if(SCREEN!=='fight'||!F||F.over||F.active!==F.p||AIBUSY)return;
+ const p=F.p;
+ if(ds.hand){const inst=p.hand.find(c=>c.uid===+ds.hand);if(!inst)return;if(SEL&&SEL.k==='hand'&&SEL.uid===inst.uid){SEL=null;render();return}if(!canPlay(p,inst)){SFX.err();fx('hero-p',CARDS[inst.id].type==='minion'&&p.board.length>=6?'bench full':'not enough mana');render();return}
+  if(needsTarget(p,inst)){SEL={k:'hand',uid:inst.uid};SFX.sel();render()}else{play(p,inst,null);SEL=null;render()}return}
+ if(ds.power){if(SEL&&SEL.k==='power'){SEL=null;render();return}if(p.powerUsed||p.mana<p.power.c){SFX.err();return}if(p.power.tgt){if(!validTargets(p,p.power).length){SFX.err();return}SEL={k:'power'};SFX.sel();render()}else{usePower(p,null);render()}return}
+ let target=null;if(ds.minion){target=allMinions().find(m=>String(m.uid)===ds.uid)}else if(ds.hero){target=ds.hero==='p'?p:F.e}
+ if(!target)return;
+ if(SEL){const tg=targetsFor();if(tg.includes(target)){if(SEL.k==='hand'){const inst=p.hand.find(c=>c.uid===SEL.uid);play(p,inst,target)}else if(SEL.k==='min'){const m=p.board.find(x=>x.uid===SEL.uid);attack(m,target)}else if(SEL.k==='power')usePower(p,target);SEL=null;render();return}
+  if(!target.isSide&&target.side===p&&SEL.k==='min'&&SEL.uid!==target.uid&&canAttack(target)){SEL={k:'min',uid:target.uid};render();return}
+  SEL=null;render();return}
+ if(!target.isSide&&target.side===p){if(canAttack(target)){SEL={k:'min',uid:target.uid};SFX.sel();render()}else{fx(target.uid,target.frozen?'frozen':target.sick?'summoning sickness':atkOf(target)<=0?'0 attack':'already attacked');render()}return}
+ if(!target.isSide&&target.side===F.e&&'ontouchstart' in window){showTip(st.querySelector(`[data-uid="${target.uid}"]`))}}
+function act(a){switch(a){
+ case 'new':newRun();break;case 'title':SCREEN='title';DECKOPEN=false;render();break;case 'help':SCREEN=SCREEN==='fight'?'help':'help';render();break;case 'guide':SCREEN='guide';render();break;
+ case 'fight':if(SCREEN==='help'&&F&&!F.over){SCREEN='fight';render()}else startFight();break;
+ case 'sfx':PREFS.sfx=!PREFS.sfx;savePrefs();render();break;case 'fast':PREFS.fast=!PREFS.fast;savePrefs();render();break;
+ case 'clear':if(confirm('Clear all progress, field guide and notes?')){localStorage.removeItem('cc_meta');location.reload()}break;
+ case 'deck':DECKOPEN=true;render();break;case 'closedeck':DECKOPEN=false;render();break;
+ case 'concede':if(F&&!F.over&&confirm('Withdraw from this fight? The run ends.')){F.over=true;F.won=false;render()}break;
+ case 'fightover':fightOver();break;case 'skipclean':nextLevel();render();break}}
+function onKey(e){if(e.key==='Escape'){if(DECKOPEN){DECKOPEN=false;render();return}if(SEL){SEL=null;render()}return}if(SCREEN==='fight'&&F&&!F.over&&F.active===F.p&&!AIBUSY&&(e.key===' '||e.key==='Enter')){e.preventDefault();endTurn()}}
+function fit(){const st=stage(),w=innerWidth,h=innerHeight,sc=Math.min(w/1280,h/720);st.style.transform=`translate(${Math.floor((w-1280*sc)/2)}px,${Math.floor((h-720*sc)/2)}px) scale(${sc})`}
+
+/* ---------- init ---------- */
+window.addEventListener('resize',fit);fit();
+stage().addEventListener('click',e=>{if(e.target.closest('#endturn')){if(F&&!F.over&&F.active===F.p&&!AIBUSY)endTurn();return}onClick(e)});
+stage().addEventListener('mouseover',e=>{const el=e.target.closest('[data-card]');if(el&&!('ontouchstart' in window))showTip(el)});
+stage().addEventListener('mouseout',e=>{const el=e.target.closest('[data-card]');if(el)hideTip()});
+document.addEventListener('keydown',onKey);
+render();
+if(DEBUG){window.CC={get F(){return F},get G(){return G},get S(){return SCREEN},CARDS,BOSSES,SPECS,KW,NOTES,play,attack,endTurn,usePower,canPlay,canAttack,validTargets,attackTargets,needsTarget,newRun,startFight,fightOver,pickDraft,chooseSpec,removeCard,render,act,
+ winFight(){F.e.hp=0;checkEnd();render()},setFast(v){window.CC_FAST=v}};}
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/culture-clash"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

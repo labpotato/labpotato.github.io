@@ -37,7 +37,7 @@ function accentOf(tool) {
 }
 
 function iconSvg(name) {
-  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "cryobox", "dna", "chart", "calculator"];
+  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "cryobox", "dna", "chart", "calculator", "rogue", "cards", "phage", "petri"];
   const key = known.includes(name) ? name : "flask";
   return `<svg viewBox="0 0 24 24" stroke="currentColor"><use href="#icon-${key}"></use></svg>`;
 }
@@ -554,6 +554,16 @@ const APP_GLYPH = {
   cryobox: `<rect x="9" y="9" width="30" height="30" rx="4.5" fill="#fff"/>
     <g ${C}><circle cx="17" cy="17" r="3"/><circle cx="24" cy="17" r="3" opacity=".7"/><circle cx="31" cy="17" r="3"/><circle cx="17" cy="24" r="3" opacity=".45"/><circle cx="24" cy="24" r="3"/>
     <circle cx="31" cy="24" r="3" opacity=".7"/><circle cx="17" cy="31" r="3"/><circle cx="24" cy="31" r="3" opacity=".25"/><circle cx="31" cy="31" r="3" opacity=".25"/></g>`,
+  rogue: `<rect x="13" y="7" width="22" height="20" rx="5" fill="#fff"/><rect x="18" y="27" width="12" height="9" rx="1.5" fill="#fff"/>
+    <rect x="18" y="14" width="5" height="5" rx="1" ${C}/><rect x="25" y="14" width="5" height="5" rx="1" ${C}/><rect x="22.5" y="21" width="3" height="3" ${C} opacity=".55"/>
+    <rect x="20" y="31" width="2" height="5" ${C} opacity=".45"/><rect x="26" y="31" width="2" height="5" ${C} opacity=".45"/><rect x="9" y="38" width="30" height="3" rx="1.5" fill="#fff" fill-opacity=".55"/>`,
+  cards: `<rect x="9" y="12" width="20" height="27" rx="3" fill="#fff" fill-opacity=".62" transform="rotate(-12 19 25.5)"/><rect x="19" y="9" width="20" height="27" rx="3" fill="#fff" transform="rotate(8 29 22.5)"/>
+    <circle cx="29" cy="19" r="3.6" ${C} transform="rotate(8 29 22.5)"/><rect x="23" y="26.5" width="12" height="2.4" rx="1.2" ${C} opacity=".5" transform="rotate(8 29 22.5)"/><rect x="23" y="31" width="8" height="2.4" rx="1.2" ${C} opacity=".35" transform="rotate(8 29 22.5)"/>`,
+  phage: `<polygon points="24,5 33,10.5 33,21 24,26.5 15,21 15,10.5" fill="#fff"/><polygon points="24,10 29,13 29,19 24,22 19,19 19,13" ${C} opacity=".4"/><rect x="22" y="26" width="4" height="10" fill="#fff"/>
+    <path d="M24 36l-8 7M24 36l8 7M24 36l-3.5 8M24 36l3.5 8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>`,
+  petri: `<circle cx="24" cy="24" r="17" fill="#fff" fill-opacity=".22"/><circle cx="24" cy="24" r="17" fill="none" stroke="#fff" stroke-width="2.4"/>
+    <rect x="25" y="21.5" width="12" height="6" rx="2" fill="#fff"/><circle cx="21.5" cy="25.5" r="7" fill="#fff"/><circle cx="21.5" cy="25.5" r="2.6" ${C}/>
+    <circle cx="13" cy="15" r="2" fill="#fff" opacity=".8"/><circle cx="34" cy="35" r="1.6" fill="#fff" opacity=".7"/><circle cx="31" cy="11" r="1.3" fill="#fff" opacity=".6"/>`,
 };
 function appGlyph(tool) { const g = APP_GLYPH[tool.icon]; return g ? `<svg viewBox="0 0 48 48" aria-hidden="true">${g}</svg>` : iconSvg(tool.icon); }
 

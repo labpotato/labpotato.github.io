@@ -254,6 +254,82 @@ const TOOLS = [
           "Shift-click ranges, one cap colour for many; groups move with their vials; sort A → Z"
         ] }
     ]
+  },
+
+  {
+    id: "lab-rogue",
+    short: "Research-career roguelike",
+    name: "Lab Rogue",
+    tagline: "Die, learn some microbiology, repeat",
+    description:
+      "A pixel-art roguelike through a research career: real microbes, real drugs, puzzle rooms, and bosses like Reviewer 2.",
+    icon: "rogue",
+    accent: "violet",
+    folder: "tools/lab-rogue",
+    features: [
+      "Gram stains, antibiotics and resistance that evolves the more you use a drug",
+      "Puzzle and quiz rooms teach bench skills between fights; a daily run to race friends",
+      "Five careers from undergraduate to PI, each with its own bosses"
+    ],
+    versions: [
+      { v: "v9", file: "lab-rogue-v9.html", date: "2026-10-23" },
+      { v: "v10", file: "lab-rogue-v10.html", date: "2026-10-23",
+        new: [
+          "Daily run and seeded runs, a local leaderboard and a copy-able result line",
+          "Eureka: kills drop data; every level is an insight draft once the room is clear",
+          "Elite affixes, Boss Rush, and two-thumb touch controls for phones"
+        ] }
+    ]
+  },
+
+  {
+    id: "flappy-phage",
+    short: "One-tap phage flapping",
+    name: "Flappy Phage",
+    tagline: "One button, zero mercy",
+    description:
+      "Fly a phage through pipette tips, infect bacteria for bonus points, and get roasted by Reviewer 2 when you die.",
+    icon: "phage",
+    accent: "emerald",
+    folder: "tools/flappy-phage",
+    features: [
+      "One tap to play, instant restart, difficulty that ramps with your score",
+      "Infect bacteria in the gaps for combos; dodge agar and antibiotic clouds",
+      "Daily mutation mode, unlockable skins and a copy-your-score brag line"
+    ],
+    versions: [
+      { v: "v1", file: "flappy-phage-v1.html", date: "2026-10-23",
+        new: [
+          "70 taunts from Reviewer 2, your PI and your labmate, never the same twice in a row",
+          "Daily mutation: inverted gravity, night mode, tiny gaps, hyperflow or swarm",
+          "Skins unlocked by best score: E. coli, tardigrade, lab mouse, pipette tip"
+        ] }
+    ]
+  },
+
+  {
+    id: "petri-io",
+    short: "Microbe arena",
+    name: "Petri.io",
+    tagline: "Eat, level up, evolve",
+    description:
+      "A diep.io-style arena in a Petri dish: eat nutrients, outgrow 14 rival strains, and evolve down a microbial lineage.",
+    icon: "petri",
+    accent: "cyan",
+    folder: "tools/petri-io",
+    features: [
+      "Level to 45 and spend points on 8 stats, diep.io style",
+      "A 29-class lineage tree: bacterium, phage, amoeba or fungus, then genus and species",
+      "Rival strains with lab names that farm, hunt the weak, flee and evolve on their own"
+    ],
+    versions: [
+      { v: "v1", file: "petri-io-v1.html", date: "2026-10-23",
+        new: [
+          "Four kingdoms, twelve genera, twelve species to evolve into",
+          "Lysogeny turns rivals into allies; phages burst, fungi send spores",
+          "Touch joystick, minimap, leaderboard and kill feed"
+        ] }
+    ]
   }
 
   /* ---------- TEMPLATE: copy this block for a new tool ----------

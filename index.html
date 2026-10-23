@@ -319,16 +319,33 @@
     </div>
   </section>
 
-  <!-- ===================== USAGE (filled in by assets/usage.js; hidden until the counts load) ===================== -->
+  <!-- ===================== USAGE (filled in by assets/usage.js) ===================== -->
   <section id="usage" class="section section-tint" hidden>
     <div class="wrap">
       <div class="section-head reveal">
         <span class="section-tag">Adoption metrics</span>
-        <h2>How often each tool gets opened</h2>
-        <p>Live numbers from our analytics department (a free, cookie-free page counter). Bars on the right are the last six months.</p>
+        <h2>Who is using this, and where</h2>
+        <p>Live numbers from our analytics department (a free, cookie-free page counter that keeps no personal data).</p>
+      </div>
+      <div class="use-tools"><div class="use-seg" id="usage-range" role="group" aria-label="Time range"></div></div>
+      <p class="use-note" id="usage-note" hidden></p>
+      <div class="use-panel">
+        <div class="use-panel-h"><h3>Tool openings over time</h3><div class="use-legend" id="usage-legend" role="group" aria-label="Line to highlight"></div></div>
+        <div class="use-chart" id="usage-chart"></div>
       </div>
       <div class="use-list" id="usage-grid"></div>
+      <div class="use-demo" id="usage-demo" hidden>
+        <div class="use-panel use-geo">
+          <div class="use-panel-h"><h3>Where visitors are</h3><span class="use-sub" id="usage-geo-sum"></span></div>
+          <div class="use-geo-body"><div class="use-mapbox" id="usage-map"></div><div class="use-countries" id="usage-countries"></div></div>
+        </div>
+        <div class="use-panel use-src" id="usage-src" hidden>
+          <div class="use-panel-h"><h3>How people find the site</h3></div>
+          <div class="use-src-body"><div><h4>By kind</h4><div id="usage-src-groups"></div></div><div><h4>Top sources</h4><div id="usage-src-top"></div></div></div>
+        </div>
+      </div>
       <p class="use-foot" id="usage-total"></p>
+      <details class="use-debug" id="usage-debug" hidden></details>
     </div>
   </section>
 </main>

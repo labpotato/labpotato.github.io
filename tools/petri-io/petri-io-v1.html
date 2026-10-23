@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Petri.io v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #07080b; --p0: #0b0d12; --p1: #11141c; --line: #2a3142; --text: #e8eef5; --muted: #8a97a8; --faint: #4a5568; --acc: #5ab4e0; --gold: #ffd166; --red: #ff6b6b; --green: #7cf29a; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.35 "Pixelify Sans", monospace; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.ov { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(3,4,6,.82); z-index: 10; padding: 16px; overflow-y: auto; }
+.ov.show { display: flex; }
+.panel { background: var(--p1); box-shadow: inset 0 0 0 2px var(--line), 0 10px 0 #05060a; padding: 22px 26px; max-width: 760px; width: 100%; text-align: center; }
+h1 { font: 40px/1 "Silkscreen", monospace; margin: 0; letter-spacing: .02em; text-shadow: 4px 4px 0 #1f6f8f; }
+h2 { font: 18px/1.2 "Silkscreen", monospace; margin: 0 0 8px; }
+.lbl { font: 11px "Silkscreen", monospace; color: var(--muted); letter-spacing: .06em; }
+.muted { color: var(--muted); } .gold { color: var(--gold); } .acc { color: var(--acc); } .red { color: var(--red); } .green { color: var(--green); }
+.btn { font: 13px "Silkscreen", monospace; color: var(--text); background: #1a1f2b; border: 0; box-shadow: inset 0 0 0 2px var(--line), 0 4px 0 #05060a; padding: 10px 18px; cursor: pointer; }
+.btn:hover { box-shadow: inset 0 0 0 2px var(--acc), 0 4px 0 #05060a; color: #fff; }
+.btn:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px var(--acc), 0 2px 0 #05060a; }
+.btn.pri { background: #1f6f8f; box-shadow: inset 0 0 0 2px #5ab4e0, 0 4px 0 #05060a; }
+.btn.off { color: var(--faint); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+input.name { font: 16px "Pixelify Sans", monospace; color: var(--text); background: var(--p0); border: 0; box-shadow: inset 0 0 0 2px var(--line); padding: 10px 12px; width: 220px; text-align: center; outline: none; }
+input.name:focus { box-shadow: inset 0 0 0 2px var(--acc); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+.stat { background: var(--p0); box-shadow: inset 0 0 0 2px var(--line); padding: 8px 4px; }
+.stat b { display: block; font: 18px "Silkscreen", monospace; color: var(--gold); }
+.stat span { font: 10px "Silkscreen", monospace; color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
+.card { background: var(--p0); box-shadow: inset 0 0 0 2px var(--line); padding: 12px 10px; cursor: pointer; text-align: center; color: var(--text); font: inherit; border: 0; }
+.card:hover { box-shadow: inset 0 0 0 2px var(--gold); }
+.card canvas { display: block; margin: 0 auto 6px; }
+.card b { display: block; font: 12px "Silkscreen", monospace; margin-bottom: 4px; }
+.card .d { font-size: 13px; color: #c9d2dc; min-height: 48px; }
+.card .f { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic; }
+.help { text-align: left; font-size: 13px; color: #c9d2dc; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-top: 12px; }
+.help b { color: var(--gold); font: 11px "Silkscreen", monospace; }
+.chip { display: inline-block; font: 10px "Silkscreen", monospace; color: var(--bg); background: var(--gold); padding: 2px 6px; margin-left: 8px; vertical-align: middle; }
+#toast { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); font: 14px "Silkscreen", monospace; color: var(--gold); text-shadow: 2px 2px 0 #000; pointer-events: none; opacity: 0; transition: opacity .3s; z-index: 5; text-align: center; }
+@media (max-width: 640px) { h1 { font-size: 28px; } .panel { padding: 16px; } .help { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="toast"></div>
+
+<div id="title" class="ov show"><div class="panel">
+  <div class="lbl">A LAB POTATO ARCADE GAME</div>
+  <h1 style="margin-top:8px">PETRI.IO <span class="chip">v1</span></h1>
+  <p class="muted" style="margin:10px 0 16px">One microbe in a dish full of rivals. Eat nutrients, level up, pick a lineage, and outgrow everything that tries to eat you.</p>
+  <div class="row"><input id="nm" class="name" maxlength="16" placeholder="Strain name" autocomplete="off"><button id="play" class="btn pri">Inoculate</button></div>
+  <div class="stats" id="tstats"></div>
+  <div class="help">
+    <div><b>MOVE</b> WASD / arrows · touch: left half</div><div><b>AIM + FIRE</b> mouse, hold click · <b>E</b> auto-fire</div>
+    <div><b>UPGRADE</b> keys 1–8 or the bars bottom-left</div><div><b>EVOLVE</b> K or Tab when a lineage is ready</div>
+    <div><b>DASH</b> Shift / right-click (Entamoeba line)</div><div><b>SOUND</b> M</div>
+  </div>
+  <div class="row" style="margin-top:14px"><button id="snd" class="btn">Sound: on</button><button id="lineage" class="btn">Lineage tree</button></div>
+</div></div>
+
+<div id="tree" class="ov"><div class="panel" style="max-width:900px">
+  <h2>The lineage tree</h2>
+  <p class="muted" style="margin:0 0 6px">Level 15: pick a kingdom. Level 30: a genus. Level 45: the species that ends runs.</p>
+  <div id="treebody" style="text-align:left;font-size:13px"></div>
+  <div class="row" style="margin-top:14px"><button class="btn" onclick="hide('tree')">Back</button></div>
+</div></div>
+
+<div id="picker" class="ov"><div class="panel" style="max-width:900px">
+  <div class="lbl">EVOLUTION AVAILABLE</div>
+  <h2 id="pickh">Choose a lineage</h2>
+  <div class="cards" id="pickcards"></div>
+  <div class="row" style="margin-top:14px"><button class="btn" onclick="hide('picker');S.pickOpen=false">Not yet (K)</button></div>
+</div></div>
+
+<div id="death" class="ov"><div class="panel">
+  <div class="lbl" id="deathby">LYSED</div>
+  <h1 style="font-size:30px;margin-top:6px" id="deathh">You were eaten</h1>
+  <div class="stats" id="dstats"></div>
+  <p id="deathq" class="muted" style="margin:0 0 12px"></p>
+  <div class="row"><button id="respawn" class="btn pri">Respawn</button><button class="btn" onclick="toTitle()">Title</button></div>
+</div></div>
+
+<div id="pause" class="ov"><div class="panel" style="max-width:360px"><h2>Paused</h2><p class="muted">The dish waits. Click or press any key.</p></div></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   PETRI.IO — a diep.io-style arena in a Petri dish.
+   One file, no network: every rival is a bot with a lab name and its own
+   opinions about who to eat. Grow, spend points, evolve down a lineage.
+   ===================================================================== */
+const TAU = Math.PI * 2, rnd = Math.random, R = (a, b) => a + rnd() * (b - a), RI = (a, b) => Math.floor(R(a, b + 1));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t, pick = (a) => a[Math.floor(rnd() * a.length)], hyp = Math.hypot;
+const $ = (id) => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const META = Object.assign({ best: 0, bestLv: 1, runs: 0, kills: 0, fav: {}, name: "", time: 0 }, store.get("pio-meta", {}));
+const PREFS = Object.assign({ sfx: true }, store.get("pio-prefs", {}));
+const saveMeta = () => store.set("pio-meta", META), savePrefs = () => store.set("pio-prefs", PREFS);
+const DEBUG = /[?&]debug\b/.test(location.search);
+const show = (id) => $(id).classList.add("show"), hide = (id) => $(id).classList.remove("show");
+
+const WORLD = 4000, CENTER = WORLD / 2, NUT_TARGET = 420, BOT_N = 14, LVCAP = 45;
+const NAMES = ["Strain K-12", "MRSA_2019", "HeLa", "ReviewerTwo", "B.subtilis_168", "PAO1", "xX_Lambda_Xx", "DH5alpha", "Mycoplasma", "C.diff", "Candida", "Tardigrade", "Listeria", "Salmonella", "T7_express", "BL21(DE3)", "V.fischeri", "Klebsiella", "Chlamy", "Paramecium", "Prion_42", "Rotavirus", "CHO-K1", "Jurkat", "Shigella", "Yersinia", "MG1655", "Top10", "NEB_turbo", "Enterococcus", "Acinetobacter", "S.pombe", "Agrobacterium", "Euglena", "Vorticella", "Stentor", "Volvox", "Rhizobium", "Wolbachia", "Deinococcus"];
+const QUIPS = ["Autoclaved.", "Your plate has been discarded.", "Contamination confirmed.", "Gram stain says: gone.", "Reviewer 2 has notes.", "Somebody forgot the negative control.", "Lysed, centrifuged, forgotten.", "Back to the glycerol stock.", "The incubator was set to 4 °C.", "Your colony did not make the figure."];
+
+/* ---------- stats ---------- */
+const STATS = [
+  { k: "regen", n: "Regeneration", col: "#7cf29a" }, { k: "maxhp", n: "Membrane (max HP)", col: "#b388ff" }, { k: "body", n: "Body damage", col: "#c77dff" }, { k: "bspd", n: "Shot speed", col: "#5ab4e0" },
+  { k: "bpen", n: "Shot penetration", col: "#ffd166" }, { k: "bdmg", n: "Shot damage", col: "#ff6b6b" }, { k: "reload", n: "Reload", col: "#ff9a5c" }, { k: "spd", n: "Motility", col: "#bdeeff" },
+];
+const MAXPT = 7;
+const xpFor = (L) => (L <= 1 ? 0 : Math.round(25 * Math.pow(L - 1, 1.9) + 20 * (L - 1)));
+const pointsAt = (L) => (L <= 28 ? L - 1 : 27 + Math.floor((L - 27) / 3));
+const tierLevel = [1, 15, 30, 45];
+
+/* ---------- lineage tree ---------- */
+const CLASSES = {};
+const B = (a, len, w, off, ph, extra) => Object.assign({ a, len, w, off: off || 0, ph: ph || 0 }, extra || {});
+function cls(k, o) { CLASSES[k] = Object.assign({ k, tier: 0, col: "#5ab4e0", barrels: [], mul: {}, next: [], zoom: 1, body: 1, blife: 1.3, bsize: 1 }, o); }
+cls("microbe", { n: "Microbe", d: "Where everyone starts: one secretion cannon and a dream.", fact: "Every lineage on this tree began as a single cell with no specialisation.", barrels: [B(0, 1, 0.42)], next: ["bacterium", "phage", "amoeba", "fungus"] });
+// tier 1
+cls("bacterium", { n: "Bacterium", tier: 1, col: "#7cf29a", d: "Twin cannons that alternate. Quick reload, cheaper shots.", fact: "Bacteria divide by binary fission: numbers, not size, are the strategy.", barrels: [B(0, 1, 0.36, -0.34, 0), B(0, 1, 0.36, 0.34, 0.5)], mul: { reload: 0.88, bdmg: 0.9 }, next: ["strep", "pseudo", "bacillus"] });
+cls("phage", { n: "Phage", tier: 1, col: "#c4a7ff", d: "Sniper. One long tail fibre: slow, far, hard-hitting, and you see further.", fact: "Bacteriophages inject their genome through a contractile tail. One shot, one cell.", barrels: [B(0, 1.65, 0.34)], mul: { bspd: 1.5, bdmg: 1.55, bpen: 1.3, reload: 1.7 }, zoom: 0.82, next: ["t4", "lambda", "filamentous"] });
+cls("amoeba", { n: "Amoeba", tier: 1, col: "#f2e6a7", d: "Brawler. Short pseudopod blobs, a thick membrane and heavy body damage: ram things.", fact: "Amoebae feed by phagocytosis: they flow around prey and engulf it whole.", barrels: [B(0, 0.7, 0.72)], mul: { body: 1.8, maxhp: 1.3, bdmg: 1.3, reload: 1.1, spd: 1.05, regen: 1.3 }, blife: 0.32, bsize: 1.6, body: 1.12, next: ["macrophage", "dicty", "entamoeba"] });
+cls("fungus", { n: "Fungus", tier: 1, col: "#ff9a5c", d: "Spore drones. No cannon: up to 4 spores that fly to your cursor and bite.", fact: "Fungi disperse by spores, which are tiny, numerous and remarkably persistent.", sp: "drones", drones: 4, ports: 3, next: ["penicillium", "aspergillus", "yeast"] });
+// tier 2
+cls("strep", { n: "Streptococcus", tier: 2, col: "#7cf29a", d: "Triple cannon in a fan. A chain of shots every reload.", fact: "Streptococci divide along one axis and stay attached, forming chains.", barrels: [B(-0.26, 0.95, 0.34), B(0, 1.05, 0.34), B(0.26, 0.95, 0.34)], mul: { reload: 0.95, bdmg: 0.85 }, next: ["pyogenes"] });
+cls("pseudo", { n: "Pseudomonas", tier: 2, col: "#9be37a", d: "Biofilm layer: drops sticky traps behind you that sit and wait. Tough, long-lived, slow.", fact: "Pseudomonas aeruginosa builds biofilms that shrug off antibiotics and immune cells alike.", sp: "trap", barrels: [B(Math.PI, 0.9, 0.55, 0, 0, { trap: 1 }), B(0, 0.95, 0.36, 0, 0.5)], mul: { bpen: 1.6, bdmg: 1.1 }, next: ["aeruginosa"] });
+cls("bacillus", { n: "Bacillus", tier: 2, col: "#e6d28a", d: "Spore artillery. A fat, slow endospore that bursts into fragments.", fact: "Bacillus endospores survive boiling, radiation and decades of neglect.", sp: "spore", frag: 6, barrels: [B(0, 1.05, 0.72)], mul: { reload: 1.7, bdmg: 1.6, bspd: 0.7, bpen: 1.4 }, bsize: 2.1, blife: 1.1, next: ["anthracis"] });
+cls("t4", { n: "T4 phage", tier: 2, col: "#c4a7ff", d: "Lytic sniper. Every kill bursts into 6 new particles.", fact: "T4 infects E. coli and lyses it after ~25 minutes, releasing 100–200 new virions.", sp: "lytic", frag: 6, barrels: [B(0, 1.75, 0.34)], mul: { bspd: 1.55, bdmg: 1.65, bpen: 1.35, reload: 1.7 }, zoom: 0.8, next: ["t4h"] });
+cls("lambda", { n: "Lambda phage", tier: 2, col: "#b388ff", d: "Lysogen. A shot into a rival under 35% health converts it to your side for 20 s.", fact: "Phage lambda can integrate into the host chromosome instead of killing it: lysogeny.", sp: "lysogen", barrels: [B(0, 1.65, 0.34)], mul: { bspd: 1.45, bdmg: 1.4, bpen: 1.3, reload: 1.6 }, zoom: 0.82, next: ["prophage"] });
+cls("filamentous", { n: "Filamentous phage", tier: 2, col: "#dcd0ff", d: "A needle. Very long, very fast, pierces through everything in a line.", fact: "Filamentous phages like M13 are ~1 µm rods that leave the host without lysing it.", sp: "needle", barrels: [B(0, 2.3, 0.2)], mul: { bspd: 1.9, bdmg: 1.35, bpen: 2.6, reload: 2.2 }, zoom: 0.8, bsize: 0.7, blife: 1.6, next: ["m13"] });
+cls("macrophage", { n: "Macrophage", tier: 2, col: "#f2e6a7", d: "Huge, regenerating, two pseudopods. Walk into people.", fact: "Macrophages engulf pathogens and debris, then present the pieces to T cells.", barrels: [B(-0.45, 0.65, 0.6), B(0.45, 0.65, 0.6, 0, 0.5)], mul: { body: 2.3, maxhp: 1.7, regen: 2.6, bdmg: 1.2, reload: 1.1, spd: 0.92 }, blife: 0.32, bsize: 1.6, body: 1.35, next: ["giant"] });
+cls("dicty", { n: "Dictyostelium", tier: 2, col: "#d9c97a", d: "Slime trail. Everything in your wake is slowed and hurt. Fast.", fact: "Dictyostelium amoebae aggregate into a crawling slug when food runs out.", sp: "slime", barrels: [B(0, 0.7, 0.68)], mul: { body: 1.7, maxhp: 1.3, bdmg: 1.2, spd: 1.22, regen: 1.3 }, blife: 0.32, bsize: 1.5, body: 1.1, next: ["slug"] });
+cls("entamoeba", { n: "Entamoeba", tier: 2, col: "#ffd9a0", d: "Dash (Shift / right-click): a burst of speed with double body damage. Ram and run.", fact: "Entamoeba histolytica invades tissue by lysing cells on contact.", sp: "dash", barrels: [B(0, 0.7, 0.68)], mul: { body: 2.1, maxhp: 1.3, bdmg: 1.2, spd: 1.1, regen: 1.4 }, blife: 0.32, bsize: 1.5, body: 1.1, next: ["histolytica"] });
+cls("penicillium", { n: "Penicillium", tier: 2, col: "#8fe3ff", d: "Antibiotic clouds. Shots leave a lingering cloud that burns rivals standing in it.", fact: "Penicillium notatum's mould killed Fleming's staphylococci on a forgotten plate in 1928.", sp: "cloud", cloudR: 70, cloudT: 3, barrels: [B(0, 1, 0.5)], mul: { reload: 1.4, bdmg: 0.9, bpen: 1.2 }, bsize: 1.3, next: ["chrysogenum"] });
+cls("aspergillus", { n: "Aspergillus", tier: 2, col: "#ff9a5c", d: "Six spores that hunt rivals on their own. Point them, or let them roam.", fact: "Aspergillus spores are everywhere in the air; most lungs clear thousands a day.", sp: "drones", drones: 6, seek: 1, ports: 4, next: ["fumigatus"] });
+cls("yeast", { n: "Yeast", tier: 2, col: "#f6e7b0", d: "Budding minions: three daughter cells that follow you and shoot.", fact: "Saccharomyces buds a daughter cell that stays smaller than its mother at first.", sp: "minions", minions: 3, ports: 2, mul: { maxhp: 1.2, regen: 1.3 }, next: ["cerevisiae"] });
+// tier 3: the species that end runs
+function evolve(parent, k, n, d, fact, patch) { const p = CLASSES[parent]; const o = Object.assign({}, p, { k, n, d, fact, tier: 3, next: [] }, patch); o.mul = Object.assign({}, p.mul, patch.mul || {}); CLASSES[k] = o; }
+evolve("strep", "pyogenes", "S. pyogenes", "Five-cannon fan with a faster reload. The flesh-eating variety.", "Group A streptococcus causes strep throat, scarlet fever and necrotising fasciitis.", { barrels: [B(-0.5, 0.85, 0.3), B(-0.25, 0.95, 0.3), B(0, 1.05, 0.32), B(0.25, 0.95, 0.3), B(0.5, 0.85, 0.3)], mul: { reload: 0.85, bdmg: 0.8 } });
+evolve("pseudo", "aeruginosa", "P. aeruginosa", "Two biofilm layers plus twin front cannons. Nothing gets through your wake.", "P. aeruginosa biofilms line catheters and cystic fibrosis lungs; quorum sensing coordinates them.", { barrels: [B(Math.PI - 0.35, 0.9, 0.5, 0, 0, { trap: 1 }), B(Math.PI + 0.35, 0.9, 0.5, 0, 0.5, { trap: 1 }), B(0, 0.95, 0.34, -0.3, 0.25), B(0, 0.95, 0.34, 0.3, 0.75)], mul: { bpen: 1.9, bdmg: 1.2, reload: 0.95 } });
+evolve("bacillus", "anthracis", "B. anthracis", "A mortar. Enormous spore, ten fragments, long range.", "Anthrax spores can lie dormant in soil for decades before germinating in a host.", { frag: 10, bsize: 2.6, blife: 1.4, mul: { bdmg: 2, bspd: 0.75, bpen: 1.8, reload: 1.9 } });
+evolve("t4", "t4h", "T4 hyperlytic", "Twelve-particle lytic bursts and a sharper reload.", "A single lytic cycle amplifies a phage population a hundredfold.", { frag: 12, mul: { bdmg: 1.9, bspd: 1.65, reload: 1.45, bpen: 1.5 } });
+evolve("lambda", "prophage", "Prophage lord", "Lysogeny at 50% health, allies for 35 s, and a twin tail fibre.", "Lysogenic phages hide in the host genome and can carry toxin genes like those of cholera.", { lyso: 0.5, allyT: 35, barrels: [B(0, 1.65, 0.3, -0.26, 0), B(0, 1.65, 0.3, 0.26, 0.5)], mul: { bdmg: 1.5, reload: 1.5 } });
+evolve("filamentous", "m13", "M13 lance", "A longer, faster needle that pierces almost anything.", "M13 is the workhorse of phage display, where peptides are shown on its coat proteins.", { barrels: [B(0, 2.7, 0.18)], mul: { bspd: 2.2, bdmg: 1.6, bpen: 3.4, reload: 2 }, blife: 1.9 });
+evolve("macrophage", "giant", "Giant cell", "Fused macrophages: colossal, near-unkillable, three pseudopods.", "Multinucleated giant cells form when macrophages fuse around something too big to eat.", { body: 1.6, barrels: [B(-0.6, 0.6, 0.55), B(0, 0.7, 0.6, 0, 0.33), B(0.6, 0.6, 0.55, 0, 0.66)], mul: { body: 3, maxhp: 2.2, regen: 3.2, spd: 0.85, bdmg: 1.3 } });
+evolve("dicty", "slug", "Slug stage", "A wider, longer-lasting slime trail and more speed.", "The Dictyostelium slug crawls toward light and heat, then stands up as a fruiting body.", { slimeR: 32, slimeT: 6, mul: { spd: 1.35, body: 1.9, maxhp: 1.4 } });
+evolve("entamoeba", "histolytica", "E. histolytica", "Shorter dash cooldown, triple damage while dashing.", "The species name means 'tissue-dissolving'. It earns it.", { dashCd: 1.4, dashMul: 3, mul: { body: 2.5, spd: 1.15, maxhp: 1.4 } });
+evolve("penicillium", "chrysogenum", "P. chrysogenum", "Bigger, longer clouds from twin cannons. The industrial strain.", "The high-yield P. chrysogenum strain came from a mouldy cantaloupe in a Peoria market.", { cloudR: 105, cloudT: 4.5, barrels: [B(0, 1, 0.45, -0.3, 0), B(0, 1, 0.45, 0.3, 0.5)], mul: { reload: 1.3, bdmg: 1.05 } });
+evolve("aspergillus", "fumigatus", "A. fumigatus", "Nine hunting spores with longer reach.", "A. fumigatus is the main cause of invasive aspergillosis in immunocompromised patients.", { drones: 9, seekR: 650, mul: { bdmg: 1.2, maxhp: 1.15 } });
+evolve("yeast", "cerevisiae", "S. cerevisiae", "Five daughter cells, each a little tougher. The brewer's strain.", "Brewer's yeast ferments sugar to ethanol and CO₂; it was domesticated thousands of years ago.", { minions: 5, mul: { maxhp: 1.35, regen: 1.5 } });
+const TIER_OF = (k) => CLASSES[k].tier;
+
+/* ---------- audio ---------- */
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === "suspended") AC.resume(); return AC; }
+const LAST = {};
+function tone(f, dur, type = "square", vol = 0.08, slide = 0, delay = 0) {
+  if (!PREFS.sfx || !AC) return; const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f + slide), t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function noise(dur, vol = 0.1, delay = 0) {
+  if (!PREFS.sfx || !AC) return; const n = Math.floor(AC.sampleRate * dur), b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (rnd() * 2 - 1) * (1 - i / n);
+  const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = b; g.gain.value = vol; s.connect(g).connect(AC.destination); s.start(AC.currentTime + delay);
+}
+function sfx(k, far = 0) {
+  if (!PREFS.sfx || !AC) return; const now = performance.now(); const gap = { shoot: 55, hit: 40, pop: 60 }[k] || 0; if (gap && now - (LAST[k] || 0) < gap) return; LAST[k] = now;
+  const v = far ? 0.4 : 1;
+  switch (k) {
+    case "shoot": tone(320, 0.06, "square", 0.03 * v, -180); break;
+    case "sniper": tone(180, 0.14, "sawtooth", 0.05 * v, -120); noise(0.05, 0.03 * v); break;
+    case "hit": tone(200, 0.05, "triangle", 0.03 * v, -60); break;
+    case "pop": tone(500, 0.08, "sine", 0.05 * v, 300); break;
+    case "hurt": tone(140, 0.12, "sawtooth", 0.06, -60); break;
+    case "kill": tone(440, 0.1, "square", 0.07); tone(660, 0.12, "square", 0.07, 0, 0.08); tone(880, 0.2, "square", 0.07, 0, 0.16); noise(0.2, 0.08); break;
+    case "levelup": tone(523, 0.1, "square", 0.06); tone(659, 0.1, "square", 0.06, 0, 0.1); tone(784, 0.18, "square", 0.06, 0, 0.2); break;
+    case "evolve": [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.25, "triangle", 0.07, 0, i * 0.09)); noise(0.3, 0.05, 0.3); break;
+    case "die": tone(300, 0.5, "sawtooth", 0.1, -260); noise(0.5, 0.12); break;
+    case "dash": tone(240, 0.15, "sine", 0.06, 400); break;
+    case "spawn": tone(300, 0.2, "sine", 0.05, 200); break;
+    case "ally": tone(500, 0.1, "sine", 0.06, 200); tone(750, 0.2, "sine", 0.06, 0, 0.1); break;
+  }
+}
+
+/* ---------- state ---------- */
+let S = null, UID = 0, W = 0, H = 0, DPR = 1;
+const cv = $("cv"), X = cv.getContext("2d");
+function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + "px"; cv.style.height = H + "px"; }
+window.addEventListener("resize", resize); resize();
+
+function newState() {
+  return { tanks: [], nuts: [], buls: [], zones: [], parts: [], pops: [], feed: [], time: 0, player: null, cam: { x: CENTER, y: CENTER, z: 1 }, shake: 0, over: false, paused: false, pickOpen: false, keys: {}, mouse: { x: 0, y: 0, down: false }, auto: false, touch: { move: null, aim: null }, kills: 0, started: 0, flash: 0 };
+}
+
+/* ---------- entities ---------- */
+function blankPts() { const p = {}; STATS.forEach((s) => (p[s.k] = 0)); return p; }
+function mkTank(o) {
+  const t = Object.assign({ kind: "tank", id: ++UID, x: CENTER, y: CENTER, vx: 0, vy: 0, aim: 0, aimX: 0, aimY: 0, r: 22, hp: 50, maxhp: 50, level: 1, xp: 0, score: 0, pts: blankPts(), free: 0, cls: "microbe", team: 0, name: "?", bot: false, unit: null, owner: null, dead: false, shooting: false, kills: 0, hitT: 0, inv: 0, bt: [], rec: [], age: 0, dashT: 0, dashCd: 0, slow: 0, spawnT: 0, allyT: 0, homeTeam: 0, lastHit: null, think: 0, mode: "farm", goal: null, tgt: null, strafe: 1, strafeT: 0, slimeT: 0, lv0: 1 }, o);
+  t.homeTeam = t.team; calc(t); t.hp = t.maxhp; return t;
+}
+function calc(t) {
+  const C = CLASSES[t.cls], m = C.mul, p = t.pts, lv = t.level;
+  if (t.unit === "drone") { const o = t.owner; t.maxhp = 14 + 5 * o.pts.bpen + lv * 0.5; t.body = o.bdmg * 2.2; t.spd = o.bspd * 0.9; t.regen = 0; t.r = 11 + lv * 0.08; return; }
+  if (t.unit === "minion") { const o = t.owner; t.maxhp = o.maxhp * 0.3; t.body = o.body * 0.5; t.spd = o.spd * 0.95; t.regen = t.maxhp * 0.01; t.r = o.r * 0.5; t.bspd = o.bspd; t.bpen = o.bpen * 0.6; t.bdmg = o.bdmg * 0.6; t.reload = o.reload * 1.4; return; }
+  t.maxhp = (50 + 2 * (lv - 1) + 20 * p.maxhp) * (m.maxhp || 1);
+  t.regen = t.maxhp * (0.004 + 0.006 * p.regen) * (m.regen || 1);
+  t.body = (20 + 7 * p.body) * (m.body || 1);
+  t.bspd = (380 + 45 * p.bspd) * (m.bspd || 1);
+  t.bpen = (6 + 4 * p.bpen) * (m.bpen || 1);
+  t.bdmg = (7 + 3 * p.bdmg) * (m.bdmg || 1);
+  t.reload = 0.55 * Math.pow(0.88, p.reload) * (m.reload || 1);
+  t.spd = (205 + 13 * p.spd) * (m.spd || 1) * (1 - (lv - 1) * 0.0045);
+  t.r = 22 * (1 + (lv - 1) * 0.016) * C.body;
+  if (t.bt.length !== C.barrels.length) { t.bt = C.barrels.map((b) => b.ph * t.reload); t.rec = C.barrels.map(() => 0); }
+}
+const NUTS = {
+  glucose: { n: "Glucose", sides: 6, r: 11, hp: 10, xp: 8, body: 3, col: "#f2c94c", w: 60 },
+  amino: { n: "Amino acid", sides: 3, r: 14, hp: 26, xp: 20, body: 5, col: "#ff6b8b", w: 26 },
+  lipid: { n: "Lipid droplet", sides: 0, r: 18, hp: 65, xp: 55, body: 8, col: "#ffb347", w: 10 },
+  atp: { n: "ATP", sides: 5, r: 23, hp: 160, xp: 220, body: 12, col: "#c77dff", w: 3 },
+  plasmid: { n: "Plasmid", sides: -1, r: 27, hp: 420, xp: 750, body: 15, col: "#7fd7ff", w: 0.5 },
+};
+function mkNut(k, x, y) { const N = NUTS[k]; return { kind: "nut", id: ++UID, k, x, y, vx: R(-6, 6), vy: R(-6, 6), r: N.r, hp: N.hp, maxhp: N.hp, body: N.body, rot: rnd() * TAU, spin: R(-0.4, 0.4), hitT: 0, lastHit: null, dead: false }; }
+function spawnNut() {
+  const d = rnd() < 0.3 ? R(0, 520) : R(500, CENTER - 60), a = rnd() * TAU, x = CENTER + Math.cos(a) * d, y = CENTER + Math.sin(a) * d;
+  const inner = d < 520; let roll = rnd() * (inner ? 50 : 99.5), k = "glucose";
+  const tbl = inner ? [["atp", 22], ["plasmid", 3], ["lipid", 15], ["amino", 10]] : [["glucose", NUTS.glucose.w], ["amino", NUTS.amino.w], ["lipid", NUTS.lipid.w], ["atp", NUTS.atp.w], ["plasmid", NUTS.plasmid.w]];
+  for (const [kk, w] of tbl) { if (roll < w) { k = kk; break; } roll -= w; }
+  S.nuts.push(mkNut(k, x, y));
+}
+function mkBul(t, b, i) {
+  const C = CLASSES[t.cls], ang = t.aim + b.a + (b.jit ? (rnd() - 0.5) * b.jit : 0), c = Math.cos(t.aim + b.a), s = Math.sin(t.aim + b.a), px = -Math.sin(t.aim + b.a), py = Math.cos(t.aim + b.a);
+  const L = t.r * (1 + b.len), off = t.r * b.off, x = t.x + c * L + px * off, y = t.y + s * L + py * off;
+  const sz = (6.5 + (t.level - 1) * 0.09) * C.bsize * (b.bs || 1), sp = t.bspd * (b.sm || 1), trap = !!b.trap;
+  const bul = { kind: "bul", id: ++UID, x, y, vx: Math.cos(ang) * sp * (trap ? 0.55 : 1), vy: Math.sin(ang) * sp * (trap ? 0.55 : 1), r: sz * (trap ? 1.6 : 1), dmg: t.bdmg * (b.dm || 1) * (trap ? 1.25 : 1), hp: t.bpen * (trap ? 2.5 : 1), life: trap ? 13 : C.blife, max: trap ? 13 : C.blife, team: t.team, owner: t, col: C.col, sp: trap ? "trap" : C.sp, ang, dead: false, t: 0, lv: t.level };
+  if (C.sp === "spore" && !trap) bul.frag = C.frag;
+  S.buls.push(bul); if (t.rec) t.rec[i] = 1;
+  t.vx -= Math.cos(ang) * (trap ? 0 : 14 * C.bsize); t.vy -= Math.sin(ang) * (trap ? 0 : 14 * C.bsize);
+  return bul;
+}
+function fragments(b, n, dmgMul, life, col) { for (let i = 0; i < n; i++) { const a = (i / n) * TAU + rnd() * 0.3, sp = 260 + rnd() * 80; S.buls.push({ kind: "bul", id: ++UID, x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.max(4, b.r * 0.5), dmg: b.dmg * dmgMul, hp: 5, life, max: life, team: b.team, owner: b.owner, col: col || b.col, sp: "frag", ang: a, dead: false, t: 0, lv: b.lv }); } }
+
+/* ---------- world setup ---------- */
+function botName() { const used = new Set(S.tanks.filter((t) => t.bot).map((t) => t.name)); const free = NAMES.filter((n) => !used.has(n)); return free.length ? pick(free) : pick(NAMES) + "_" + RI(2, 99); }
+function spawnPos(avoidPlayer) { for (let i = 0; i < 20; i++) { const x = R(120, WORLD - 120), y = R(120, WORLD - 120); if (!avoidPlayer || !S.player || hyp(x - S.player.x, y - S.player.y) > 900) return [x, y]; } return [R(120, WORLD - 120), R(120, WORLD - 120)]; }
+function spawnBot(level) {
+  const [x, y] = spawnPos(true), lv = clamp(level, 1, 40), b = mkTank({ x, y, team: ++UID + 1000, name: botName(), bot: true, level: lv, xp: xpFor(lv), score: xpFor(lv), inv: 2, spawnT: 1, think: rnd() * 0.5 });
+  b.prefs = pick([["bdmg", "reload", "bpen", "maxhp"], ["body", "maxhp", "regen", "spd"], ["bspd", "bdmg", "bpen", "reload"], ["spd", "reload", "bdmg", "maxhp"], ["maxhp", "regen", "bdmg", "reload"]]);
+  for (let i = 0; i < pointsAt(lv); i++) botSpend(b);
+  if (lv >= 15) botEvolve(b, true); if (lv >= 30) botEvolve(b, true); if (lv >= 45) botEvolve(b, true);
+  calc(b); b.hp = b.maxhp; S.tanks.push(b); return b;
+}
+function botSpend(b) { const k = rnd() < 0.7 ? pick(b.prefs) : pick(STATS).k; if (b.pts[k] < MAXPT) { b.pts[k]++; } else { const o = STATS.find((s) => b.pts[s.k] < MAXPT); if (o) b.pts[o.k]++; } calc(b); }
+function botEvolve(b, quiet) { const C = CLASSES[b.cls]; if (!C.next.length || b.level < tierLevel[C.tier + 1]) return; setClass(b, pick(C.next), quiet); }
+function setClass(t, k, quiet) {
+  const old = t.cls; t.cls = k; const C = CLASSES[k]; t.bt = []; calc(t); t.hp = Math.min(t.maxhp, t.hp + t.maxhp * 0.25);
+  for (const u of S.tanks) if (u.owner === t && u.unit) u.dead = true; // units reset with lineage
+  if (!quiet) { burst(t.x, t.y, C.col, 26, 4); if (!t.bot) { sfx("evolve"); META.fav[k] = (META.fav[k] || 0) + 1; saveMeta(); pop(t.x, t.y - t.r - 30, `EVOLVED: ${C.n.toUpperCase()}`, C.col, 1); } else feedMsg(`${t.name} evolved into ${C.n}`, C.col); }
+  return old;
+}
+function startRun(name) {
+  S = newState(); S.started = performance.now();
+  const pa = rnd() * TAU, pd = R(800, 1500), P = mkTank({ x: CENTER + Math.cos(pa) * pd, y: CENTER + Math.sin(pa) * pd, team: 0, name: name || "You", inv: 3, spawnT: 1 });
+  S.player = P; S.tanks.push(P);
+  for (let i = 0; i < NUT_TARGET; i++) spawnNut();
+  for (let i = 0; i < BOT_N; i++) spawnBot(RI(1, 3) + Math.floor(i * 1.25));
+  S.cam.x = P.x; S.cam.y = P.y; S.cam.z = camZoom();
+  META.runs++; saveMeta(); hide("title"); hide("death"); feedMsg("Inoculated. Eat the small things first.", "#8a97a8");
+}
+
+/* ---------- xp, levels, score ---------- */
+function gainXP(t, n) {
+  if (t.dead || t.unit) { if (t.unit && t.owner) return gainXP(t.owner, n); return; }
+  t.xp += n; t.score += n;
+  while (t.level < LVCAP && t.xp >= xpFor(t.level + 1)) {
+    t.level++; const before = pointsAt(t.level - 1), after = pointsAt(t.level); t.free += after - before; const mh = t.maxhp; calc(t); t.hp += t.maxhp - mh;
+    if (!t.bot) { sfx("levelup"); pop(t.x, t.y - t.r - 24, `LEVEL ${t.level}`, "#ffd166"); if (t.level === 15 || t.level === 30 || t.level === 45) { S.flash = 0.4; toast(`LEVEL ${t.level}: A NEW LINEAGE IS AVAILABLE. PRESS K`); } }
+    else { botSpend(t); t.evoT = R(1, 3); }
+  }
+}
+function canEvolve(t) { const C = CLASSES[t.cls]; return C.next.length > 0 && t.level >= tierLevel[C.tier + 1]; }
+
+/* ---------- combat helpers ---------- */
+function damage(v, n, by) {
+  if (v.dead || v.inv > 0) return; v.hp -= n; v.hitT = 0.12; if (by) v.lastHit = { by, t: S.time };
+  if (v.kind === "tank" && !v.unit && !v.bot) { if (n > 2) sfx("hurt"); S.shake = Math.min(14, S.shake + n * 0.12); }
+  if (v.hp <= 0) kill(v, by);
+}
+function credit(v, by) { if (!by) return null; let o = by.kind === "bul" ? by.owner : by; if (o && o.unit) o = o.owner; return o && !o.dead ? o : null; }
+function kill(v, by) {
+  if (v.dead) return; v.dead = true; const k = credit(v, by);
+  if (v.kind === "nut") { const N = NUTS[v.k]; burst(v.x, v.y, N.col, v.k === "glucose" ? 6 : 12, v.r * 0.12); if (k) { gainXP(k, N.xp); if (!k.bot && (v.k === "atp" || v.k === "plasmid")) pop(v.x, v.y, `+${N.xp}`, N.col); } if (k && k === S.player) sfx("pop"); else sfx("pop", 1); if (k && by && by.kind === "bul" && by.sp === "lytic" && v.k !== "glucose") lytic(by, v); return; }
+  if (v.unit) { burst(v.x, v.y, CLASSES[v.owner.cls].col, 8, 2); if (k && k !== v.owner) gainXP(k, 20 + v.level * 2); return; }
+  // a player or bot died
+  const C = CLASSES[v.cls]; burst(v.x, v.y, C.col, 40, 6); burst(v.x, v.y, "#ffffff", 14, 3);
+  for (const u of S.tanks) if (u.owner === v && u.unit) u.dead = true;
+  for (const u of S.tanks) if (u.allyT > 0 && u.allyOf === v) { u.allyT = 0; u.team = u.homeTeam; u.allyOf = null; }
+  const worth = Math.round(120 + v.xp * 0.5);
+  if (k) {
+    k.kills++; gainXP(k, k.bot ? Math.round(worth * 0.4) : worth);
+    if (k === S.player) { S.kills++; META.kills++; sfx("kill"); S.shake += 6; pop(v.x, v.y - 20, `+${worth} XP`, "#ffd166", 1); }
+    if (by && by.kind === "bul" && by.sp === "lytic") lytic(by, v);
+    feedMsg(`${k.name} ate ${v.name}${v.level >= 15 ? " (" + C.n + ")" : ""}`, k === S.player ? "#ffd166" : v === S.player ? "#ff6b6b" : "#c9d2dc");
+  } else feedMsg(`${v.name} dissolved`, "#8a97a8");
+  if (v === S.player) { S.over = true; sfx("die"); S.shake = 18; v.killer = k ? k.name : "the dish"; const run = S; setTimeout(() => { if (S === run && S.over) showDeath(); }, 900); }
+  else { v.respawn = 3.5; }
+}
+function lytic(b, v) { const n = CLASSES[b.owner.cls].frag || 6; fragments({ x: v.x, y: v.y, r: b.r, dmg: b.dmg, team: b.team, owner: b.owner, col: b.col, lv: b.lv }, n, 0.55, 0.8); burst(v.x, v.y, "#c4a7ff", 10, 3); }
+function feedMsg(s, col) { S.feed.unshift({ s, col, t: 7 }); if (S.feed.length > 6) S.feed.pop(); }
+function pop(x, y, s, col, big) { S.pops.push({ x, y, s, col, t: 1.4, big }); }
+function burst(x, y, col, n, sz) { for (let i = 0; i < n; i++) { const a = rnd() * TAU, sp = R(40, 260); S.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: R(1.5, sz || 3), col, t: R(0.3, 0.8), max: 0.8 }); } }
+let toastT = 0; function toast(s) { const e = $("toast"); e.textContent = s; e.style.opacity = 1; toastT = 3; }
+
+/* ---------- player input ---------- */
+const keys = {};
+window.addEventListener("keydown", (e) => {
+  if (e.target && e.target.tagName === "INPUT") { if (e.key === "Enter") $("play").click(); return; }
+  ac(); const k = e.key.toLowerCase(); keys[k] = true;
+  if (!S) return;
+  if (S.paused) { S.paused = false; hide("pause"); return; }
+  if (k === "e") S.auto = !S.auto;
+  if (k === "m") { PREFS.sfx = !PREFS.sfx; savePrefs(); toast(PREFS.sfx ? "SOUND ON" : "SOUND OFF"); }
+  if (k === "k" || k === "tab") { e.preventDefault(); togglePicker(); }
+  if (/^[1-8]$/.test(k) && S.player && !S.over) spend(S.player, STATS[+k - 1].k);
+  if (k === "shift" || k === " ") { e.preventDefault(); dash(S.player); }
+  if (k === "escape" && S.pickOpen) togglePicker();
+  if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
+});
+window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener("blur", () => { for (const k in keys) keys[k] = false; if (S && !S.over && !S.pickOpen && !$("title").classList.contains("show")) { S.paused = true; show("pause"); } });
+$("pause").addEventListener("pointerdown", () => { if (S) { S.paused = false; hide("pause"); } });
+cv.addEventListener("contextmenu", (e) => e.preventDefault());
+const PTRS = new Map();
+cv.addEventListener("pointerdown", (e) => {
+  ac(); if (!S) return; if (S.paused) { S.paused = false; hide("pause"); return; }
+  if (e.pointerType === "touch") { PTRS.set(e.pointerId, { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, side: e.clientX < W / 2 ? "L" : "R" }); cv.setPointerCapture(e.pointerId); return; }
+  S.mouse.x = e.clientX; S.mouse.y = e.clientY;
+  if (hudClick(e.clientX, e.clientY)) return;
+  if (e.button === 2) { dash(S.player); return; }
+  S.mouse.down = true;
+});
+cv.addEventListener("pointermove", (e) => { if (!S) return; if (e.pointerType === "touch") { const p = PTRS.get(e.pointerId); if (p) { p.x = e.clientX; p.y = e.clientY; } return; } S.mouse.x = e.clientX; S.mouse.y = e.clientY; });
+const ptrUp = (e) => { if (!S) return; if (e.pointerType === "touch") { const p = PTRS.get(e.pointerId); if (p && p.side === "R" && hyp(p.x - p.x0, p.y - p.y0) < 8) hudClick(p.x, p.y); if (p && p.side === "L" && hyp(p.x - p.x0, p.y - p.y0) < 8) hudClick(p.x, p.y); PTRS.delete(e.pointerId); return; } if (e.button !== 2) S.mouse.down = false; };
+cv.addEventListener("pointerup", ptrUp); cv.addEventListener("pointercancel", ptrUp);
+function spend(t, k) { if (t.free <= 0 || t.pts[k] >= MAXPT) return false; t.pts[k]++; t.free--; const mh = t.maxhp; calc(t); t.hp += Math.max(0, t.maxhp - mh); if (!t.bot) tone(600 + 60 * t.pts[k], 0.07, "square", 0.05); return true; }
+function dash(t) { if (!t || t.dead) return; const C = CLASSES[t.cls]; if (C.sp !== "dash" || t.dashCd > 0) return; t.dashT = 0.2; t.dashCd = C.dashCd || 2.4; if (!t.bot) sfx("dash"); burst(t.x, t.y, C.col, 10, 3); }
+
+/* ---------- AI ---------- */
+function power(t) { return t.level * 1.2 + (t.hp / t.maxhp) * 12 + (t.unit ? -10 : 0); }
+function botThink(b, dt) {
+  b.think -= dt; if (b.think > 0) return;
+  b.think = 0.22 + rnd() * 0.18;
+  const enemies = [], allyGoal = b.allyT > 0 ? b.allyOf : null;
+  for (const t of S.tanks) { if (t === b || t.dead || t.team === b.team || t.spawnT > 0) continue; const d = hyp(t.x - b.x, t.y - b.y); if (d < 900) enemies.push({ t, d }); }
+  enemies.sort((a, c) => a.d - c.d);
+  const me = power(b), hpF = b.hp / b.maxhp;
+  let mode = "farm", tgt = null;
+  const nearest = enemies[0];
+  if (nearest && hpF < 0.3 && nearest.d < 600 && !allyGoal) { mode = "flee"; tgt = nearest.t; }
+  else {
+    const prey = enemies.find((e) => !e.t.unit && power(e.t) < me * (allyGoal ? 1.3 : 0.95) && e.d < 750 && (e.t.level >= 5 || (e.t.lastHit && e.t.lastHit.by && credit(e.t, e.t.lastHit.by) === b) || (b.lastHit && credit(b, b.lastHit.by) === e.t))) || enemies.find((e) => e.t.unit && e.d < 300);
+    const bully = enemies.find((e) => !e.t.unit && power(e.t) > me * 1.25 && e.d < 420);
+    if (prey && (!bully || prey.d < bully.d * 0.7)) { mode = "hunt"; tgt = prey.t; }
+    else if (bully && hpF < 0.75) { mode = "flee"; tgt = bully.t; }
+    else if (nearest && nearest.d < 260 && !nearest.t.unit) { mode = "hunt"; tgt = nearest.t; } // too close to ignore: fight back
+  }
+  if (mode === "farm") {
+    if (allyGoal && hyp(allyGoal.x - b.x, allyGoal.y - b.y) > 350) { mode = "follow"; tgt = allyGoal; }
+    else {
+      let best = null, bs = 0;
+      for (const n of S.nuts) { if (n.dead) continue; const d = hyp(n.x - b.x, n.y - b.y); if (d > 900) continue; const sc = NUTS[n.k].xp / (d + 60) * (n.k === "plasmid" && b.level < 8 ? 0.2 : 1); if (sc > bs) { bs = sc; best = n; } }
+      if (best) tgt = best; else if (!b.goal || hyp(b.goal[0] - b.x, b.goal[1] - b.y) < 80) b.goal = [R(200, WORLD - 200), R(200, WORLD - 200)];
+    }
+  }
+  b.mode = mode; b.tgt = tgt;
+  if ((b.strafeT -= 0.3) <= 0) { b.strafeT = R(1, 2.2); b.strafe = rnd() < 0.5 ? 1 : -1; }
+  if (b.evoT !== undefined && (b.evoT -= 0.3) <= 0) { b.evoT = undefined; botEvolve(b); }
+  if (b.free > 0) botSpend(b), b.free--;
+}
+function botMove(b, dt) {
+  const C = CLASSES[b.cls], t = b.tgt; let mx = 0, my = 0; b.shooting = false;
+  if (t) {
+    const dx = t.x - b.x, dy = t.y - b.y, d = hyp(dx, dy) || 1;
+    if (b.mode === "flee") { mx = -dx / d; my = -dy / d; const n = nearestNut(b); if (n) { mx += (n.x - b.x) / (hyp(n.x - b.x, n.y - b.y) || 1) * 0.5; my += (n.y - b.y) / (hyp(n.x - b.x, n.y - b.y) || 1) * 0.5; } b.aim = Math.atan2(dy, dx); b.shooting = true; }
+    else if (b.mode === "hunt" || b.mode === "follow") {
+      const brawler = C.mul.body > 1.5, want = b.mode === "follow" ? 140 : brawler ? 0 : C.zoom < 1 ? 420 : 230;
+      const r = d - want; mx = (dx / d) * clamp(r / 120, -1, 1) + (-dy / d) * b.strafe * 0.6; my = (dy / d) * clamp(r / 120, -1, 1) + (dx / d) * b.strafe * 0.6;
+      if (b.mode === "hunt") { const tt = Math.min(1.2, d / Math.max(200, b.bspd)); b.aim = Math.atan2(dy + t.vy * tt, dx + t.vx * tt); b.shooting = d < 700; b.aimX = t.x; b.aimY = t.y; if (C.sp === "dash" && d < 320 && b.dashCd <= 0) dash(b); }
+      else { b.aim = Math.atan2(dy, dx); }
+    } else { mx = dx / d; my = dy / d; b.aim = Math.atan2(dy, dx); b.shooting = d < 480; b.aimX = t.x; b.aimY = t.y; if (d < b.r + t.r + 10) { mx *= 0.2; my *= 0.2; } }
+  } else if (b.goal) { const dx = b.goal[0] - b.x, dy = b.goal[1] - b.y, d = hyp(dx, dy) || 1; mx = dx / d; my = dy / d; b.aim += dt * 0.5; }
+  // stay inside the dish
+  if (b.x < 150) mx += 1; if (b.x > WORLD - 150) mx -= 1; if (b.y < 150) my += 1; if (b.y > WORLD - 150) my -= 1;
+  const l = hyp(mx, my) || 1; return [mx / l, my / l];
+}
+function nearestNut(b) { let best = null, bd = 1e9; for (const n of S.nuts) { if (n.dead) continue; const d = hyp(n.x - b.x, n.y - b.y); if (d < bd) { bd = d; best = n; } } return best; }
+function unitMove(u, dt) {
+  const o = u.owner, C = CLASSES[o.cls];
+  if (u.unit === "drone") {
+    let tx, ty; const seekR = C.seekR || (C.seek ? 520 : 0);
+    let foe = null, fd = 1e9; if (seekR || o.shooting) { for (const t of S.tanks) { if (t.dead || t.team === u.team || t.spawnT > 0) continue; const d = hyp(t.x - u.x, t.y - u.y); if (d < fd && d < (seekR || 220)) { fd = d; foe = t; } } }
+    if (foe) { tx = foe.x; ty = foe.y; }
+    else if (o.shooting) { tx = o.aimX; ty = o.aimY; }
+    else { const a = u.age * 1.6 + u.id; tx = o.x + Math.cos(a) * (o.r + 55); ty = o.y + Math.sin(a) * (o.r + 55); }
+    const dx = tx - u.x, dy = ty - u.y, d = hyp(dx, dy) || 1, sp = u.spd; u.vx = lerp(u.vx, (dx / d) * sp * Math.min(1, d / 40), dt * 6); u.vy = lerp(u.vy, (dy / d) * sp * Math.min(1, d / 40), dt * 6);
+    u.aim = Math.atan2(u.vy, u.vx); u.x += u.vx * dt; u.y += u.vy * dt;
+    if (!foe && !o.shooting) { for (const n of S.nuts) if (!n.dead && hyp(n.x - u.x, n.y - u.y) < 90) { u.x += (n.x - u.x) * dt * 2; u.y += (n.y - u.y) * dt * 2; break; } }
+    return;
+  }
+  // minion: follow owner, shoot enemies near owner
+  let foe = null, fd = 1e9; for (const t of S.tanks) { if (t.dead || t.team === u.team || t.spawnT > 0 || t.unit === "drone") continue; const d = hyp(t.x - o.x, t.y - o.y); if (d < fd && d < 520) { fd = d; foe = t; } }
+  const slot = u.slot || 0, a = o.aim + Math.PI + (slot - 1) * 0.9, hx = o.x + Math.cos(a) * (o.r + 46), hy = o.y + Math.sin(a) * (o.r + 46);
+  let tx = hx, ty = hy; if (foe) { const d = hyp(foe.x - u.x, foe.y - u.y); if (d > 180) { tx = foe.x; ty = foe.y; } }
+  const dx = tx - u.x, dy = ty - u.y, d = hyp(dx, dy) || 1, f = Math.min(1, d / 30);
+  u.vx = lerp(u.vx, (dx / d) * u.spd * f, dt * 5); u.vy = lerp(u.vy, (dy / d) * u.spd * f, dt * 5); u.x += u.vx * dt; u.y += u.vy * dt;
+  if (foe) { const dd = hyp(foe.x - u.x, foe.y - u.y); u.aim = Math.atan2(foe.y + foe.vy * dd / u.bspd - u.y, foe.x + foe.vx * dd / u.bspd - u.x); u.shooting = true; } else { u.aim = o.aim; u.shooting = false; }
+}
+
+/* ---------- update ---------- */
+function camZoom() { const P = S.player, C = CLASSES[P.cls]; const base = clamp(Math.min(W / 1500, H / 900) + 0.35, 0.5, 1.1); return base * (1 - (P.level - 1) * 0.0085) * C.zoom; }
+function step(dt) {
+  S.time += dt; const P = S.player;
+  if (toastT > 0 && (toastT -= dt) <= 0) $("toast").style.opacity = 0;
+  if (S.flash > 0) S.flash -= dt;
+  // player input
+  if (!S.over) {
+    let mx = 0, my = 0;
+    if (keys.w || keys.arrowup) my -= 1; if (keys.s || keys.arrowdown) my += 1; if (keys.a || keys.arrowleft) mx -= 1; if (keys.d || keys.arrowright) mx += 1;
+    let aimSet = false, fire = S.mouse.down || S.auto;
+    for (const p of PTRS.values()) {
+      if (p.side === "L") { const dx = p.x - p.x0, dy = p.y - p.y0, d = hyp(dx, dy); if (d > 10) { const l = Math.min(1, d / 60); mx = (dx / d) * l; my = (dy / d) * l; } }
+      else { const [wx, wy] = toWorld(p.x, p.y); P.aim = Math.atan2(wy - P.y, wx - P.x); P.aimX = wx; P.aimY = wy; aimSet = true; fire = true; }
+    }
+    if (!aimSet && PTRS.size === 0) { const [wx, wy] = toWorld(S.mouse.x, S.mouse.y); P.aim = Math.atan2(wy - P.y, wx - P.x); P.aimX = wx; P.aimY = wy; }
+    const l = hyp(mx, my); if (l > 1) { mx /= l; my /= l; }
+    P.mv = DEBUG && P.dbgMv ? P.dbgMv : [mx, my]; P.shooting = fire && !S.pickOpen;
+  }
+  // tanks
+  for (const t of S.tanks) {
+    if (t.dead) { if (t.bot && !t.unit && (t.respawn -= dt) <= 0) { const i = S.tanks.indexOf(t); S.tanks.splice(i, 1); spawnBot(clamp(Math.floor(P.level * 0.5 + R(0, 4)), 1, 30)); } continue; }
+    t.age += dt; if (t.inv > 0) t.inv -= dt; if (t.spawnT > 0) t.spawnT -= dt; if (t.hitT > 0) t.hitT -= dt; if (t.dashCd > 0) t.dashCd -= dt;
+    if (t.allyT > 0 && (t.allyT -= dt) <= 0) { t.team = t.homeTeam; t.allyOf = null; feedMsg(`${t.name} shook off the prophage`, "#8a97a8"); }
+    const C = CLASSES[t.cls];
+    if (t.regen) t.hp = Math.min(t.maxhp, t.hp + t.regen * dt * (t.age - (t.lastHurt || -9) > 4 ? 1.8 : 1));
+    let mv = [0, 0];
+    if (t.unit) { if (!t.owner || t.owner.dead) { t.dead = true; continue; } unitMove(t, dt); }
+    else if (t.bot) { if (t.level < Math.min(40, Math.max(14, P.level + 9))) gainXP(t, (6 + 0.8 * t.level) * dt); botThink(t, dt); mv = botMove(t, dt); }
+    else mv = t.mv || [0, 0];
+    if (!t.unit) {
+      let sp = t.spd * (t.slow > 0 ? 0.55 : 1); if (t.dashT > 0) { t.dashT -= dt; sp *= 4.2; }
+      t.vx = lerp(t.vx, mv[0] * sp, dt * 7); t.vy = lerp(t.vy, mv[1] * sp, dt * 7);
+      t.x += t.vx * dt; t.y += t.vy * dt;
+      if (C.sp === "slime" && hyp(t.vx, t.vy) > 40 && (t.slimeT -= dt) <= 0) { t.slimeT = 0.09; S.zones.push({ x: t.x - t.vx * 0.05, y: t.y - t.vy * 0.05, r: C.slimeR || 22, life: C.slimeT || 4, max: C.slimeT || 4, team: t.team, owner: t, type: "slime", col: C.col }); }
+    }
+    if (t.slow > 0) t.slow -= dt;
+    const m = t.r; if (t.x < m) { t.x = m; t.vx = Math.abs(t.vx) * 0.3; } if (t.x > WORLD - m) { t.x = WORLD - m; t.vx = -Math.abs(t.vx) * 0.3; } if (t.y < m) { t.y = m; t.vy = Math.abs(t.vy) * 0.3; } if (t.y > WORLD - m) { t.y = WORLD - m; t.vy = -Math.abs(t.vy) * 0.3; }
+    // firing
+    if (t.unit === "drone") continue;
+    const barrels = C.barrels; for (let i = 0; i < barrels.length; i++) { if (t.rec[i] > 0) t.rec[i] = Math.max(0, t.rec[i] - dt * 6); }
+    if (t.shooting && !t.dead && t.spawnT <= 0) {
+      for (let i = 0; i < barrels.length; i++) { t.bt[i] -= dt; if (t.bt[i] <= 0) { mkBul(t, barrels[i], i); t.bt[i] += t.reload; if (t === P || (t.unit && t.owner === P)) sfx(C.zoom < 1 ? "sniper" : "shoot"); else if (hyp(t.x - P.x, t.y - P.y) < 700) sfx("shoot", 1); } }
+    } else for (let i = 0; i < barrels.length; i++) t.bt[i] = Math.max(Math.min(t.bt[i], barrels[i].ph * t.reload), t.bt[i] - dt);
+    // drones & minions
+    if (C.sp === "drones" || C.sp === "minions") {
+      const isD = C.sp === "drones", n = S.tanks.filter((u) => !u.dead && u.owner === t && u.unit).length, max = isD ? C.drones : C.minions;
+      t.unitT = (t.unitT || 0) - dt;
+      if (n < max && t.unitT <= 0) { t.unitT = t.reload * (isD ? 2.2 : 4); const a = rnd() * TAU; const u = mkTank({ x: t.x + Math.cos(a) * (t.r + 14), y: t.y + Math.sin(a) * (t.r + 14), team: t.team, name: "", unit: isD ? "drone" : "minion", owner: t, cls: "microbe", level: t.level, slot: n, bot: t.bot, inv: 0.3 }); u.hp = u.maxhp; S.tanks.push(u); if (t === P) sfx("spawn"); }
+    }
+  }
+  // bullets
+  for (const b of S.buls) {
+    if (b.dead) continue; b.t += dt; b.life -= dt;
+    if (b.sp === "trap") { b.vx *= Math.pow(0.02, dt); b.vy *= Math.pow(0.02, dt); }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.x < 0 || b.x > WORLD || b.y < 0 || b.y > WORLD) b.dead = true;
+    if (b.life <= 0 || b.hp <= 0) { b.dead = true; bulletEnd(b); }
+  }
+  // nutrients
+  if (S.nuts.length < NUT_TARGET && rnd() < dt * 6) spawnNut();
+  for (const n of S.nuts) { if (n.dead) continue; n.x += n.vx * dt; n.y += n.vy * dt; n.rot += n.spin * dt; if (n.hitT > 0) n.hitT -= dt; if (n.x < n.r) n.vx = Math.abs(n.vx); if (n.x > WORLD - n.r) n.vx = -Math.abs(n.vx); if (n.y < n.r) n.vy = Math.abs(n.vy); if (n.y > WORLD - n.r) n.vy = -Math.abs(n.vy); if (n.hp < n.maxhp) n.hp = Math.min(n.maxhp, n.hp + n.maxhp * 0.02 * dt); }
+  collide(dt);
+  // zones
+  for (const z of S.zones) { z.life -= dt; if (z.life <= 0) continue; for (const t of S.tanks) { if (t.dead || t.team === z.team || t.inv > 0) continue; if (hyp(t.x - z.x, t.y - z.y) < z.r + t.r * 0.6) { if (z.type === "slime") { t.slow = 0.25; damage(t, 3 * dt, z.owner); } else { damage(t, z.dps * dt, z.owner); } } } }
+  S.zones = S.zones.filter((z) => z.life > 0);
+  // cleanup
+  if (S.time % 1 < dt) { S.tanks = S.tanks.filter((t) => !t.dead || (t.bot && !t.unit)); }
+  S.buls = S.buls.filter((b) => !b.dead); S.nuts = S.nuts.filter((n) => !n.dead);
+  for (const p of S.parts) { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.92; p.vy *= 0.92; } S.parts = S.parts.filter((p) => p.t > 0);
+  for (const p of S.pops) { p.t -= dt; p.y -= 30 * dt; } S.pops = S.pops.filter((p) => p.t > 0);
+  for (const f of S.feed) f.t -= dt; S.feed = S.feed.filter((f) => f.t > 0);
+  // camera
+  const z = camZoom(); S.cam.z = lerp(S.cam.z, z, dt * 2); S.cam.x = lerp(S.cam.x, P.x, dt * 8); S.cam.y = lerp(S.cam.y, P.y, dt * 8);
+  if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 30);
+  if (!S.over && !S.pickOpen && !P.bot && canEvolve(P) && !P.evoHint) { P.evoHint = 1; }
+}
+function bulletEnd(b) {
+  const C = CLASSES[b.owner.cls];
+  if (b.frag) { fragments(b, b.frag, 0.45, 0.6); burst(b.x, b.y, b.col, 8, 3); }
+  if (b.sp === "cloud") { S.zones.push({ x: b.x, y: b.y, r: C.cloudR || 70, life: C.cloudT || 3, max: C.cloudT || 3, team: b.team, owner: b.owner, type: "cloud", dps: b.dmg * 1.6, col: C.col }); }
+}
+
+/* ---------- collisions: a spatial hash over tanks, nutrients and bullets ---------- */
+const CELL = 110;
+function collide(dt) {
+  const grid = new Map(), key = (cx, cy) => cx * 100003 + cy;
+  const put = (e) => { const x0 = Math.floor((e.x - e.r) / CELL), x1 = Math.floor((e.x + e.r) / CELL), y0 = Math.floor((e.y - e.r) / CELL), y1 = Math.floor((e.y + e.r) / CELL); for (let cx = x0; cx <= x1; cx++) for (let cy = y0; cy <= y1; cy++) { const k = key(cx, cy); let a = grid.get(k); if (!a) grid.set(k, (a = [])); a.push(e); } };
+  const act = [];
+  for (const t of S.tanks) if (!t.dead) { put(t); act.push(t); }
+  for (const n of S.nuts) if (!n.dead) put(n);
+  for (const b of S.buls) if (!b.dead) { put(b); act.push(b); }
+  const done = new Set();
+  for (const A of act) {
+    if (A.dead) continue;
+    const x0 = Math.floor((A.x - A.r) / CELL), x1 = Math.floor((A.x + A.r) / CELL), y0 = Math.floor((A.y - A.r) / CELL), y1 = Math.floor((A.y + A.r) / CELL);
+    for (let cx = x0; cx <= x1; cx++) for (let cy = y0; cy <= y1; cy++) {
+      const cell = grid.get(key(cx, cy)); if (!cell) continue;
+      for (const Bb of cell) {
+        if (Bb === A || Bb.dead) continue; if (Bb.kind !== "nut" && Bb.id < A.id) continue;
+        const pk = A.id < Bb.id ? A.id * 1e7 + Bb.id : Bb.id * 1e7 + A.id; if (done.has(pk)) continue; done.add(pk);
+        const dx = Bb.x - A.x, dy = Bb.y - A.y, rr = A.r + Bb.r, d2 = dx * dx + dy * dy; if (d2 >= rr * rr) continue;
+        pair(A, Bb, dx, dy, Math.sqrt(d2) || 0.01, rr, dt);
+      }
+    }
+  }
+}
+function separate(a, b, dx, dy, d, rr, ma, mb) { const ov = (rr - d), nx = dx / d, ny = dy / d, tot = ma + mb; a.x -= nx * ov * (mb / tot); a.y -= ny * ov * (mb / tot); b.x += nx * ov * (ma / tot); b.y += ny * ov * (ma / tot); }
+function pair(a, b, dx, dy, d, rr, dt) {
+  if (a.kind === "tank" && b.kind === "tank") {
+    const ma = a.r * a.r, mb = b.r * b.r; separate(a, b, dx, dy, d, rr, ma, mb);
+    if (a.team === b.team || a.spawnT > 0 || b.spawnT > 0) return;
+    const ka = a.dashT > 0 ? (CLASSES[a.cls].dashMul || 2) : 1, kb = b.dashT > 0 ? (CLASSES[b.cls].dashMul || 2) : 1;
+    damage(b, a.body * ka * 1.6 * dt, a); damage(a, b.body * kb * 1.6 * dt, b);
+    const kick = 60 * dt; a.vx -= (dx / d) * kick * (mb / ma); a.vy -= (dy / d) * kick * (mb / ma); b.vx += (dx / d) * kick * (ma / mb); b.vy += (dy / d) * kick * (ma / mb);
+    return;
+  }
+  if (a.kind === "tank" && b.kind === "nut") {
+    separate(a, b, dx, dy, d, rr, a.r * a.r * 3, b.r * b.r);
+    if (a.spawnT > 0) return; damage(b, a.body * 1.6 * dt, a); if (!a.unit || a.unit === "drone") damage(a, b.body * 0.4 * dt * (a.unit ? 0.5 : 1), null); b.vx += (dx / d) * 30 * dt; b.vy += (dy / d) * 30 * dt;
+    return;
+  }
+  if (a.kind === "bul" && b.kind === "bul") {
+    if (a.team === b.team) return; const ah = a.hp, bh = b.hp; a.hp -= b.dmg * 0.8; b.hp -= a.dmg * 0.8; if (a.hp <= 0) { a.dead = true; bulletEnd(a); } if (b.hp <= 0) { b.dead = true; bulletEnd(b); } if (ah > 0 && bh > 0) burst((a.x + b.x) / 2, (a.y + b.y) / 2, "#e8eef5", 2, 2);
+    return;
+  }
+  // bullet vs tank / nut (either order)
+  const bul = a.kind === "bul" ? a : b, v = bul === a ? b : a;
+  if (v.kind === "tank") {
+    if (v.team === bul.team || v.spawnT > 0 || v.inv > 0) return;
+    if (bul.sp === "lysogen" && v.bot && !v.unit && v.allyT <= 0 && v.hp - bul.dmg > 0 && v.hp < v.maxhp * (CLASSES[bul.owner.cls].lyso || 0.35) && bul.owner && !bul.owner.unit) {
+      v.allyT = CLASSES[bul.owner.cls].allyT || 20; v.allyOf = bul.owner; v.team = bul.owner.team; v.tgt = null; bul.dead = true; burst(v.x, v.y, "#b388ff", 20, 4); if (bul.owner === S.player) { sfx("ally"); pop(v.x, v.y - v.r - 20, "LYSOGENISED: ALLY", "#b388ff", 1); } feedMsg(`${bul.owner.name} lysogenised ${v.name}`, "#b388ff"); return;
+    }
+    damage(v, bul.dmg, bul); bul.hp -= v.body * (v.unit ? 0.25 : 0.55); v.vx += (bul.vx / (hyp(bul.vx, bul.vy) || 1)) * 40 * (bul.sp === "needle" ? 0.3 : 1) * (22 / v.r); v.vy += (bul.vy / (hyp(bul.vx, bul.vy) || 1)) * 40 * (bul.sp === "needle" ? 0.3 : 1) * (22 / v.r);
+    if (v === S.player || bul.owner === S.player) sfx("hit"); if (bul.hp > 0) burst(bul.x, bul.y, bul.col, 2, 2);
+  } else { damage(v, bul.dmg, bul); bul.hp -= v.body; v.vx += bul.vx * 0.04; v.vy += bul.vy * 0.04; if (bul.owner === S.player && bul.hp > 0) sfx("hit", 1); }
+  if (bul.hp <= 0) { bul.dead = true; bulletEnd(bul); }
+}
+
+/* ---------- rendering ---------- */
+function toWorld(sx, sy) { return [(sx - W / 2) / S.cam.z + S.cam.x, (sy - H / 2) / S.cam.z + S.cam.y]; }
+function toScreen(wx, wy) { return [(wx - S.cam.x) * S.cam.z + W / 2, (wy - S.cam.y) * S.cam.z + H / 2]; }
+const PF = (px) => `${px}px "Silkscreen", monospace`, PX = (px) => `${px}px "Pixelify Sans", monospace`;
+function poly(ctx, x, y, r, n, rot) { ctx.beginPath(); for (let i = 0; i < n; i++) { const a = rot + (i / n) * TAU; ctx[i ? "lineTo" : "moveTo"](x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.closePath(); }
+function star(ctx, x, y, r, rot) { ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = rot + (i / 10) * TAU, rr = i % 2 ? r * 0.5 : r; ctx[i ? "lineTo" : "moveTo"](x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); }
+function shade(col, k) { const n = parseInt(col.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`; }
+function drawTankShape(ctx, t, x, y, r, aim, k, col, hit) {
+  const C = CLASSES[k];
+  // barrels first
+  for (let i = 0; i < C.barrels.length; i++) {
+    const b = C.barrels[i], rec = t && t.rec ? t.rec[i] || 0 : 0, L = r * (1 + b.len) * (1 - rec * 0.18), w = r * 2 * b.w;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(aim + b.a); ctx.fillStyle = "#8a97a8"; ctx.strokeStyle = "#3a4458"; ctx.lineWidth = Math.max(1.5, r * 0.09);
+    if (C.sp === "spore" || b.trap) { ctx.beginPath(); ctx.moveTo(0, r * b.off - w / 2); ctx.lineTo(L, r * b.off - w * 0.75); ctx.lineTo(L, r * b.off + w * 0.75); ctx.lineTo(0, r * b.off + w / 2); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.rect(0, r * b.off - w / 2, L, w); ctx.fill(); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (C.ports) for (let i = 0; i < C.ports; i++) { const a = aim + (i / C.ports) * TAU + Math.PI / C.ports; ctx.fillStyle = "#8a97a8"; ctx.strokeStyle = "#3a4458"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + Math.cos(a - 0.35) * r * 0.9, y + Math.sin(a - 0.35) * r * 0.9); ctx.lineTo(x + Math.cos(a) * r * 1.45, y + Math.sin(a) * r * 1.45); ctx.lineTo(x + Math.cos(a + 0.35) * r * 0.9, y + Math.sin(a + 0.35) * r * 0.9); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  // body
+  ctx.fillStyle = hit ? "#ffffff" : col; ctx.strokeStyle = hit ? "#ffffff" : shade(col, 0.55); ctx.lineWidth = Math.max(2, r * 0.12);
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke();
+  // a nucleus / organelle hint
+  if (!hit) { ctx.fillStyle = shade(col, 0.75); ctx.beginPath(); ctx.arc(x - r * 0.25, y - r * 0.2, r * 0.3, 0, TAU); ctx.fill(); if (C.tier >= 2) { ctx.fillStyle = shade(col, 1.15); ctx.beginPath(); ctx.arc(x + r * 0.3, y + r * 0.25, r * 0.18, 0, TAU); ctx.fill(); } }
+}
+function draw() {
+  const ctx = X; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = "#07080b"; ctx.fillRect(0, 0, W, H);
+  if (!S) return;
+  const P = S.player, z = S.cam.z, shx = S.shake ? (rnd() - 0.5) * S.shake : 0, shy = S.shake ? (rnd() - 0.5) * S.shake : 0;
+  ctx.save(); ctx.translate(W / 2 + shx, H / 2 + shy); ctx.scale(z, z); ctx.translate(-S.cam.x, -S.cam.y);
+  const vx0 = S.cam.x - W / 2 / z - 50, vx1 = S.cam.x + W / 2 / z + 50, vy0 = S.cam.y - H / 2 / z - 50, vy1 = S.cam.y + H / 2 / z + 50;
+  // dish floor
+  ctx.fillStyle = "#0d1220"; ctx.fillRect(Math.max(0, vx0), Math.max(0, vy0), Math.min(WORLD, vx1) - Math.max(0, vx0), Math.min(WORLD, vy1) - Math.max(0, vy0));
+  // nutrient hotspot glow
+  const gd = ctx.createRadialGradient(CENTER, CENTER, 0, CENTER, CENTER, 560); gd.addColorStop(0, "rgba(199,125,255,0.10)"); gd.addColorStop(1, "rgba(199,125,255,0)"); ctx.fillStyle = gd; ctx.fillRect(CENTER - 560, CENTER - 560, 1120, 1120);
+  ctx.strokeStyle = "rgba(90,180,224,0.07)"; ctx.lineWidth = 1 / z; ctx.beginPath();
+  const g = 100; for (let x = Math.max(0, Math.floor(vx0 / g) * g); x <= Math.min(WORLD, vx1); x += g) { ctx.moveTo(x, Math.max(0, vy0)); ctx.lineTo(x, Math.min(WORLD, vy1)); } for (let y = Math.max(0, Math.floor(vy0 / g) * g); y <= Math.min(WORLD, vy1); y += g) { ctx.moveTo(Math.max(0, vx0), y); ctx.lineTo(Math.min(WORLD, vx1), y); } ctx.stroke();
+  ctx.strokeStyle = "#2a3142"; ctx.lineWidth = 6 / z; ctx.strokeRect(0, 0, WORLD, WORLD);
+  const vis = (e, m = 60) => e.x > vx0 - m && e.x < vx1 + m && e.y > vy0 - m && e.y < vy1 + m;
+  // zones
+  for (const zn of S.zones) { if (!vis(zn)) continue; const a = Math.min(1, zn.life / Math.min(1, zn.max)) * 0.35; ctx.fillStyle = zn.type === "slime" ? `rgba(217,201,122,${a})` : `rgba(143,227,255,${a * 0.8})`; ctx.beginPath(); ctx.arc(zn.x, zn.y, zn.r, 0, TAU); ctx.fill(); if (zn.type === "cloud") { ctx.strokeStyle = `rgba(143,227,255,${a})`; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.stroke(); ctx.setLineDash([]); } }
+  // nutrients
+  for (const n of S.nuts) {
+    if (!vis(n)) continue; const N = NUTS[n.k], col = n.hitT > 0 ? "#ffffff" : N.col; ctx.fillStyle = col; ctx.strokeStyle = n.hitT > 0 ? "#fff" : shade(N.col, 0.55); ctx.lineWidth = 2.5;
+    if (N.sides === 0) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, TAU); ctx.fill(); ctx.stroke(); }
+    else if (N.sides === -1) { ctx.lineWidth = 7; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(n.x, n.y, n.r - 4, 0, TAU); ctx.stroke(); ctx.strokeStyle = shade(N.col, 0.5); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r - 8, 0, TAU); ctx.stroke(); ctx.fillStyle = "#ffd166"; ctx.beginPath(); ctx.arc(n.x + Math.cos(n.rot) * (n.r - 4), n.y + Math.sin(n.rot) * (n.r - 4), 4, 0, TAU); ctx.fill(); }
+    else if (N.sides === 5) { star(ctx, n.x, n.y, n.r, n.rot); ctx.fill(); ctx.stroke(); }
+    else { poly(ctx, n.x, n.y, n.r, N.sides, n.rot); ctx.fill(); ctx.stroke(); }
+    if (n.hp < n.maxhp - 1) { ctx.fillStyle = "#0b0d12"; ctx.fillRect(n.x - n.r, n.y + n.r + 4, n.r * 2, 4); ctx.fillStyle = "#7cf29a"; ctx.fillRect(n.x - n.r, n.y + n.r + 4, n.r * 2 * (n.hp / n.maxhp), 4); }
+  }
+  // bullets
+  for (const b of S.buls) {
+    if (!vis(b)) continue; ctx.fillStyle = b.col; ctx.strokeStyle = shade(b.col, 0.55); ctx.lineWidth = 2;
+    if (b.sp === "needle") { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.ang); ctx.beginPath(); ctx.rect(-b.r * 4, -b.r * 0.6, b.r * 8, b.r * 1.2); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    else if (b.sp === "trap") { poly(ctx, b.x, b.y, b.r, 4, b.t * 0.6); ctx.fill(); ctx.stroke(); }
+    else if (b.frag) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = shade(b.col, 0.6); ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.45, 0, TAU); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); ctx.stroke(); }
+  }
+  // tanks
+  for (const t of S.tanks) {
+    if (t.dead || !vis(t, 120)) continue; const C = CLASSES[t.cls]; let col = C.col; if (t.allyT > 0) col = "#b388ff"; if (t === P) col = "#5ab4e0"; if (t.team === 0 && t.unit) col = "#5ab4e0";
+    ctx.globalAlpha = t.spawnT > 0 ? 0.5 : 1;
+    if (t.unit === "drone") { ctx.fillStyle = t.hitT > 0 ? "#fff" : col; ctx.strokeStyle = shade(col, 0.55); ctx.lineWidth = 2; poly(ctx, t.x, t.y, t.r, 3, t.aim); ctx.fill(); ctx.stroke(); }
+    else {
+      drawTankShape(ctx, t, t.x, t.y, t.r, t.aim, t.cls, col, t.hitT > 0);
+      if (t.inv > 0) { ctx.strokeStyle = `rgba(255,255,255,${0.3 + 0.3 * Math.sin(S.time * 12)})`; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(t.x, t.y, t.r + 7, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+      if (t.dashT > 0) { ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(t.x, t.y, t.r + 4, 0, TAU); ctx.stroke(); }
+      if (!t.unit) {
+        const hpw = t.r * 2.2; if (t.hp < t.maxhp - 0.5) { ctx.fillStyle = "#0b0d12"; ctx.fillRect(t.x - hpw / 2, t.y + t.r + 6, hpw, 5); ctx.fillStyle = t === P ? "#7cf29a" : "#ff6b6b"; ctx.fillRect(t.x - hpw / 2, t.y + t.r + 6, hpw * Math.max(0, t.hp / t.maxhp), 5); }
+        ctx.font = PF(Math.max(9, Math.min(13, 11 / z))); ctx.textAlign = "center"; ctx.fillStyle = "#e8eef5"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.lineJoin = "round"; const nm = `${t.name}`; ctx.strokeText(nm, t.x, t.y - t.r - 10); ctx.fillText(nm, t.x, t.y - t.r - 10);
+        if (t !== P) { ctx.font = PX(Math.max(9, 11 / z)); ctx.fillStyle = "#8a97a8"; const sub = `Lv ${t.level} ${C.n}${t.allyT > 0 ? " · ALLY" : ""}`; ctx.strokeText(sub, t.x, t.y - t.r - 22); ctx.fillText(sub, t.x, t.y - t.r - 22); }
+      } else if (t.unit === "minion") { ctx.fillStyle = "#0b0d12"; ctx.fillRect(t.x - t.r, t.y + t.r + 3, t.r * 2, 3); ctx.fillStyle = "#7cf29a"; ctx.fillRect(t.x - t.r, t.y + t.r + 3, t.r * 2 * (t.hp / t.maxhp), 3); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // particles & pops
+  for (const p of S.parts) { ctx.globalAlpha = Math.min(1, p.t / 0.3); ctx.fillStyle = p.col; ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); } ctx.globalAlpha = 1;
+  for (const p of S.pops) { ctx.globalAlpha = Math.min(1, p.t); ctx.font = PF(p.big ? 15 / z : 11 / z); ctx.textAlign = "center"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.fillStyle = p.col; ctx.strokeText(p.s, p.x, p.y); ctx.fillText(p.s, p.x, p.y); } ctx.globalAlpha = 1;
+  ctx.restore();
+  if (S.flash > 0) { ctx.fillStyle = `rgba(255,209,102,${S.flash * 0.4})`; ctx.fillRect(0, 0, W, H); }
+  drawHUD();
+}
+const HUD = { rects: [] };
+function drawHUD() {
+  const ctx = X, P = S.player, C = CLASSES[P.cls]; HUD.rects = []; const small = W < 700;
+  // kill feed
+  ctx.textAlign = "left"; ctx.font = PX(13); let y = 14; for (const f of S.feed) { ctx.globalAlpha = Math.min(1, f.t); ctx.fillStyle = f.col; ctx.fillText(f.s, 12, y + 10); y += 17; } ctx.globalAlpha = 1;
+  // leaderboard
+  const lb = S.tanks.filter((t) => !t.dead && !t.unit).sort((a, b) => b.score - a.score).slice(0, small ? 5 : 10), lw = small ? 150 : 210, lx = W - lw - 10;
+  ctx.fillStyle = "rgba(11,13,18,0.75)"; ctx.fillRect(lx, 10, lw, 24 + lb.length * 18); ctx.font = PF(9); ctx.fillStyle = "#8a97a8"; ctx.fillText("LEADERBOARD", lx + 8, 24);
+  lb.forEach((t, i) => { const yy = 40 + i * 18, me = t === P; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(lx + 6, yy - 10, lw - 12, 14); ctx.fillStyle = me ? "#1f6f8f" : shade(CLASSES[t.cls].col, 0.45); ctx.fillRect(lx + 6, yy - 10, (lw - 12) * Math.min(1, t.score / Math.max(1, lb[0].score)), 14); ctx.font = PX(12); ctx.fillStyle = me ? "#fff" : "#e8eef5"; ctx.textAlign = "left"; ctx.fillText(`${i + 1}. ${t.name}`.slice(0, 18), lx + 10, yy + 1); ctx.textAlign = "right"; ctx.fillStyle = "#c9d2dc"; ctx.fillText(fmt(t.score), lx + lw - 10, yy + 1); });
+  // minimap
+  const ms = small ? 90 : 140, mx = W - ms - 10, my = H - ms - (small ? 60 : 10);
+  ctx.fillStyle = "rgba(11,13,18,0.8)"; ctx.fillRect(mx, my, ms, ms); ctx.strokeStyle = "#2a3142"; ctx.lineWidth = 2; ctx.strokeRect(mx, my, ms, ms);
+  ctx.fillStyle = "rgba(199,125,255,0.25)"; ctx.beginPath(); ctx.arc(mx + ms / 2, my + ms / 2, ms * 0.13, 0, TAU); ctx.fill();
+  for (const t of S.tanks) { if (t.dead || t.unit) continue; ctx.fillStyle = t === P ? "#5ab4e0" : t.allyT > 0 ? "#b388ff" : "#ff6b6b"; const r = t === P ? 3.5 : 2; ctx.beginPath(); ctx.arc(mx + (t.x / WORLD) * ms, my + (t.y / WORLD) * ms, r, 0, TAU); ctx.fill(); }
+  // xp + level bar (bottom centre)
+  const bw = Math.min(420, W - 40 - (small ? 0 : 330)), bx = small ? (W - bw) / 2 : Math.max(180, (W - bw) / 2), by = H - 34;
+  const need = xpFor(P.level + 1) - xpFor(P.level), have = P.xp - xpFor(P.level), f = P.level >= LVCAP ? 1 : clamp(have / need, 0, 1);
+  ctx.fillStyle = "rgba(11,13,18,0.8)"; ctx.fillRect(bx, by, bw, 18); ctx.fillStyle = "#ffd166"; ctx.fillRect(bx + 2, by + 2, (bw - 4) * f, 14);
+  ctx.font = PF(10); ctx.textAlign = "center"; ctx.fillStyle = "#0b0d12"; ctx.fillText(`LV ${P.level} ${C.n.toUpperCase()}`, bx + bw / 2, by + 13); ctx.fillStyle = "#e8eef5"; ctx.font = PF(11); ctx.fillText(`${P.name} · SCORE ${fmt(P.score)} · ${S.kills} KILLS${S.auto ? " · AUTO-FIRE" : ""}`, bx + bw / 2, by - 8);
+  if (canEvolve(P) && !S.over) { ctx.font = PF(small ? 11 : 14); ctx.fillStyle = Math.sin(S.time * 8) > 0 ? "#ffd166" : "#fff"; ctx.fillText(small ? "TAP TO EVOLVE" : "EVOLUTION READY · PRESS K", W / 2, by - 30); HUD.rects.push({ x: W / 2 - 140, y: by - 46, w: 280, h: 24, act: "evolve" }); }
+  // stat panel (bottom left)
+  const rows = STATS.length, rh = small ? 15 : 19, pw = small ? 140 : 180, px0 = 10, py0 = H - rows * rh - 16 - (small ? 44 : 0);
+  if (!small || P.free > 0) {
+    ctx.fillStyle = "rgba(11,13,18,0.75)"; ctx.fillRect(px0, py0 - 18, pw + 30, rows * rh + 24);
+    ctx.font = PF(9); ctx.textAlign = "left"; ctx.fillStyle = P.free ? "#ffd166" : "#8a97a8"; ctx.fillText(P.free ? `${P.free} POINT${P.free > 1 ? "S" : ""} TO SPEND` : "UPGRADES", px0 + 6, py0 - 6);
+    STATS.forEach((s, i) => {
+      const yy = py0 + i * rh, v = P.pts[s.k]; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(px0 + 6, yy + 2, pw, rh - 4);
+      for (let j = 0; j < MAXPT; j++) { ctx.fillStyle = j < v ? s.col : "#0b0d12"; ctx.fillRect(px0 + 8 + j * (pw / MAXPT), yy + 4, pw / MAXPT - 2, rh - 8); }
+      ctx.font = PX(small ? 10 : 12); ctx.fillStyle = "#e8eef5"; ctx.fillText(`${i + 1} ${s.n}`, px0 + 10, yy + rh - 6);
+      if (P.free > 0 && v < MAXPT) { ctx.fillStyle = "#ffd166"; ctx.fillRect(px0 + pw + 8, yy + 2, 20, rh - 4); ctx.fillStyle = "#0b0d12"; ctx.font = PF(11); ctx.fillText("+", px0 + pw + 13, yy + rh - 6); HUD.rects.push({ x: px0, y: yy, w: pw + 30, h: rh, act: "stat", k: s.k }); }
+    });
+  }
+  // dash cooldown
+  if (C.sp === "dash") { ctx.font = PF(9); ctx.textAlign = "center"; ctx.fillStyle = P.dashCd > 0 ? "#8a97a8" : "#ffd166"; ctx.fillText(P.dashCd > 0 ? `DASH ${P.dashCd.toFixed(1)} s` : "DASH READY (SHIFT)", W / 2, H - 50); }
+  // touch joystick hints
+  for (const p of PTRS.values()) if (p.side === "L") { ctx.strokeStyle = "rgba(232,238,245,0.3)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x0, p.y0, 50, 0, TAU); ctx.stroke(); ctx.fillStyle = "rgba(232,238,245,0.4)"; const dx = p.x - p.x0, dy = p.y - p.y0, d = Math.min(50, hyp(dx, dy)), a = Math.atan2(dy, dx); ctx.beginPath(); ctx.arc(p.x0 + Math.cos(a) * d, p.y0 + Math.sin(a) * d, 18, 0, TAU); ctx.fill(); }
+}
+function fmt(n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e4 ? Math.round(n / 1e3) + "k" : String(Math.round(n)); }
+function hudClick(x, y) { for (const r of HUD.rects) if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) { if (r.act === "stat") spend(S.player, r.k); if (r.act === "evolve") togglePicker(); return true; } return false; }
+
+/* ---------- menus ---------- */
+function miniTank(k, size) { const c = document.createElement("canvas"); c.width = size * 2; c.height = size * 2; c.style.width = c.style.height = size + "px"; const g = c.getContext("2d"); g.scale(2, 2); drawTankShape(g, null, size / 2, size / 2, size * 0.2, -Math.PI / 4, k, CLASSES[k].col, false); return c; }
+function togglePicker() {
+  if (!S || S.over) return; const P = S.player;
+  if (S.pickOpen) { S.pickOpen = false; hide("picker"); return; }
+  if (!canEvolve(P)) { toast(`NEXT LINEAGE AT LEVEL ${tierLevel[CLASSES[P.cls].tier + 1] || "∞"}`); return; }
+  S.pickOpen = true; const C = CLASSES[P.cls]; $("pickh").textContent = `Level ${P.level}: ${C.tier === 0 ? "choose a kingdom" : C.tier === 1 ? "choose a genus" : "choose your species"}`;
+  const box = $("pickcards"); box.innerHTML = "";
+  for (const k of C.next) { const N = CLASSES[k], b = document.createElement("button"); b.className = "card"; b.appendChild(miniTank(k, 90)); b.insertAdjacentHTML("beforeend", `<b style="color:${N.col}">${N.n}</b><div class="d">${N.d}</div><div class="f">${N.fact}</div>`); b.onclick = () => { setClass(P, k); S.pickOpen = false; hide("picker"); }; box.appendChild(b); }
+  show("picker");
+}
+function showDeath() {
+  const P = S.player, C = CLASSES[P.cls], secs = Math.round((performance.now() - S.started) / 1000), best = P.score > META.best;
+  META.best = Math.max(META.best, P.score); META.bestLv = Math.max(META.bestLv, P.level); META.time += secs; saveMeta();
+  $("deathby").textContent = `LYSED BY ${(P.killer || "the dish").toUpperCase()}`; $("deathh").textContent = best ? "New personal best" : pick(QUIPS);
+  $("dstats").innerHTML = [["SCORE", fmt(P.score)], ["LEVEL", P.level], ["KILLS", S.kills], ["SURVIVED", `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`], ["LINEAGE", C.n], ["BEST", fmt(META.best)], ["BEST LV", META.bestLv], ["RUNS", META.runs]].map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+  $("deathq").textContent = best ? "The leaderboard remembers you. Briefly." : "Respawn is one tap away. The dish does not care.";
+  show("death");
+}
+function toTitle() { hide("death"); hide("picker"); S = null; titleStats(); show("title"); }
+function titleStats() { const fav = Object.entries(META.fav).sort((a, b) => b[1] - a[1])[0]; $("tstats").innerHTML = [["BEST SCORE", fmt(META.best)], ["BEST LEVEL", META.bestLv], ["KILLS", META.kills], ["FAVOURITE", fav ? CLASSES[fav[0]].n : "—"]].map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join(""); $("snd").textContent = `Sound: ${PREFS.sfx ? "on" : "off"}`; $("snd").classList.toggle("off", !PREFS.sfx); }
+function treeHTML() { const line = (k, depth) => { const C = CLASSES[k]; return `<div style="margin-left:${depth * 18}px;padding:3px 0;border-left:2px solid ${C.col};padding-left:8px;margin-bottom:2px"><b style="color:${C.col};font:11px Silkscreen,monospace">${C.n}</b> <span class="muted">· Lv ${tierLevel[C.tier]}</span><br><span style="color:#c9d2dc">${C.d}</span></div>` + C.next.map((n) => line(n, depth + 1)).join(""); }; return line("microbe", 0); }
+$("play").onclick = () => { ac(); const nm = $("nm").value.trim().slice(0, 16) || "You"; META.name = nm; saveMeta(); startRun(nm); };
+$("respawn").onclick = () => { ac(); startRun(META.name || "You"); };
+$("snd").onclick = () => { PREFS.sfx = !PREFS.sfx; savePrefs(); titleStats(); };
+$("lineage").onclick = () => { $("treebody").innerHTML = treeHTML(); show("tree"); };
+$("nm").value = META.name || ""; titleStats();
+
+/* ---------- main loop ---------- */
+let last = performance.now(), acc = 0; const DT = 1 / 60;
+function frame(now) {
+  requestAnimationFrame(frame); const el = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S && !S.paused && !S.pickOpen) { acc += el; let n = 0; while (acc >= DT && n++ < 5) { step(DT); acc -= DT; } if (n >= 5) acc = 0; }
+  draw();
+}
+requestAnimationFrame(frame);
+
+if (DEBUG) window.PIO = {
+  get state() { return S; }, step, startRun, CLASSES, STATS, xpFor,
+  player: () => S && S.player, addXP: (n) => gainXP(S.player, n), setLevel: (L) => { const P = S.player; gainXP(P, Math.max(0, xpFor(L) - P.xp)); },
+  pickClass: (k) => setClass(S.player, k), spend: (k) => spend(S.player, k), fire: (on) => (S.auto = !!on), dash: () => dash(S.player), kill: (t) => kill(t, S.player), picker: togglePicker, hudClick,
+};
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/petri-io"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1014,7 +1014,7 @@ function runAbility(col, m, A, which) {
     case "invade": { let best = null, bd = 220; for (const e of S.epi) { const d = hyp(e.x - m.x, (EPI + 40) - m.y); if (d < bd && e.hp > 0.15) { bd = d; best = e; } } if (!best) { if (col === S.player) toast("NO EPITHELIUM IN REACH"); return false; } m.invade = { e: best, t: (col.fl.invade2 ? 9 : 5.5) }; m.x = best.x; m.y = EPI + 30; best.inv++; damageEpi(best.x, 0.08, 0.05); return true; }
     case "hyphae": { let n = 0; for (let i = 0; i < A.cnt; i++) if (growHypha(col, [aim[0] + R(-90, 90), aim[1] + R(-90, 90)], A.len)) n++; if (A.t6) col.hyphaFort = 10; return n > 0; }
     case "biofilm": { S.zones.push({ type: "biofilm", x: m.x, y: m.y, r: A.r, life: A.t, max: A.t, team: col.team, owner: col, seed: rnd() * 100, col: C.col }); return true; }
-    case "sporewave": { for (const c of alive(col)) { c.spore = 2; c.sporeT = A.t; } col.sporeWave = A.cnt; return true; }
+    case "sporewave": { for (const c of alive(col)) beginSporulation(c, A.t); col.sporeWave = A.cnt; return true; }
     case "grab": { let best = null, bd = A.r; for (const o of S.cells) { if (o.dead || o.col === col) continue; const d = hyp(o.x - m.x, o.y - m.y); if (d < bd && o.mass < m.mass * 0.9) { bd = d; best = o; } } m.pseudo = 1; if (!best) return true; const d = bd || 1; best.vx -= ((best.x - m.x) / d) * 460; best.vy -= ((best.y - m.y) / d) * 460; best.stuck = 0.25; return true; }
     case "phageDash": { const live = alive(col); let tx = aim[0], ty = aim[1]; let best = null, bd = 900; for (const o of S.cells) { if (o.dead || !isHostOf(col, o)) continue; const d = hyp(o.x - m.x, o.y - m.y); if (d < bd) { bd = d; best = o; } } if (best) { tx = best.x; ty = best.y; } for (const v of live) { const d = hyp(tx - v.x, ty - v.y) || 1; v.vx += ((tx - v.x) / d) * 520; v.vy += ((ty - v.y) / d) * 520; } return true; }
     case "lyticBloom": { let n = 0; for (const c of S.cells) if (!c.dead && c.inf && c.inf.col === col) { c.inf.burst = Math.round(c.inf.burst * A.mul); lyse(c, col); n++; } if (!n && col === S.player) toast("NO INFECTED HOSTS YET"); return n > 0; }
@@ -1298,6 +1298,8 @@ function step(dt) {
       if (c.dead) continue; c.age += dt; if (c.hurtT > 0) c.hurtT -= dt; if (c.divCd > 0) c.divCd -= dt; if (c.iga > 0) c.iga = Math.max(0, c.iga - dt * (col.fl.iga ? 0.5 : 0.05));
       if (c.buff > 0) c.buff -= dt;
       if (c.sheltered > 0) c.sheltered -= dt;
+      if (c.fission) updFission(c, col, dt);
+      if (c.sporu) updSporulation(c, col, dt);
       if (c.inhib > 0) c.inhib = Math.max(0, c.inhib - dt * 0.6);
       if (!c.virion) { cellInter(c, col, SP(col), dt); fungalInter(c, col, SP(col), dt); }
       c.biofilm = 0; for (const z of S.zones) if (z.type === "biofilm" && hyp(c.x - z.x, c.y - z.y) < z.r) { c.biofilm = z.team === c.team ? 1 : -1; break; }
@@ -1313,8 +1315,8 @@ function step(dt) {
         if (col.fl.bacteriocin && S.tick % 4 === 0) { const r = 60 + 16 * col.pts.secretion; near(c.x, c.y, r, (o) => { if (o.kind !== "cell" || o.team === c.team || !hasTag(o.col, "bacteria")) return; if (hyp(o.x - c.x, o.y - c.y) < r) damage(o, (1.1 + 0.5 * secretion(col)) * dt * 4, col, "toxin"); }); }
         if (col.fl.t6ss && S.tick % 4 === 0) { near(c.x, c.y, c.r + 30, (o) => { if (o.kind !== "cell" || o.team === c.team || !hasTag(o.col, "bacteria")) return; if (hyp(o.x - c.x, o.y - c.y) < c.r + o.r + 8) damage(o, 2.6 * dt * 4, col, "t6ss"); }); }
         const SPm = SP(col).maxMass;
-        if (c.mass > SPm) { if (!divide(col, c)) c.mass = SPm; }
-        else if (c.mass > SPm * 0.6 && alive(col).length < 3 && c.divCd <= 0 && !SP(col).host) divide(col, c);
+        if (c.mass > SPm) { if (!c.fission && !beginFission(col, c, SP(col).shape === "yeast")) c.mass = SPm; }
+        else if (c.mass > SPm * 0.6 && alive(col).length < 3 && c.divCd <= 0 && !SP(col).host) beginFission(col, c, SP(col).shape === "yeast");
         if (c.mass < SP(col).minMass * 0.45) { die(c, "starve", null); continue; }
         calcCell(c);
       }
@@ -1638,6 +1640,9 @@ it("phasevar", CATS[0], "Phase variation", "The surface antigen switches; phages
 it("adsorption", CATS[1], "Adsorption", "Long tail fibres splay and touch receptors, then the particle reorients tail-down, anchors, contracts its sheath and ejects its DNA.", "Attachment is receptor-specific and the geometry matters: the tail must end up perpendicular to the surface before the tube can cross the envelope.");
 it("reversible", CATS[1], "Reversible binding", "The particle touched down, walked across the surface and let go again.", "The first contact through long tail fibres is reversible. Only short-fibre anchoring commits the phage to that cell.");
 it("reorient", CATS[1], "Reorientation", "Fibre binding rotates the phage so the tail axis is perpendicular to the cell surface, and the baseplate opens hexagon → star.", "The baseplate conformational change is the trigger for everything that follows: anchoring, sheath contraction and ejection.");
+it("fission", CATS[0], "Binary fission", "A septum grows inward at mid-cell and constricts until the two daughters separate.", "Division is not a split down the middle: a ring of FtsZ assembles at mid-cell, recruits the wall-building machinery and draws the envelope inward. The daughters stay joined until the septum is complete.");
+it("budding", CATS[3], "Budding", "A bud swells at one point, the neck narrows, and it pinches off leaving a scar.", "Yeasts divide asymmetrically. A septin ring marks the bud neck before the bud appears and closes it afterwards, and each division leaves a chitin-rich bud scar the cell can never reuse.");
+it("sporulation", CATS[0], "Sporulation", "An off-centre septum makes a small compartment, which the mother cell then engulfs and seals.", "Sporulation starts with a division well off centre. The larger mother cell engulfs the smaller forespore, wraps it in a second membrane and lays down cortex and coat around it. The result is metabolically inert, which is exactly why no antibiotic touches it.");
 it("lysis", CATS[1], "Lytic burst", "The host swells, fills with particles and bursts.", "A lytic cycle turns one infected cell into dozens of new phages. Burst size is set by how long the phage waits before lysing.");
 it("lysogeny", CATS[1], "Lysogeny", "The genome circularises and integrates into the host chromosome; the cell lives on carrying it.", "A prophage replicates with the host and can carry extra genes. Several bacterial toxins are phage-encoded for exactly this reason.");
 it("induction", CATS[1], "Prophage induction", "DNA damage triggers SOS and every lysogen bursts at once.", "Agents that damage DNA, including fluoroquinolones, flip prophages into the lytic cycle. Treating an infection can detonate the phages inside it.");
@@ -2031,6 +2036,110 @@ function tryGerminate(c) {
   noteGerminate(c, blocked);
   return !blocked;
 }
+
+/* =====================================================================
+   DIVISION, BUDDING AND SPORULATION
+   None of these are instant in a real cell, and all three look different.
+   A rod builds a septum at mid-cell and constricts it before the daughters
+   come apart; a yeast pushes out a bud, narrows the neck with a septin
+   ring and leaves a scar; a sporulating cell divides asymmetrically and
+   then engulfs the small compartment it just made.
+   ===================================================================== */
+const DIV_DUR = 0.65, BUD_DUR = 0.9, SPOR_DUR = 2.6;
+
+/* called instead of divide() so the split is something you can watch */
+function beginFission(col, c, bud) {
+  if (c.fission || c.spore || c.virion || c.divCd > 0) return false;
+  const C = SP(col);
+  if (c.mass < C.minMass * (bud ? 1.9 : 2.1)) return false;
+  c.fission = { t: 0, dur: bud ? BUD_DUR : DIV_DUR, bud: !!bud,
+                ang: bud ? c.ang + R(0.6, 1.2) * (rnd() < 0.5 ? 1 : -1) : c.ang };
+  return true;
+}
+function updFission(c, col, dt) {
+  const f = c.fission; f.t += dt;
+  if (f.t < f.dur) return;
+  c.fission = null;
+  if (divide(col, c, f.bud) && witnessed(c.x, c.y) && fxGate(c, "fission", 9)) {
+    if (f.bud) witness("budding", `${col.name} pinched off a bud: the septin ring closed the neck and left a scar behind`);
+    else witness("fission", `${col.name} finished constricting its septum and the two daughters came apart`);
+  }
+}
+/* sporulation runs as the real sequence, not a flag flip */
+function beginSporulation(c, hold) {
+  if (c.spore || c.virion) return false;
+  c.spore = 1; c.sporu = { t: 0, dur: SPOR_DUR, hold: hold || 4 };
+  return true;
+}
+function updSporulation(c, col, dt) {
+  const sp = c.sporu; sp.t += dt;
+  if (sp.t < sp.dur) return;
+  c.sporu = null; c.spore = 2; c.sporeT = sp.hold;
+  c.mass = Math.max(SP(col).minMass, c.mass * 0.55);   // the mother cell is spent
+  calcCell(c);
+  if (witnessed(c.x, c.y)) witness("sporulation", `${col.name} divided asymmetrically, engulfed the small compartment and sealed it into a spore: nothing metabolic is happening in there any more`, ART.sand);
+}
+/* the shapes, drawn in the cell's own local space.
+   A rod's long axis is local +X: half-length r*1.3, half-width r*0.5. */
+function cellAxes(c, r) {
+  const sh = SP(c.col).shape;
+  return (sh === "rod" || sh === "vibrio" || sh === "spiral") ? { hl: r * 1.3, hw: r * 0.5 } : { hl: r, hw: r };
+}
+function drawFission(ctx, c, r, hue) {
+  const f = c.fission; if (!f) return;
+  const u = clamp(f.t / f.dur, 0, 1), { hl, hw } = cellAxes(c, r);
+  if (f.bud) {
+    // a bud swells at one point on the surface, then the neck closes behind it
+    const br = r * (0.18 + 0.42 * easeOut(u)), open = 1 - easeIn(clamp((u - 0.45) / 0.55, 0, 1));
+    const ux = Math.cos(f.ang), uy = Math.sin(f.ang);
+    const bx = ux * (r + br * 0.5), by = uy * (r + br * 0.5);
+    ctx.fillStyle = rgba(hue, 0.55); ctx.strokeStyle = lite(hue, 0.5, 0.9); ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill(); ctx.stroke();
+    // the neck: wide at first, pinched shut by the septin ring
+    const nx = ux * r, ny = uy * r, nw = br * (0.25 + 0.6 * open);
+    ctx.strokeStyle = lite(hue, 0.65, 0.9); ctx.lineWidth = Math.max(1.4, nw);
+    ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(bx - ux * br * 0.6, by - uy * br * 0.6); ctx.stroke();
+    ctx.save(); ctx.translate(nx, ny); ctx.rotate(f.ang);
+    ctx.strokeStyle = lite(hue, 0.95, 0.95); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.8, br * 0.16), nw * 0.75, 0, 0, TAU); ctx.stroke(); ctx.restore();
+  } else {
+    // a septum grows inward from both sides of mid-cell and the envelope pinches with it
+    const inw = easeInOut(u) * hw;
+    ctx.save(); ctx.rotate(c.ang);
+    ctx.strokeStyle = lite(hue, 0.8, 0.95); ctx.lineWidth = Math.max(1.2, r * 0.14);
+    ctx.beginPath(); ctx.moveTo(0, -hw); ctx.lineTo(0, -hw + inw); ctx.moveTo(0, hw); ctx.lineTo(0, hw - inw); ctx.stroke();
+    if (u > 0.7) {                       // the two daughters are visibly separate by now
+      ctx.strokeStyle = rgba(ART.ink, 0.55); ctx.lineWidth = 1 + (u - 0.7) * 5;
+      ctx.beginPath(); ctx.moveTo(0, -hw); ctx.lineTo(0, hw); ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+function drawSporulation(ctx, c, r, hue) {
+  const sp = c.sporu; if (!sp) return;
+  const u = clamp(sp.t / sp.dur, 0, 1), { hl, hw } = cellAxes(c, r);
+  ctx.save(); ctx.rotate(c.ang);
+  const px = hl * 0.46, fr = hw * 0.78;        // the forespore sits well off centre, near one pole
+  if (u < 0.3) {                               // asymmetric septum: not at mid-cell
+    const inw = easeOut(u / 0.3) * hw;
+    ctx.strokeStyle = lite(hue, 0.8, 0.95); ctx.lineWidth = Math.max(1.2, r * 0.13);
+    ctx.beginPath(); ctx.moveTo(px - fr * 0.8, -hw); ctx.lineTo(px - fr * 0.8, -hw + inw);
+    ctx.moveTo(px - fr * 0.8, hw); ctx.lineTo(px - fr * 0.8, hw - inw); ctx.stroke();
+  } else if (u < 0.75) {                       // the mother membrane engulfs the forespore
+    const e = easeInOut((u - 0.3) / 0.45);
+    ctx.fillStyle = rgba(hue, 0.55); ctx.beginPath(); ctx.ellipse(px, 0, fr, fr * 0.84, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = lite(hue, 0.9, 0.95); ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(px, 0, fr * 1.2, Math.PI - Math.PI * e, Math.PI + Math.PI * e); ctx.stroke();
+  } else {                                     // cortex and coat laid down around it
+    const k = (u - 0.75) / 0.25;
+    const g = ctx.createRadialGradient(px, 0, 0, px, 0, fr);
+    g.addColorStop(0, "rgba(255,255,255,.9)"); g.addColorStop(1, rgba(hue, 0.3));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(px, 0, fr, fr * 0.84, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(ART.sand, 0.5 + 0.5 * k); ctx.lineWidth = 1.4 + k * 1.4;
+    ctx.beginPath(); ctx.ellipse(px, 0, fr * 1.1, fr * 0.95, 0, 0, TAU); ctx.stroke();
+  }
+  ctx.restore();
+}
 /* ---------- input ---------- */
 const keys = {}, PTRS = new Map();
 window.addEventListener("keydown", (e) => {
@@ -2333,6 +2442,8 @@ function drawCell(ctx, c, t) {
   }
   if (c.inf) drawInfection(ctx, c, r * swell, t);
   if (c.ghosts || c.integrate > 0 || c.lysogen) drawPhageMarks(ctx, c, r * swell, t);
+  if (c.fission) drawFission(ctx, c, r * swell, hue);
+  if (c.sporu) drawSporulation(ctx, c, r * swell, hue);
   if (c.chronic) { for (let i = 0; i < 3; i++) { const a = c.seed + i * 2.1; flagellum(ctx, "#dcd0ff", Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9, r * 1.4, 1.5, t, i, a, 1); } }
   ctx.restore();
 }

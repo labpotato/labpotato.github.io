@@ -25,7 +25,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 SITE = os.environ.get("GOATCOUNTER_SITE", "https://labpotato.goatcounter.com")
-TOKEN = os.environ.get("GOATCOUNTER_TOKEN", "")
+# the key as pasted into the secret: spaces, line breaks or a leading "Bearer" are ignored
+TOKEN = os.environ.get("GOATCOUNTER_TOKEN", "").strip().removeprefix("Bearer ").strip()
 OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "usage.json")
 DAYS = 400
 PAGES = ["locations", "toprefs"]   # countries and referring sites; GoatCounter can also give browsers, systems, sizes, languages
@@ -45,6 +46,14 @@ def api(path, **query):
                 time.sleep(float(e.headers.get("X-Rate-Limit-Reset", "2")) + 0.5)
                 continue
             body = e.read().decode("utf-8", "replace")[:300]
+            if e.code == 401:
+                sys.exit(f"GoatCounter {path}: HTTP 401 {body}\n"
+                         f"The key in GOATCOUNTER_TOKEN ({len(TOKEN)} characters long) is not a key of {SITE}.\n"
+                         "In GoatCounter open Settings → API, click 'show' in the Token column and copy that long text "
+                         "(not the key's name), then paste it into the GitHub secret again.")
+            if e.code == 403:
+                sys.exit(f"GoatCounter {path}: HTTP 403 {body}\n"
+                         "The key exists but may not read statistics or this site: make a new key with 'Read statistics' ticked.")
             sys.exit(f"GoatCounter {path}: HTTP {e.code} {body}")
     sys.exit(f"GoatCounter {path}: still rate-limited after retries")
 

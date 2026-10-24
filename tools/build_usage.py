@@ -54,8 +54,25 @@ def api(path, **query):
             if e.code == 403:
                 sys.exit(f"GoatCounter {path}: HTTP 403 {body}\n"
                          "The key exists but may not read statistics or this site: make a new key with 'Read statistics' ticked.")
-            sys.exit(f"GoatCounter {path}: HTTP {e.code} {body}")
+            print(f"GoatCounter {path}: HTTP {e.code} {body}\n  asked: {url}")
+            probe()
+            sys.exit(1)
     sys.exit(f"GoatCounter {path}: still rate-limited after retries")
+
+
+def probe():
+    """After an unexpected error: which parts of the API answer, to see where it goes wrong (no key is printed)."""
+    print("Checking other GoatCounter API calls:")
+    for p in ["me", "sites", "paths?limit=3", "stats/total", "stats/hits?limit=3", "stats/hits?limit=3&group=day", "stats/locations?limit=3"]:
+        req = urllib.request.Request(f"{SITE}/api/v0/{p}", headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                print(f"  {p}: {r.status} {r.read(160).decode('utf-8', 'replace')!r}")
+        except urllib.error.HTTPError as e:
+            print(f"  {p}: {e.code} {e.read(200).decode('utf-8', 'replace')!r}")
+        except Exception as e:  # network
+            print(f"  {p}: {e}")
+        time.sleep(0.4)
 
 
 def stamp(d):

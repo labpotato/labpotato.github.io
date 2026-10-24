@@ -120,7 +120,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + 
 const $ = (id) => document.getElementById(id);
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const META = Object.assign({ best: 0, bestLv: 1, runs: 0, kills: 0, played: {}, name: "", species: "btheta", time: 0, seen: {} }, store.get("pio2-meta", {}));
-const PREFS = Object.assign({ sfx: true, music: true, vfx: true, ctrl: "wasd" }, store.get("pio2-prefs", {}));
+const PREFS = Object.assign({ sfx: true, music: true, vfx: true, signals: true, ctrl: "wasd" }, store.get("pio2-prefs", {}));
 const saveMeta = () => store.set("pio2-meta", META), savePrefs = () => store.set("pio2-prefs", PREFS);
 const DEBUG = /[?&]debug\b/.test(location.search);
 const show = (id) => $(id).classList.add("show"), hide = (id) => $(id).classList.remove("show");
@@ -783,6 +783,7 @@ function postOverlay(srPx) {
   }
   const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
   vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  if (PREFS.vfx) { g.globalAlpha = 0.5; g.fillStyle = g.createPattern(grainTiles()[0], "repeat"); g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
   POSTC = c; POSTK = k; return c;
 }
 function grainTiles() {
@@ -795,14 +796,15 @@ function grainTiles() {
   }
   return GRAIN;
 }
+/* The post chain used to cost four full-screen passes a frame. The grade is two
+   composite ops that cannot be baked into a bitmap, but the vignette, the
+   chromatic fringe and the grain all can, so they ship as one cached overlay. */
 function applyPost(ctx, srPx) {
-  // colour grade: warm plum in the shadows, cool lift in the highlights
   ctx.save();
   ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = "rgba(255,232,226,1)"; ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "screen"; ctx.fillStyle = "rgba(30,6,24,.16)"; ctx.fillRect(0, 0, W, H);
   ctx.restore();
   ctx.drawImage(postOverlay(srPx), 0, 0);
-  if (PREFS.vfx) { const t = grainTiles()[(S.tick >> 1) % 3]; ctx.globalAlpha = 0.5; const p = ctx.createPattern(t, "repeat"); ctx.fillStyle = p; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }
 /* ---------- UI: rounded panels with a soft drop shadow, and numbers that count ---------- */
 function panel(ctx, x, y, w, h, o = {}) {
@@ -1105,7 +1107,9 @@ const isHostOf = (vcol, h) => {
   return t.includes(C.host) || (vcol.fl.broad && (t.includes("entero") || t.includes("bacteroides")));
 };
 /* ---------- population: every guild stays present ---------- */
-const GUILD_TARGET = { fibre: 3, scfa: 3, mucus: 2, lab: 2, entero: 2, patho: 3, spore: 1, fungus: 2, protist: 1, phage: 2, archaea: 1 };
+// a busier board: more rivals active at once, weighted toward the guilds that
+// actually contest a player for nutrients and territory
+const GUILD_TARGET = { fibre: 5, scfa: 4, mucus: 3, lab: 3, entero: 4, patho: 4, spore: 2, fungus: 3, protist: 2, phage: 3, archaea: 2 };
 const GUILD_N = { fibre: "fibre degraders", scfa: "butyrate producers", mucus: "mucus dwellers", lab: "lactic acid bacteria", entero: "Enterobacteriaceae", patho: "pathobionts", spore: "spore formers", fungus: "fungi", protist: "protists", phage: "phages", archaea: "archaea" };
 function guildCount() { const g = {}; for (const k in GUILD_TARGET) g[k] = 0; for (const c of S.cols) if (!c.dead) g[SP(c).guild] = (g[SP(c).guild] || 0) + 1; return g; }
 function botName(spKey) {
@@ -1126,12 +1130,24 @@ function spawnBot(spKey, level, x) {
 function placeCells(col, x, y) { const C = SP(col); if (C.host) { for (let i = 0; i < 6; i++) addCell(col, x + R(-50, 50), y + R(-50, 50), 1); } else addCell(col, x, y, C.baseMass * (1 + Math.min(1.6, col.level * 0.05))); }
 function topUpGuilds(force) {
   const g = guildCount();
+  // a phage lives or dies by its host range, so make sure the hosts it can
+  // actually bind are on the board: without them its whole screen reads empty
+  const PC = S.player && SP(S.player);
+  if (PC && PC.host) {
+    const hosts = S.cols.filter((c) => !c.dead && c !== S.player && SP(c).tags.includes(PC.host));
+    if (hosts.length < 4) {
+      const opts = SPKEYS.filter((k) => SPECIES[k].tags.includes(PC.host) && !SPECIES[k].starter);
+      if (opts.length) spawnBot(pick(opts), clamp(S.player.level, 3, 26));
+    }
+  }
   for (const k in GUILD_TARGET) {
-    if (g[k] > GUILD_TARGET[k] * 2 + 1) {                                     // carrying capacity: the overgrown guild starts losing colonies
+    if (g[k] > GUILD_TARGET[k] * 1.8 + 1) {                                     // carrying capacity: the overgrown guild starts losing colonies
       const victims = S.cols.filter((c) => !c.dead && SP(c).guild === k && c !== S.player).sort((a, b) => totalMass(a) - totalMass(b));
       if (victims.length) colonyDied(victims[0], "starve", null);
     }
-    if (g[k] >= GUILD_TARGET[k]) continue;
+    // at least two rivals always sit in the player's own guild, eating what it eats
+    const want = GUILD_TARGET[k] + (S.player && SP(S.player).guild === k ? 2 : 0);
+    if (g[k] >= want) continue;
     const opts = SPKEYS.filter((s) => SPECIES[s].guild === k && !SPECIES[s].starter); if (!opts.length) continue;
     const lv = clamp(Math.round((S.player ? S.player.level : 4) * 0.55 + R(0, 5)), 1, 26);
     const col = spawnBot(pick(opts), lv, force ? undefined : R(0, 400));
@@ -1250,6 +1266,7 @@ function director(dt) {
   let p = clamp((shareRel - 1) * 0.55, -0.7, 1) + clamp((lead - 1) * 0.9, -0.5, 1) - (1 - health) * 0.5;
   if (P.kills > (d.k0 || 0)) { p += 0.25; d.k0 = P.kills; }
   d.pressure = lerp(d.pressure, clamp(p, -1, 1), 0.3);
+  updApex(d, live, P);
   d.note = d.pressure > 0.35 ? "You are dominating: the host is noticing." : d.pressure < -0.3 ? "You are struggling: conditions are easing." : "The community is balanced.";
   // relief when badly behind
   if (d.pressure < -0.5 && rnd() < 0.25) { for (let i = 0; i < 8; i++) spawnNut(pick(SP(P).eats.length ? SP(P).eats : ["sugar"]), centroid(P)[0] + R(-500, 500), centroid(P)[1] + R(-250, 250)); }
@@ -1418,6 +1435,33 @@ function resolveGoal(e) {
     if (!S.over) { toast("OBJECTIVE MET"); sfx("ally"); }
   } else {
     feedMsg(`${e.def.n}: you did not manage it — ${e.def.goalHint || "the objective failed"}`, "#ff8a5c");
+  }
+}
+
+/* ---------------------------------------------------------------------
+   THE APEX RIVAL
+   One named colony at a time snowballs: it grows faster, pushes harder and
+   is called out by name. Beating it is worth real XP. It is still inside
+   the guild caps and the director's pressure, so the board stays fair.
+   --------------------------------------------------------------------- */
+function updApex(d, live, P) {
+  if (S.apex && (S.apex.dead || alive(S.apex).length === 0)) {
+    feedMsg(`${S.apex.name} has been broken. Something else will take its place.`, ART.gold);
+    gainXP(P, 240); S.apex = null; d.apexT = S.time + 40;
+  }
+  if (!S.apex && S.time > (d.apexT || 50)) {
+    const pool = live.filter((c) => c !== P && !c.dead && alive(c).length);
+    if (pool.length) {
+      pool.sort((a, b) => (totalMass(b) + b.xp * 0.02) - (totalMass(a) + a.xp * 0.02));
+      S.apex = pool[0]; S.apex.apex = 1;
+      feedMsg(`${S.apex.name} (${SP(S.apex).short}) is running away with the niche`, ART.crimson);
+      if (!S.over) toast(`APEX RIVAL · ${S.apex.name.toUpperCase()}`);
+    }
+  }
+  if (S.apex && !S.apex.dead) {
+    const a = S.apex;
+    a.boost = Object.assign(a.boost || {}, { growth: 1.45, aggro: 1 });
+    if (S.time % 4 < 2) for (const c of alive(a)) if (c.mass < SP(a).maxMass) c.mass += 0.12;
   }
 }
 /* =====================================================================
@@ -2190,6 +2234,205 @@ function drawSporulation(ctx, c, r, hue) {
   }
   ctx.restore();
 }
+/* =====================================================================
+   THE AFFORDANCE LANGUAGE
+   Four reserved signals, used for nothing else in the game, layered on
+   top of each organism's own biological colour rather than replacing it.
+   Every one pairs a colour with a distinct ring style and a glyph, so it
+   still reads without colour vision.
+
+     SELF     white      solid double ring + YOU tag
+     FOOD     green      dotted ring + chevron        (take this now)
+     TARGET   gold       dashed ring + corner brackets (you can attack it)
+     ENEMY    red        spiked ring + warning triangle (it can kill you)
+     NEUTRAL  --         nothing drawn, and desaturated
+
+   What counts as which is relative to the player's species and genes and
+   is recomputed whenever either changes, so the same cell is food to an
+   amoeba and a predator to a bacterium.
+   ===================================================================== */
+const SIG = {
+  self:   { col: "#ffffff", ring: "double", glyph: "you" },
+  food:   { col: "#7cf29a", ring: "dotted", glyph: "chevron" },
+  target: { col: "#ffc84a", ring: "dashed", glyph: "bracket" },
+  enemy:  { col: "#ff5d6c", ring: "spiked", glyph: "warn" },
+};
+const SIG_HELP = [
+  ["self",   "You",     "Your own colony. The lead cell carries the tag."],
+  ["food",   "Food",    "You can absorb this right now: nutrients your species metabolises, or prey small enough to engulf."],
+  ["target", "Target",  "A valid attack: a host your receptor matches, something you can engulf, or a competitor your weapons reach."],
+  ["enemy",  "Danger",  "This can kill you: a predator big enough to eat you, a phage that matches your receptor, or a toxin you have no defence against."],
+];
+
+/* ---- the player's profile, rebuilt only when the player actually changes ---- */
+let AFF = null, AFFKEY = "";
+function affProfile() {
+  const P = S && S.player; if (!P) return null;
+  const key = `${P.sp}|${P.genes.length}|${P.level}|${Math.round(totalMass(P))}`;
+  if (AFF && AFFKEY === key) return AFF;
+  const C = SP(P), m = mainCell(P);
+  AFF = {
+    P, C,
+    mass: m ? m.mass : 0,
+    eats: new Set(C.eats || []),
+    engulf: C.engulf || 0,
+    isPhage: !!C.host,
+    host: C.host,
+    bacterium: C.tags.includes("bacteria"),
+    armed: !!(P.fl.t6ss || P.fl.bacteriocin || C.antibiotic),
+    team: P.team,
+  };
+  AFFKEY = key; return AFF;
+}
+/* ---- what is this thing, to me, right now? ---- */
+function affordanceOf(o) {
+  const a = affProfile(); if (!a) return null;
+  if (o.kind === "immune") return a.bacterium || a.C.guild === "patho" ? "enemy" : "neutral";
+  if (o.col === a.P) return "self";
+  if (o.team === a.team) return "neutral";
+  const C = SP(o.col);
+  if (o.col.apex && !a.isPhage && o.mass > a.mass * 0.7) return "enemy";   // the runaway is always worth watching
+  // a phage sees hosts, and everything else sees phages that match it
+  if (a.isPhage) {
+    if (o.virion) return "neutral";
+    return isHostOf(a.P, o) ? "target" : "neutral";
+  }
+  if (o.virion) return C.host && a.C.tags.includes(C.host) ? "enemy" : "neutral";
+  // size-based predation runs both ways and settles it outright
+  if (C.engulf && a.mass < o.mass * C.engulf) return "enemy";
+  if (a.engulf && o.mass < a.mass * a.engulf) return "target";
+  // a mould clearing a ring around itself is a threat to any bacterium without the enzyme
+  if (C.guild === "fungus" && C.antibiotic && a.bacterium && !a.P.fl.res_blactam) return "enemy";
+  // between bacteria it comes down to who would win the contact, not just who is armed:
+  // marking every neighbour that owns a weapon turns the whole screen red and says nothing
+  const theirs = o.col.fl;
+  const theyArmed = !!(theirs.t6ss || theirs.bacteriocin) && !a.P.fl.capsule;
+  const ratio = o.mass / Math.max(1, a.mass);
+  // "armed" is not the same as "dangerous": in a crowded gut most neighbours carry
+  // something, so only mark the ones that would actually win the exchange
+  if (a.bacterium && theyArmed && ratio > 1.25) return "enemy";
+  if (a.armed && C.tags.includes("bacteria") && ratio < 1.1) return "target";
+  if (theyArmed && ratio > 2.2) return "enemy";
+  return "neutral";
+}
+function nutAffordance(n) {
+  const a = affProfile(); if (!a) return "neutral";
+  if (NUTRIENTS[n.k] && NUTRIENTS[n.k].hazard && !a.P.fl.bsh) return "enemy";
+  if (n.k === "plasmid" || n.k === "atp") return "food";
+  return a.eats.has(n.k) ? "food" : "neutral";
+}
+
+/* ---- the rings ---- */
+function sigRing(ctx, x, y, r, kind, t, urgent) {
+  const s = SIG[kind]; if (!s) return;
+  const pulse = urgent ? 0.55 + 0.45 * Math.sin(t * 9) : 1;
+  ctx.save(); ctx.translate(x, y);
+  ctx.strokeStyle = rgba(s.col, (kind === "self" ? 0.95 : 0.8) * pulse);
+  ctx.lineWidth = kind === "self" ? 2.4 : 2;
+  if (s.ring === "dotted") ctx.setLineDash([2, 5]);
+  else if (s.ring === "dashed") ctx.setLineDash([7, 5]);
+  if (s.ring === "spiked") {
+    // a ring of outward spikes: unmistakable in a thumbnail and without colour
+    const n = 10; ctx.beginPath();
+    for (let i = 0; i < n * 2; i++) { const an = (i / (n * 2)) * TAU, rr = r + (i % 2 ? 0 : 5);
+      i ? ctx.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : ctx.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); }
+    ctx.closePath(); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke();
+    if (s.ring === "double") { ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, 0, r + 4.5, 0, TAU); ctx.stroke(); }
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+/* ---- the glyphs, so the signal survives without colour ---- */
+function sigGlyph(ctx, x, y, r, kind, t) {
+  const s = SIG[kind]; if (!s || s.glyph === "you") return;
+  ctx.save(); ctx.translate(x, y - r - 9);
+  ctx.strokeStyle = rgba(s.col, 0.95); ctx.fillStyle = rgba(s.col, 0.95); ctx.lineWidth = 2; ctx.lineJoin = "round";
+  if (s.glyph === "chevron") { const b = 1.5 * Math.sin(t * 4); ctx.beginPath(); ctx.moveTo(-5, 3 + b); ctx.lineTo(0, -2 + b); ctx.lineTo(5, 3 + b); ctx.stroke(); }
+  else if (s.glyph === "bracket") { ctx.beginPath();
+    ctx.moveTo(-7, -3); ctx.lineTo(-7, 2); ctx.moveTo(-7, 2); ctx.lineTo(-2, 2);
+    ctx.moveTo(7, -3); ctx.lineTo(7, 2); ctx.moveTo(7, 2); ctx.lineTo(2, 2); ctx.stroke(); }
+  else if (s.glyph === "warn") { ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(6, 4); ctx.lineTo(-6, 4); ctx.closePath(); ctx.stroke();
+    ctx.fillRect(-0.9, -2, 1.8, 3.6); ctx.fillRect(-0.9, 2.6, 1.8, 1.6); }
+  ctx.restore();
+}
+/* is this thing actively coming for me? */
+function isHunting(o, a) {
+  if (!o.goal || !a) return false;
+  const m = mainCell(a.P); if (!m) return false;
+  return hyp(o.goal[0] - m.x, o.goal[1] - m.y) < 140 && hyp(o.x - m.x, o.y - m.y) < 420;
+}
+/* ---- drawn per visible entity, in world space ---- */
+function drawSignals(ctx, cells, t) {
+  if (!PREFS.signals) return;
+  const a = affProfile(); if (!a) return;
+  const P = a.P, lead = mainCell(P);
+  for (const o of cells) {
+    const kind = affordanceOf(o);
+    if (!kind || kind === "neutral") continue;
+    const r = o.r + 7;
+    if (kind === "self") {
+      sigRing(ctx, o.x, o.y, r, "self", t, false);
+      if (o === lead) {                                   // the one you are steering
+        // below the cell: above it belongs to the strain-name label
+        ctx.save(); ctx.translate(o.x, o.y + r + 16);
+        ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.font = PF(9); ctx.textAlign = "center";
+        ctx.strokeStyle = "rgba(0,0,0,.8)"; ctx.lineWidth = 3; ctx.lineJoin = "round";
+        ctx.strokeText("YOU", 0, 0); ctx.fillText("YOU", 0, 0);
+        ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, -3); ctx.stroke();   // leader line up to the cell
+        ctx.restore();
+      }
+      continue;
+    }
+    const urgent = kind === "enemy" && isHunting(o, a);
+    sigRing(ctx, o.x, o.y, r, kind, t, urgent);
+    sigGlyph(ctx, o.x, o.y, r, kind, t);
+  }
+}
+/* nutrients: the edible ones get a signal ring and a pull, the rest go quiet */
+function drawNutSignal(ctx, n, kind, t) {
+  if (!PREFS.signals || kind === "neutral") return;
+  if (kind === "food") {
+    const p = 0.55 + 0.45 * Math.sin(t * 3 + n.x * 0.05);
+    ctx.strokeStyle = rgba(SIG.food.col, 0.3 * p); ctx.lineWidth = 1.4; ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 5, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  } else if (kind === "enemy") {
+    ctx.strokeStyle = rgba(SIG.enemy.col, 0.5); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(n.x - 4, n.y - 4); ctx.lineTo(n.x + 4, n.y + 4);
+    ctx.moveTo(n.x + 4, n.y - 4); ctx.lineTo(n.x - 4, n.y + 4); ctx.stroke();
+  }
+}
+/* an edge arrow so you can never lose yourself off-screen */
+function drawSelfArrow(ctx) {
+  if (!PREFS.signals || !S.player) return;
+  const m = mainCell(S.player); if (!m) return;
+  const z = S.cam.z, sx = W / 2 + (m.x - S.cam.x) * z, sy = H / 2 + (m.y - S.cam.y) * z;
+  const pad = 46;
+  if (sx > pad && sx < W - pad && sy > pad && sy < H - pad) return;
+  const cx = clamp(sx, pad, W - pad), cy = clamp(sy, pad, H - pad);
+  const an = Math.atan2(sy - H / 2, sx - W / 2);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(an);
+  ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(-7, -8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.font = PF(8); ctx.textAlign = "center";
+  ctx.fillText("YOU", cx, cy + 22);
+}
+/* the legend, so the language is stated and not just implied */
+function drawLegend(ctx, x, y, small) {
+  if (!PREFS.signals) return;
+  const keys = ["self", "food", "target", "enemy"], lbl = { self: "YOU", food: "FOOD", target: "TARGET", enemy: "DANGER" };
+  ctx.font = PF(small ? 7 : 8); ctx.textAlign = "left";
+  let yy = y;
+  for (const k of keys) {
+    sigRing(ctx, x + 7, yy, 5, k, S.time, false);
+    sigGlyph(ctx, x + 7, yy + 1, 2, k, 0);
+    ctx.fillStyle = rgba(SIG[k].col, 0.9); ctx.fillText(lbl[k], x + 18, yy + 3);
+    yy += small ? 13 : 15;
+  }
+}
 /* ---------- input ---------- */
 const keys = {}, PTRS = new Map();
 window.addEventListener("keydown", (e) => {
@@ -2837,11 +3080,17 @@ function draw() {
   const mg = ctx.createLinearGradient(0, EPI, 0, EPI + 240); mg.addColorStop(0, "rgba(176,224,245,.13)"); mg.addColorStop(0.7, "rgba(176,224,245,.05)"); mg.addColorStop(1, "rgba(176,224,245,0)");
   ctx.fillStyle = mg; ctx.fill(); ctx.strokeStyle = "rgba(200,235,250,.12)"; ctx.lineWidth = 1.5; ctx.stroke();
   for (let i = 0; i < 26; i++) { const x = vx0 + i * ((vx1 - vx0) / 26) + Math.sin(S.time * 0.3 + i) * 20, th = 60 + mucusAt(x) * 170; ctx.strokeStyle = "rgba(210,240,255,.12)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, EPI + 10); ctx.quadraticCurveTo(x + 18, EPI + th * 0.6, x - 10, EPI + th); ctx.stroke(); }
-  // oxygen haze near the wall
-  const o2top = o2At(S.cam.x, EPI + 60), og = ctx.createLinearGradient(0, EPI - 20, 0, EPI + 520 + S.env.inflame * 500);
-  og.addColorStop(0, `rgba(106,184,255,${0.05 + 0.13 * o2top})`); og.addColorStop(1, "rgba(106,184,255,0)");
-  ctx.fillStyle = og; ctx.fillRect(vx0, EPI - 40, vx1 - vx0, 900);
-  if (S.env.inflame > 0.1) { ctx.fillStyle = `rgba(255,60,80,${0.03 + 0.09 * S.env.inflame})`; ctx.fillRect(vx0, EPI - 60, vx1 - vx0, 420 + 500 * S.env.inflame); }
+  // oxygen haze and inflammation share one fill with the same bounds: three
+  // full-screen passes a frame became one, which is most of the background cost
+  const o2top = o2At(S.cam.x, EPI + 60), inf = S.env.inflame;
+  const og = ctx.createLinearGradient(0, EPI - 20, 0, EPI + 520 + inf * 500);
+  const ox = 0.05 + 0.13 * o2top, ia = inf > 0.1 ? 0.03 + 0.09 * inf : 0;
+  // premultiplied blend of the cool oxygen rim and the warm inflamed one
+  const mixR = Math.round((106 * ox + 255 * ia) / (ox + ia || 1)), mixG = Math.round((184 * ox + 60 * ia) / (ox + ia || 1)),
+        mixB = Math.round((255 * ox + 80 * ia) / (ox + ia || 1));
+  og.addColorStop(0, `rgba(${mixR},${mixG},${mixB},${(ox + ia).toFixed(3)})`);
+  og.addColorStop(1, `rgba(${mixR},${mixG},${mixB},0)`);
+  ctx.fillStyle = og; ctx.fillRect(vx0, EPI - 60, vx1 - vx0, 900 + inf * 400);
   // peristaltic flow streaks
   if (PREFS.vfx) { ctx.strokeStyle = `rgba(190,220,255,${0.05 + 0.1 * (S.env.flow - 1)})`; ctx.lineWidth = 2; for (let i = 0; i < 26; i++) { const y = EPI + 120 + ((i * 331) % (WORLD.h - EPI - 160)); if (y < vy0 || y > vy1) continue; const x = vx0 + ((i * 1013 + S.time * flowAt(0, y) * 9) % (vx1 - vx0 + 600)) - 300, len = 40 + flowAt(0, y) * 2.4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke(); } }
   // zones
@@ -2861,11 +3110,24 @@ function draw() {
   }
   ctx.lineCap = "butt";
   for (const n of S.nuts) { if (!vis(n)) continue; const N = NUTRIENTS[n.k], sp2 = nutSprite(n.k), k = n.r / N.r;
-    if (PREFS.vfx && (N.meta || n.k === "atp" || n.k === "plasmid")) glow(ctx, n.x, n.y, n.r * 3.2, N.col, 0.7);
-    ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.rot); ctx.scale(k, k); ctx.drawImage(sp2.c, -sp2.s / 2, -sp2.s / 2, sp2.s, sp2.s); ctx.restore(); }
+    const na = nutAffordance(n);
+    // anything this species cannot metabolise recedes, so you never chase it
+    ctx.globalAlpha = na === "neutral" ? 0.4 : 1;
+    if (PREFS.vfx && (na === "food" || N.meta || n.k === "atp" || n.k === "plasmid")) glow(ctx, n.x, n.y, n.r * 3.2, na === "food" ? SIG.food.col : N.col, na === "food" ? 0.85 : 0.7);
+    ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.rot); ctx.scale(k, k); ctx.drawImage(sp2.c, -sp2.s / 2, -sp2.s / 2, sp2.s, sp2.s); ctx.restore();
+    ctx.globalAlpha = 1;
+    drawNutSignal(ctx, n, na, S.time); }
   // cells
   const cells = S.cells.filter((c) => !c.dead && vis(c, c.r * 3 + 70)).sort((a, b) => b.r - a.r);
-  for (const c of cells) { c.aim = Math.atan2(c.aimY - c.y, c.aimX - c.x); drawCell(ctx, c, c.age); }
+  for (const c of cells) {
+    c.aim = Math.atan2(c.aimY - c.y, c.aimX - c.x);
+    // anything irrelevant to you right now sits back a little so the signals carry
+    const aff = PREFS.signals ? affordanceOf(c) : null;
+    if (aff === "neutral") ctx.globalAlpha = 0.62;
+    drawCell(ctx, c, c.age);
+    ctx.globalAlpha = 1;
+  }
+  drawSignals(ctx, cells, S.time);
   drawFx(ctx);
   // immune cells
   for (const m of S.immune) {
@@ -2881,9 +3143,12 @@ function draw() {
     const C = SP(col), fs = 11 / z;   // constant size on screen: a world-unit floor explodes when zoomed in ctx.font = PF(fs); ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
     const oy = c.virion ? 14 : c.r * 1.5 + 12;
     ctx.fillStyle = col === P ? "#e8eef5" : col.team === P.team ? "#b388ff" : isCommensal(col) ? "#a8e6cf" : "#ffb3a0";
-    ctx.strokeText(col.name, c.x, c.y - oy); ctx.fillText(col.name, c.x, c.y - oy);
-    ctx.font = PX(9 / z); ctx.fillStyle = "#8a97a8"; const sub = col === P ? C.short : `Lv ${col.level} ${C.short}`;
-    ctx.strokeText(sub, c.x, c.y - oy - fs - 1); ctx.fillText(sub, c.x, c.y - oy - fs - 1);
+    // the player's own cells carry the YOU tag instead: two labels on one cell is noise
+    if (!(col === P && PREFS.signals)) { ctx.strokeText(col.name, c.x, c.y - oy); ctx.fillText(col.name, c.x, c.y - oy); }
+    ctx.font = PX(9 / z); ctx.fillStyle = col.apex ? ART.crimson : "#8a97a8";
+    const sub = col === P ? C.short : `${col.apex ? "\u2605 " : ""}Lv ${col.level} ${C.short}`;
+    const sy = col === P && PREFS.signals ? c.y - oy : c.y - oy - fs - 1;
+    ctx.strokeText(sub, c.x, sy); ctx.fillText(sub, c.x, sy);
     if (!c.virion && c.hp < c.maxhp - 0.5) { const hw = c.r * 2; ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(c.x - hw / 2, c.y + oy - 6, hw, 3.5); ctx.fillStyle = col === P ? "#7cf29a" : "#ff6b6b"; ctx.fillRect(c.x - hw / 2, c.y + oy - 6, hw * Math.max(0, c.hp / c.maxhp), 3.5); }
     if (c.iga > 0.3) { ctx.strokeStyle = `rgba(189,238,255,${c.iga})`; ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 6, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     if (col.shield > 0) { ctx.strokeStyle = `rgba(143,227,255,${0.3 + 0.3 * Math.sin(S.time * 8)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 9, 0, TAU); ctx.stroke(); }
@@ -2902,6 +3167,7 @@ function draw() {
       ctx.drawImage(f.c, sx - f.r, sy - f.r); }
     ctx.globalAlpha = 1; ctx.restore(); }
   applyPost(ctx, senseR(P) * S.cam.z);
+  drawSelfArrow(ctx);
   if (S.flash > 0) { ctx.fillStyle = `rgba(255,209,102,${S.flash * 0.35})`; ctx.fillRect(0, 0, W, H); }
   if (S.env.drug) { ctx.fillStyle = rgba(S.env.drug.col, 0.07 + 0.05 * Math.sin(S.time * 3)); ctx.fillRect(0, 0, W, H); }
   { const pm = mainCell(P), hp = pm ? pm.hp / pm.maxhp : 1, hurt = Math.min(0.22, Math.max((S.hurtFx || 0) * 0.5, hp < 0.35 ? (0.35 - hp) * 0.6 : 0));
@@ -2942,7 +3208,7 @@ function drawHUD() {
   const lb = S.cols.filter((c) => !c.dead).sort((a, b) => b.xp - a.xp).slice(0, small ? 5 : 9), lw = small ? 160 : 232, lx = W - lw - 10;
   panel(ctx, lx, 10, lw, 26 + lb.length * 18);
   ctx.font = PF(9); ctx.fillStyle = "#8a97a8"; ctx.fillText("ABUNDANCE", lx + 8, 24);
-  lb.forEach((c, i) => { const yy = 42 + i * 18, me = c === P; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(lx + 6, yy - 10, lw - 12, 14); ctx.fillStyle = me ? "#1f6f8f" : dark(SP(c).col, 0.5, 1); ctx.fillRect(lx + 6, yy - 10, (lw - 12) * Math.min(1, c.xp / Math.max(1, lb[0].xp)), 14); ctx.font = PX(12); ctx.fillStyle = me ? "#fff" : "#e8eef5"; ctx.textAlign = "left"; ctx.fillText(`${c.name} · ${SP(c).short}`.slice(0, small ? 15 : 24), lx + 10, yy + 1); ctx.textAlign = "right"; ctx.fillStyle = "#c9d2dc"; ctx.fillText(fmt(c.xp), lx + lw - 10, yy + 1); });
+  lb.forEach((c, i) => { const yy = 42 + i * 18, me = c === P; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(lx + 6, yy - 10, lw - 12, 14); ctx.fillStyle = me ? "#1f6f8f" : dark(SP(c).col, 0.5, 1); ctx.fillRect(lx + 6, yy - 10, (lw - 12) * Math.min(1, c.xp / Math.max(1, lb[0].xp)), 14); ctx.font = PX(12); ctx.fillStyle = me ? "#fff" : "#e8eef5"; ctx.textAlign = "left"; ctx.fillText(`${c.apex ? "\u2605 " : ""}${c.name} · ${SP(c).short}`.slice(0, small ? 15 : 24), lx + 10, yy + 1); ctx.textAlign = "right"; ctx.fillStyle = "#c9d2dc"; ctx.fillText(fmt(c.xp), lx + lw - 10, yy + 1); });
   // environment panel: region, oxygen, pH, inflammation
   const m = mainCell(P) || { x: S.cam.x, y: S.cam.y };
   const ex = lx, ey = 10 + 26 + lb.length * 18 + 8, ew = lw, eh = small ? 74 : 86;
@@ -2995,6 +3261,15 @@ function drawHUD() {
   ctx.fillText(`${P.name} · ${C.host ? alive(P).length + " PARTICLES · " + hostsOf(P) + " HOSTS" : "MASS " + shownMass + " IN " + alive(P).length + " CELL" + (alive(P).length > 1 ? "S" : "")} · ${fmt(shownXP)} XP`, bx + bw / 2, by - 6);
   // genome chips
   if (!small) { ctx.textAlign = "left"; let gx = 12, gy = H - 16; ctx.font = PF(9); for (const g of P.genes.slice(-9)) { const w2 = ctx.measureText(GENES[g].n).width + 10; ctx.fillStyle = "rgba(17,20,28,.85)"; ctx.fillRect(gx, gy - 11, w2, 15); ctx.fillStyle = RES_GENES.includes(g) ? "#7fd7ff" : "#a8e6cf"; ctx.fillText(GENES[g].n, gx + 5, gy); gx += w2 + 5; } }
+  // the affordance legend, stated rather than implied
+  if (PREFS.signals) {
+    // tucked above the adaptations panel: top-left belongs to the feed
+    const lh = small ? 13 : 15, lw2 = small ? 74 : 84;
+    const ly = (small ? H - 132 - STATS.length * 14 : H - 44 - STATS.length * 17) - lh * 4 - 34;
+    panel(ctx, 10, ly - 14, lw2, lh * 4 + 20);
+    ctx.font = PF(7); ctx.textAlign = "left"; ctx.fillStyle = "#8a97a8"; ctx.fillText("READING THE WORLD", 16, ly - 3);
+    drawLegend(ctx, 16, ly + 10, small);
+  }
   // stat bars
   const rows = STATS.length, rh = small ? 14 : 17, pw = small ? 116 : 160, px0 = 10, py0 = small ? H - rows * rh - 132 : H - rows * rh - 44;
   if (!small || P.free > 0) {
@@ -3150,10 +3425,11 @@ function renderPause() {
 }
 function pauseBody() {
   const P = S && S.player;
-  if (PTAB === "codex") return codexBody();
+  if (PTAB === "codex") return signalHelp() + codexBody();
   if (PTAB === "set") return `<div class="kv">
       <b>SOUND</b><div><button class="btn sm ${PREFS.sfx ? "" : "off"}" onclick="PREFS.sfx=!PREFS.sfx;savePrefs();renderPause()">${PREFS.sfx ? "On" : "Off"}</button></div>
       <b>MUSIC</b><div><button class="btn sm ${PREFS.music ? "" : "off"}" onclick="PREFS.music=!PREFS.music;savePrefs();music(PREFS.music);renderPause()">${PREFS.music ? "On" : "Off"}</button></div>
+      <b>THREAT COLOURS</b><div><button class="btn sm ${PREFS.signals ? "" : "off"}" onclick="PREFS.signals=!PREFS.signals;savePrefs();renderPause()">${PREFS.signals ? "On" : "Off"}</button> <span class="muted">rings and glyphs marking food, targets and danger</span></div>
       <b>VISUAL EFFECTS</b><div><button class="btn sm ${PREFS.vfx ? "" : "off"}" onclick="PREFS.vfx=!PREFS.vfx;savePrefs();renderPause()">${PREFS.vfx ? "On" : "Off"}</button> <span class="muted">particles, haze, fog, shake</span></div>
       <b>CONTROLS</b><div><button class="btn sm ${PREFS.ctrl === "wasd" ? "" : "off"}" onclick="PREFS.ctrl='wasd';savePrefs();renderPause()">WASD / arrows</button>
         <button class="btn sm ${PREFS.ctrl === "mouse" ? "" : "off"}" onclick="PREFS.ctrl='mouse';savePrefs();renderPause()">Follow the mouse</button></div>
@@ -3250,7 +3526,7 @@ if (DEBUG) window.PIO = {
   player: () => S && S.player, cells: () => S && alive(S.player), addXP: (n) => gainXP(S.player, n), setLevel: (L) => gainXP(S.player, Math.max(0, xpFor(L) - S.player.xp)),
   useSp: () => useAbility(S.player, "sp"), useUlt: () => useAbility(S.player, "ult"), addGene: (g) => addGene(S.player, g), genePool: () => genePool(S.player),
   fire: (on) => (S.auto = !!on), fireEvent: (id) => { const e = scheduleEvent(id); e.t = e.lead; return e; }, forceEvent: (id) => { const e = scheduleEvent(id); e.t = 0; e.phase = "warn"; e.lead = 0.01; return e; },
-  spawnBot, addCell, mkFx, witness, INTER, beginAdsorption, ADS, topUpGuilds, hudClick, openPause, closePause, openGene, takeGene, openSpec, openStrain, setSpecies, specialise: (k) => { setSpecies(S.player, k); S.player.specialised = 1; S.specOpen = 0; hide("gpick"); if (!S.over) S.paused = false; },
+  spawnBot, addCell, mkFx, witness, INTER, CODEX: INTER, codexBody, SIG, SIG_HELP, affordanceOf, nutAffordance, beginAdsorption, ADS, topUpGuilds, hudClick, openPause, closePause, openGene, takeGene, openSpec, openStrain, setSpecies, specialise: (k) => { setSpecies(S.player, k); S.player.specialised = 1; S.specOpen = 0; hide("gpick"); if (!S.over) S.paused = false; },
   quickStart: (typeKey, spKey) => { startRun("T", typeKey); if (spKey) { setSpecies(S.player, spKey, true); } S.player.specialised = 1; S.player.strained = 1; hide("gpick"); hide("pause"); S.paused = false; return S.player.sp; }, TYPES, TYPEKEYS, toTitle, engulf, infect, lyse, divide, growHypha, damage, die, o2At, flowAt, mucusAt, centroid, mainCell, totalMass, hostsOf, SP, spendPt: (k) => spendPt(S.player, k), director, useAbility, senseR, o2Tol, GUILD_N, regionAt, EPI, WORLD,
 };
 </script>
@@ -3259,3 +3535,11 @@ if (DEBUG) window.PIO = {
         async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
+
+/* the colour language, written out where the player can read it */
+function signalHelp() {
+  const row = ([k, name, d]) => `<b style="color:${SIG[k].col}">${name.toUpperCase()}</b><div><span class="muted">${d}</span></div>`;
+  return `<h3>Reading the world</h3>
+    <p class="muted">Four signals, used for nothing else. Each pairs a colour with its own ring style and glyph, so they still read without colour vision. What counts as which depends on the species you are now and the genes you carry, so it changes as you do.</p>
+    <div class="kv">${SIG_HELP.map(row).join("")}</div>`;
+}

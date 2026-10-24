@@ -12,7 +12,11 @@
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.35 "Pixelify Sans", monospace; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none; }
 #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 .ov { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(3,4,6,.86); z-index: 10; padding: 14px; overflow-y: auto; }
-.ov.show { display: flex; }
+.ov.show { display: flex; animation: ovIn .18s ease both; }
+.ov.show > .panel { animation: panelIn .22s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes ovIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes panelIn { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .ov.show, .ov.show > .panel { animation: none } .sp, .btn { transition: none } }
 .panel { background: var(--p1); box-shadow: inset 0 0 0 2px var(--line), 0 10px 0 #05060a; padding: 20px 22px; max-width: 1080px; width: 100%; text-align: center; margin: auto; }
 h1 { font: 38px/1 "Silkscreen", monospace; margin: 0; letter-spacing: .02em; text-shadow: 4px 4px 0 #8a3a52; }
 h2 { font: 17px/1.2 "Silkscreen", monospace; margin: 0 0 8px; }
@@ -20,7 +24,8 @@ h3 { font: 12px "Silkscreen", monospace; color: var(--muted); margin: 16px 0 6px
 .lbl { font: 11px "Silkscreen", monospace; color: var(--muted); letter-spacing: .06em; }
 .muted { color: var(--muted); } .gold { color: var(--gold); } .green { color: var(--green); } .red { color: var(--red); } .acc { color: var(--acc); }
 .btn { font: 12px "Silkscreen", monospace; color: var(--text); background: #1a1f2b; border: 0; box-shadow: inset 0 0 0 2px var(--line), 0 4px 0 #05060a; padding: 9px 16px; cursor: pointer; }
-.btn:hover { box-shadow: inset 0 0 0 2px var(--acc), 0 4px 0 #05060a; color: #fff; }
+.btn { transition: transform .1s cubic-bezier(.2,.9,.3,1.3), box-shadow .1s ease, color .1s ease; }
+.btn:hover { box-shadow: inset 0 0 0 2px var(--acc), 0 6px 0 #05060a; color: #fff; transform: translateY(-2px); }
 .btn:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px var(--acc), 0 2px 0 #05060a; }
 .btn.pri { background: #1f6f8f; box-shadow: inset 0 0 0 2px #5ab4e0, 0 4px 0 #05060a; }
 .btn.off { color: var(--faint); }
@@ -34,7 +39,9 @@ input.name:focus { box-shadow: inset 0 0 0 2px var(--acc); }
 .stat span { font: 9px "Silkscreen", monospace; color: var(--muted); }
 .spgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; max-height: 48vh; overflow-y: auto; padding-right: 4px; }
 .sp { background: var(--p0); box-shadow: inset 0 0 0 2px var(--line); padding: 8px 6px; cursor: pointer; text-align: center; color: var(--text); font: inherit; border: 0; position: relative; }
-.sp:hover { box-shadow: inset 0 0 0 2px var(--acc); } .sp.sel { box-shadow: inset 0 0 0 3px var(--gold); }
+.sp { transition: transform .12s cubic-bezier(.2,.9,.3,1.3), box-shadow .12s ease; }
+.sp:hover { box-shadow: inset 0 0 0 2px var(--acc), 0 5px 0 #05060a; transform: translateY(-3px); }
+.sp.sel { box-shadow: inset 0 0 0 3px var(--gold), 0 4px 0 #05060a; transform: translateY(-2px); }
 .sp canvas { display: block; margin: 0 auto 4px; }
 .sp b { display: block; font: 10px "Silkscreen", monospace; margin-bottom: 2px; }
 .sp i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
@@ -273,11 +280,11 @@ sp("entamoeba", { n: "Entamoeba histolytica", short: "Entamoeba", col: "#f0d98c"
   sp: "pseudo", ult: "engulfStorm", genes: ["adhesin", "persister", "efflux", "iga", "catalase", "acidtol", "biofilm", "capsule", "quorum", "sod"],
   niche: "A grazing protist that eats bacteria whole and chews through the epithelium when it gets the chance.", eatenBy: "Immune cells, flow.",
   fact: "Entamoeba kills host cells by trogocytosis: it bites off pieces of them until they die.", d: "The grazer. Swallows bacteria whole; nothing smaller than it is safe." });
-sp("lambda", { n: "Temperate phage λ", short: "λ phage", col: "#b98cff", shape: "lambda", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "coli", burst: 9, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 115, zoom: 1.8,
+sp("lambda", { recep: "LamB", recepD: "the maltoporin E. coli uses to import maltodextrins", n: "Temperate phage λ", short: "λ phage", col: "#b98cff", shape: "lambda", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "coli", burst: 9, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 115, zoom: 1.8,
   sp: "attach", ult: "massLyso", genes: ["burst2", "hostrange", "lysoStable", "toxgene", "antiCRISPR", "tailfib", "latentFast", "capsid", "integrase", "superinf"],
   niche: "Infects E. coli and can integrate instead of killing: the host carries you and fights for you.", eatenBy: "CRISPR and restriction systems; hosts dying to something else.",
   fact: "A lysogen is immune to further infection by the same phage, and can gain genes from it: that is how EHEC got its toxin.", d: "The passenger. Turn E. coli into allies that carry your genome, then induce them all at once." });
-sp("crass", { n: "crAss-like lytic phage", short: "crAssphage", col: "#cfa8ff", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "bacteroides", burst: 14, latent: 5.5, baseMass: 1, minMass: 1, maxMass: 1, spd: 120, zoom: 1.8,
+sp("crass", { recep: "the capsular polysaccharide", recepD: "the surface capsule Bacteroides switches between to evade exactly this", n: "crAss-like lytic phage", short: "crAssphage", col: "#cfa8ff", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "bacteroides", burst: 14, latent: 5.5, baseMass: 1, minMass: 1, maxMass: 1, spd: 120, zoom: 1.8,
   sp: "attach", ult: "lyticBloom", genes: ["burst2", "hostrange", "latentFast", "antiCRISPR", "tailfib", "capsid", "superinf", "burst3", "stability", "adsorb"],
   niche: "The most abundant virus in the human gut, and it lives on Bacteroides.", eatenBy: "Host defences, running out of hosts.",
   fact: "crAssphage was discovered in 2014 by assembling it out of faecal sequence data; it is present in about half of all people.", d: "Pure lysis. Multiply through the dominant fibre degraders until nothing is left to infect." });
@@ -924,6 +931,12 @@ function botGene(col) { const p = genePool(col); if (p.length) addGene(col, pick
 /* ---------- feed, pops, particles ---------- */
 function feedMsg(s, col) { S.feed.unshift({ s, col: col || "#c9d2dc", t: 9 }); if (S.feed.length > 7) S.feed.pop(); }
 function pop(x, y, s, col, big) { if (!PREFS.vfx && !big) return; S.pops.push({ x, y, s, col, t: 1.5, big }); }
+/* a beat of slow motion, rate-limited: without the cooldown a kill-heavy run
+   retriggers it every frame and the whole simulation ends up in slow motion */
+function hitstop(n) {
+  if (!PREFS.vfx || S.time - (S.hsLast || -9) < 0.9) return;
+  S.hsLast = S.time; S.hitstop = Math.min(0.12, n);
+}
 function burst(x, y, col, n, sz) { if (!PREFS.vfx) n = Math.min(n, 4); for (let i = 0; i < n; i++) { const a = rnd() * TAU, sp = R(20, 170); S.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: R(1, sz || 3), col, t: R(0.4, 1.1) }); } }
 let toastT = 0; function toast(s) { const e = $("toast"); e.textContent = s; e.style.opacity = 1; toastT = 3.5; }
 function shake(n) { if (PREFS.vfx) S.shake = Math.min(16, S.shake + n); }
@@ -938,7 +951,7 @@ function damage(c, n, src, cause) {
   if (f.iga && cause === "immune") n *= 0.5; if (f.acidtol && cause === "acid") n = 0; if (f.bsh && cause === "bile") n = 0;
   if (cause === "drug") { n *= 1 - resists(col, S.env.drug); if (c.sheltered > 0) n *= 0.25; }
   if (n <= 0) return;
-  c.hp -= n; c.hurtT = 0.15; if (src) { c.lastHit = { col: src, cause }; col.aggro = src; col.aggroT = S.time; }
+  c.hp -= n; c.hurtT = 0.15; c.sq = Math.max(c.sq || 0, Math.min(0.2, n * 0.03)); if (src) { c.lastHit = { col: src, cause }; col.aggro = src; col.aggroT = S.time; }
   if (col === S.player && n > 0.3) {
     if (n > 2.5) sfx("hurt"); shake(n * 0.12); S.hurtFx = Math.min(1, (S.hurtFx || 0) + n * 0.05);
     if (src && S.time - (S.hurtNote || -9) > 6) { S.hurtNote = S.time; toast(`${cause === "toxin" ? "POISONED" : cause === "t6ss" ? "SPEARED" : cause === "acid" ? "ACID" : cause === "hyphae" ? "TRAPPED IN HYPHAE" : cause === "immune" ? "UNDER IMMUNE ATTACK" : cause === "drug" ? "THE DRUG IS WORKING ON YOU" : "UNDER ATTACK"} BY ${src.name.toUpperCase()} · ${SP(src).short.toUpperCase()}`); }
@@ -953,6 +966,8 @@ function die(c, cause, src) {
   if (c.dead) return; c.dead = true; const col = c.col, C = SP(col);
   if (!c.virion) { burst(c.x, c.y, C.col, 8 + Math.min(24, c.r), 3); for (let i = 0; i < clamp(c.mass / 7, 1, 4); i++) spawnNut("debris", c.x + R(-14, 14), c.y + R(-14, 14)); }
   if (src && src !== col && !src.dead) gainXP(src, c.virion ? 3 : Math.round(30 + c.mass * 7));
+  // a kill you were part of gets a beat of slow motion, scaled to how big it was
+  if (!c.virion && (src === S.player || col === S.player)) hitstop(clamp(0.05 + c.mass / 420, 0.05, 0.18));
   const last = alive(col).length === 0 && !(C.host && hostsOf(col) > 0);
   if (!c.virion && (last || src === S.player || col === S.player || (S.time - S.lastNarr > 2.2 && src))) { S.lastNarr = S.time; feedMsg(narrate(cause, src, col, last), src === S.player ? "#ffd166" : col === S.player ? "#ff6b6b" : "#c9d2dc"); }
   S.stats[cause] = (S.stats[cause] || 0) + 1;
@@ -1035,7 +1050,9 @@ function divide(col, c, bud) {
   const g = SP(col).grow || 1; const dm = c.mass * f; c.mass -= dm; c.divCd = (bud ? 1 : 1.4) / g; c.buds++;
   const a = bud ? c.ang + R(0.6, 1.2) * (rnd() < 0.5 ? 1 : -1) : rnd() < 0.5 ? c.ang : c.ang + Math.PI;
   const d = addCell(col, c.x + Math.cos(a) * c.r, c.y + Math.sin(a) * c.r, dm);
-  d.ang = a; d.hp = d.maxhp * (c.hp / c.maxhp); d.lysogen = c.lysogen; d.team = c.team; d.divCd = 1.6; calcCell(c); return true;
+  d.ang = a; d.hp = d.maxhp * (c.hp / c.maxhp); d.lysogen = c.lysogen; d.team = c.team; d.divCd = 1.6;
+  c.sq = -0.16; d.sq = 0.22;                       // the daughters spring apart
+  calcCell(c); return true;
 }
 function growHypha(col, toward, len) {
   const C = SP(col), m = mainCell(col); if (!m) return false; const hy = col.hyph.filter((h) => !h.dying); if (hy.length >= 40 || m.mass < C.minMass + 2) return false;
@@ -1056,6 +1073,7 @@ function lyse(h, vcol) {
     if (hostDNA.length && rnd() < 0.08) v.cargo = pick(hostDNA);
   }
   noteLysis(h, vcol);
+  if (hyp(h.x - S.cam.x, h.y - S.cam.y) < 900) hitstop(0.1);
   h.inf = null; h.lysogen = null; gainXP(vcol, 25); die(h, "phage", vcol);
 }
 function infect(v, h) {
@@ -1271,6 +1289,8 @@ function step(dt) {
     else { eventTick(e, dt); if (e.t >= e.dur) { eventEnd(e); S.ev.splice(i, 1); } }
   }
   S.env.inflame = clamp(S.env.inflame - dt * 0.004, 0, 1); S.env.flow = lerp(S.env.flow, S.ev.some((e) => e.id === "flush" && e.phase === "active") ? 4.2 : 1, dt);
+  if (S.hitstop > 0) { S.hitstop -= dt; dt *= 0.22; }   // a beat of slow motion on anything worth feeling
+  witnessRefresh();
   buildIndex(); director(dt); updImmune(dt); hostInter(dt); updFx(dt);
   // grid decay and mucus regrowth
   if (S.tick % 6 === 0) { const k = Math.pow(0.86, 6 * dt * 10); for (let i = 0; i < S.o2mod.length; i++) { S.o2mod[i] *= 0.985; S.phmod[i] *= 0.985; } for (let i = 0; i < GW; i++) S.mucus[i] = clamp(S.mucus[i] + 0.0022 * (S.env.diet === "fibre" ? 2 : 1), 0, regionAt(i * GS).k === "col" ? 1.1 : 0.85); }
@@ -1298,10 +1318,17 @@ function step(dt) {
       if (c.dead) continue; c.age += dt; if (c.hurtT > 0) c.hurtT -= dt; if (c.divCd > 0) c.divCd -= dt; if (c.iga > 0) c.iga = Math.max(0, c.iga - dt * (col.fl.iga ? 0.5 : 0.05));
       if (c.buff > 0) c.buff -= dt;
       if (c.sheltered > 0) c.sheltered -= dt;
+      if (c.sq) c.sq = approach(c.sq, 0, dt, 9);
+      // a trail, but only on things moving fast enough to deserve one
+      if (PREFS.vfx && (col === S.player || c.virion)) {
+        const sp2 = hyp(c.vx, c.vy);
+        if (sp2 > 120) { (c.trail = c.trail || []).push([c.x, c.y]); if (c.trail.length > 7) c.trail.shift(); }
+        else if (c.trail && c.trail.length) c.trail.shift();
+      } else if (c.trail) c.trail = null;
       if (c.fission) updFission(c, col, dt);
       if (c.sporu) updSporulation(c, col, dt);
       if (c.inhib > 0) c.inhib = Math.max(0, c.inhib - dt * 0.6);
-      if (!c.virion) { cellInter(c, col, SP(col), dt); fungalInter(c, col, SP(col), dt); }
+      if (!c.virion) { const Ci = SP(col); cellInter(c, Ci, dt); fungalInter(c, col, Ci, dt); }
       c.biofilm = 0; for (const z of S.zones) if (z.type === "biofilm" && hyp(c.x - z.x, c.y - z.y) < z.r) { c.biofilm = z.team === c.team ? 1 : -1; break; }
       if (c.spore >= 2) { if ((c.sporeT -= dt) <= 0) { if (!tryGerminate(c)) { c.sporeT = 6; c.x += flowAt(c.x, c.y) * dt * 0.4; continue; } c.spore = 0; if (col.sporeWave) { for (let i = 0; i < col.sporeWave; i++) { const d = addCell(col, c.x + R(-140, 140), c.y + R(-140, 140), SP(col).minMass * 1.4); d.spore = 0; } col.sporeWave = 0; } } c.x += flowAt(c.x, c.y) * dt * 0.4; continue; }
       if (c.invade) { const e = c.invade.e; c.x = e.x; c.y = EPI + 30; c.hp = Math.min(c.maxhp, c.hp + c.maxhp * 0.12 * dt); c.mass = Math.min(SP(col).maxMass, c.mass + 1.6 * dt); gainXP(col, 7 * dt); if ((c.invade.t -= dt) <= 0) { e.inv = Math.max(0, e.inv - 1); c.invade = null; c.y = EPI + 90; } continue; }
@@ -1524,7 +1551,10 @@ function beginAdsorption(v, h) {
   // a surface normal plus a standoff from the cell centre, never as a world position
   v.ads = { h, stage: 0, t: 0, nx: dx / d, ny: dy / d, off: d, walk: R(-0.5, 0.5) };
   v.vx = v.vy = 0;
-  witness("adsorption", `${v.col.name} is adsorbing to ${h.col.name}`);
+  const rc = SP(v.col).recep;
+  witness("adsorption", rc
+    ? `${v.col.name} found ${rc} on ${h.col.name} and began adsorbing: that receptor is the whole of its host range`
+    : `${v.col.name} is adsorbing to ${h.col.name}`);
   // sustained phage pressure selects for cells that have stopped making the receptor
   const hc = h.col, C = SP(v.col);
   hc.phageHits = (hc.phageHits || 0) + 1;
@@ -1637,7 +1667,7 @@ it("crossprotect", CATS[0], "β-lactamase cross-protection", "A resistant cell d
 it("exclusion", CATS[0], "Nutrient-niche exclusion", "Two species with the same utilisation locus suppress each other far harder than unrelated neighbours.", "Competition is strongest between the most similar organisms, because they want exactly the same molecule.");
 it("phasevar", CATS[0], "Phase variation", "The surface antigen switches; phages and antibodies lose their grip, at a cost.", "Reversible on/off switching of surface structures lets a population hedge against phages and immunity, but the structures had other jobs.");
 // --- phage ↔ bacterium ---
-it("adsorption", CATS[1], "Adsorption", "Long tail fibres splay and touch receptors, then the particle reorients tail-down, anchors, contracts its sheath and ejects its DNA.", "Attachment is receptor-specific and the geometry matters: the tail must end up perpendicular to the surface before the tube can cross the envelope.");
+it("adsorption", CATS[1], "Adsorption", "Long tail fibres splay and touch one named receptor, then the particle reorients tail-down, anchors, contracts its sheath and ejects its DNA.", "Host range is decided at the receptor: \u03bb binds LamB, the maltoporin, and crAss-like phages bind the Bacteroides capsule. The geometry matters as much as the chemistry, because the tail has to end up perpendicular to the surface before the tube can cross the envelope.");
 it("reversible", CATS[1], "Reversible binding", "The particle touched down, walked across the surface and let go again.", "The first contact through long tail fibres is reversible. Only short-fibre anchoring commits the phage to that cell.");
 it("reorient", CATS[1], "Reorientation", "Fibre binding rotates the phage so the tail axis is perpendicular to the cell surface, and the baseplate opens hexagon → star.", "The baseplate conformational change is the trigger for everything that follows: anchoring, sheath contraction and ejection.");
 it("fission", CATS[0], "Binary fission", "A septum grows inward at mid-cell and constricts until the two daughters separate.", "Division is not a split down the middle: a ring of FtsZ assembles at mid-cell, recruits the wall-building machinery and draws the envelope inward. The daughters stay joined until the septum is complete.");
@@ -1708,9 +1738,19 @@ function codexBody() {
    ===================================================================== */
 const ICD = 0.4;                                   // how often a cell re-checks its surroundings
 
+/* refreshed once per step: this is called from the per-pair contact path,
+   so re-deriving the player's cell and sense radius here was the hot cost */
+let WIT_X = 0, WIT_Y = 0, WIT_R2 = 0, WIT_OK = false;
+function witnessRefresh() {
+  const P = S.player, pm = P && mainCell(P);
+  WIT_OK = !!pm;
+  if (!pm) return;
+  WIT_X = pm.x; WIT_Y = pm.y; const r = senseR(P) * 1.5; WIT_R2 = r * r;
+}
 function witnessed(x, y) {
-  const P = S.player, pm = mainCell(P); if (!pm) return false;
-  return hyp(x - pm.x, y - pm.y) < senseR(P) * 1.5;
+  if (!WIT_OK) return false;
+  const dx = x - WIT_X, dy = y - WIT_Y;
+  return dx * dx + dy * dy < WIT_R2;
 }
 /* one FX per cell per cooldown, so a crowd never floods the screen */
 function fxGate(c, k, t) { const g = (c.fxg = c.fxg || {}); if ((g[k] || -9) > S.time - (t || 3)) return false; g[k] = S.time; return true; }
@@ -1721,18 +1761,22 @@ const gramNeg = (col) => !!SP(col)._gneg;
    contact range: called from pairCells once the envelopes touch
    --------------------------------------------------------------------- */
 function contactInter(a, b, A, B, dt) {
-  const mid = [(a.x + b.x) / 2, (a.y + b.y) / 2], see = witnessed(mid[0], mid[1]);
+  // everything here is cosmetic or guide-facing, so if neither cell is in view there is nothing to do
+  if (!witnessed(a.x, a.y) && !witnessed(b.x, b.y)) return;
+  const see = true;
   // --- type VI secretion: a contractile spear fired into the touching cell ---
-  for (const [s, o, S1] of [[a, b, A], [b, a, B]]) {
+  for (let i = 0; i < 2; i++) {
+    const s = i ? b : a, o = i ? a : b;
     if (!s.col.fl.t6ss || !bact(s.col) || !bact(o.col)) continue;
-    if (see && fxGate(s, "t6ss", 1.1)) {
+    if (fxGate(s, "t6ss", 1.1)) {
       mkFx("spear", { a: s, b: o, dur: 0.42, col: SP(s.col).col });
       witness("t6ss", `${s.col.name} speared ${o.col.name} with a type VI secretion system`, SP(s.col).col);
     }
   }
   // --- contact-dependent inhibition: a filament reaches over; immunity protein blocks it ---
-  for (const [s, o] of [[a, b], [b, a]]) {
-    if (!s.col.fl.cdi || !bact(o.col) || !see || !fxGate(s, "cdi", 2.2)) continue;
+  for (let i = 0; i < 2; i++) {
+    const s = i ? b : a, o = i ? a : b;
+    if (!s.col.fl.cdi || !bact(o.col) || !fxGate(s, "cdi", 2.2)) continue;
     const immune = o.col.id === s.col.id || o.col.fl.cdi;            // cognate immunity protein
     mkFx("filament", { a: s, b: o, dur: 0.75, col: SP(s.col).col, blocked: immune });
     if (immune) witness("cdi", `${o.col.name} carries the matching immunity protein: ${s.col.name}'s CdiA toxin did nothing`);
@@ -1749,9 +1793,10 @@ function contactInter(a, b, A, B, dt) {
     witness("nanotube", `${a.col.name} and ${b.col.name} opened a cytoplasmic nanotube and swapped contents`);
   }
   // --- T3SS: a needle docked perpendicular to the host membrane ---
-  for (const [s, o] of [[a, b], [b, a]]) {
+  for (let i = 0; i < 2; i++) {
+    const s = i ? b : a, o = i ? a : b;
     if (!s.col.fl.invade2 || o.kind !== "cell" || SP(o.col).tags.includes("bacteria")) continue;
-    if (!see || !fxGate(s, "t3ss", 2.5)) continue;
+    if (!fxGate(s, "t3ss", 2.5)) continue;
     const dx = o.x - s.x, dy = o.y - s.y, d = hyp(dx, dy) || 1;      // docked along the contact normal
     mkFx("needle", { x1: s.x, y1: s.y, x2: s.x + dx / d * (d - o.r * 0.3), y2: s.y + dy / d * (d - o.r * 0.3), dur: 0.9, col: ART.orange });
     witness("t3ss", `${s.col.name} docked a type III secretion needle on ${o.col.name} and injected effectors`, ART.orange);
@@ -1788,7 +1833,8 @@ function conjugate(from, to, a, b) {
 /* ---------------------------------------------------------------------
    ambient: run per cell on a stagger
    --------------------------------------------------------------------- */
-function cellInter(c, col, C, dt) {
+function cellInter(c, C, dt) {
+  const col = c.col;
   if ((c.ict = (c.ict || rnd() * ICD) - dt) > 0) return;
   c.ict = ICD;
   if (!witnessed(c.x, c.y)) return;
@@ -1899,7 +1945,9 @@ function noteMIC(c, frac) {
 function noteReceptorLoss(col, vC) {
   const m = mainCell(col);
   if (m) mkFx("ring", { x: m.x, y: m.y, r0: m.r, r: m.r + 26, dur: 0.9, col: ART.sand, a0: 0.7 });
-  witness("receptorloss", `${col.name} stopped making the surface receptor ${vC ? vC.n : "the phage"} was binding. It cannot be infected by it any more, and it has lost whatever that receptor was importing`, ART.sand);
+  witness("receptorloss", vC && vC.recep
+    ? `${col.name} stopped making ${vC.recep}, ${vC.recepD}. ${vC.n} cannot bind it any more, and neither can the cell use what that receptor was for`
+    : `${col.name} stopped making the surface receptor the phage was binding, and lost whatever it was importing with it`, ART.sand);
 }
 
 /* ---------------------------------------------------------------------
@@ -1933,17 +1981,19 @@ function hostInter(dt) {
 /* fungal and protist behaviour that has a visible form */
 function fungalInter(c, col, C, dt) {
   if (C.guild !== "fungus") return;
-  const o2 = o2At(c.x, c.y);
+  if ((c.fct = (c.fct || rnd() * ICD) - dt) > 0) return;   // same stagger as everything else
+  c.fct = ICD;
+  if (!witnessed(c.x, c.y)) return;
   // --- yeast-to-hypha switch: the morphology that turns a commensal into an invader ---
-  if (col.hyph && col.hyph.length > 2 && witnessed(c.x, c.y) && fxGate(c, "hyphal", 12))
+  if (col.hyph && col.hyph.length > 2 && fxGate(c, "hyphal", 12))
     witness("hyphal", `${col.name} switched from budding yeast to hyphae: the filamentous form is what lets it push between epithelial cells`, ART.orange);
   // --- a mixed-kingdom biofilm is far harder to clear than either partner alone ---
-  if (c.biofilm !== 0 && witnessed(c.x, c.y) && fxGate(c, "mixbio", 14)) {
+  if (c.biofilm !== 0 && fxGate(c, "mixbio", 14)) {
     let partner = null; near(c.x, c.y, 160, (o) => { if (!partner && o.kind === "cell" && !o.virion && SP(o.col).tags.includes("bacteria")) partner = o; });
     if (partner) { mkFx("link", { a: c, b: partner, dur: 1.4, col: ART.sand }); witness("mixedbiofilm", `${col.name} and ${partner.col.name} built one biofilm together: the fungal scaffold shelters the bacteria and the matrix keeps drugs out of both`); }
   }
   // --- a mould that makes a β-lactam clears a ring around itself ---
-  if (C.id === "penicil" && witnessed(c.x, c.y) && fxGate(c, "inhib", 10)) {
+  if (C.id === "penicil" && fxGate(c, "inhib", 10)) {
     let hit = 0; near(c.x, c.y, 150, (o) => { if (o.kind === "cell" && !o.virion && SP(o.col).tags.includes("bacteria") && !o.col.fl.res_blactam) { damage(o, 6, col, "toxin"); hit++; } });
     if (hit) { mkFx("ring", { x: c.x, y: c.y, r0: c.r, r: 150, dur: 1.2, col: ART.mint, a0: 0.4 }); witness("inhibition", `${col.name} is secreting a β-lactam: a clear zone of inhibition opened around it, and only β-lactamase carriers are still standing in it`, ART.mint); }
   }
@@ -2415,8 +2465,21 @@ function blobPath(r, f, n = 36) { const p = new Path2D(); for (let i = 0; i < n;
 function hexPath(r, rot = 0) { const p = new Path2D(); for (let i = 0; i < 6; i++) { const a = rot + (i / 6) * TAU; p[i ? "lineTo" : "moveTo"](Math.cos(a) * r, Math.sin(a) * r); } p.closePath(); return p; }
 
 /* ---------- the organisms ---------- */
+/* a short motion trail behind anything actually moving fast */
+function drawTrail(ctx, c, hue) {
+  const tr = c.trail; if (!tr || tr.length < 2) return;
+  ctx.lineCap = "round";
+  for (let i = 1; i < tr.length; i++) {
+    const u = i / tr.length;
+    ctx.strokeStyle = rgba(hue, 0.16 * u);
+    ctx.lineWidth = c.r * 0.7 * u;
+    ctx.beginPath(); ctx.moveTo(tr[i - 1][0], tr[i - 1][1]); ctx.lineTo(tr[i][0], tr[i][1]); ctx.stroke();
+  }
+  ctx.lineCap = "butt";
+}
 function drawCell(ctx, c, t) {
   const col = c.col, C = SP(col), hue = c.lysogen ? "#b388ff" : C.col, r = c.r, hurt = c.hurtT > 0;
+  if (c.trail) drawTrail(ctx, c, hue);
   ctx.save(); ctx.translate(c.x, c.y);
   if (c.virion) { drawVirion(ctx, c, C, hue, t); ctx.restore(); return; }
   const breathe = 1 + 0.025 * Math.sin(t * 1.7 + c.seed), sq = c.sq || 0;     // resting pulse + squash-and-stretch
@@ -2926,7 +2989,10 @@ function drawHUD() {
   const xg = ctx.createLinearGradient(bx, 0, bx + bw, 0); xg.addColorStop(0, ART.gold); xg.addColorStop(1, ART.orange); ctx.fillStyle = xg; ctx.fill(); ctx.restore();
   ctx.font = PF(10); ctx.textAlign = "center"; ctx.fillStyle = "#0b0d12"; ctx.fillText(`LV ${P.level} ${C.short.toUpperCase()}`, bx + bw / 2, by + 12);
   ctx.font = PF(10); ctx.fillStyle = "#e8eef5";
-  ctx.fillText(`${P.name} · ${C.host ? alive(P).length + " PARTICLES · " + hostsOf(P) + " HOSTS" : "MASS " + Math.round(totalMass(P)) + " IN " + alive(P).length + " CELL" + (alive(P).length > 1 ? "S" : "")} · ${fmt(P.xp)} XP`, bx + bw / 2, by - 6);
+  // the headline numbers count up rather than snapping
+  const dtUI = Math.min(0.05, S.dtUI || 1 / 60);
+  const shownXP = Math.round(counted("xp", P.xp, dtUI)), shownMass = Math.round(counted("mass", totalMass(P), dtUI));
+  ctx.fillText(`${P.name} · ${C.host ? alive(P).length + " PARTICLES · " + hostsOf(P) + " HOSTS" : "MASS " + shownMass + " IN " + alive(P).length + " CELL" + (alive(P).length > 1 ? "S" : "")} · ${fmt(shownXP)} XP`, bx + bw / 2, by - 6);
   // genome chips
   if (!small) { ctx.textAlign = "left"; let gx = 12, gy = H - 16; ctx.font = PF(9); for (const g of P.genes.slice(-9)) { const w2 = ctx.measureText(GENES[g].n).width + 10; ctx.fillStyle = "rgba(17,20,28,.85)"; ctx.fillRect(gx, gy - 11, w2, 15); ctx.fillStyle = RES_GENES.includes(g) ? "#7fd7ff" : "#a8e6cf"; ctx.fillText(GENES[g].n, gx + 5, gy); gx += w2 + 5; } }
   // stat bars
@@ -3175,7 +3241,7 @@ function frame(now) {
   if (S && !S.paused && !S.over) { acc += el; let n = 0; while (acc >= DT && n++ < 5) { step(DT); acc -= DT; } if (n >= 5) acc = 0; }
   else if (S && S.over) { acc = 0; }
   if (PREVIEWS.length && ($("title").classList.contains("show") || $("pause").classList.contains("show"))) tickPreviews(el);
-  if (S) draw();
+  if (S) { S.dtUI = el; draw(); }
 }
 requestAnimationFrame(frame);
 

@@ -1530,7 +1530,7 @@ details.tool-new>ul{margin-top:8px}
 .use-note b{color:var(--text)}
 .use-retry{margin-left:8px;border:1px solid var(--border);background:var(--bg-tint);border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer;color:var(--text)}
 #usage.loading .use-panel,#usage.loading .use-list{opacity:.5;transition:opacity .2s}
-#usage.use-off .use-panel{display:none}
+#usage.use-off .use-panel:not(.use-geo):not(.use-src){display:none}
 .use-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin:0 0 12px}
 .use-panel-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin:0 0 8px}
 .use-panel h3{margin:0;font-size:15px;font-weight:650}

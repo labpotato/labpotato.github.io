@@ -210,12 +210,19 @@ function barList(items, n, total, kind) {
   return `<ol class="use-bl">${rows.map(([nm, v]) => `<li title="${esc2(nm)}: ${nf(v)}"><span class="use-bl-n">${esc2(nm)}</span><span class="use-bl-v">${(100 * v / sum).toFixed(v / sum < .1 ? 1 : 0)}%</span><span class="use-bl-b"><i style="width:${(100 * v / sum).toFixed(1)}%"></i></span></li>`).join("")}</ol>`;
 }
 
+/* no country or source data yet (the daily report has not run): the panels are drawn empty, with a note */
+function emptyDemo() {
+  document.getElementById("usage-demo").hidden = false; document.getElementById("usage-src").hidden = false;
+  drawMap(document.getElementById("usage-map"), document.getElementById("usage-countries"), [], "No country data yet · it is collected once a day");
+  drawSources(document.getElementById("usage-src-groups"), document.getElementById("usage-src-top"), [], "No source data yet · it is collected once a day");
+  document.getElementById("usage-geo-sum").textContent = "";
+}
 function renderUsage(data) {
   const sec = document.getElementById("usage"), R = Object.assign({}, RANGES[data.range], data.last ? { last: data.last } : {});
   const note = document.getElementById("usage-note"), box = document.getElementById("usage-grid"), foot = document.getElementById("usage-total");
   const chart = document.getElementById("usage-chart"), legend = document.getElementById("usage-legend"), demo = document.getElementById("usage-demo");
   if (data.src === "counter" && data.failed === data.asked) {
-    [box, chart, legend].forEach(e => e.innerHTML = ""); demo.hidden = true; sec.classList.add("use-off");
+    [box, chart, legend].forEach(e => e.innerHTML = ""); sec.classList.add("use-off"); emptyDemo();
     note.hidden = false; note.innerHTML = `<b>The counts could not be loaded in this browser.</b> An ad or tracker blocker is the usual reason (it stops goatcounter.com, which counts the visits); nothing else on the site is affected. <button type="button" class="use-retry">Try again</button>`;
     foot.textContent = ""; usageDebug(); return;
   }
@@ -246,14 +253,7 @@ function renderUsage(data) {
     drawSources(document.getElementById("usage-src-groups"), document.getElementById("usage-src-top"), s.toprefs);
     document.getElementById("usage-src").hidden = false;
     document.getElementById("usage-geo-sum").textContent = tot ? `${nf(tot)} visits from ${(s.locations || []).length} countr${(s.locations || []).length === 1 ? "y" : "ies"} ${R.noun}` : "";
-  } else {
-    demo.hidden = false;
-    const wait = "appear after the first daily update";
-    drawMap(document.getElementById("usage-map"), document.getElementById("usage-countries"), [], `Countries ${wait}.`);
-    drawSources(document.getElementById("usage-src-groups"), document.getElementById("usage-src-top"), [], `Sources ${wait}.`);
-    document.getElementById("usage-src").hidden = false;
-    document.getElementById("usage-geo-sum").textContent = "";
-  }
+  } else emptyDemo();
   const sum = rows.reduce((a, r) => a + r.sum, 0), when = new Date(data.at), whenTxt = `${fmtD(when)}, ${when.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}`;
   foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated daily, last " + whenTxt : "checked " + whenTxt}`;
   usageDebug();

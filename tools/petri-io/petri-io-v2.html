@@ -74,7 +74,7 @@ input.name:focus { box-shadow: inset 0 0 0 2px var(--acc); }
   <h3 id="splabel">Choose your type</h3>
   <div class="spgrid" id="spgrid"></div>
   <div class="detail" id="spdetail"></div>
-  <div class="row" style="margin-top:12px"><button id="play" class="btn pri">Colonise</button><button class="btn" onclick="openPause('how')">How to play</button><button class="btn" onclick="openPause('set')">Settings</button></div>
+  <div class="row" style="margin-top:12px"><button id="play" class="btn pri">Colonise</button><button class="btn" onclick="openPause('codex')">Field guide</button><button class="btn" onclick="openPause('how')">How to play</button><button class="btn" onclick="openPause('set')">Settings</button></div>
   <div class="stats" id="tstats"></div>
 </div></div>
 
@@ -201,8 +201,8 @@ const SPECIES = {};
 function sp(id, o) {
   SPECIES[id] = Object.assign({ id, col: "#9fd3ff", shape: "rod", flag: null, guild: "commensal", tags: ["bacteria"], o2: 0.2, eats: ["sugar"], makes: null, baseMass: 12, minMass: 6, maxMass: 42, spd: 165, absorb: 1, engulf: 0, host: null, burst: 0, latent: 0, zoom: 1, genes: [], playable: 1 }, o);
 }
-sp("btheta", { n: "Bacteroides thetaiotaomicron", short: "B. theta", col: "#8fff6a", shape: "rod", flag: null, guild: "fibre", tags: ["bacteria", "commensal"], o2: 0.1, eats: ["fibre", "starch", "mucin", "sugar"], makes: "acetate", baseMass: 14, maxMass: 48, spd: 150, absorb: 1.3,
-  sp: "pul", ult: "t6ss", genes: ["pul2", "capsule", "t6ss", "bsh", "mucinase", "sod", "efflux", "tet", "adhesin", "quorum", "crispr", "siderophore"],
+sp("btheta", { intrinsic: { res_blactam: 64 }, n: "Bacteroides thetaiotaomicron", short: "B. theta", col: "#8fff6a", shape: "rod", flag: null, guild: "fibre", aux: "haem", tags: ["bacteria", "commensal"], o2: 0.1, eats: ["fibre", "starch", "mucin", "sugar"], makes: "acetate", baseMass: 14, maxMass: 48, spd: 150, absorb: 1.3,
+  sp: "pul", ult: "t6ss", genes: ["phasevar", "pul2", "capsule", "t6ss", "bsh", "mucinase", "sod", "efflux", "tet", "adhesin", "quorum", "crispr", "siderophore"],
   niche: "Fibre fermenter of the colon: carries dozens of gene clusters for breaking down plant polysaccharides.", eatenBy: "Phages, protist grazers, antibiotic courses.",
   fact: "The B. theta genome carries 88 polysaccharide utilisation loci and over 250 carbohydrate-active enzymes, each tuned to a different glycan.", d: "The workhorse fibre degrader. Feeds half the neighbourhood acetate, and stabs competitors with a type VI secretion system." });
 sp("faecali", { n: "Faecalibacterium prausnitzii", short: "F. prausnitzii", col: "#5ef0b0", shape: "rod", guild: "scfa", tags: ["bacteria", "commensal"], o2: 0.02, eats: ["acetate", "fibre", "sugar"], makes: "butyrate", baseMass: 12, maxMass: 40, spd: 140,
@@ -210,7 +210,7 @@ sp("faecali", { n: "Faecalibacterium prausnitzii", short: "F. prausnitzii", col:
   niche: "Butyrate producer; one of the most abundant species in a healthy colon and extremely oxygen-sensitive.", eatenBy: "Oxygen, antibiotics, inflammation.",
   fact: "F. prausnitzii takes up acetate and makes butyrate, the main fuel of colonocytes; it survives the oxic–anoxic interface with an extracellular shuttle of flavins and cysteine.", d: "Strict anaerobe. Makes the butyrate that keeps the epithelium healthy and the lumen anaerobic. Fragile near the wall without oxygen defences." });
 sp("akk", { n: "Akkermansia muciniphila", short: "Akkermansia", col: "#5ee7f5", shape: "coccus", guild: "mucus", tags: ["bacteria", "commensal"], o2: 0.18, eats: ["mucin", "sugar", "peptide"], makes: "acetate", baseMass: 13, maxMass: 44, spd: 150, absorb: 1.2,
-  sp: "mucinase", ult: "mucusBloom", genes: ["mucinase2", "adhesin", "sod", "capsule", "iga", "quorum", "bsh", "crispr", "efflux", "biofilm"],
+  sp: "mucinase", ult: "mucusBloom", genes: ["phasevar", "mucinase2", "adhesin", "sod", "capsule", "iga", "quorum", "bsh", "crispr", "efflux", "biofilm"],
   niche: "Lives in the mucus layer and grazes on mucin, which keeps goblet cells producing more of it.", eatenBy: "Mucus thinning, phages, antibiotics.",
   fact: "Akkermansia is the only abundant gut member of the phylum Verrucomicrobiota; it makes up 1–4% of the community and tracks with a thicker mucus layer.", d: "Mucus specialist. Eats the barrier, and makes the host build more of it. Safe where lumen-dwellers cannot follow." });
 sp("bifido", { n: "Bifidobacterium longum", short: "Bifidobacterium", col: "#ffc84a", shape: "bifid", guild: "lab", tags: ["bacteria", "commensal"], o2: 0.12, eats: ["sugar", "fibre", "mucin"], makes: "acetate", baseMass: 11, maxMass: 38, spd: 160,
@@ -222,11 +222,11 @@ sp("lacto", { n: "Lactobacillus reuteri", short: "Lactobacillus", col: "#ff8fb8"
   niche: "Lactic acid bacterium of the small intestine; suppresses fungi and keeps the pH down.", eatenBy: "Bile, flow, antibiotics.",
   fact: "Some Lactobacillus strains secrete reuterin, a broad-spectrum antimicrobial made from glycerol.", d: "Acid and bacteriocins. Holds down Candida and pathogens; weak against anything that tolerates acid." });
 sp("ecoli", { n: "Escherichia coli (commensal)", short: "E. coli", col: "#c8f05a", shape: "rod", flag: "peri", guild: "entero", tags: ["bacteria", "entero", "coli", "commensal"], o2: 0.85, eats: ["sugar", "peptide", "mucin"], makes: null, baseMass: 12, maxMass: 42, spd: 190,
-  sp: "divide", ult: "nitrate", genes: ["catalase", "sod", "siderophore", "flagella", "adhesin", "bla", "tet", "efflux", "capsule", "crispr", "rm", "colicin"],
+  sp: "divide", ult: "nitrate", genes: ["abi", "gyrA", "cdi", "catalase", "sod", "siderophore", "flagella", "adhesin", "bla", "tet", "efflux", "capsule", "crispr", "rm", "colicin"],
   niche: "Facultative anaerobe. A minority in health, but it blooms whenever the gut becomes inflamed and oxygenated.", eatenBy: "Phages (it is the favourite host), colicins, competition.",
   fact: "E. coli can respire nitrate produced during inflammation, an advantage no strict anaerobe can match.", d: "The generalist. Breathes oxygen near the wall, respires nitrate when the gut inflames, and divides faster than almost anything." });
 sp("ehec", { n: "Enterohaemorrhagic E. coli", short: "EHEC", col: "#ff5d6c", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "coli", "patho"], o2: 0.85, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 185,
-  sp: "shiga", ult: "storm", genes: ["adhesin2", "catalase", "siderophore", "bla", "efflux", "flagella", "capsule", "rm", "iga", "tet"],
+  sp: "shiga", ult: "storm", genes: ["phasevar", "cdi", "adhesin2", "catalase", "siderophore", "bla", "efflux", "flagella", "capsule", "rm", "iga", "tet"],
   niche: "Attaches to the epithelium and wrecks it with a phage-encoded toxin.", eatenBy: "Immune response, commensal competition, phages.",
   fact: "The Shiga toxin of EHEC is carried by a lysogenic phage; antibiotics that induce the phage can make the illness worse.", d: "Pathogen. Lives off the damage it causes, but every toxin pulse brings the immune system closer." });
 sp("salmonella", { n: "Salmonella enterica", short: "Salmonella", col: "#ff9345", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 180,
@@ -241,8 +241,8 @@ sp("entero", { n: "Enterococcus faecalis", short: "Enterococcus", col: "#cf8cff"
   sp: "bacteriocin", ult: "vre", genes: ["van", "erm", "efflux", "biofilm", "adhesin", "persister", "catalase", "quorum", "tet", "iga"],
   niche: "Tough, tolerant and happy to acquire resistance genes from anything nearby.", eatenBy: "Competition, phages.",
   fact: "The vanA operon retools the cell-wall precursor from D-Ala-D-Ala to D-Ala-D-Lac, cutting vancomycin binding about a thousandfold.", d: "Survivor. Tolerates bile, acid and salt, and collects resistance genes like stamps." });
-sp("kleb", { n: "Klebsiella pneumoniae", short: "Klebsiella", col: "#4fd4e8", shape: "rod", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "iron"], baseMass: 14, maxMass: 48, spd: 165,
-  sp: "capsuleUp", ult: "fortress", genes: ["carb", "bla", "capsule2", "siderophore2", "efflux", "biofilm", "adhesin", "rm", "iga", "tet"],
+sp("kleb", { intrinsic: { res_blactam: 32 }, n: "Klebsiella pneumoniae", short: "Klebsiella", col: "#4fd4e8", shape: "rod", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "iron"], baseMass: 14, maxMass: 48, spd: 165,
+  sp: "capsuleUp", ult: "fortress", genes: ["abi", "gyrA", "cdi", "carb", "bla", "capsule2", "siderophore2", "efflux", "biofilm", "adhesin", "rm", "iga", "tet"],
   niche: "Thick capsule, hungry for iron, and a frequent carrier of carbapenem resistance.", eatenBy: "Phages that recognise its capsule, competition for iron.",
   fact: "Klebsiella's capsule blocks phagocytosis and many phages; hypervirulent strains make so much of it the colonies string out when touched.", d: "Armoured. Hard to kill, hard to starve, and drug courses barely scratch it." });
 sp("hpylori", { n: "Helicobacter pylori", short: "H. pylori", col: "#d9b35c", shape: "spiral", flag: "polar", guild: "patho", tags: ["bacteria", "patho"], o2: 0.45, eats: ["peptide", "mucin", "debris"], baseMass: 12, maxMass: 38, spd: 185,
@@ -261,6 +261,10 @@ sp("boulardii", { n: "Saccharomyces boulardii", short: "S. boulardii", col: "#ff
   sp: "bind", ult: "probiotic", genes: ["adhesin", "acidtol", "bsh", "biofilm", "efflux", "catalase", "iga", "azole", "persister", "hyphal2"],
   niche: "A probiotic yeast: binds pathogens to its surface and is untouched by antibacterial drugs.", eatenBy: "Flow: it does not colonise permanently.",
   fact: "S. boulardii is a thermotolerant strain of S. cerevisiae used clinically against antibiotic-associated diarrhoea.", d: "The medic. Mops up toxins, binds pathogens, heals commensals, and shrugs off every antibacterial event." });
+sp("penicil", { n: "Penicillium chrysogenum", short: "Penicillium", col: "#cfe08f", shape: "hypha", guild: "fungus", tags: ["fungus"], o2: 0.8, eats: ["sugar", "starch", "fibre"], baseMass: 18, minMass: 10, maxMass: 70, spd: 70, absorb: 1.2, playable: 0,
+  sp: "hyphal", ult: "hyphaNet", genes: ["azole", "acidtol", "biofilm", "catalase", "hyphal2"],
+  niche: "A dietary mould, swallowed with food and passing through: a transient of the gut mycobiome rather than a resident.", eatenBy: "Stomach acid, bile, transit time.",
+  fact: "Penicillium chrysogenum is the industrial source of penicillin; it is also one of the moulds most often picked up in gut mycobiome surveys, because it arrives on food.", d: "Transient food mould. Secretes a β-lactam, so a clear ring of dead bacteria opens around it." });
 sp("msmithii", { n: "Methanobrevibacter smithii", short: "M. smithii", col: "#a8c8ff", shape: "coccus", guild: "archaea", tags: ["archaea", "commensal"], o2: 0.02, eats: ["h2", "acetate"], baseMass: 11, maxMass: 36, spd: 130,
   sp: "methan", ult: "scfaBloom", genes: ["sod", "adhesin", "quorum", "biofilm", "catalase", "efflux", "crispr", "persister", "bsh", "pul2"],
   niche: "The dominant archaeon of the human gut: it disposes of the hydrogen that fermenters produce.", eatenBy: "Oxygen, flow, antibiotics that hit the community it depends on.",
@@ -308,7 +312,7 @@ sp("mstadt", { n: "Methanosphaera stadtmanae", short: "M. stadtmanae", col: "#8f
   sp: "methan", ult: "scfaBloom", genes: ["sod", "adhesin", "quorum", "biofilm", "catalase", "efflux", "crispr", "persister", "acidtol", "bsh"],
   niche: "A methylotrophic methanogen: it reduces methanol with hydrogen, so it depends on pectin-degraders for its methanol.", eatenBy: "Oxygen, flow, losing its methanol suppliers.",
   fact: "Unlike M. smithii, M. stadtmanae cannot use CO₂; it needs methanol, which it gets from bacteria breaking down pectin.", d: "The specialist methanogen. Faster but fussier than M. smithii, and tied to the fibre fermenters." });
-sp("blasto", { n: "Blastocystis sp.", short: "Blastocystis", col: "#e8dcb0", shape: "vacuolar", guild: "protist", tags: ["protist", "commensal"], o2: 0.15, eats: ["debris", "peptide", "sugar", "bile"], engulf: 0.5, baseMass: 80, minMass: 36, maxMass: 1100, spd: 90, grow: 0.7,
+sp("blasto", { n: "Blastocystis sp.", short: "Blastocystis", col: "#e8dcb0", shape: "vacuolar", guild: "protist", tags: ["protist", "commensal"], o2: 0.15, eats: ["debris", "peptide", "sugar", "bile"], makes: "h2", engulf: 0.5, baseMass: 80, minMass: 36, maxMass: 1100, spd: 90, grow: 0.7,
   sp: "pseudo", ult: "fortress", genes: ["adhesin", "persister", "efflux", "iga", "biofilm", "capsule", "bsh", "acidtol", "catalase", "sod"],
   niche: "The most common protist in the human gut: a big vacuolated cell, usually a harmless colonist of the colon.", eatenBy: "Immune cells, flow.",
   fact: "Blastocystis is found in roughly half of healthy people; its large central vacuole fills most of the cell.", d: "The commensal protist. Bigger and tougher than Entamoeba, but far less aggressive." });
@@ -358,13 +362,15 @@ const PLAYABLE = SPKEYS.filter((k) => SPECIES[k].playable && !SPECIES[k].starter
 /* ---------- genes: levelling picks, plasmids and conjugation ---------- */
 const GENES = {};
 function gene(id, o) { GENES[id] = Object.assign({ id, pool: "bacteria", st: {}, fl: {} }, o); }
-gene("bla", { n: "blaTEM β-lactamase", d: "Penicillins and most cephalosporins stop working on you.", fact: "β-lactamases cut the β-lactam ring open before it can reach the enzymes that build the cell wall.", fl: { res_blactam: 1 } });
-gene("carb", { n: "KPC carbapenemase", d: "Even carbapenems, the drugs of last resort, stop working.", fact: "Carbapenemases spread on plasmids between Enterobacteriaceae and are the reason carbapenem resistance moves so fast.", fl: { res_blactam: 1, res_carb: 1 } });
-gene("van", { n: "vanA operon", d: "Vancomycin can no longer bind your cell wall precursor.", fact: "The vanA cluster swaps the terminal D-alanine for D-lactate, cutting vancomycin binding a thousandfold.", fl: { res_glyco: 1 } });
-gene("tet", { n: "tetM ribosome protection", d: "Tetracyclines bounce off your ribosomes.", fact: "tetM is one of the most widespread resistance genes in the gut, usually on a conjugative transposon.", fl: { res_tet: 1 } });
-gene("azole", { n: "ERG11 variant", d: "Azole antifungals lose their grip.", fact: "Point mutations in the azole target enzyme are the commonest route to fluconazole resistance in Candida.", pool: "fungus", fl: { res_azole: 1 } });
-gene("erm", { n: "erm (MLSb)", d: "Methylates the ribosome: macrolides and lincosamides like clindamycin stop binding.", fact: "A single ribosomal methyltransferase gives cross-resistance to macrolides, lincosamides and streptogramin B at once.", fl: { res_mls: 1 } });
-gene("efflux", { n: "AcrAB-TolC efflux pump", d: "Pumps every drug class out: 40% less damage from any antibiotic.", fact: "Multidrug efflux pumps give low-level resistance to many unrelated drugs at once.", fl: { efflux: 1 } });
+gene("bla", { mech: "enzyme", n: "blaTEM β-lactamase", d: "Penicillins and most cephalosporins stop working on you.", fact: "β-lactamases cut the β-lactam ring open before it can reach the enzymes that build the cell wall.", fl: { res_blactam: 1 } });
+gene("carb", { mech: "enzyme", n: "KPC carbapenemase", d: "Even carbapenems, the drugs of last resort, stop working.", fact: "Carbapenemases spread on plasmids between Enterobacteriaceae and are the reason carbapenem resistance moves so fast.", fl: { res_blactam: 1, res_carb: 1 } });
+gene("van", { mech: "target", n: "vanA operon", d: "Vancomycin can no longer bind your cell wall precursor.", fact: "The vanA cluster swaps the terminal D-alanine for D-lactate, cutting vancomycin binding a thousandfold.", fl: { res_glyco: 1 } });
+gene("tet", { mech: "target", n: "tetM ribosome protection", d: "Tetracyclines bounce off your ribosomes.", fact: "tetM is one of the most widespread resistance genes in the gut, usually on a conjugative transposon.", fl: { res_tet: 1 } });
+gene("azole", { mech: "target", n: "ERG11 variant", d: "Azole antifungals lose their grip.", fact: "Point mutations in the azole target enzyme are the commonest route to fluconazole resistance in Candida.", pool: "fungus", fl: { res_azole: 1 } });
+gene("erm", { mech: "target", n: "erm (MLSb)", d: "Methylates the ribosome: macrolides and lincosamides like clindamycin stop binding.", fact: "A single ribosomal methyltransferase gives cross-resistance to macrolides, lincosamides and streptogramin B at once.", fl: { res_mls: 1 } });
+gene("gyrA", { mech: "target", n: "gyrA S83L", d: "Fluoroquinolones no longer poison your DNA gyrase.", fact: "A single codon change in the gyrase A subunit is enough for clinical fluoroquinolone resistance, and it costs the cell almost nothing.", fl: { res_quin: 1 } });
+gene("cdi", { n: "CdiA/CdiB toxin delivery", d: "Deliver a toxin tip into any neighbouring cell you touch, unless it carries the matching immunity protein.", fact: "Contact-dependent inhibition delivers a nuclease or pore-forming tip through a filament; the sender is protected by a cognate immunity protein, so it only ever harms strangers.", fl: { cdi: 1 } });
+gene("efflux", { mech: "efflux", n: "AcrAB-TolC efflux pump", d: "Pumps every drug class out: 40% less damage from any antibiotic.", fact: "Multidrug efflux pumps give low-level resistance to many unrelated drugs at once.", fl: { efflux: 1 } });
 gene("catalase", { n: "Catalase", d: "Oxygen near the epithelium hurts far less.", fact: "Catalase breaks hydrogen peroxide into water and oxygen; strict anaerobes mostly lack it.", fl: { o2: 0.3 } });
 gene("sod", { n: "Superoxide dismutase", d: "Tolerate more oxygen, and shrug off the first moments of an oxygen spike.", fact: "SOD converts superoxide radicals into peroxide; even many 'strict' anaerobes carry one.", fl: { o2: 0.2 } });
 gene("bsh", { n: "Bile salt hydrolase", d: "Bile stops hurting and becomes food.", fact: "Bile salt hydrolases deconjugate bile acids, the first step toward the secondary bile acids that block C. difficile spores.", fl: { bsh: 1 } });
@@ -389,6 +395,8 @@ gene("sporulation", { n: "Sporulation operon", d: "Sporulate faster and germinat
 gene("persister", { n: "Persister switch", d: "A fraction of you goes dormant: survive any single lethal event.", fact: "Persisters are not resistant, just metabolically asleep; drugs that need growth cannot touch them.", fl: { persist: 1 } });
 gene("quorum", { n: "Quorum sensing", d: "With kin nearby, everything you do is stronger.", fact: "Quorum sensing lets a population act only once it is big enough for the action to pay off.", fl: { quorum: 1 } });
 gene("crispr", { n: "CRISPR-Cas", d: "Phages that infected your kin cannot infect you.", fact: "CRISPR arrays store fragments of past invaders as a genetic memory of infection.", fl: { crispr: 1 } });
+gene("abi", { n: "Abortive infection (ToxIN)", d: "An infected cell kills itself before the phage can finish: you lose that cell, but the burst never happens.", fact: "Abortive infection systems are altruistic at the cell level and selfish at the clone level: one cell dies childless so its identical neighbours are never exposed to the burst.", fl: { abi: 1 } });
+gene("phasevar", { n: "Phase-variable surface antigen", d: "You switch surface structures at random, so phages that were binding you suddenly cannot.", fact: "Bacteroides invert the promoters of their capsule loci, so a population is always a mixture of surface types and no single phage can clear it.", fl: { phasevar: 1 } });
 gene("rm", { n: "Restriction-modification", d: "Half of all phage injections fail.", fact: "Restriction enzymes cut unmethylated foreign DNA; the cell methylates its own to tell them apart.", fl: { rm: 1 } });
 gene("iga", { n: "IgA protease", d: "Immune coating slides off you.", fact: "IgA protease cleaves the hinge of secretory antibody, leaving it stuck to the cell but useless.", fl: { iga: 1 } });
 gene("urease2", { n: "Urease cluster", d: "A wider acid-neutralising cloud, and acid never hurts you.", fact: "Up to 10% of H. pylori's protein is urease.", pool: "patho", fl: { urease: 1, acidtol: 1 } });
@@ -411,7 +419,7 @@ gene("integrase", { n: "Integrase", d: "Lysogeny succeeds far more often.", fact
 gene("toxgene", { n: "Toxin cargo", d: "Your lysogens gain a toxin and fight much harder for you.", fact: "Diphtheria, cholera and Shiga toxins are all encoded by prophages, not the bacteria themselves.", pool: "phage", fl: { toxcargo: 1 } });
 gene("superinf", { n: "Superinfection exclusion", d: "Your lysogens cannot be taken over by rival phages.", fact: "Prophages routinely block other phages from infecting the cell they live in.", pool: "phage", fl: { superinf: 1 } });
 const GENEKEYS = Object.keys(GENES);
-const RES_GENES = ["bla", "carb", "van", "tet", "erm", "azole", "efflux"];
+const RES_GENES = ["bla", "carb", "van", "tet", "erm", "azole", "gyrA", "efflux"];
 
 /* real-ish strain designations, so a colony's label matches its species */
 const STRAINS = {
@@ -431,6 +439,7 @@ const DRUGS = [
   { n: "Vancomycin", cls: "glycopeptide", res: "res_glyco", hits: ["bacteria"], gram: "pos", spares: ["fungus", "virion", "protist", "archaea"], col: "#c9b3ff", bio: "Binds the cell wall precursor of Gram-positives. It cannot cross the outer membrane of Gram-negatives at all." },
   { n: "Doxycycline", cls: "tetracycline", res: "res_tet", hits: ["bacteria"], spares: ["fungus", "virion", "protist"], col: "#8fe3ff", bio: "Blocks the ribosome. Ribosome-protection proteins such as TetM push it off again." },
   { n: "Clindamycin", cls: "lincosamide", res: "res_mls", hits: ["bacteria"], anaer: 1, spares: ["fungus", "virion", "protist", "archaea"], col: "#ff8a5c", bio: "Hits anaerobes hard and spares the facultative Enterobacteriaceae, which is why it is the classic trigger for C. difficile. erm methylation defeats it." },
+  { n: "Ciprofloxacin", cls: "fluoroquinolone", res: "res_quin", hits: ["bacteria"], sos: 1, spares: ["fungus", "virion", "protist", "archaea"], col: "#7fd7ff", bio: "Poisons DNA gyrase, so the chromosome is cut and never resealed. The double-strand breaks trigger the SOS response, which is also what makes a lysogen cut its prophage out and go lytic. Strong against Enterobacteriaceae, weak against strict anaerobes." },
   { n: "Fluconazole", cls: "azole antifungal", res: "res_azole", hits: ["fungus"], spares: ["bacteria", "virion", "protist", "archaea"], col: "#a8e6cf", bio: "Blocks ergosterol synthesis in fungal membranes. Bacteria are untouched." },
 ];
 /* ---------- events: telegraphed, explained, and all reversible ---------- */
@@ -775,7 +784,7 @@ function damage(c, n, src, cause) {
   if (col.shield > 0 && (cause === "phage" || cause === "immune" || cause === "toxin")) n *= 0.35;
   if (c.biofilm > 0) n *= 0.55; if (f.capsule && (cause === "immune" || cause === "phage")) n *= 0.5 / (1 + (f.capsule2 ? 1 : 0));
   if (f.iga && cause === "immune") n *= 0.5; if (f.acidtol && cause === "acid") n = 0; if (f.bsh && cause === "bile") n = 0;
-  if (cause === "drug") n *= 1 - resists(col, S.env.drug);
+  if (cause === "drug") { n *= 1 - resists(col, S.env.drug); if (c.sheltered > 0) n *= 0.25; }
   if (n <= 0) return;
   c.hp -= n; c.hurtT = 0.15; if (src) { c.lastHit = { col: src, cause }; col.aggro = src; col.aggroT = S.time; }
   if (col === S.player && n > 0.3) {
@@ -888,7 +897,13 @@ function growHypha(col, toward, len) {
 function lyse(h, vcol) {
   const n = (h.inf ? h.inf.burst : (SP(vcol).burst + (vcol.fl.burst || 0))), live = alive(vcol).length;
   burst(h.x, h.y, SP(vcol).col, 12, 2); if (hyp(h.x - S.cam.x, h.y - S.cam.y) < 1100) sfx("lyse");
-  for (let i = 0; i < n && live + i < MAX_VIRIONS; i++) { const a = rnd() * TAU, v = addCell(vcol, h.x, h.y, 1); v.vx = Math.cos(a) * R(70, 180); v.vy = Math.sin(a) * R(70, 180); }
+  const hostDNA = h.col.genes.filter((g) => RES_GENES.includes(g));
+  for (let i = 0; i < n && live + i < MAX_VIRIONS; i++) {
+    const a = rnd() * TAU, v = addCell(vcol, h.x, h.y, 1); v.vx = Math.cos(a) * R(70, 180); v.vy = Math.sin(a) * R(70, 180);
+    // packaging is not perfect: a few heads close on host chromosome instead of phage DNA
+    if (hostDNA.length && rnd() < 0.08) v.cargo = pick(hostDNA);
+  }
+  noteLysis(h, vcol);
   h.inf = null; h.lysogen = null; gainXP(vcol, 25); die(h, "phage", vcol);
 }
 function infect(v, h) {
@@ -912,7 +927,13 @@ function setSpecies(col, spKey, quiet) {
   else for (const c of alive(col)) { c.mass = clamp(c.mass, C.minMass, C.maxMass); c.seed = c.seed; calcCell(c); c.hp = Math.min(c.maxhp, c.hp + c.maxhp * 0.3); }
   if (!quiet) { burst(cx, cy, C.col, 24, 4); if (col === S.player) { sfx("gene"); pop(cx, cy - 46, C.short.toUpperCase(), "#ffd166", 1); META.played[col.type] = (META.played[col.type] || 0) + 1; saveMeta(); } else feedMsg(`${col.name} specialised into ${C.short}`, C.col); }
 }
-const isHostOf = (vcol, h) => { const C = SP(vcol); if (h.virion || h.inf || h.spore >= 2 || h.team === vcol.team || h.col.grace > 0) return false; const t = SP(h.col).tags; return t.includes(C.host) || (vcol.fl.broad && (t.includes("entero") || t.includes("bacteroides"))); };
+const isHostOf = (vcol, h) => {
+  const C = SP(vcol);
+  if (h.virion || h.inf || h.spore >= 2 || h.team === vcol.team || h.col.grace > 0) return false;
+  if (h.col.recLoss && h.col.recLoss === C.host) return false;   /* the receptor it used is simply not there any more */
+  const t = SP(h.col).tags;
+  return t.includes(C.host) || (vcol.fl.broad && (t.includes("entero") || t.includes("bacteroides")));
+};
 /* ---------- population: every guild stays present ---------- */
 const GUILD_TARGET = { fibre: 3, scfa: 3, mucus: 2, lab: 2, entero: 2, patho: 3, spore: 1, fungus: 2, protist: 1, phage: 2, archaea: 1 };
 const GUILD_N = { fibre: "fibre degraders", scfa: "butyrate producers", mucus: "mucus dwellers", lab: "lactic acid bacteria", entero: "Enterobacteriaceae", patho: "pathobionts", spore: "spore formers", fungus: "fungi", protist: "protists", phage: "phages", archaea: "archaea" };
@@ -979,7 +1000,7 @@ function scheduleEvent(force) {
 function eventStart(e) {
   e.phase = "active"; const id = e.id; sfx("event"); shake(4);
   switch (id) {
-    case "antibiotic": S.env.drug = e.drug; S.env.drugT = e.dur; break;
+    case "antibiotic": S.env.drug = e.drug; S.env.drugT = e.dur; seedPersisters(); break;
     case "dysbiosis": S.env.inflame = Math.max(S.env.inflame, 0.6); S.env.nitrate = 1; for (let i = 0; i < 2; i++) spawnBot(pick(["ecoli", "ehec", "salmonella", "kleb"]), clamp(S.player.level, 4, 26)); break;
     case "immune": e.wave = 0; break;
     case "phagebloom": for (let i = 0; i < 2; i++) spawnBot(pick(["crass", "lambda"]), clamp(S.player.level, 5, 28)); break;
@@ -999,11 +1020,7 @@ function eventStart(e) {
 }
 function eventTick(e, dt) {
   switch (e.id) {
-    case "antibiotic": {
-      S.env.drugT = e.dur - e.t; const d = e.drug, dps = 9 * (0.6 + 0.8 * Math.sin(Math.min(Math.PI, (e.t / e.dur) * Math.PI)));
-      for (const c of S.cells) { const C = SP(c.col); if (c.dead || c.spore >= 2) continue; if (!d.hits.some((t) => C.tags.includes(t))) continue; if (d.gram === "pos" && !C.tags.includes("grampos")) continue; if (d.anaer && C.o2 > 0.5) continue; if (c.invade) continue; damage(c, dps * dt, null, "drug"); }
-      break;
-    }
+    case "antibiotic": drugTick(e, dt); break;
     case "dysbiosis": S.env.inflame = clamp(S.env.inflame + dt * 0.02, 0, 1); S.env.nitrate = 1; if (rnd() < dt * 0.35) spawnNut("debris", R(0, WORLD.w), EPI + R(40, 300)); break;
     case "immune": {
       e.wave -= dt; if (e.wave <= 0) { e.wave = 1.6; const x = S.player ? centroid(S.player)[0] + R(-900, 900) : R(0, WORLD.w); spawnImmune(clamp(x, 60, WORLD.w - 60)); }
@@ -1021,7 +1038,7 @@ function eventTick(e, dt) {
 }
 function eventEnd(e) {
   switch (e.id) {
-    case "antibiotic": S.env.drug = null; S.env.drugT = 0; feedMsg(`The ${e.drug.n} course is over. Whatever survived now has room.`, "#8a97a8"); break;
+    case "antibiotic": S.env.drug = null; S.env.drugT = 0; S.env.conc = 0; for (const c of S.cells) { c.persist = false; c.inhib = 0; } feedMsg(`The ${e.drug.n} course is over. Whatever survived now has room.`, "#8a97a8"); break;
     case "dysbiosis": S.env.nitrate = 0.4; break;
     case "flush": S.env.flow = 1; break;
     case "feast": case "sugarrush": case "fasting": S.env.diet = "mixed"; break;
@@ -1067,7 +1084,9 @@ function director(dt) {
 
 /* ---------- metabolism and the main step ---------- */
 function feedCell(col, c, dt) {
-  const C = SP(col), f = col.fl, up = uptake(col) * dt;
+  // a sub-MIC drug concentration does not kill, it slows growth — which is exactly
+  // the window where resistant cells out-compete everything else
+  const C = SP(col), f = col.fl, up = uptake(col) * dt * (c.inhib > 0 ? 1 - c.inhib : 1) * (col.recCost ? 0.82 : 1) / (1 + (col.fitcost || 0) * 0.06);
   // oxygen stress
   const o2 = o2At(c.x, c.y), tol = o2Tol(col);
   if (o2 > tol) { damage(c, (o2 - tol) * 16 * dt, null, "o2"); c.ox = 1; } else c.ox = 0;
@@ -1093,7 +1112,7 @@ function step(dt) {
     else { eventTick(e, dt); if (e.t >= e.dur) { eventEnd(e); S.ev.splice(i, 1); } }
   }
   S.env.inflame = clamp(S.env.inflame - dt * 0.004, 0, 1); S.env.flow = lerp(S.env.flow, S.ev.some((e) => e.id === "flush" && e.phase === "active") ? 4.2 : 1, dt);
-  buildIndex(); director(dt); updImmune(dt); updFx(dt);
+  buildIndex(); director(dt); updImmune(dt); hostInter(dt); updFx(dt);
   // grid decay and mucus regrowth
   if (S.tick % 6 === 0) { const k = Math.pow(0.86, 6 * dt * 10); for (let i = 0; i < S.o2mod.length; i++) { S.o2mod[i] *= 0.985; S.phmod[i] *= 0.985; } for (let i = 0; i < GW; i++) S.mucus[i] = clamp(S.mucus[i] + 0.0022 * (S.env.diet === "fibre" ? 2 : 1), 0, regionAt(i * GS).k === "col" ? 1.1 : 0.85); }
   // epithelium
@@ -1119,8 +1138,11 @@ function step(dt) {
     for (const c of col.cells) {
       if (c.dead) continue; c.age += dt; if (c.hurtT > 0) c.hurtT -= dt; if (c.divCd > 0) c.divCd -= dt; if (c.iga > 0) c.iga = Math.max(0, c.iga - dt * (col.fl.iga ? 0.5 : 0.05));
       if (c.buff > 0) c.buff -= dt;
+      if (c.sheltered > 0) c.sheltered -= dt;
+      if (c.inhib > 0) c.inhib = Math.max(0, c.inhib - dt * 0.6);
+      if (!c.virion) { cellInter(c, col, SP(col), dt); fungalInter(c, col, SP(col), dt); }
       c.biofilm = 0; for (const z of S.zones) if (z.type === "biofilm" && hyp(c.x - z.x, c.y - z.y) < z.r) { c.biofilm = z.team === c.team ? 1 : -1; break; }
-      if (c.spore >= 2) { if ((c.sporeT -= dt) <= 0) { c.spore = 0; if (col.sporeWave) { for (let i = 0; i < col.sporeWave; i++) { const d = addCell(col, c.x + R(-140, 140), c.y + R(-140, 140), SP(col).minMass * 1.4); d.spore = 0; } col.sporeWave = 0; } } c.x += flowAt(c.x, c.y) * dt * 0.4; continue; }
+      if (c.spore >= 2) { if ((c.sporeT -= dt) <= 0) { if (!tryGerminate(c)) { c.sporeT = 6; c.x += flowAt(c.x, c.y) * dt * 0.4; continue; } c.spore = 0; if (col.sporeWave) { for (let i = 0; i < col.sporeWave; i++) { const d = addCell(col, c.x + R(-140, 140), c.y + R(-140, 140), SP(col).minMass * 1.4); d.spore = 0; } col.sporeWave = 0; } } c.x += flowAt(c.x, c.y) * dt * 0.4; continue; }
       if (c.invade) { const e = c.invade.e; c.x = e.x; c.y = EPI + 30; c.hp = Math.min(c.maxhp, c.hp + c.maxhp * 0.12 * dt); c.mass = Math.min(SP(col).maxMass, c.mass + 1.6 * dt); gainXP(col, 7 * dt); if ((c.invade.t -= dt) <= 0) { e.inv = Math.max(0, e.inv - 1); c.invade = null; c.y = EPI + 90; } continue; }
       if (c.inf) { c.inf.t += dt; if (c.inf.t >= c.inf.latent) { lyse(c, c.inf.col); continue; } }
       if (c.lysogen) { if (c.lysogen.dead) { c.lysogen = null; c.team = col.team; } else { gainXP(c.lysogen, 2 * dt); if (c.hp < c.maxhp * 0.3 && rnd() < dt * 0.5) { c.inf = { col: c.lysogen, t: 0, latent: 1.5, burst: SP(c.lysogen).burst + (c.lysogen.fl.burst || 0) }; } } }
@@ -1330,6 +1352,14 @@ function beginAdsorption(v, h) {
   v.ads = { h, stage: 0, t: 0, nx: dx / d, ny: dy / d, off: d, walk: R(-0.5, 0.5) };
   v.vx = v.vy = 0;
   witness("adsorption", `${v.col.name} is adsorbing to ${h.col.name}`);
+  // sustained phage pressure selects for cells that have stopped making the receptor
+  const hc = h.col, C = SP(v.col);
+  hc.phageHits = (hc.phageHits || 0) + 1;
+  if (hc.phageHits > 14 && !hc.recLoss && rnd() < 0.25) {
+    hc.recLoss = C.host;                       // immune to this phage from here on
+    hc.recCost = 1;                            // and worse at importing whatever that receptor carried
+    noteReceptorLoss(hc, C);
+  }
 }
 function updAdsorption(v, dt) {
   const a = v.ads, h = a.h;
@@ -1370,6 +1400,19 @@ function updAdsorption(v, dt) {
 /* what happens once the DNA is inside: restriction, CRISPR, abortive infection, lysogeny or lysis */
 function injectGenome(v, h) {
   const vcol = v.col, hc = h.col, C = SP(vcol); v.dead = true;
+  // a transducing particle packaged host chromosome instead of a phage genome. There is no
+  // phage DNA inside, so it cannot lysogenise or lyse, and CRISPR has no spacer to match it.
+  // Restriction-modification still cuts it, because the DNA is unmethylated for this host.
+  if (v.cargo) {
+    const g = v.cargo;
+    if (!hc.fl.rm || rnd() >= 0.5) {
+      if (addGene(hc, g, true)) {
+        mkFx("bead", { x1: h.x - 14, y1: h.y - 14, x2: h.x, y2: h.y, dur: 0.6, col: ART.cyan });
+        witness("transduction", `a mispackaged phage head carried ${GENES[g].n} out of one cell and injected it into ${hc.name}: no infection, just a gene moved`, ART.cyan);
+      }
+    } else { mkFx("cut", { x: h.x, y: h.y, dur: 0.5, ang: rnd() * TAU }); }
+    return;
+  }
   if (!vcol.fl.anticrispr && hc.fl.crispr && (hc.spacers || []).includes(vcol.id)) {
     mkFx("cut", { x: h.x, y: h.y, dur: 0.5, ang: rnd() * TAU });
     witness("crispr", `${hc.name} recognised the phage from a stored spacer and cut it`); burst(h.x, h.y, "#8a97a8", 5, 2); return;
@@ -1392,7 +1435,7 @@ function injectGenome(v, h) {
     if (vcol === S.player) { sfx("ally"); pop(h.x, h.y - h.r - 10, "LYSOGEN", "#b98cff"); } return;
   }
   // transduction: now and then the phage packaged host DNA instead of its own
-  if (v.cargo) { const g = v.cargo; if (addGene(hc, g, true)) { mkFx("bead", { x1: h.x - 14, y1: h.y - 14, x2: h.x, y2: h.y, dur: 0.5, col: "#7fd7ff" }); witness("transduction", `a mispackaged phage carried ${GENES[g].n} into ${hc.name}`); } return; }
+
   h.inf = { col: vcol, t: 0, latent: SP(vcol).latent * (vcol.fl.latent || 1), burst: SP(vcol).burst + (vcol.fl.burst || 0) };
   if (vcol === S.player) sfx("inject");
 }
@@ -1478,6 +1521,345 @@ function codexBody() {
   }
   return h;
 }
+/* =====================================================================
+   THE INTERACTION SUITE
+   Every entry in the field guide has to actually happen in the sim, with
+   a mechanism you can watch. Contact-range interactions are driven from
+   pairCells; the rest run here, per cell, on a stagger.
+
+   Everything is gated on being near the player: the field guide claims
+   you witnessed it, so it only counts where you could have seen it.
+   ===================================================================== */
+const ICD = 0.4;                                   // how often a cell re-checks its surroundings
+
+function witnessed(x, y) {
+  const P = S.player, pm = mainCell(P); if (!pm) return false;
+  return hyp(x - pm.x, y - pm.y) < senseR(P) * 1.5;
+}
+/* one FX per cell per cooldown, so a crowd never floods the screen */
+function fxGate(c, k, t) { const g = (c.fxg = c.fxg || {}); if ((g[k] || -9) > S.time - (t || 3)) return false; g[k] = S.time; return true; }
+const bact = (col) => SP(col).tags.includes("bacteria");
+const gramNeg = (col) => !!SP(col)._gneg;
+
+/* ---------------------------------------------------------------------
+   contact range: called from pairCells once the envelopes touch
+   --------------------------------------------------------------------- */
+function contactInter(a, b, A, B, dt) {
+  const mid = [(a.x + b.x) / 2, (a.y + b.y) / 2], see = witnessed(mid[0], mid[1]);
+  // --- type VI secretion: a contractile spear fired into the touching cell ---
+  for (const [s, o, S1] of [[a, b, A], [b, a, B]]) {
+    if (!s.col.fl.t6ss || !bact(s.col) || !bact(o.col)) continue;
+    if (see && fxGate(s, "t6ss", 1.1)) {
+      mkFx("spear", { a: s, b: o, dur: 0.42, col: SP(s.col).col });
+      witness("t6ss", `${s.col.name} speared ${o.col.name} with a type VI secretion system`, SP(s.col).col);
+    }
+  }
+  // --- contact-dependent inhibition: a filament reaches over; immunity protein blocks it ---
+  for (const [s, o] of [[a, b], [b, a]]) {
+    if (!s.col.fl.cdi || !bact(o.col) || !see || !fxGate(s, "cdi", 2.2)) continue;
+    const immune = o.col.id === s.col.id || o.col.fl.cdi;            // cognate immunity protein
+    mkFx("filament", { a: s, b: o, dur: 0.75, col: SP(s.col).col, blocked: immune });
+    if (immune) witness("cdi", `${o.col.name} carries the matching immunity protein: ${s.col.name}'s CdiA toxin did nothing`);
+    else { damage(o, 7, s.col, "t6ss"); witness("cdi", `${s.col.name} delivered a CdiA toxin tip into ${o.col.name}`, SP(s.col).col); }
+  }
+  // --- co-aggregation: specific adhesins stick partner species into a clump ---
+  if (a.col !== b.col && (a.col.fl.adhere || b.col.fl.adhere) && A.guild !== B.guild && bact(a.col) && bact(b.col)) {
+    a.vx *= 0.82; a.vy *= 0.82; b.vx *= 0.82; b.vy *= 0.82;
+    if (see && fxGate(a, "coagg", 4)) { mkFx("link", { a, b, dur: 1.2, col: ART.sand }); witness("coagg", `${a.col.name} and ${b.col.name} co-aggregated through surface adhesins`); }
+  }
+  // --- cytoplasmic nanotubes: a brief bridge between touching cells ---
+  if (bact(a.col) && bact(b.col) && rnd() < dt * 0.08 && see && fxGate(a, "tube", 6)) {
+    mkFx("nanotube", { a, b, dur: 1.1, col: ART.mint });
+    witness("nanotube", `${a.col.name} and ${b.col.name} opened a cytoplasmic nanotube and swapped contents`);
+  }
+  // --- T3SS: a needle docked perpendicular to the host membrane ---
+  for (const [s, o] of [[a, b], [b, a]]) {
+    if (!s.col.fl.invade2 || o.kind !== "cell" || SP(o.col).tags.includes("bacteria")) continue;
+    if (!see || !fxGate(s, "t3ss", 2.5)) continue;
+    const dx = o.x - s.x, dy = o.y - s.y, d = hyp(dx, dy) || 1;      // docked along the contact normal
+    mkFx("needle", { x1: s.x, y1: s.y, x2: s.x + dx / d * (d - o.r * 0.3), y2: s.y + dy / d * (d - o.r * 0.3), dur: 0.9, col: ART.orange });
+    witness("t3ss", `${s.col.name} docked a type III secretion needle on ${o.col.name} and injected effectors`, ART.orange);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   conjugation: the pilus extends, grips, retracts to pull the cells
+   together, and only then does DNA cross
+   --------------------------------------------------------------------- */
+function conjugate(from, to, a, b) {
+  const g = pick(from.genes.filter((q) => RES_GENES.includes(q) && !to.genes.includes(q) && canCarry(to, q)) || []);
+  if (!g) return false;
+  const inc = (from.inc = from.inc || (RES_GENES.indexOf(from.genes.find((q) => RES_GENES.includes(q))) % 3));
+  const toInc = to.inc;
+  if (toInc != null && toInc === inc && to.genes.some((q) => RES_GENES.includes(q))) {
+    if (witnessed(a.x, a.y) && fxGate(a, "incompat", 6)) {
+      mkFx("pilus", { a, b, dur: 1.0, col: ART.rose });
+      witness("incompat", `${to.name} already carries a plasmid of the same incompatibility group: the new one could not be kept`);
+    }
+    return false;
+  }
+  mkFx("pilus", { a, b, dur: 1.25, col: ART.cyan });
+  const dx = b.x - a.x, dy = b.y - a.y, d = hyp(dx, dy) || 1;        // retraction reels them together
+  b.vx -= dx / d * 40; b.vy -= dy / d * 40; a.vx += dx / d * 40; a.vy += dy / d * 40;
+  if (addGene(to, g, to !== S.player)) {
+    to.inc = inc;
+    witness("conjugation", `${from.name} extended a pilus, reeled in ${to.name} and transferred ${GENES[g].n}`, ART.cyan);
+    return true;
+  }
+  return false;
+}
+
+/* ---------------------------------------------------------------------
+   ambient: run per cell on a stagger
+   --------------------------------------------------------------------- */
+function cellInter(c, col, C, dt) {
+  if ((c.ict = (c.ict || rnd() * ICD) - dt) > 0) return;
+  c.ict = ICD;
+  if (!witnessed(c.x, c.y)) return;
+  dt = ICD;                       // this body runs once per ICD, so rates below are per-interval
+
+  // --- quorum sensing: an autoinducer threshold, and the enzymes that break it ---
+  if (col.fl.quorum && c.quorum && fxGate(c, "quorum", 7)) {
+    let quench = false;
+    near(c.x, c.y, 220, (o) => { if (o.kind === "cell" && !o.virion && o.col !== col && o.col.fl.bsh) quench = true; });
+    if (quench) witness("quench", `a neighbour's lactonase chewed up ${col.name}'s autoinducer: the quorum never registered`);
+    else { mkFx("ring", { x: c.x, y: c.y, r0: c.r, r: 120, dur: 0.9, col: ART.mint, a0: 0.45 }); witness("quorum", `${col.name} reached its autoinducer threshold and switched on group behaviour`, ART.mint); }
+  }
+  // --- outer-membrane vesicles: Gram-negatives bleb off cargo that drifts to a neighbour ---
+  if (gramNeg(col) && bact(col) && rnd() < dt * 0.5 && fxGate(c, "omv", 7)) {
+    let tgt = null; near(c.x, c.y, 260, (o) => { if (!tgt && o.kind === "cell" && !o.virion && o.col !== col) tgt = o; });
+    if (tgt) {
+      mkFx("vesicle", { x: c.x, y: c.y, vx: R(-20, 20), vy: R(-20, 20), b: tgt, dur: 3, r: 3.4, col: C.col });
+      witness("omv", `${col.name} shed outer-membrane vesicles carrying enzymes and LPS to its neighbours`);
+    }
+  }
+  // --- cross-feeding and syntrophy: who is actually eating whose waste ---
+  if (C.makes && fxGate(c, "xfeed", 8)) {
+    let partner = null;
+    near(c.x, c.y, 200, (o) => { if (partner || o.kind !== "cell" || o.virion || o.col === col) return; if ((SP(o.col).eats || []).includes(C.makes)) partner = o; });
+    if (partner) {
+      mkFx("bead", { x1: c.x, y1: c.y, x2: partner.x, y2: partner.y, dur: 0.9, col: ART.gold, arc: 14 });
+      if (C.makes === "h2") witness("syntrophy", `${partner.col.name} is pulling off the hydrogen ${col.name} makes, which is the only thing that keeps that fermentation thermodynamically possible`, ART.gold);
+      else witness("crossfeed", `${partner.col.name} is growing on the ${C.makes} that ${col.name} excretes`, ART.gold);
+    }
+  }
+  // --- auxotrophy: a cell that cannot make something has to find it ---
+  if (C.aux && fxGate(c, "aux", 12)) {
+    let donor = null; near(c.x, c.y, 220, (o) => { if (!donor && o.kind === "cell" && !o.virion && o.col !== col && !SP(o.col).aux) donor = o; });
+    if (donor) { mkFx("link", { a: donor, b: c, dur: 1.3, col: ART.cream }); witness("auxotroph", `${col.name} cannot make ${C.aux} itself and is living off what ${donor.col.name} leaks`); }
+  }
+  // --- siderophore piracy: someone else's iron chelator, taken at the receptor ---
+  if (col.fl.sidero && fxGate(c, "piracy", 10)) {
+    let mark = null; near(c.x, c.y, 240, (o) => { if (!mark && o.kind === "cell" && !o.virion && o.col !== col && o.col.fl.sidero) mark = o; });
+    if (mark) { mkFx("bead", { x1: mark.x, y1: mark.y, x2: c.x, y2: c.y, dur: 0.8, col: ART.warm, arc: 18 }); witness("piracy", `${col.name} took up ${mark.col.name}'s loaded siderophore without paying to make it`, ART.warm); }
+  }
+  // --- carrying plasmids is not free ---
+  col.fitcost = col.genes.filter((g) => RES_GENES.includes(g) && GENES[g] && GENES[g].mech !== "efflux").length;
+  if (col.fitcost >= 2 && fxGate(c, "fitcost", 16))
+    witness("fitcost", `${col.name} is replicating ${col.fitcost} plasmids alongside its chromosome: it grows measurably slower than a plasmid-free cell, which is why resistance fades once the drug stops`);
+  // --- public-goods cheating inside a biofilm ---
+  if (c.biofilm > 0 && !col.fl.biofilm && fxGate(c, "cheat", 12))
+    witness("cheat", `${col.name} is sitting in a matrix it contributed nothing to`);
+  // --- β-lactamase cross-protection: the enzyme is secreted, so neighbours benefit ---
+  if (S.env.drug && S.env.drug.res === "res_blactam" && col.fl.res_blactam && fxGate(c, "xprot", 8)) {
+    let saved = 0; near(c.x, c.y, 180, (o) => { if (o.kind === "cell" && !o.virion && o.col !== col && !o.col.fl.res_blactam) { o.sheltered = 1.2; saved++; } });
+    if (saved) { mkFx("puff", { x: c.x, y: c.y, r: 180, dur: 1.1, col: ART.mint }); witness("crossprotect", `${col.name}'s secreted β-lactamase is destroying the drug around it and sheltering ${saved} susceptible neighbour${saved > 1 ? "s" : ""}`, ART.mint); }
+  }
+  // --- niche exclusion: the seat is taken ---
+  if (C.guild && fxGate(c, "excl", 14)) {
+    let same = 0; near(c.x, c.y, 200, (o) => { if (o.kind === "cell" && !o.virion && o.col !== col && SP(o.col).guild === C.guild) same++; });
+    if (same >= 3) witness("exclusion", `${col.name} is up against ${same} cells doing the same job in the same place: there is no niche left to take`);
+  }
+  // --- butyrate feeding the epithelium, and the oxygen consequence ---
+  if (C.makes === "butyrate" && c.y < EPI + 420 && fxGate(c, "but", 10)) {
+    mkFx("bead", { x1: c.x, y1: c.y, x2: c.x, y2: EPI + 30, dur: 1.1, col: ART.gold, arc: 20 });
+    witness("butyrate", `${col.name}'s butyrate is being burned by the colonocytes, which keeps the mucosa hypoxic and anaerobes in charge`, ART.gold);
+  }
+  // --- TLR sensing: the epithelium reads the surface, and reacts to pathogens ---
+  if (c.y < EPI + 200 && fxGate(c, "tlr", 14)) {
+    const patho = C.guild === "patho" || C.guild === "entero";
+    mkFx("ring", { x: c.x, y: EPI + 20, r0: 4, r: 60, dur: 0.8, col: patho ? ART.crimson : ART.mint, a0: 0.35 });
+    witness("tlr", patho
+      ? `the epithelium's toll-like receptors read ${col.name}'s flagellin and LPS as a threat and called in inflammation`
+      : `the epithelium read ${col.name}'s surface as familiar and answered with tolerance, not inflammation`);
+  }
+  // --- prophage induction by a DNA-damaging drug ---
+  if (c.lysogen && S.env.drug && S.env.drug.sos && fxGate(c, "induct", 6)) {
+    mkFx("ring", { x: c.x, y: c.y, r0: c.r, r: c.r + 40, dur: 0.7, col: ART.violet, a0: 0.6 });
+    witness("induction", `${S.env.drug.n} broke ${col.name}'s DNA, the SOS response fired, and the prophage it was carrying cut itself out and went lytic`, ART.violet);
+    c.inf = { col: c.lysogen, t: 0, latent: 2.5, burst: 5 }; c.lysogen = null;
+  }
+  // --- persistence: a dormant subpopulation that the drug simply cannot reach ---
+  if (S.env.drug && c.persist && fxGate(c, "persist", 9))
+    witness("persist", `${col.name} has a dormant subpopulation: those cells are not resistant, they are simply not growing, so the drug has nothing to act on`);
+}
+
+/* ---------------------------------------------------------------------
+   one-shot hooks called from the systems that already exist
+   --------------------------------------------------------------------- */
+function noteLysis(h, vcol) {
+  if (!witnessed(h.x, h.y)) return;
+  mkFx("ring", { x: h.x, y: h.y, r0: h.r, r: h.r + 55, dur: 0.5, col: ART.violet, a0: 0.8 });
+  witness("lysis", `${vcol.name} finished replicating and burst ${h.col.name} open`, ART.violet);
+}
+function noteGraze(pred, prey) {
+  if (!witnessed(pred.x, pred.y)) return;
+  mkFx("cup", { a: pred, r: pred.r, ang: Math.atan2(prey.y - pred.y, prey.x - pred.x), dur: 0.6, col: SP(pred.col).col });
+  const tough = prey.col.fl.capsule || prey.spore >= 2;
+  if (tough) witness("grazing", `${prey.col.name} went into ${pred.col.name}'s phagosome and came out alive: its capsule resists digestion`);
+  else witness("grazing", `${pred.col.name} wrapped a pseudopod round ${prey.col.name}, closed the cup and digested it in a phagosome`);
+}
+function noteGerminate(c, blocked) {
+  if (!witnessed(c.x, c.y)) return;
+  if (blocked) witness("germination", `${c.col.name}'s spores stayed dormant: the secondary bile acids a healthy community makes block germination`);
+  else { mkFx("ring", { x: c.x, y: c.y, r0: 2, r: 40, dur: 0.8, col: ART.orange, a0: 0.6 }); witness("germination", `${c.col.name} germinated: primary bile acids got through because nothing was left to convert them`, ART.orange); }
+}
+function noteMIC(c, frac) {
+  if (!witnessed(c.x, c.y) || !fxGate(c, "mic", 11)) return;
+  witness("mic", frac < 0.5
+    ? `the ${S.env.drug.n} here is below ${c.col.name}'s MIC: it is being slowed, not killed`
+    : `the ${S.env.drug.n} here is over ${c.col.name}'s MIC and the population is dropping`);
+}
+function noteReceptorLoss(col, vC) {
+  const m = mainCell(col);
+  if (m) mkFx("ring", { x: m.x, y: m.y, r0: m.r, r: m.r + 26, dur: 0.9, col: ART.sand, a0: 0.7 });
+  witness("receptorloss", `${col.name} stopped making the surface receptor ${vC ? vC.n : "the phage"} was binding. It cannot be infected by it any more, and it has lost whatever that receptor was importing`, ART.sand);
+}
+
+/* ---------------------------------------------------------------------
+   the host side: what the epithelium and the immune system actually do
+   --------------------------------------------------------------------- */
+function hostInter(dt) {
+  if ((S.hict = (S.hict || 0) - dt) > 0) return;
+  S.hict = 0.5; dt = 0.5;         // likewise: per-interval, not per-frame
+  const P = S.player, pm = mainCell(P); if (!pm) return;
+  // --- secretory IgA: dimeric antibody cross-links cells into a clump it can flush out ---
+  let a = null, b = null;
+  near(pm.x, pm.y, senseR(P), (c) => {
+    if (c.kind !== "cell" || c.virion || c.iga < 0.35) return;
+    if (!a) a = c; else if (!b && c !== a && hyp(c.x - a.x, c.y - a.y) < 90) b = c;
+  });
+  if (a && b && fxGate(a, "iga", 7)) {
+    mkFx("iga", { a, b, dur: 1.4 });
+    witness("iga", `secretory IgA cross-linked ${a.col.name} into a clump: agglutinated cells are swept out with the mucus rather than killed`);
+  }
+  // --- Paneth cell defensins: antimicrobial peptides released into the crypt ---
+  if (pm.y < EPI + 170 && rnd() < dt * 0.5 && fxGate(S, "defensin", 9)) {
+    mkFx("puff", { x: pm.x + R(-60, 60), y: EPI + 16, r: 90, dur: 1.2, col: ART.cream });
+    witness("defensin", `Paneth cells in the crypt released α-defensins: they punch holes in bacterial membranes, and Gram-positives feel it first`);
+  }
+  // --- goblet cells: the mucus layer is secreted, not permanent ---
+  if (pm.y < EPI + 260 && mucusAt(pm.x) > 0.4 && rnd() < dt * 0.4 && fxGate(S, "goblet", 11)) {
+    mkFx("puff", { x: pm.x + R(-80, 80), y: EPI + 24, r: 120, dur: 1.5, col: ART.mucus });
+    witness("goblet", `a goblet cell dumped its mucin granules: the inner mucus layer is rebuilt constantly, and it is the only thing keeping bacteria off the cells`);
+  }
+}
+/* fungal and protist behaviour that has a visible form */
+function fungalInter(c, col, C, dt) {
+  if (C.guild !== "fungus") return;
+  const o2 = o2At(c.x, c.y);
+  // --- yeast-to-hypha switch: the morphology that turns a commensal into an invader ---
+  if (col.hyph && col.hyph.length > 2 && witnessed(c.x, c.y) && fxGate(c, "hyphal", 12))
+    witness("hyphal", `${col.name} switched from budding yeast to hyphae: the filamentous form is what lets it push between epithelial cells`, ART.orange);
+  // --- a mixed-kingdom biofilm is far harder to clear than either partner alone ---
+  if (c.biofilm !== 0 && witnessed(c.x, c.y) && fxGate(c, "mixbio", 14)) {
+    let partner = null; near(c.x, c.y, 160, (o) => { if (!partner && o.kind === "cell" && !o.virion && SP(o.col).tags.includes("bacteria")) partner = o; });
+    if (partner) { mkFx("link", { a: c, b: partner, dur: 1.4, col: ART.sand }); witness("mixedbiofilm", `${col.name} and ${partner.col.name} built one biofilm together: the fungal scaffold shelters the bacteria and the matrix keeps drugs out of both`); }
+  }
+  // --- a mould that makes a β-lactam clears a ring around itself ---
+  if (C.id === "penicil" && witnessed(c.x, c.y) && fxGate(c, "inhib", 10)) {
+    let hit = 0; near(c.x, c.y, 150, (o) => { if (o.kind === "cell" && !o.virion && SP(o.col).tags.includes("bacteria") && !o.col.fl.res_blactam) { damage(o, 6, col, "toxin"); hit++; } });
+    if (hit) { mkFx("ring", { x: c.x, y: c.y, r0: c.r, r: 150, dur: 1.2, col: ART.mint, a0: 0.4 }); witness("inhibition", `${col.name} is secreting a β-lactam: a clear zone of inhibition opened around it, and only β-lactamase carriers are still standing in it`, ART.mint); }
+  }
+}
+
+/* ---------------------------------------------------------------------
+   PHARMACOLOGY
+   Antibiotics do not kill on contact. A course builds a concentration,
+   every strain has an MIC, and what happens depends on the ratio of the
+   two. Below the MIC you are inhibited, not killed; well above it the
+   population drops fast. Resistance raises the MIC, and it does so by
+   four mechanisms that behave differently.
+   --------------------------------------------------------------------- */
+const MIC_MECH = { enzyme: 64, target: 48, porin: 12, efflux: 4 };
+
+/* the MIC of this colony against this drug, as a multiple of the wild-type MIC */
+function micOf(col, drug) {
+  const C = SP(col);
+  if (!drug.hits.some((t) => C.tags.includes(t))) return Infinity;          // wrong kingdom entirely
+  if (drug.gram === "pos" && !C.tags.includes("grampos")) return Infinity;  // cannot cross the outer membrane
+  if (drug.anaer && C.o2 > 0.5) return Infinity;                            // not an anaerobe: nothing to hit
+  let mic = 1, mech = null;
+  if (C.intrinsic && C.intrinsic[drug.res]) { mic = C.intrinsic[drug.res]; mech = C.intrinsicMech || "enzyme"; }
+  for (const g of col.genes) {
+    const G = GENES[g]; if (!G || !G.mech) continue;
+    const specific = G.fl[drug.res];
+    const f = specific ? MIC_MECH[G.mech] : (G.mech === "efflux" ? MIC_MECH.efflux : 1);
+    if (f > mic) { mic = f; mech = G.mech; }
+  }
+  if (col.boost && col.boost.resAll) mic = Math.max(mic, 32);
+  return (col.micMech = mech, mic);
+}
+/* a Hill curve, so the dose actually matters */
+function drugKill(col, drug, conc) {
+  const mic = micOf(col, drug); if (!isFinite(mic)) return { kill: 0, ratio: 0, mic };
+  const ratio = conc / mic, r2 = ratio * ratio;
+  return { kill: r2 / (1 + r2), ratio, mic };
+}
+function drugTick(e, dt) {
+  const d = e.drug;
+  // a course has a pharmacokinetic shape: it builds, peaks well over the wild-type MIC, and washes out
+  const u = clamp(e.t / e.dur, 0, 1);
+  const conc = 7 * Math.sin(Math.min(Math.PI, u * Math.PI)) ** 0.7;
+  S.env.conc = conc; S.env.drugT = e.dur - e.t;
+  for (const c of S.cells) {
+    if (c.dead || c.spore >= 2 || c.virion || c.invade) continue;
+    const { kill, ratio } = drugKill(c.col, d, conc);
+    if (ratio <= 0) continue;
+    if (c.persist) { if (rnd() < dt * 0.4) noteMIC(c, 0.2); continue; }      // dormant: nothing to act on
+    if (ratio < 1) { c.inhib = 0.6; if (rnd() < dt * 0.1) noteMIC(c, 0.4); continue; }  // sub-MIC: slowed, selected
+    if (rnd() < dt * 0.08) noteMIC(c, 1);
+    damage(c, 13 * kill * dt, null, "drug");
+    if (witnessed(c.x, c.y) && c.col.micMech && fxGate(c, "mech", 7)) showResistMech(c, c.col.micMech, d);
+  }
+}
+/* the four mechanisms look different, because they are different */
+function showResistMech(c, mech, d) {
+  const C = SP(c.col);
+  if (mech === "efflux") {
+    for (let i = 0; i < 3; i++) { const a = rnd() * TAU; mkFx("bead", { x1: c.x, y1: c.y, x2: c.x + Math.cos(a) * 34, y2: c.y + Math.sin(a) * 34, dur: 0.6, col: ART.cold, rr: 2, arc: 0 }); }
+    witness("mic", `${c.col.name} is pumping ${d.n} straight back out: an efflux pump raises the MIC a little against everything at once`, ART.cold);
+  } else if (mech === "enzyme") {
+    mkFx("puff", { x: c.x, y: c.y, r: 46, dur: 0.8, col: ART.mint });
+    witness("mic", `${c.col.name} is destroying ${d.n} outside the cell: an enzyme protects whoever is standing nearby too`, ART.mint);
+  } else if (mech === "target") {
+    mkFx("ring", { x: c.x, y: c.y, r0: c.r + 2, r: c.r + 12, dur: 0.5, col: ART.violet, a0: 0.7 });
+    witness("mic", `${d.n} reaches ${c.col.name} perfectly well: the target it binds has been modified, so it binds nothing`, ART.violet);
+  } else if (mech === "porin") {
+    mkFx("ring", { x: c.x, y: c.y, r0: c.r + 6, r: c.r + 7, dur: 0.6, col: ART.sand, a0: 0.8, w: 3 });
+    witness("mic", `${c.col.name} has shut the porin ${d.n} used to get in: the drug never reaches the periplasm`, ART.sand);
+  }
+}
+/* a small dormant subpopulation appears whenever a course starts */
+function seedPersisters() {
+  for (const col of S.cols) {
+    const live = alive(col).filter((c) => !c.virion); if (!live.length) continue;
+    const base = col.fl.persist ? 0.1 : 0.004;
+    let any = false;
+    for (const c of live) { c.persist = rnd() < base; if (c.persist) any = true; }
+    // a colony that has actually invested in the switch always keeps one cell asleep
+    if (!any && col.fl.persist) pick(live).persist = true;
+  }
+}
+/* spores germinate only when the bile acid signal says the community is gone */
+function tryGerminate(c) {
+  const col = c.col;
+  let converters = 0;
+  near(c.x, c.y, 320, (o) => { if (o.kind === "cell" && !o.virion && o.col !== col && o.col.fl.bsh) converters++; });
+  const blocked = converters >= 2 || c.suppress;
+  noteGerminate(c, blocked);
+  return !blocked;
+}
 /* ---------- input ---------- */
 const keys = {}, PTRS = new Map();
 window.addEventListener("keydown", (e) => {
@@ -1491,6 +1873,7 @@ window.addEventListener("keydown", (e) => {
   if (k === " ") { e.preventDefault(); useAbility(S.player, "sp"); }
   if (k === "q") useAbility(S.player, "ult");
   if (k === "g") { if ($("gpick").classList.contains("show")) closeGene(); else openGene(); }
+  if (k === "c") openPause("codex");
   if (/^[1-6]$/.test(k)) spendPt(S.player, STATS[+k - 1].k);
   if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
 });
@@ -1641,6 +2024,7 @@ function engulf(pred, prey) {
   const col = pred.col, PC = SP(prey.col), dur = prey.virion ? 0.6 : (1.6 + prey.mass / 14) / (uptake(col) / 3) * (prey.col.fl.capsule ? 1.8 : 1);
   pred.vac.push({ m: prey.mass * 0.85, left: prey.mass * 0.85, dur, col: PC.col, r: prey.r, ang: rnd() * TAU, d: R(0.2, 0.5) });
   if (col === S.player) sfx("engulf");
+  noteGraze(pred, prey);
   die(prey, "engulf", col);
 }
 function pairCells(a, b, dx, dy, d, dt) {
@@ -1666,14 +2050,16 @@ function pairCells(a, b, dx, dy, d, dt) {
   // contact weapons
   if (a.col.fl.t6ss && A.tags.includes("bacteria") && B.tags.includes("bacteria")) damage(b, 8 * dt, a.col, "t6ss");
   if (b.col.fl.t6ss && B.tags.includes("bacteria") && A.tags.includes("bacteria")) damage(a, 8 * dt, b.col, "t6ss");
+  contactInter(a, b, A, B, dt);
   // lactic acid bacteria suppress fungi on contact
   if (A.guild === "lab" && B.guild === "fungus") damage(b, 4 * dt * secretion(a.col), a.col, "acid");
   if (B.guild === "lab" && A.guild === "fungus") damage(a, 4 * dt * secretion(b.col), b.col, "acid");
-  // conjugation: resistance genes move between bacteria in contact
+  // conjugation: a pilus extends, grips and retracts before any DNA moves
   if (A.tags.includes("bacteria") && B.tags.includes("bacteria") && rnd() < dt * 0.25) {
     const aRes = a.col.genes.filter((g) => RES_GENES.includes(g)), bRes = b.col.genes.filter((g) => RES_GENES.includes(g));
     const from = aRes.length > bRes.length ? a.col : bRes.length > aRes.length ? b.col : null;
-    if (from) { const to = from === a.col ? b.col : a.col, g = pick(from.genes.filter((q) => RES_GENES.includes(q) && !to.genes.includes(q) && canCarry(to, q)) || []); if (g && addGene(to, g, to !== S.player)) { burst((a.x + b.x) / 2, (a.y + b.y) / 2, "#7fd7ff", 5, 2); if (to === S.player || from === S.player) feedMsg(`${from.name} conjugated ${GENES[g].n} into ${to.name}`, "#7fd7ff"); } }
+    if (from) { const to = from === a.col ? b.col : a.col, fc = from === a.col ? a : b, tc = from === a.col ? b : a;
+      if (conjugate(from, to, fc, tc) && (to === S.player || from === S.player)) burst((a.x + b.x) / 2, (a.y + b.y) / 2, "#7fd7ff", 5, 2); }
   }
   // colonisation resistance: dense commensals suppress spore germination
   if (A.guild === "spore" && isCommensal(b.col)) a.suppress = 1;
@@ -2390,17 +2776,21 @@ function titleStats() {
 }
 /* ---------- pause panel ---------- */
 let PTAB = "you";
-function openPause(tab) { if (S) S.paused = true; PTAB = tab || PTAB; renderPause(); show("pause"); }
+function openPause(tab) { if (S) S.paused = true; PTAB = tab || PTAB; if (PTAB === "codex" && S) S.newCodex = 0; renderPause(); show("pause"); }
 function closePause() { if (S) S.paused = false; hide("pause"); if (!S || S.over) { } }
 function quitRun() { hide("pause"); if (S) S.paused = false; toTitle(); }
 function renderPause() {
-  const tabs = [["you", "Colony"], ["strain", "Strain"], ["eco", "Ecosystem"], ["how", "How to play"], ["set", "Settings"]];
-  $("ptabs").innerHTML = tabs.map(([k, n]) => `<button class="btn sm ${PTAB === k ? "on" : ""}" onclick="PTAB='${k}';renderPause()">${n}</button>`).join("");
+  const nw = S && S.newCodex ? ` <span class="tag">${S.newCodex} new</span>` : "";
+  const tabs = S ? [["you", "Colony"], ["strain", "Strain"], ["eco", "Ecosystem"], ["codex", "Field guide" + nw], ["how", "How to play"], ["set", "Settings"]]
+                 : [["codex", "Field guide"], ["how", "How to play"], ["set", "Settings"]];
+  if (!tabs.some(([k]) => k === PTAB)) PTAB = tabs[0][0];
+  $("ptabs").innerHTML = tabs.map(([k, n]) => `<button class="btn sm ${PTAB === k ? "on" : ""}" onclick="PTAB='${k}';if(PTAB==='codex'&&S)S.newCodex=0;renderPause()">${n}</button>`).join("");
   $("pbody").innerHTML = pauseBody();
   $("presume").style.display = S && !S.over ? "" : "none";
 }
 function pauseBody() {
   const P = S && S.player;
+  if (PTAB === "codex") return codexBody();
   if (PTAB === "set") return `<div class="kv">
       <b>SOUND</b><div><button class="btn sm ${PREFS.sfx ? "" : "off"}" onclick="PREFS.sfx=!PREFS.sfx;savePrefs();renderPause()">${PREFS.sfx ? "On" : "Off"}</button></div>
       <b>MUSIC</b><div><button class="btn sm ${PREFS.music ? "" : "off"}" onclick="PREFS.music=!PREFS.music;savePrefs();music(PREFS.music);renderPause()">${PREFS.music ? "On" : "Off"}</button></div>

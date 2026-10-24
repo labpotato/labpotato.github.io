@@ -201,141 +201,141 @@ const SPECIES = {};
 function sp(id, o) {
   SPECIES[id] = Object.assign({ id, col: "#9fd3ff", shape: "rod", flag: null, guild: "commensal", tags: ["bacteria"], o2: 0.2, eats: ["sugar"], makes: null, baseMass: 12, minMass: 6, maxMass: 42, spd: 165, absorb: 1, engulf: 0, host: null, burst: 0, latent: 0, zoom: 1, genes: [], playable: 1 }, o);
 }
-sp("btheta", { n: "Bacteroides thetaiotaomicron", short: "B. theta", col: "#8ef0a0", shape: "rod", flag: null, guild: "fibre", tags: ["bacteria", "commensal"], o2: 0.1, eats: ["fibre", "starch", "mucin", "sugar"], makes: "acetate", baseMass: 14, maxMass: 48, spd: 150, absorb: 1.3,
+sp("btheta", { n: "Bacteroides thetaiotaomicron", short: "B. theta", col: "#8fff6a", shape: "rod", flag: null, guild: "fibre", tags: ["bacteria", "commensal"], o2: 0.1, eats: ["fibre", "starch", "mucin", "sugar"], makes: "acetate", baseMass: 14, maxMass: 48, spd: 150, absorb: 1.3,
   sp: "pul", ult: "t6ss", genes: ["pul2", "capsule", "t6ss", "bsh", "mucinase", "sod", "efflux", "tet", "adhesin", "quorum", "crispr", "siderophore"],
   niche: "Fibre fermenter of the colon: carries dozens of gene clusters for breaking down plant polysaccharides.", eatenBy: "Phages, protist grazers, antibiotic courses.",
   fact: "The B. theta genome carries 88 polysaccharide utilisation loci and over 250 carbohydrate-active enzymes, each tuned to a different glycan.", d: "The workhorse fibre degrader. Feeds half the neighbourhood acetate, and stabs competitors with a type VI secretion system." });
-sp("faecali", { n: "Faecalibacterium prausnitzii", short: "F. prausnitzii", col: "#a8e6cf", shape: "rod", guild: "scfa", tags: ["bacteria", "commensal"], o2: 0.02, eats: ["acetate", "fibre", "sugar"], makes: "butyrate", baseMass: 12, maxMass: 40, spd: 140,
+sp("faecali", { n: "Faecalibacterium prausnitzii", short: "F. prausnitzii", col: "#5ef0b0", shape: "rod", guild: "scfa", tags: ["bacteria", "commensal"], o2: 0.02, eats: ["acetate", "fibre", "sugar"], makes: "butyrate", baseMass: 12, maxMass: 40, spd: 140,
   sp: "butyr", ult: "scfaBloom", genes: ["butyr2", "sod", "catalase", "adhesin", "quorum", "bacteriocin", "biofilm", "crispr", "erm", "efflux"],
   niche: "Butyrate producer; one of the most abundant species in a healthy colon and extremely oxygen-sensitive.", eatenBy: "Oxygen, antibiotics, inflammation.",
   fact: "F. prausnitzii takes up acetate and makes butyrate, the main fuel of colonocytes; it survives the oxic–anoxic interface with an extracellular shuttle of flavins and cysteine.", d: "Strict anaerobe. Makes the butyrate that keeps the epithelium healthy and the lumen anaerobic. Fragile near the wall without oxygen defences." });
-sp("akk", { n: "Akkermansia muciniphila", short: "Akkermansia", col: "#bfe6f2", shape: "coccus", guild: "mucus", tags: ["bacteria", "commensal"], o2: 0.18, eats: ["mucin", "sugar", "peptide"], makes: "acetate", baseMass: 13, maxMass: 44, spd: 150, absorb: 1.2,
+sp("akk", { n: "Akkermansia muciniphila", short: "Akkermansia", col: "#5ee7f5", shape: "coccus", guild: "mucus", tags: ["bacteria", "commensal"], o2: 0.18, eats: ["mucin", "sugar", "peptide"], makes: "acetate", baseMass: 13, maxMass: 44, spd: 150, absorb: 1.2,
   sp: "mucinase", ult: "mucusBloom", genes: ["mucinase2", "adhesin", "sod", "capsule", "iga", "quorum", "bsh", "crispr", "efflux", "biofilm"],
   niche: "Lives in the mucus layer and grazes on mucin, which keeps goblet cells producing more of it.", eatenBy: "Mucus thinning, phages, antibiotics.",
   fact: "Akkermansia is the only abundant gut member of the phylum Verrucomicrobiota; it makes up 1–4% of the community and tracks with a thicker mucus layer.", d: "Mucus specialist. Eats the barrier, and makes the host build more of it. Safe where lumen-dwellers cannot follow." });
-sp("bifido", { n: "Bifidobacterium longum", short: "Bifidobacterium", col: "#f2e394", shape: "bifid", guild: "lab", tags: ["bacteria", "commensal"], o2: 0.12, eats: ["sugar", "fibre", "mucin"], makes: "acetate", baseMass: 11, maxMass: 38, spd: 160,
+sp("bifido", { n: "Bifidobacterium longum", short: "Bifidobacterium", col: "#ffc84a", shape: "bifid", guild: "lab", tags: ["bacteria", "commensal"], o2: 0.12, eats: ["sugar", "fibre", "mucin"], makes: "acetate", baseMass: 11, maxMass: 38, spd: 160,
   sp: "acidify", ult: "bloom", genes: ["acidtol", "adhesin", "bacteriocin", "pul2", "quorum", "biofilm", "sod", "efflux", "erm", "crispr"],
   niche: "First coloniser of the infant gut; lives on milk oligosaccharides and plant sugars.", eatenBy: "Acid stress, bile, antibiotics.",
   fact: "Bifidobacteria run the fructose-6-phosphate shunt, the 'bifid shunt', which yields more acetate per sugar than classical glycolysis.", d: "Y-shaped and fast growing. Floods the field with acetate and acid, which commensals love and pathogens do not." });
-sp("lacto", { n: "Lactobacillus reuteri", short: "Lactobacillus", col: "#ffc6e0", shape: "rod", guild: "lab", tags: ["bacteria", "commensal"], o2: 0.3, eats: ["sugar", "peptide"], makes: "lactate", baseMass: 11, maxMass: 36, spd: 170,
+sp("lacto", { n: "Lactobacillus reuteri", short: "Lactobacillus", col: "#ff8fb8", shape: "rod", guild: "lab", tags: ["bacteria", "commensal"], o2: 0.3, eats: ["sugar", "peptide"], makes: "lactate", baseMass: 11, maxMass: 36, spd: 170,
   sp: "bacteriocin", ult: "probiotic", genes: ["bacteriocin2", "acidtol", "adhesin", "bsh", "biofilm", "sod", "quorum", "erm", "efflux", "crispr"],
   niche: "Lactic acid bacterium of the small intestine; suppresses fungi and keeps the pH down.", eatenBy: "Bile, flow, antibiotics.",
   fact: "Some Lactobacillus strains secrete reuterin, a broad-spectrum antimicrobial made from glycerol.", d: "Acid and bacteriocins. Holds down Candida and pathogens; weak against anything that tolerates acid." });
-sp("ecoli", { n: "Escherichia coli (commensal)", short: "E. coli", col: "#9be37a", shape: "rod", flag: "peri", guild: "entero", tags: ["bacteria", "entero", "coli", "commensal"], o2: 0.85, eats: ["sugar", "peptide", "mucin"], makes: null, baseMass: 12, maxMass: 42, spd: 190,
+sp("ecoli", { n: "Escherichia coli (commensal)", short: "E. coli", col: "#c8f05a", shape: "rod", flag: "peri", guild: "entero", tags: ["bacteria", "entero", "coli", "commensal"], o2: 0.85, eats: ["sugar", "peptide", "mucin"], makes: null, baseMass: 12, maxMass: 42, spd: 190,
   sp: "divide", ult: "nitrate", genes: ["catalase", "sod", "siderophore", "flagella", "adhesin", "bla", "tet", "efflux", "capsule", "crispr", "rm", "colicin"],
   niche: "Facultative anaerobe. A minority in health, but it blooms whenever the gut becomes inflamed and oxygenated.", eatenBy: "Phages (it is the favourite host), colicins, competition.",
   fact: "E. coli can respire nitrate produced during inflammation, an advantage no strict anaerobe can match.", d: "The generalist. Breathes oxygen near the wall, respires nitrate when the gut inflames, and divides faster than almost anything." });
-sp("ehec", { n: "Enterohaemorrhagic E. coli", short: "EHEC", col: "#ff8a5c", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "coli", "patho"], o2: 0.85, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 185,
+sp("ehec", { n: "Enterohaemorrhagic E. coli", short: "EHEC", col: "#ff5d6c", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "coli", "patho"], o2: 0.85, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 185,
   sp: "shiga", ult: "storm", genes: ["adhesin2", "catalase", "siderophore", "bla", "efflux", "flagella", "capsule", "rm", "iga", "tet"],
   niche: "Attaches to the epithelium and wrecks it with a phage-encoded toxin.", eatenBy: "Immune response, commensal competition, phages.",
   fact: "The Shiga toxin of EHEC is carried by a lysogenic phage; antibiotics that induce the phage can make the illness worse.", d: "Pathogen. Lives off the damage it causes, but every toxin pulse brings the immune system closer." });
-sp("salmonella", { n: "Salmonella enterica", short: "Salmonella", col: "#ffb347", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 180,
+sp("salmonella", { n: "Salmonella enterica", short: "Salmonella", col: "#ff9345", shape: "rod", flag: "peri", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "debris"], baseMass: 13, maxMass: 44, spd: 180,
   sp: "t3ss", ult: "nitrate", genes: ["t3ss2", "catalase", "siderophore", "efflux", "bla", "flagella", "capsule", "iga", "persister", "tet"],
   niche: "Invades epithelial cells, triggers inflammation, then outgrows the commensals in the mess it made.", eatenBy: "Immune cells, colonisation resistance, phages.",
   fact: "Salmonella uses inflammation to its own advantage: the tetrathionate the host produces is a respiratory electron acceptor only it can use.", d: "Invader. Hides inside host cells to heal, and turns the host's own inflammation into a food supply." });
-sp("cdiff", { n: "Clostridioides difficile", short: "C. difficile", col: "#e6d28a", shape: "rod", flag: "peri", guild: "spore", tags: ["bacteria", "patho", "spore"], o2: 0.05, eats: ["peptide", "sugar", "debris"], baseMass: 14, maxMass: 46, spd: 145,
+sp("cdiff", { n: "Clostridioides difficile", short: "C. difficile", col: "#e0b84a", shape: "rod", flag: "peri", guild: "spore", tags: ["bacteria", "patho", "spore"], o2: 0.05, eats: ["peptide", "sugar", "debris"], baseMass: 14, maxMass: 46, spd: 145,
   sp: "toxinAB", ult: "sporewave", genes: ["sporulation", "persister", "adhesin", "efflux", "erm", "flagella", "quorum", "iga", "tet", "bsh"],
   niche: "Waits as a spore. Germinates when antibiotics have cleared the commensals that normally hold it back.", eatenBy: "Colonisation resistance, secondary bile acids, faecal transplant.",
   fact: "The primary bile acid taurocholate germinates C. difficile spores; secondary bile acids (deoxycholate) made by Clostridium scindens via 7α-dehydroxylation block growth. That is why a faecal transplant works.", d: "Opportunist. Weak in a healthy gut, unstoppable after an antibiotic course. Spores survive what kills everything else." });
-sp("entero", { n: "Enterococcus faecalis", short: "Enterococcus", col: "#c9b3ff", shape: "chain", guild: "patho", tags: ["bacteria", "patho"], o2: 0.6, eats: ["peptide", "sugar", "debris"], baseMass: 12, maxMass: 40, spd: 155,
+sp("entero", { n: "Enterococcus faecalis", short: "Enterococcus", col: "#cf8cff", shape: "chain", guild: "patho", tags: ["bacteria", "patho"], o2: 0.6, eats: ["peptide", "sugar", "debris"], baseMass: 12, maxMass: 40, spd: 155,
   sp: "bacteriocin", ult: "vre", genes: ["van", "erm", "efflux", "biofilm", "adhesin", "persister", "catalase", "quorum", "tet", "iga"],
   niche: "Tough, tolerant and happy to acquire resistance genes from anything nearby.", eatenBy: "Competition, phages.",
   fact: "The vanA operon retools the cell-wall precursor from D-Ala-D-Ala to D-Ala-D-Lac, cutting vancomycin binding about a thousandfold.", d: "Survivor. Tolerates bile, acid and salt, and collects resistance genes like stamps." });
-sp("kleb", { n: "Klebsiella pneumoniae", short: "Klebsiella", col: "#8fe3ff", shape: "rod", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "iron"], baseMass: 14, maxMass: 48, spd: 165,
+sp("kleb", { n: "Klebsiella pneumoniae", short: "Klebsiella", col: "#4fd4e8", shape: "rod", guild: "patho", tags: ["bacteria", "entero", "patho"], o2: 0.8, eats: ["sugar", "peptide", "iron"], baseMass: 14, maxMass: 48, spd: 165,
   sp: "capsuleUp", ult: "fortress", genes: ["carb", "bla", "capsule2", "siderophore2", "efflux", "biofilm", "adhesin", "rm", "iga", "tet"],
   niche: "Thick capsule, hungry for iron, and a frequent carrier of carbapenem resistance.", eatenBy: "Phages that recognise its capsule, competition for iron.",
   fact: "Klebsiella's capsule blocks phagocytosis and many phages; hypervirulent strains make so much of it the colonies string out when touched.", d: "Armoured. Hard to kill, hard to starve, and drug courses barely scratch it." });
-sp("hpylori", { n: "Helicobacter pylori", short: "H. pylori", col: "#d9b36a", shape: "spiral", flag: "polar", guild: "patho", tags: ["bacteria", "patho"], o2: 0.45, eats: ["peptide", "mucin", "debris"], baseMass: 12, maxMass: 38, spd: 185,
+sp("hpylori", { n: "Helicobacter pylori", short: "H. pylori", col: "#d9b35c", shape: "spiral", flag: "polar", guild: "patho", tags: ["bacteria", "patho"], o2: 0.45, eats: ["peptide", "mucin", "debris"], baseMass: 12, maxMass: 38, spd: 185,
   sp: "urease", ult: "fortress", genes: ["urease2", "adhesin", "catalase", "iga", "efflux", "flagella", "mucinase", "bla", "persister", "tet"],
   niche: "Corkscrews through mucus and neutralises acid around itself with ammonia.", eatenBy: "Immune response, antibiotic triple therapy.",
   fact: "H. pylori's urease converts urea into ammonia, raising the pH of its immediate surroundings enough to survive the stomach.", d: "Spiral and fast. Buffers the acid around it, lives deep in mucus where few others go." });
-sp("vibrio", { n: "Vibrio cholerae", short: "V. cholerae", col: "#a5f0c8", shape: "vibrio", flag: "polar", guild: "patho", tags: ["bacteria", "patho"], o2: 0.7, eats: ["sugar", "peptide", "mucin"], baseMass: 12, maxMass: 40, spd: 230,
+sp("vibrio", { n: "Vibrio cholerae", short: "V. cholerae", col: "#6effc8", shape: "vibrio", flag: "polar", guild: "patho", tags: ["bacteria", "patho"], o2: 0.7, eats: ["sugar", "peptide", "mucin"], baseMass: 12, maxMass: 40, spd: 230,
   sp: "ctx", ult: "storm", genes: ["flagella2", "adhesin", "mucinase", "quorum", "bla", "efflux", "iga", "catalase", "biofilm", "rm"],
   niche: "Colonises the small intestine, then makes the host flush everything else away.", eatenBy: "Bile, competition, phages.",
   fact: "Cholera toxin locks adenylate cyclase on, and the resulting secretion carries the bacteria onward to the next host.", d: "The fastest swimmer here. Its toxin turns the gut into a river that washes away its competitors." });
-sp("candida", { n: "Candida albicans", short: "Candida", col: "#f6e7b0", shape: "yeast", guild: "fungus", tags: ["fungus"], o2: 0.6, eats: ["sugar", "peptide", "debris"], baseMass: 24, minMass: 12, maxMass: 110, spd: 95, absorb: 1.7,
+sp("candida", { n: "Candida albicans", short: "Candida", col: "#ffe6a8", shape: "yeast", guild: "fungus", tags: ["fungus"], o2: 0.6, eats: ["sugar", "peptide", "debris"], baseMass: 24, minMass: 12, maxMass: 110, spd: 95, absorb: 1.7,
   sp: "hyphal", ult: "hyphaNet", genes: ["hyphal2", "biofilm", "adhesin", "efflux", "azole", "catalase", "iga", "persister", "capsule", "acidtol"],
   niche: "Yeast in a healthy gut, filamentous invader when the bacteria that hold it back are gone.", eatenBy: "Lactobacillus, acid, competition for sugar.",
   fact: "The yeast-to-hypha switch is Candida's key virulence trait; mutants locked in either form are much less invasive.", d: "Switches between a harmless yeast and an invasive hyphal network. Antibiotics clear its competition, not it." });
-sp("boulardii", { n: "Saccharomyces boulardii", short: "S. boulardii", col: "#ffe2a8", shape: "yeast", guild: "fungus", tags: ["fungus", "commensal"], o2: 0.65, eats: ["sugar", "fibre", "peptide"], baseMass: 22, minMass: 11, maxMass: 95, spd: 100, absorb: 1.8,
+sp("boulardii", { n: "Saccharomyces boulardii", short: "S. boulardii", col: "#ffd98f", shape: "yeast", guild: "fungus", tags: ["fungus", "commensal"], o2: 0.65, eats: ["sugar", "fibre", "peptide"], baseMass: 22, minMass: 11, maxMass: 95, spd: 100, absorb: 1.8,
   sp: "bind", ult: "probiotic", genes: ["adhesin", "acidtol", "bsh", "biofilm", "efflux", "catalase", "iga", "azole", "persister", "hyphal2"],
   niche: "A probiotic yeast: binds pathogens to its surface and is untouched by antibacterial drugs.", eatenBy: "Flow: it does not colonise permanently.",
   fact: "S. boulardii is a thermotolerant strain of S. cerevisiae used clinically against antibiotic-associated diarrhoea.", d: "The medic. Mops up toxins, binds pathogens, heals commensals, and shrugs off every antibacterial event." });
-sp("msmithii", { n: "Methanobrevibacter smithii", short: "M. smithii", col: "#dfe9ff", shape: "coccus", guild: "archaea", tags: ["archaea", "commensal"], o2: 0.02, eats: ["h2", "acetate"], baseMass: 11, maxMass: 36, spd: 130,
+sp("msmithii", { n: "Methanobrevibacter smithii", short: "M. smithii", col: "#a8c8ff", shape: "coccus", guild: "archaea", tags: ["archaea", "commensal"], o2: 0.02, eats: ["h2", "acetate"], baseMass: 11, maxMass: 36, spd: 130,
   sp: "methan", ult: "scfaBloom", genes: ["sod", "adhesin", "quorum", "biofilm", "catalase", "efflux", "crispr", "persister", "bsh", "pul2"],
   niche: "The dominant archaeon of the human gut: it disposes of the hydrogen that fermenters produce.", eatenBy: "Oxygen, flow, antibiotics that hit the community it depends on.",
   fact: "By consuming hydrogen, methanogens keep fermentation thermodynamically favourable for everyone else in the colon.", d: "The hydrogen sink. Grows on the waste gas of fermenters and makes them all work faster." });
-sp("entamoeba", { n: "Entamoeba histolytica", short: "Entamoeba", col: "#f2e6a7", shape: "amoeba", guild: "protist", tags: ["protist"], o2: 0.25, eats: ["debris", "peptide", "sugar"], engulf: 0.85, baseMass: 70, minMass: 32, maxMass: 900, spd: 110,
+sp("entamoeba", { n: "Entamoeba histolytica", short: "Entamoeba", col: "#f0d98c", shape: "amoeba", guild: "protist", tags: ["protist"], o2: 0.25, eats: ["debris", "peptide", "sugar"], engulf: 0.85, baseMass: 70, minMass: 32, maxMass: 900, spd: 110,
   sp: "pseudo", ult: "engulfStorm", genes: ["adhesin", "persister", "efflux", "iga", "catalase", "acidtol", "biofilm", "capsule", "quorum", "sod"],
   niche: "A grazing protist that eats bacteria whole and chews through the epithelium when it gets the chance.", eatenBy: "Immune cells, flow.",
   fact: "Entamoeba kills host cells by trogocytosis: it bites off pieces of them until they die.", d: "The grazer. Swallows bacteria whole; nothing smaller than it is safe." });
-sp("lambda", { n: "Temperate phage λ", short: "λ phage", col: "#b388ff", shape: "lambda", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "coli", burst: 9, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 115, zoom: 1.8,
+sp("lambda", { n: "Temperate phage λ", short: "λ phage", col: "#b98cff", shape: "lambda", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "coli", burst: 9, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 115, zoom: 1.8,
   sp: "attach", ult: "massLyso", genes: ["burst2", "hostrange", "lysoStable", "toxgene", "antiCRISPR", "tailfib", "latentFast", "capsid", "integrase", "superinf"],
   niche: "Infects E. coli and can integrate instead of killing: the host carries you and fights for you.", eatenBy: "CRISPR and restriction systems; hosts dying to something else.",
   fact: "A lysogen is immune to further infection by the same phage, and can gain genes from it: that is how EHEC got its toxin.", d: "The passenger. Turn E. coli into allies that carry your genome, then induce them all at once." });
-sp("crass", { n: "crAss-like lytic phage", short: "crAssphage", col: "#c9b3ff", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "bacteroides", burst: 14, latent: 5.5, baseMass: 1, minMass: 1, maxMass: 1, spd: 120, zoom: 1.8,
+sp("crass", { n: "crAss-like lytic phage", short: "crAssphage", col: "#cfa8ff", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "bacteroides", burst: 14, latent: 5.5, baseMass: 1, minMass: 1, maxMass: 1, spd: 120, zoom: 1.8,
   sp: "attach", ult: "lyticBloom", genes: ["burst2", "hostrange", "latentFast", "antiCRISPR", "tailfib", "capsid", "superinf", "burst3", "stability", "adsorb"],
   niche: "The most abundant virus in the human gut, and it lives on Bacteroides.", eatenBy: "Host defences, running out of hosts.",
   fact: "crAssphage was discovered in 2014 by assembling it out of faecal sequence data; it is present in about half of all people.", d: "Pure lysis. Multiply through the dominant fibre degraders until nothing is left to infect." });
 SPECIES.btheta.tags.push("bacteroides");
 /* ---------- generic starter forms: what each broad type looks like before it specialises ---------- */
-sp("g_gramneg", { n: "Generic Gram-negative rod", short: "Gram-negative", col: "#aee89a", shape: "rod", flag: "peri", guild: "entero", tags: ["bacteria", "gramneg"], o2: 0.6, eats: ["sugar", "peptide"], baseMass: 12, maxMass: 40, spd: 180, grow: 1.2,
+sp("g_gramneg", { n: "Generic Gram-negative rod", short: "Gram-negative", col: "#9fd98a", shape: "rod", flag: "peri", guild: "entero", tags: ["bacteria", "gramneg"], o2: 0.6, eats: ["sugar", "peptide"], baseMass: 12, maxMass: 40, spd: 180, grow: 1.2,
   sp: "divide", ult: "adapt", genes: ["catalase", "sod", "efflux", "bla", "tet", "adhesin", "flagella", "siderophore", "capsule", "biofilm"], playable: 0, starter: 1,
   niche: "A thin wall wrapped in an outer membrane. A generalist until it commits to a niche.", eatenBy: "Phages, grazers, antibiotics.",
   fact: "The outer membrane is the Gram-negative signature: it keeps large drugs like vancomycin out entirely.", d: "The generic Gram-negative. Divides fast on simple sugars. Choose a lineage at level 5." });
-sp("g_grampos", { n: "Generic Gram-positive cell", short: "Gram-positive", col: "#cbb8f0", shape: "rod", thickwall: 1, guild: "lab", tags: ["bacteria", "grampos"], o2: 0.4, eats: ["sugar", "peptide"], baseMass: 12, maxMass: 38, spd: 150, grow: 1.1,
+sp("g_grampos", { n: "Generic Gram-positive cell", short: "Gram-positive", col: "#c9a8e8", shape: "rod", thickwall: 1, guild: "lab", tags: ["bacteria", "grampos"], o2: 0.4, eats: ["sugar", "peptide"], baseMass: 12, maxMass: 38, spd: 150, grow: 1.1,
   sp: "divide", ult: "adapt", genes: ["acidtol", "adhesin", "bacteriocin", "biofilm", "sod", "efflux", "erm", "quorum", "persister", "iga"], playable: 0, starter: 1,
   niche: "A thick peptidoglycan wall and no outer membrane. Tough, but exposed to vancomycin.", eatenBy: "Phages, antibiotics, acid.",
   fact: "Vancomycin works only on Gram-positives: it binds the cell-wall precursor the thick wall is built from.", d: "The generic Gram-positive. Aerotolerant and hardy. Choose a lineage at level 5." });
-sp("g_arch", { n: "Generic methanogen", short: "Archaeon", col: "#d4e0ff", shape: "coccus", guild: "archaea", tags: ["archaea"], o2: 0.03, eats: ["h2", "acetate"], baseMass: 11, maxMass: 34, spd: 125, grow: 0.7,
+sp("g_arch", { n: "Generic methanogen", short: "Archaeon", col: "#b8c8ea", shape: "coccus", guild: "archaea", tags: ["archaea"], o2: 0.03, eats: ["h2", "acetate"], baseMass: 11, maxMass: 34, spd: 125, grow: 0.7,
   sp: "methan", ult: "adapt", genes: ["sod", "adhesin", "quorum", "biofilm", "catalase", "efflux", "crispr", "persister"], playable: 0, starter: 1,
   niche: "A different domain of life. In the gut, archaea live on the hydrogen that fermenters give off.", eatenBy: "Oxygen, flow, losing the fermenters it depends on.",
   fact: "Archaea have ether-linked membranes and are the only organisms that make methane.", d: "The generic archaeon. Strict anaerobe, slow grower. Choose a methanogen at level 5." });
-sp("g_fungus", { n: "Generic yeast", short: "Fungus", col: "#f3e6b8", shape: "yeast", guild: "fungus", tags: ["fungus"], o2: 0.6, eats: ["sugar", "peptide"], baseMass: 20, minMass: 10, maxMass: 90, spd: 100, absorb: 1.6, grow: 0.8,
+sp("g_fungus", { n: "Generic yeast", short: "Fungus", col: "#edd9a8", shape: "yeast", guild: "fungus", tags: ["fungus"], o2: 0.6, eats: ["sugar", "peptide"], baseMass: 20, minMass: 10, maxMass: 90, spd: 100, absorb: 1.6, grow: 0.8,
   sp: "bud", ult: "adapt", genes: ["adhesin", "biofilm", "efflux", "azole", "catalase", "acidtol", "iga", "persister", "capsule", "hyphal2"], playable: 0, starter: 1,
   niche: "A walled eukaryote that secretes enzymes and absorbs the digest. Blooms when its bacterial rivals are cleared.", eatenBy: "Lactic acid bacteria, competition for sugar.",
   fact: "Fungi are a small fraction of the gut, but antibiotics that clear the bacteria let them expand.", d: "The generic yeast. Buds slowly, absorbs widely. Choose a lineage at level 5." });
-sp("g_protist", { n: "Generic amoeboid protist", short: "Protist", col: "#f3e8ac", shape: "amoeba", guild: "protist", tags: ["protist"], o2: 0.25, eats: ["debris", "peptide", "sugar"], engulf: 0.6, baseMass: 60, minMass: 28, maxMass: 700, spd: 115, grow: 0.7,
+sp("g_protist", { n: "Generic amoeboid protist", short: "Protist", col: "#ded0a0", shape: "amoeba", guild: "protist", tags: ["protist"], o2: 0.25, eats: ["debris", "peptide", "sugar"], engulf: 0.6, baseMass: 60, minMass: 28, maxMass: 700, spd: 115, grow: 0.7,
   sp: "pseudo", ult: "adapt", genes: ["adhesin", "persister", "efflux", "iga", "catalase", "acidtol", "biofilm", "capsule", "quorum", "sod"], playable: 0, starter: 1,
   niche: "A large eukaryotic cell that engulfs bacteria whole. It dwarfs anything it hunts.", eatenBy: "Immune cells, flow.",
   fact: "A gut protist is ten to fifty times the length of the bacteria it eats.", d: "The generic protist. Big, slow, and always hungry. Choose a lineage at level 5." });
-sp("g_phage", { n: "Generic coliphage", short: "Phage", col: "#c3b0ef", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "entero", burst: 8, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 118, zoom: 1.8, grow: 1,
+sp("g_phage", { n: "Generic coliphage", short: "Phage", col: "#b49ae0", shape: "phage", guild: "phage", tags: ["virion"], o2: 1, eats: [], host: "entero", burst: 8, latent: 7, baseMass: 1, minMass: 1, maxMass: 1, spd: 118, zoom: 1.8, grow: 1,
   sp: "attach", ult: "adapt", genes: ["burst2", "latentFast", "tailfib", "antiCRISPR", "capsid", "superinf"], playable: 0, starter: 1,
   niche: "A virus of bacteria, far smaller than its host. Inject, replicate inside, burst the cell open.", eatenBy: "CRISPR and restriction systems; running out of hosts.",
   fact: "Phages outnumber bacteria in the gut and set which species can dominate.", d: "The generic phage. Broad host range across Enterobacteriaceae. Narrow it at level 5." });
 /* a second methanogen and a second protist, so every branch has a real choice */
-sp("mstadt", { n: "Methanosphaera stadtmanae", short: "M. stadtmanae", col: "#c9d6f2", shape: "coccus", guild: "archaea", tags: ["archaea", "commensal"], o2: 0.02, eats: ["h2", "sugar"], baseMass: 10, maxMass: 30, spd: 135, grow: 0.75,
+sp("mstadt", { n: "Methanosphaera stadtmanae", short: "M. stadtmanae", col: "#8fb0f0", shape: "coccus", guild: "archaea", tags: ["archaea", "commensal"], o2: 0.02, eats: ["h2", "sugar"], baseMass: 10, maxMass: 30, spd: 135, grow: 0.75,
   sp: "methan", ult: "scfaBloom", genes: ["sod", "adhesin", "quorum", "biofilm", "catalase", "efflux", "crispr", "persister", "acidtol", "bsh"],
   niche: "A methylotrophic methanogen: it reduces methanol with hydrogen, so it depends on pectin-degraders for its methanol.", eatenBy: "Oxygen, flow, losing its methanol suppliers.",
   fact: "Unlike M. smithii, M. stadtmanae cannot use CO₂; it needs methanol, which it gets from bacteria breaking down pectin.", d: "The specialist methanogen. Faster but fussier than M. smithii, and tied to the fibre fermenters." });
-sp("blasto", { n: "Blastocystis sp.", short: "Blastocystis", col: "#e6dca8", shape: "vacuolar", guild: "protist", tags: ["protist", "commensal"], o2: 0.15, eats: ["debris", "peptide", "sugar", "bile"], engulf: 0.5, baseMass: 80, minMass: 36, maxMass: 1100, spd: 90, grow: 0.7,
+sp("blasto", { n: "Blastocystis sp.", short: "Blastocystis", col: "#e8dcb0", shape: "vacuolar", guild: "protist", tags: ["protist", "commensal"], o2: 0.15, eats: ["debris", "peptide", "sugar", "bile"], engulf: 0.5, baseMass: 80, minMass: 36, maxMass: 1100, spd: 90, grow: 0.7,
   sp: "pseudo", ult: "fortress", genes: ["adhesin", "persister", "efflux", "iga", "biofilm", "capsule", "bsh", "acidtol", "catalase", "sod"],
   niche: "The most common protist in the human gut: a big vacuolated cell, usually a harmless colonist of the colon.", eatenBy: "Immune cells, flow.",
   fact: "Blastocystis is found in roughly half of healthy people; its large central vacuole fills most of the cell.", d: "The commensal protist. Bigger and tougher than Entamoeba, but far less aggressive." });
 
 /* ---------- broad types: what you pick at the start; each specialises at level 5 ---------- */
 const TYPES = {
-  gramneg: { n: "Gram-negative bacterium", short: "Gram-negative", col: "#9be37a", starter: "g_gramneg",
+  gramneg: { n: "Gram-negative bacterium", short: "Gram-negative", col: "#8fff6a", starter: "g_gramneg",
     d: "A thin wall wrapped in an outer membrane. The outer membrane keeps many drugs out, vancomycin among them, but costs you nothing to start.",
     fact: "Gram-negatives span the fibre-fermenting Bacteroidetes and the fast, oxygen-breathing Enterobacteriaceae.",
     children: ["btheta", "akk", "ecoli", "ehec", "salmonella", "kleb", "vibrio", "hpylori"] },
-  grampos: { n: "Gram-positive bacterium", short: "Gram-positive", col: "#c9b3ff", starter: "g_grampos",
+  grampos: { n: "Gram-positive bacterium", short: "Gram-positive", col: "#cf8cff", starter: "g_grampos",
     d: "A thick peptidoglycan wall, no outer membrane. Harder to dissolve, but fully exposed to vancomycin.",
     fact: "The Gram-positive Firmicutes dominate a healthy colon and make most of its butyrate.",
     children: ["faecali", "bifido", "lacto", "cdiff", "entero"] },
-  archaeon: { n: "Archaeon", short: "Archaeon", col: "#d4e0ff", starter: "g_arch",
+  archaeon: { n: "Archaeon", short: "Archaeon", col: "#a8c8ff", starter: "g_arch",
     d: "A separate domain of life. In the gut, archaea are methanogens that live on hydrogen and make methane.",
     fact: "Methanogens keep fermentation energetically favourable by removing the hydrogen that would otherwise pile up.",
     children: ["msmithii", "mstadt"] },
-  fungus: { n: "Fungus", short: "Fungus", col: "#f6e7b0", starter: "g_fungus",
+  fungus: { n: "Fungus", short: "Fungus", col: "#ffe6a8", starter: "g_fungus",
     d: "A walled eukaryote that digests outside the cell and absorbs the products. Some can switch to invasive filaments.",
     fact: "Gut fungi are a small fraction of the community but bloom whenever their bacterial rivals are cleared.",
     children: ["candida", "boulardii"] },
-  protist: { n: "Protist", short: "Protist", col: "#f2e6a7", starter: "g_protist",
+  protist: { n: "Protist", short: "Protist", col: "#f0d98c", starter: "g_protist",
     d: "A large eukaryotic cell that engulfs bacteria whole. It dwarfs anything it hunts.",
     fact: "Gut protists range from the tissue-invading Entamoeba to the common, usually harmless Blastocystis.",
     children: ["entamoeba", "blasto"] },
-  phage: { n: "Bacteriophage", short: "Phage", col: "#b388ff", starter: "g_phage",
+  phage: { n: "Bacteriophage", short: "Phage", col: "#b98cff", starter: "g_phage",
     d: "A virus of bacteria, far smaller than its host. Inject, replicate inside, and burst the cell open, or lie dormant as a prophage.",
     fact: "Phages are the most abundant entities in the gut and shape which bacteria dominate.",
     children: ["lambda", "crass"] },
@@ -502,6 +502,160 @@ function music(on) {
   const osc = [55, 82.4, 110, 164.8].map((f, i) => { const o = AC.createOscillator(), og = AC.createGain(); o.type = i % 2 ? "sine" : "triangle"; o.frequency.value = f; og.gain.value = 0.25; const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.03 + i * 0.017; lg.gain.value = 0.2; lfo.connect(lg).connect(og.gain); lfo.start(); o.connect(og).connect(lp); o.start(); return o; });
   MUSIC = { g, osc };
 }
+/* =====================================================================
+   ART DIRECTION — one palette, one light, three depth planes, one grade.
+   Everything the renderer draws goes through these helpers so the whole
+   frame reads as authored rather than assembled.
+   ===================================================================== */
+const ART = {
+  ink: "#080309", deep: "#160a14", plum0: "#36121f", plum1: "#190916", lumen0: "#4d1b2b", lumen1: "#0b0410",
+  epiHi: "#ffb79b", epiMid: "#d2706b", epiLow: "#7e2f46", crypt: "#4c1a30",
+  mucus: "#8fd6e8", acid: "#8fff6a", mint: "#5ef0b0", cyan: "#5ee7f5", gold: "#ffc84a",
+  rose: "#ff8fb8", orange: "#ff9345", crimson: "#ff5d6c", violet: "#b98cff", cream: "#ffe6a8", sand: "#e3c77a",
+  warm: "#ff8a5c", cold: "#6ab8ff",
+};
+/* a single consistent key light, from the epithelium side (up and slightly left) */
+const LIGHT = { x: -0.42, y: -0.91 };
+const easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const easeIn = (t) => Math.pow(clamp(t, 0, 1), 3);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeBack = (t) => { const c = 1.9; return 1 + c * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const approach = (a, b, dt, rate) => a + (b - a) * (1 - Math.exp(-rate * dt));   // frame-rate independent easing
+
+/* ---------- cached paint ---------- */
+const GLOWC = new Map();
+function glowSprite(col, r) {
+  const rr = Math.max(6, Math.round(r / 4) * 4), k = col + rr;
+  let c = GLOWC.get(k);
+  if (!c) {
+    c = document.createElement("canvas"); c.width = c.height = rr * 2; const g = c.getContext("2d");
+    const gr = g.createRadialGradient(rr, rr, 0, rr, rr, rr);
+    gr.addColorStop(0, rgba(col, 0.55)); gr.addColorStop(0.35, rgba(col, 0.22)); gr.addColorStop(1, rgba(col, 0));
+    g.fillStyle = gr; g.fillRect(0, 0, rr * 2, rr * 2);
+    if (GLOWC.size > 160) GLOWC.clear(); GLOWC.set(k, c);
+  }
+  return c;
+}
+function glow(ctx, x, y, r, col, a = 1) { if (!PREFS.vfx) return; const s = glowSprite(col, r); ctx.globalAlpha = a; ctx.drawImage(s, x - s.width / 2, y - s.height / 2); ctx.globalAlpha = 1; }
+/* a soft contact shadow so a cell sits in the world instead of floating on it */
+function castShadow(ctx, p, r) {
+  if (!PREFS.vfx || r < 4) return;
+  ctx.save(); ctx.translate(-LIGHT.x * r * 0.3, -LIGHT.y * r * 0.3 + r * 0.16);
+  ctx.fillStyle = "rgba(6,2,9,.34)"; ctx.fill(p); ctx.restore();
+}
+/* rim light along the lit edge of a body */
+const RIMC = new Map();
+function rimGrad(ctx, col, r) {
+  const rr = Math.max(4, Math.round(r / 3) * 3), k = col + rr;
+  let g = RIMC.get(k);
+  if (!g) {
+    g = ctx.createLinearGradient(LIGHT.x * rr * 1.2, LIGHT.y * rr * 1.2, -LIGHT.x * rr * 1.2, -LIGHT.y * rr * 1.2);
+    g.addColorStop(0, lite(col, 0.8, 0.95)); g.addColorStop(0.45, lite(col, 0.35, 0.3)); g.addColorStop(1, rgba(col, 0));
+    if (RIMC.size > 200) RIMC.clear(); RIMC.set(k, g);
+  }
+  return g;
+}
+/* ---------- depth: a far out-of-focus plane and a near foreground ---------- */
+let FAR = null, FORE = null;
+function buildFar() {
+  if (FAR) return FAR;
+  const w = 1024, h = 512, c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
+  g.fillStyle = "rgba(0,0,0,0)"; g.clearRect(0, 0, w, h);
+  // distant villi silhouettes along the top of the tile
+  for (let i = 0; i < 7; i++) {
+    const x = (i + 0.3) * (w / 7) + R(-30, 30), vw = R(44, 86), vh = R(150, 260);
+    const gr = g.createLinearGradient(x, 0, x, vh); gr.addColorStop(0, "rgba(150,62,74,.85)"); gr.addColorStop(1, "rgba(70,26,44,.1)");
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x - vw / 2, 0);
+    g.bezierCurveTo(x - vw / 2, vh * 0.7, x - vw * 0.3, vh, x, vh);
+    g.bezierCurveTo(x + vw * 0.3, vh, x + vw / 2, vh * 0.7, x + vw / 2, 0); g.closePath(); g.fill();
+  }
+  // distant cells as soft blobs
+  for (let i = 0; i < 46; i++) {
+    const x = rnd() * w, y = R(120, h), r = R(6, 22), col = pick([ART.acid, ART.cyan, ART.gold, ART.rose, ART.mint]);
+    const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, rgba(col, 0.3)); gr.addColorStop(1, rgba(col, 0));
+    g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // one blur pass bakes the depth-of-field in
+  const b = document.createElement("canvas"); b.width = w; b.height = h; const bg = b.getContext("2d");
+  try { bg.filter = "blur(7px)"; } catch (e) {}
+  bg.drawImage(c, 0, 0); FAR = b; return FAR;
+}
+function buildFore() {
+  if (FORE) return FORE;
+  FORE = [];
+  for (let i = 0; i < 9; i++) {
+    const r = R(60, 170), c = document.createElement("canvas"); c.width = c.height = r * 2; const g = c.getContext("2d");
+    const col = pick([ART.plum0, ART.epiLow, ART.crimson, ART.sand]);
+    const gr = g.createRadialGradient(r, r, 0, r, r, r); gr.addColorStop(0, rgba(col, 0.5)); gr.addColorStop(0.6, rgba(col, 0.2)); gr.addColorStop(1, rgba(col, 0));
+    g.fillStyle = gr; g.beginPath();
+    for (let a = 0; a < 26; a++) { const an = (a / 26) * TAU, rr = r * (0.6 + 0.35 * hash(i + 2, a)); g.lineTo(r + Math.cos(an) * rr, r + Math.sin(an) * rr); }
+    g.closePath(); g.fill();
+    FORE.push({ c, x: rnd() * WORLD.w, y: R(EPI, WORLD.h), vx: R(-18, -6), r });
+  }
+  return FORE;
+}
+/* ---------- post: grade, vignette with a touch of chromatic fringe, grain ---------- */
+let POSTC = null, POSTK = "", GRAIN = null;
+function postOverlay(srPx) {
+  const k = `${W}x${H}|${Math.round(srPx / 40)}|${PREFS.vfx ? 1 : 0}`;
+  if (POSTC && POSTK === k) return POSTC;
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  if (PREFS.vfx) {
+    const sr = Math.max(140, srPx), fg = g.createRadialGradient(W / 2, H / 2, sr * 0.8, W / 2, H / 2, sr * 2.4);
+    fg.addColorStop(0, "rgba(9,4,12,0)"); fg.addColorStop(0.55, "rgba(9,4,12,.3)"); fg.addColorStop(1, "rgba(9,4,12,.6)");
+    g.fillStyle = fg; g.fillRect(0, 0, W, H);
+    // chromatic fringe: a warm rim on one side, a cool rim on the other, only at the extremes
+    g.globalCompositeOperation = "screen";
+    const ca = Math.max(W, H) * 0.52;
+    let l = g.createRadialGradient(W / 2 - 6, H / 2, ca * 0.86, W / 2 - 6, H / 2, ca * 1.25);
+    l.addColorStop(0, "rgba(255,40,70,0)"); l.addColorStop(1, "rgba(255,40,70,.085)"); g.fillStyle = l; g.fillRect(0, 0, W, H);
+    l = g.createRadialGradient(W / 2 + 6, H / 2, ca * 0.86, W / 2 + 6, H / 2, ca * 1.25);
+    l.addColorStop(0, "rgba(40,190,255,0)"); l.addColorStop(1, "rgba(40,190,255,.085)"); g.fillStyle = l; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "source-over";
+  }
+  const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.8);
+  vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  POSTC = c; POSTK = k; return c;
+}
+function grainTiles() {
+  if (GRAIN) return GRAIN;
+  GRAIN = []; for (let t = 0; t < 3; t++) {
+    const s = 192, c = document.createElement("canvas"); c.width = c.height = s; const g = c.getContext("2d");
+    const im = g.createImageData(s, s), d = im.data;
+    for (let i = 0; i < d.length; i += 4) { const v = 120 + rnd() * 135; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 20; }
+    g.putImageData(im, 0, 0); GRAIN.push(c);
+  }
+  return GRAIN;
+}
+function applyPost(ctx, srPx) {
+  // colour grade: warm plum in the shadows, cool lift in the highlights
+  ctx.save();
+  ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = "rgba(255,232,226,1)"; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "screen"; ctx.fillStyle = "rgba(30,6,24,.16)"; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  ctx.drawImage(postOverlay(srPx), 0, 0);
+  if (PREFS.vfx) { const t = grainTiles()[(S.tick >> 1) % 3]; ctx.globalAlpha = 0.5; const p = ctx.createPattern(t, "repeat"); ctx.fillStyle = p; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+}
+/* ---------- UI: rounded panels with a soft drop shadow, and numbers that count ---------- */
+function panel(ctx, x, y, w, h, o = {}) {
+  const r = o.r || 10;
+  ctx.save();
+  if (PREFS.vfx) { ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 4; }
+  ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, o.top || "rgba(34,18,32,.92)"); g.addColorStop(1, o.bot || "rgba(16,8,18,.92)");
+  ctx.fillStyle = g; ctx.fill(); ctx.restore();
+  ctx.save(); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x + 0.5, y + 0.5, w - 1, h - 1, r); else ctx.rect(x, y, w, h);
+  ctx.strokeStyle = o.line || "rgba(255,190,200,.13)"; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+}
+const COUNTERS = {};
+function counted(key, value, dt) { const c = (COUNTERS[key] = COUNTERS[key] || { v: value }); c.v = approach(c.v, value, dt, 7); return c.v; }
+/* a cooldown sweep for the ability buttons */
+function sweep(ctx, x, y, w, h, f, col) {
+  if (f >= 1) return; ctx.save(); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8); else ctx.rect(x, y, w, h); ctx.clip();
+  ctx.fillStyle = rgba(col, 0.22); ctx.beginPath(); ctx.moveTo(x + w / 2, y + h / 2);
+  ctx.arc(x + w / 2, y + h / 2, Math.max(w, h), -Math.PI / 2, -Math.PI / 2 + TAU * (1 - f), false); ctx.closePath(); ctx.fill(); ctx.restore();
+}
 /* ---------- canvas and state ---------- */
 let S = null, UID = 0, W = 0, H = 0, DPR = 1;
 const cv = $("cv"), X = cv.getContext("2d");
@@ -515,7 +669,7 @@ function newState() {
     o2mod: new Float32Array(GW * GH), phmod: new Float32Array(GW * GH), mucus: new Float32Array(GW), fog: new Uint8Array(GW * GH),
     env: { inflame: 0, nitrate: 0, flow: 1, drug: null, drugT: 0, diet: "mixed", temp: 37, mucusMul: 1 },
     ev: [], evNext: 24, evLast: "", director: { t: 0, pressure: 0, note: "" }, guild: {}, tick: 0,
-    mouse: { x: W / 2, y: H / 2, down: false }, auto: false, exitWarn: 0 };
+    mouse: { x: W / 2, y: H / 2, down: false }, auto: false, exitWarn: 0, fx: [], witT: {}, newCodex: 0, hitstop: 0 };
 }
 const gi = (x, y) => clamp(Math.floor(x / GS), 0, GW - 1) + clamp(Math.floor(y / GS), 0, GH - 1) * GW;
 /* oxygen: high at the epithelium, anaerobic in the lumen; inflammation pushes it out into the lumen */
@@ -939,7 +1093,7 @@ function step(dt) {
     else { eventTick(e, dt); if (e.t >= e.dur) { eventEnd(e); S.ev.splice(i, 1); } }
   }
   S.env.inflame = clamp(S.env.inflame - dt * 0.004, 0, 1); S.env.flow = lerp(S.env.flow, S.ev.some((e) => e.id === "flush" && e.phase === "active") ? 4.2 : 1, dt);
-  buildIndex(); director(dt); updImmune(dt);
+  buildIndex(); director(dt); updImmune(dt); updFx(dt);
   // grid decay and mucus regrowth
   if (S.tick % 6 === 0) { const k = Math.pow(0.86, 6 * dt * 10); for (let i = 0; i < S.o2mod.length; i++) { S.o2mod[i] *= 0.985; S.phmod[i] *= 0.985; } for (let i = 0; i < GW; i++) S.mucus[i] = clamp(S.mucus[i] + 0.0022 * (S.env.diet === "fibre" ? 2 : 1), 0, regionAt(i * GS).k === "col" ? 1.1 : 0.85); }
   // epithelium
@@ -983,6 +1137,9 @@ function step(dt) {
         if (c.mass < SP(col).minMass * 0.45) { die(c, "starve", null); continue; }
         calcCell(c);
       }
+      if (c.virion && c.ads) { updAdsorption(c, dt); continue; }
+      if (c.integrate > 0) c.integrate -= dt;
+      if (c.ghosts) for (const g of c.ghosts) g.t += dt;
       // movement intent
       let mv = [0, 0];
       if (col === P) { mv = P.mv || [0, 0]; c.aimX = P.aimX; c.aimY = P.aimY; c.secreting = !!P.acting; }
@@ -1041,6 +1198,286 @@ function passiveAct(col, c, dt) {
   }
 }
 function camZoom() { const P = S.player, C = SP(P), base = clamp(Math.min(W / 1200, H / 760) + 0.5, 0.7, 1.5); if (C.host) return base * 1.5; const m = mainCell(P), r = m ? m.r : 18; return base * clamp(Math.pow(34 / (15 + r), 0.6), 0.5, 1.4); }
+/* =====================================================================
+   MECHANISM FX — every interaction that matters gets a visible, correctly
+   oriented mechanism: a spear fired into a neighbour, a pilus that
+   retracts, a phage that reorients tail-down before it fires its tube.
+   Each one is a small timed object; the draw switch keeps them cheap.
+   ===================================================================== */
+function mkFx(kind, o) { if (!S) return null; const f = Object.assign({ kind, t: 0, dur: 1, dead: false }, o); S.fx.push(f); if (S.fx.length > 220) S.fx.shift(); return f; }
+function updFx(dt) {
+  for (const f of S.fx) {
+    f.t += dt;
+    if (f.a && f.a.dead) f.dead = true;
+    if (f.follow && !f.follow.dead) { f.x = f.follow.x; f.y = f.follow.y; }
+    if (f.kind === "vesicle") { f.x += f.vx * dt; f.y += f.vy * dt; if (f.b && !f.b.dead) { const d = hyp(f.b.x - f.x, f.b.y - f.y) || 1; f.vx = approach(f.vx, (f.b.x - f.x) / d * 90, dt, 2); f.vy = approach(f.vy, (f.b.y - f.y) / d * 90, dt, 2); if (d < f.b.r + 6) { f.dead = true; if (f.onHit) f.onHit(); } } }
+    if (f.t >= f.dur) { f.dead = true; if (f.onEnd) f.onEnd(); }
+  }
+  S.fx = S.fx.filter((f) => !f.dead);
+}
+const fxEnds = (f) => { const a = f.a && !f.a.dead ? [f.a.x, f.a.y] : [f.x1, f.y1], b = f.b && !f.b.dead ? [f.b.x, f.b.y] : [f.x2, f.y2]; return [a[0], a[1], b[0], b[1]]; };
+function drawFx(ctx) {
+  for (const f of S.fx) {
+    const u = clamp(f.t / f.dur, 0, 1), col = f.col || ART.cyan;
+    switch (f.kind) {
+      case "spear": {   // T6SS: sheath contracts and drives a spike into the touching cell
+        const [ax, ay, bx, by] = fxEnds(f), dx = bx - ax, dy = by - ay, d = hyp(dx, dy) || 1, nx = dx / d, ny = dy / d;
+        const fire = easeIn(clamp(u * 1.8, 0, 1)), reach = d * (0.35 + 0.72 * fire);
+        ctx.save(); ctx.translate(ax, ay); ctx.rotate(Math.atan2(ny, nx));
+        ctx.strokeStyle = rgba(col, 1 - u * 0.6); ctx.lineWidth = 4 - 2 * fire; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(reach * 0.72, 0); ctx.stroke();  // sheath
+        ctx.lineWidth = 1.6; ctx.strokeStyle = lite(col, 0.6, 1 - u * 0.5); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(reach, 0); ctx.stroke();            // inner tube
+        ctx.fillStyle = lite(col, 0.7, 1 - u * 0.4); ctx.beginPath(); ctx.moveTo(reach + 5, 0); ctx.lineTo(reach - 3, -3); ctx.lineTo(reach - 3, 3); ctx.closePath(); ctx.fill();
+        ctx.restore(); break;
+      }
+      case "filament": { // CDI: a long filament reaches over and touches the neighbour
+        const [ax, ay, bx, by] = fxEnds(f), g = easeOut(clamp(u * 1.6, 0, 1));
+        ctx.strokeStyle = rgba(col, 0.8 * (1 - u * 0.4)); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(ax, ay);
+        for (let i = 1; i <= 8; i++) { const k = (i / 8) * g, px = ax + (bx - ax) * k, py = ay + (by - ay) * k + Math.sin(k * 5 + f.t * 6) * 4; ctx.lineTo(px, py); }
+        ctx.stroke();
+        const tx = ax + (bx - ax) * g, ty = ay + (by - ay) * g;
+        ctx.fillStyle = f.blocked && u > 0.7 ? "#8a97a8" : lite(col, 0.6, 1); ctx.beginPath(); ctx.arc(tx, ty, 3, 0, TAU); ctx.fill();
+        if (f.blocked && u > 0.7) { ctx.strokeStyle = "rgba(200,210,220,.7)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(tx, ty, 6 + (u - 0.7) * 26, 0, TAU); ctx.stroke(); }
+        break;
+      }
+      case "vesicle": {  // outer-membrane vesicle drifting to its target
+        glow(ctx, f.x, f.y, 14, col, 0.5);
+        ctx.fillStyle = rgba(col, 0.5); ctx.strokeStyle = lite(col, 0.5, 0.9); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(f.x, f.y, 3.4, 0, TAU); ctx.fill(); ctx.stroke(); break;
+      }
+      case "nanotube": { // a brief cytoplasmic bridge with contents moving across
+        const [ax, ay, bx, by] = fxEnds(f);
+        ctx.strokeStyle = rgba(col, 0.5 * (1 - u)); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        for (let i = 0; i < 3; i++) { const k = ((u * 1.5 + i / 3) % 1); ctx.fillStyle = lite(col, 0.6, 0.9 * (1 - u)); ctx.beginPath(); ctx.arc(ax + (bx - ax) * k, ay + (by - ay) * k, 2.2, 0, TAU); ctx.fill(); }
+        break;
+      }
+      case "pilus": {    // conjugation: extend, grip, retract and reel the cells together, then DNA crosses
+        const [ax, ay, bx, by] = fxEnds(f);
+        const ext = u < 0.3 ? easeOut(u / 0.3) : 1, retract = u > 0.35 && u < 0.7 ? easeInOut((u - 0.35) / 0.35) : u >= 0.7 ? 1 : 0;
+        const len = (1 - retract * 0.55) * ext;
+        ctx.strokeStyle = rgba(col, 0.9); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(ax, ay);
+        for (let i = 1; i <= 10; i++) { const k = (i / 10) * len, w = retract ? 0 : Math.sin(k * 6 + f.t * 5) * 3; ctx.lineTo(ax + (bx - ax) * k - (by - ay) * 0.02 * w, ay + (by - ay) * k + (bx - ax) * 0.02 * w); }
+        ctx.stroke();
+        if (u > 0.7) for (let i = 0; i < 4; i++) { const k = ((u - 0.7) / 0.3 * 1.4 + i * 0.2) % 1; ctx.fillStyle = lite("#7fd7ff", 0.5, 1); ctx.beginPath(); ctx.arc(ax + (bx - ax) * k * len, ay + (by - ay) * k * len, 2.4, 0, TAU); ctx.fill(); }
+        break;
+      }
+      case "needle": {   // T3SS: a needle docked perpendicular to the host membrane
+        const [ax, ay, bx, by] = fxEnds(f), g = easeOut(clamp(u * 2, 0, 1));
+        ctx.save(); ctx.translate(ax, ay); ctx.rotate(Math.atan2(by - ay, bx - ax));
+        const L = hyp(bx - ax, by - ay) * g;
+        ctx.strokeStyle = rgba(col, 0.95); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(L, 0); ctx.stroke();
+        ctx.fillStyle = lite(col, 0.5, 0.9); ctx.beginPath(); ctx.arc(0, 0, 5, 0, TAU); ctx.fill();
+        if (u > 0.5) for (let i = 0; i < 3; i++) { const k = ((u - 0.5) * 2 + i * 0.3) % 1; ctx.fillStyle = "rgba(255,210,120,.9)"; ctx.beginPath(); ctx.arc(L * k, 0, 2, 0, TAU); ctx.fill(); }
+        ctx.restore(); break;
+      }
+      case "cup": {      // phagocytosis: two arms close around the prey, then a phagosome
+        const o = f.a; if (!o || o.dead) { f.dead = true; break; }
+        const close = easeInOut(u), arc = 0.5 + close * 1.25, rr = f.r * (1 + 0.25 * close);
+        ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(f.ang);
+        ctx.strokeStyle = rgba(col, 0.75 * (1 - u * 0.3)); ctx.lineWidth = f.r * 0.42; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(f.r * 0.7, 0, rr * 0.75, -arc, arc); ctx.stroke(); ctx.lineCap = "butt"; ctx.restore(); break;
+      }
+      case "iga": {      // secretory IgA cross-linking cells into a clump
+        const [ax, ay, bx, by] = fxEnds(f), mx2 = (ax + bx) / 2, my2 = (ay + by) / 2;
+        ctx.strokeStyle = rgba("#bdeeff", 0.55 * (1 - u * 0.5)); ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(mx2, my2); ctx.lineTo(bx, by); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(mx2, my2); ctx.lineTo(mx2 + 5, my2 - 7); ctx.moveTo(mx2, my2); ctx.lineTo(mx2 - 5, my2 - 7); ctx.stroke(); break;
+      }
+      case "puff": {     // defensins, mucus, enzyme clouds
+        const rr = f.r * easeOut(u); glow(ctx, f.x, f.y, rr * 1.6, col, 0.4 * (1 - u));
+        ctx.strokeStyle = rgba(col, 0.5 * (1 - u)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.stroke(); break;
+      }
+      case "bead": {     // a travelling packet: iron, a spacer, mispackaged DNA, a signal
+        const [ax, ay, bx, by] = fxEnds(f), k = easeInOut(u);
+        const px = ax + (bx - ax) * k, py = ay + (by - ay) * k - Math.sin(k * Math.PI) * (f.arc || 16);
+        glow(ctx, px, py, 12, col, 0.6); ctx.fillStyle = lite(col, 0.5, 1); ctx.beginPath(); ctx.arc(px, py, f.rr || 3, 0, TAU); ctx.fill(); break;
+      }
+      case "cut": {      // restriction enzyme slicing incoming DNA
+        ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.ang || 0);
+        ctx.strokeStyle = rgba("#ff5d6c", 1 - u); ctx.lineWidth = 2;
+        const sp = 2 + u * 9; ctx.beginPath(); ctx.moveTo(-10, -sp); ctx.lineTo(10, -sp); ctx.moveTo(-10, sp); ctx.lineTo(10, sp); ctx.stroke();
+        ctx.strokeStyle = rgba("#ffffff", (1 - u) * 0.9); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, 12); ctx.stroke(); ctx.restore(); break;
+      }
+      case "ring": {     // generic emphasis ring (quorum threshold, zone of inhibition, induction)
+        const rr = f.r0 + (f.r - f.r0) * easeOut(u);
+        ctx.strokeStyle = rgba(col, (f.a0 || 0.5) * (1 - u)); ctx.lineWidth = f.w || 2.5;
+        ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.stroke(); break;
+      }
+      case "link": {     // co-aggregation / syntrophy partnership
+        const [ax, ay, bx, by] = fxEnds(f);
+        ctx.strokeStyle = rgba(col, 0.35 * (1 - u * 0.5)); ctx.lineWidth = 1.5; ctx.setLineDash([3, 5]);
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]); break;
+      }
+    }
+  }
+}
+
+/* =====================================================================
+   PHAGE ADSORPTION — the real T4 sequence, in stages you can watch.
+   The phage ends up tail-down, perpendicular to the cell surface.
+   ===================================================================== */
+const ADS = [
+  { k: "reversible", d: 0.75, n: "Reversible binding", s: "Long tail fibres splay out and touch receptors; it can still let go." },
+  { k: "reorient", d: 0.6, n: "Reorientation", s: "Fibre binding rotates the particle tail-down, perpendicular to the cell surface, and the baseplate opens hexagon → star." },
+  { k: "anchor", d: 0.45, n: "Irreversible anchoring", s: "Short tail fibres extend from the baseplate and pin it to the envelope." },
+  { k: "contract", d: 0.7, n: "Sheath contraction", s: "The sheath shortens and thickens, driving the inner tube through the outer membrane; it pauses in the periplasm to chew through peptidoglycan." },
+  { k: "eject", d: 0.8, n: "Genome ejection", s: "DNA translocates down the tube into the cytoplasm. The empty capsid stays behind as a ghost." },
+];
+function beginAdsorption(v, h) {
+  if (v.ads || h.dead) return;
+  const dx = v.x - h.x, dy = v.y - h.y, d = hyp(dx, dy) || 1;
+  // host-relative frame: a bound particle rides the cell, so the geometry is stored as
+  // a surface normal plus a standoff from the cell centre, never as a world position
+  v.ads = { h, stage: 0, t: 0, nx: dx / d, ny: dy / d, off: d, walk: R(-0.5, 0.5) };
+  v.vx = v.vy = 0;
+  witness("adsorption", `${v.col.name} is adsorbing to ${h.col.name}`);
+}
+function updAdsorption(v, dt) {
+  const a = v.ads, h = a.h;
+  if (!h || h.dead || h.inf || h.spore >= 2) { v.ads = null; return; }
+  a.t += dt;
+  const st = ADS[a.stage];
+  // stage 0 can still fail: the long fibres let go, or the receptor is switched off under them
+  if (a.stage === 0) {
+    a.walk += dt * 0.6 * Math.sign(a.walk);
+    const rot = Math.sin(a.walk) * dt * 0.8, cs = Math.cos(rot), sn = Math.sin(rot);
+    const nx = a.nx * cs - a.ny * sn, ny = a.nx * sn + a.ny * cs;   // walk around the surface
+    a.nx = nx; a.ny = ny;
+    if (rnd() < dt * 0.16) {
+      v.ads = null; v.vx = a.nx * 70; v.vy = a.ny * 70;
+      witness("reversible", `${v.col.name} let go of ${h.col.name} again`); return;
+    }
+    if (h.col.fl.phasevar && rnd() < dt * 0.6) {
+      v.ads = null; damage(v, 99, null, "flow");
+      witness("phasevar", `${h.col.name} had switched its surface antigen: the phage could not hold on`); return;
+    }
+  }
+  // ride the cell: approach the correct standoff along the normal, in the host's frame
+  const want = h.r + (a.stage >= 3 ? 7 : 12);
+  a.off = approach(a.off, want, dt, a.stage >= 1 ? 10 : 4);
+  v.x = h.x + a.nx * a.off; v.y = h.y + a.ny * a.off;
+  v.vx = h.vx; v.vy = h.vy;
+  if (a.t >= st.d) {
+    a.t = 0; a.stage++;
+    if (a.stage === 1) witness("reorient", `${v.col.name} reoriented tail-down on ${h.col.name}`);
+    if (a.stage === 3) sfx("inject");
+    if (a.stage >= ADS.length) {   // the genome is in: hand over to infection, leave the ghost capsid behind
+      (h.ghosts = h.ghosts || []).push({ a: Math.atan2(a.ny, a.nx), t: 0, col: SP(v.col).col });
+      if (h.ghosts.length > 5) h.ghosts.shift();
+      v.ads = null; injectGenome(v, h);
+    }
+  }
+}
+/* what happens once the DNA is inside: restriction, CRISPR, abortive infection, lysogeny or lysis */
+function injectGenome(v, h) {
+  const vcol = v.col, hc = h.col, C = SP(vcol); v.dead = true;
+  if (!vcol.fl.anticrispr && hc.fl.crispr && (hc.spacers || []).includes(vcol.id)) {
+    mkFx("cut", { x: h.x, y: h.y, dur: 0.5, ang: rnd() * TAU });
+    witness("crispr", `${hc.name} recognised the phage from a stored spacer and cut it`); burst(h.x, h.y, "#8a97a8", 5, 2); return;
+  }
+  if (!vcol.fl.anticrispr && hc.fl.rm && rnd() < 0.5) {
+    mkFx("cut", { x: h.x, y: h.y, dur: 0.5, ang: rnd() * TAU });
+    witness("rm", `${hc.name}'s restriction enzymes cut the unmethylated phage DNA`); return;
+  }
+  if (hc.fl.abi && rnd() < 0.55) {   // abortive infection: the cell dies, but no burst leaves it
+    witness("abi", `${hc.name} aborted the infection and died childless, sparing its clone`);
+    burst(h.x, h.y, "#ffffff", 10, 3); die(h, "abi", vcol); return;
+  }
+  // CRISPR adaptation: a cell that gets infected but survives long enough can store a spacer
+  if (hc.fl.crispr) { (hc.spacers = hc.spacers || []).push(vcol.id); mkFx("bead", { x1: h.x, y1: h.y - h.r, x2: h.x, y2: h.y, dur: 0.6, col: "#7fd7ff", arc: 8 }); witness("crisprAdapt", `${hc.name} filed a new CRISPR spacer against ${vcol.name}`); }
+  const lysoChance = (C.id === "lambda" ? 0.55 : 0.05) + (vcol.fl.lyso ? 0.25 : 0) + (vcol.fl.lyso2 ? 0.15 : 0);
+  if (rnd() < lysoChance && h.hp > h.maxhp * 0.4) {
+    h.lysogen = vcol; h.team = vcol.team; h.integrate = 1.2; burst(h.x, h.y, "#b98cff", 7, 2);
+    if (vcol.fl.toxcargo) h.tox = 1;
+    gainXP(vcol, 18); witness("lysogeny", `${vcol.name} integrated into ${hc.name} as a prophage`);
+    if (vcol === S.player) { sfx("ally"); pop(h.x, h.y - h.r - 10, "LYSOGEN", "#b98cff"); } return;
+  }
+  // transduction: now and then the phage packaged host DNA instead of its own
+  if (v.cargo) { const g = v.cargo; if (addGene(hc, g, true)) { mkFx("bead", { x1: h.x - 14, y1: h.y - 14, x2: h.x, y2: h.y, dur: 0.5, col: "#7fd7ff" }); witness("transduction", `a mispackaged phage carried ${GENES[g].n} into ${hc.name}`); } return; }
+  h.inf = { col: vcol, t: 0, latent: SP(vcol).latent * (vcol.fl.latent || 1), burst: SP(vcol).burst + (vcol.fl.burst || 0) };
+  if (vcol === S.player) sfx("inject");
+}
+/* =====================================================================
+   FIELD GUIDE — every interaction the player can witness, with the
+   mechanism it shows on screen and a plain explanation of the biology.
+   witness(id, line) narrates it once and files it in the codex.
+   ===================================================================== */
+const INTER = {};
+function it(id, cat, n, mech, why) { INTER[id] = { id, cat, n, mech, why }; }
+const CATS = ["Bacterium ↔ bacterium", "Phage ↔ bacterium", "Host ↔ microbe", "Eukaryotes", "Plasmids & evolution"];
+// --- bacterium ↔ bacterium ---
+it("t6ss", CATS[0], "Type VI secretion", "A spring-loaded spear: the sheath contracts and drives a spike into a cell it is touching.", "The T6SS is a phage tail turned inside out. It only works on contact, so it decides who may sit next to whom. Kin carry the matching immunity protein.");
+it("cdi", CATS[0], "Contact-dependent growth inhibition", "A long CdiA filament reaches over, touches the neighbour and delivers a toxic tip; immune kin shrug it off.", "CDI lets a cell poison a neighbour it touches while sparing its own clone, which carries the CdiI immunity protein.");
+it("omv", CATS[0], "Outer-membrane vesicles", "The cell buds off small vesicles that drift away and pop on whatever they reach.", "Gram-negatives pinch off membrane blebs loaded with enzymes and toxins. It is how they act at a distance without touching.");
+it("nanotube", CATS[0], "Nanotubes", "A brief cytoplasmic bridge forms between touching cells and contents move across it.", "Bacteria can build short tubes between neighbours and exchange cytoplasmic molecules, including resistance proteins.");
+it("quorum", CATS[0], "Quorum sensing", "Autoinducer builds up; above a threshold the whole group switches on biofilm and toxin together.", "A single cell cannot afford to make a toxin alone. Counting the neighbours first means the investment only happens when it pays.");
+it("quench", CATS[0], "Quorum quenching", "A neighbour degrades the signal, and the group never reaches its threshold.", "Lactonases and acylases break down autoinducers. Jamming the conversation is cheaper than resisting the attack.");
+it("crossfeed", CATS[0], "Cross-feeding", "One species' waste drifts out and is eaten by another: fibre → acetate → butyrate.", "Most gut species cannot digest fibre alone. Primary degraders release acetate and lactate; butyrate producers live on them and feed the gut wall.");
+it("syntrophy", CATS[0], "Interspecies hydrogen transfer", "A fermenter and a methanogen stay close; the methanogen drinks the hydrogen and both speed up.", "Fermentation stalls when hydrogen accumulates. Methanogens remove it, which keeps the reaction thermodynamically favourable. The partners must be near each other.");
+it("auxotroph", CATS[0], "Vitamin auxotrophy", "A species that cannot make its own B12 must stay near a producer or starve.", "Most gut bacteria have lost biosynthetic pathways and depend on neighbours for vitamins and amino acids. Dependence is the normal state.");
+it("piracy", CATS[0], "Siderophore piracy", "One cell's siderophore captures iron; a cheater with the right receptor takes the loaded complex.", "Iron is scarce and the host hides it. Making a siderophore is expensive, and stealing a loaded one is cheap.");
+it("cheat", CATS[0], "Public-goods cheating", "Non-producers shelter inside a biofilm matrix somebody else paid for.", "Matrix is a shared good. Cheats that do not build it still get the protection, which is why cooperation is always under strain.");
+it("coagg", CATS[0], "Co-aggregation", "Compatible species stick together into a consortium that resists the flow as one.", "Specific surface adhesins glue partner species together. Clumps are much harder to wash out than single cells.");
+it("crossprotect", CATS[0], "β-lactamase cross-protection", "A resistant cell degrades the drug around it and shelters susceptible neighbours.", "Resistance can be a public good: a β-lactamase producer detoxifies its surroundings, so a resistant minority rescues a susceptible population.");
+it("exclusion", CATS[0], "Nutrient-niche exclusion", "Two species with the same utilisation locus suppress each other far harder than unrelated neighbours.", "Competition is strongest between the most similar organisms, because they want exactly the same molecule.");
+it("phasevar", CATS[0], "Phase variation", "The surface antigen switches; phages and antibodies lose their grip, at a cost.", "Reversible on/off switching of surface structures lets a population hedge against phages and immunity, but the structures had other jobs.");
+// --- phage ↔ bacterium ---
+it("adsorption", CATS[1], "Adsorption", "Long tail fibres splay and touch receptors, then the particle reorients tail-down, anchors, contracts its sheath and ejects its DNA.", "Attachment is receptor-specific and the geometry matters: the tail must end up perpendicular to the surface before the tube can cross the envelope.");
+it("reversible", CATS[1], "Reversible binding", "The particle touched down, walked across the surface and let go again.", "The first contact through long tail fibres is reversible. Only short-fibre anchoring commits the phage to that cell.");
+it("reorient", CATS[1], "Reorientation", "Fibre binding rotates the phage so the tail axis is perpendicular to the cell surface, and the baseplate opens hexagon → star.", "The baseplate conformational change is the trigger for everything that follows: anchoring, sheath contraction and ejection.");
+it("lysis", CATS[1], "Lytic burst", "The host swells, fills with particles and bursts.", "A lytic cycle turns one infected cell into dozens of new phages. Burst size is set by how long the phage waits before lysing.");
+it("lysogeny", CATS[1], "Lysogeny", "The genome circularises and integrates into the host chromosome; the cell lives on carrying it.", "A prophage replicates with the host and can carry extra genes. Several bacterial toxins are phage-encoded for exactly this reason.");
+it("induction", CATS[1], "Prophage induction", "DNA damage triggers SOS and every lysogen bursts at once.", "Agents that damage DNA, including fluoroquinolones, flip prophages into the lytic cycle. Treating an infection can detonate the phages inside it.");
+it("crispr", CATS[1], "CRISPR immunity", "Stored spacer matches the incoming genome, and it is cut on entry.", "CRISPR arrays are a record of past infections, and the immunity is sequence-specific to the phage that was survived.");
+it("crisprAdapt", CATS[1], "CRISPR adaptation", "A cell that survives an infection files a new spacer from the invader.", "Adaptation is the rare step: a fragment of the invader is captured and stored, making that lineage immune to that phage specifically.");
+it("rm", CATS[1], "Restriction-modification", "Unmethylated phage DNA is cut as it enters; the cell's own methylated DNA passes.", "Methylation marks self. Anything arriving without the right pattern is destroyed, which is where restriction enzymes came from.");
+it("abi", CATS[1], "Abortive infection", "The infected cell kills itself and releases nothing.", "Suicide is altruism at the clone level: one cell dies, but the burst never happens and its identical neighbours survive.");
+it("receptorloss", CATS[1], "Receptor-loss resistance", "A mutant stops making the surface receptor; the phage cannot bind, but the receptor had a day job.", "Phage receptors are porins, adhesins and LPS. Losing one blocks the phage and costs nutrient uptake or adhesion.");
+it("transduction", CATS[1], "Transduction", "A phage mispackages host DNA and injects it into the next cell.", "Packaging errors make phages accidental gene couriers, moving resistance and virulence genes between bacteria.");
+// --- host ↔ microbe ---
+it("iga", CATS[2], "Secretory IgA", "Antibody cross-links cells into clumps that get swept away.", "IgA does not usually kill. It agglutinates and blocks adhesion, so the clump leaves with the flow.");
+it("defensin", CATS[2], "Paneth-cell defensins", "A puff of antimicrobial peptide from the crypts clears the space near the wall.", "Paneth cells at the base of the crypts keep the epithelial surface nearly sterile, which is why the crypt is a hard place to live.");
+it("goblet", CATS[2], "Goblet-cell secretion", "A goblet cell empties and the mucus layer visibly thickens.", "The mucus layer is continuously eaten and continuously rebuilt. On a low-fibre diet, rebuilding loses.");
+it("butyrate", CATS[2], "Butyrate feeds the colonocyte", "Butyrate reaches the wall, the epithelium burns oxygen, and the lumen gets more anaerobic.", "Colonocytes run on butyrate and consume oxygen doing it. That keeps the lumen anoxic, which keeps the anaerobes dominant: a self-reinforcing loop.");
+it("tlr", CATS[2], "Pattern recognition", "LPS and flagellin at the wall are sensed and inflammation rises.", "The epithelium reads conserved microbial molecules. Too much contact means inflammation, oxygen and nitrate, which favours very different species.");
+it("germination", CATS[2], "Bile-acid germination", "Primary bile acid wakes a spore; secondary bile acid from commensals blocks it.", "Taurocholate germinates C. difficile spores; deoxycholate made by 7α-dehydroxylating commensals blocks growth. Antibiotics remove those commensals.");
+// --- eukaryotes ---
+it("hyphal", CATS[3], "Yeast-to-hypha switch", "Neutral pH and warmth flip the yeast into invasive filaments; lactic acid bacteria flip it back.", "The morphological switch is Candida's main virulence trait, and the bacteria that acidify its surroundings suppress it.");
+it("grazing", CATS[3], "Selective grazing", "A protist forms a cup around its prey and closes it into a phagosome; some prey survive inside.", "Grazing is size-selective and not always fatal: digestion-resistant bacteria can persist inside the vacuole.");
+it("inhibition", CATS[3], "Zone of inhibition", "A mould clears a visible ring of bacteria around itself.", "Penicillium secretes a β-lactam that blocks cell-wall cross-linking. Fungi have no peptidoglycan, so they are untouched.");
+it("mixedbiofilm", CATS[3], "Mixed bacterial-fungal biofilm", "Bacteria settle along fungal hyphae and the matrix goes mixed.", "Fungal filaments act as scaffolding for bacterial partners, and the joint biofilm tolerates drugs better than either alone.");
+// --- plasmids & evolution ---
+it("conjugation", CATS[4], "Conjugation", "A pilus extends, grips the recipient, retracts to pull the cells together, and DNA crosses.", "Conjugation moves resistance between unrelated species. The pilus is a grappling hook, not a tube in most systems.");
+it("incompat", CATS[4], "Plasmid incompatibility", "A second plasmid of the same group cannot be kept; one is lost.", "Plasmids sharing a replication control system cannot be stably maintained together, which limits how many a cell can hold.");
+it("fitcost", CATS[4], "Plasmid fitness cost", "Carrying the plasmid slows growth, until a compensatory mutation removes the cost.", "Resistance is not free, but compensatory evolution usually erases the cost, which is why resistance does not fade when you stop prescribing.");
+it("persist", CATS[4], "Persistence versus resistance", "Persisters go dormant and survive without growing; resistant cells keep growing through the drug.", "Persistence is a phenotype, not a genotype. It explains relapse after treatment even when nothing is resistant.");
+it("mic", CATS[4], "Dose and MIC", "Drug concentration rises past the strain's MIC, and only then does killing start.", "Antibiotics are not instant poison: killing depends on how far concentration sits above the minimum inhibitory concentration for that strain.");
+const INTERKEYS = Object.keys(INTER);
+/* narrate once, file it in the guide */
+function witness(id, line, col) {
+  if (!S) return;
+  const e = INTER[id]; if (!e) return;
+  const first = !META.seen[id];
+  if (first) { META.seen[id] = 1; saveMeta(); S.newCodex = (S.newCodex || 0) + 1; }
+  const now = S.time, last = (S.witT = S.witT || {})[id] || -99;
+  if (line && (first || now - last > 9)) { S.witT[id] = now; feedMsg(line + (first ? " · NEW IN THE FIELD GUIDE" : ""), col || (first ? ART.gold : "#c9d2dc")); }
+  if (first && !S.over) toast(`FIELD GUIDE: ${e.n.toUpperCase()}`);
+}
+const seenCount = () => INTERKEYS.filter((k) => META.seen[k]).length;
+function codexBody() {
+  let h = `<p class="muted">Every mechanism you have actually watched happen. ${seenCount()} of ${INTERKEYS.length} observed.</p>`;
+  for (const cat of CATS) {
+    const list = INTERKEYS.filter((k) => INTER[k].cat === cat);
+    h += `<h3>${cat} · ${list.filter((k) => META.seen[k]).length}/${list.length}</h3><div class="kv">`;
+    for (const k of list) {
+      const e = INTER[k], seen = META.seen[k];
+      h += seen
+        ? `<b style="color:#ffc84a">${e.n.toUpperCase()}</b><div><span style="color:#e8eef5">${e.mech}</span><br><span class="muted">${e.why}</span></div>`
+        : `<b>${e.n.toUpperCase()}</b><div class="muted">Not yet observed.</div>`;
+    }
+    h += `</div>`;
+  }
+  return h;
+}
 /* ---------- input ---------- */
 const keys = {}, PTRS = new Map();
 window.addEventListener("keydown", (e) => {
@@ -1212,7 +1649,7 @@ function pairCells(a, b, dx, dy, d, dt) {
     const v = a.virion ? a : b, h = v === a ? b : a; if (h.virion) return;
     const adR = h.r + v.r + (v.col.fl.adsorb ? (v.col.fl.adsorb2 ? 26 : 14) : 0);
     if (d < adR) {
-      if (isHostOf(v.col, h) && !h.col.shield) { infect(v, h); return; }
+      if (isHostOf(v.col, h) && !h.col.shield && !v.ads) { beginAdsorption(v, h); return; }
       if (SP(h.col).engulf && d < h.r) { engulf(h, v); return; }
     }
     return;
@@ -1274,11 +1711,13 @@ function cytoGradient(ctx, col, r, a0, a1) {
 }
 function cellBody(ctx, p, col, r, o = {}) {
   const hurt = o.hurt, mem = hurt ? "rgba(255,255,255,.95)" : lite(col, 0.45, o.memA || 0.95);
-  if (r > 6) { ctx.lineWidth = r * 0.34; ctx.strokeStyle = rgba(col, 0.12); ctx.stroke(p); } // dark-field halo
+  castShadow(ctx, p, r);                                                    // sits in the world
+  if (r > 6) { ctx.lineWidth = r * 0.34; ctx.strokeStyle = rgba(col, 0.14); ctx.stroke(p); } // scattered-light halo
   const g = cytoGradient(ctx, col, r, o.a0 || 0.56, o.a1 || 0.3);
   ctx.fillStyle = hurt ? "rgba(255,255,255,.35)" : g; ctx.fill(p);
   ctx.save(); ctx.clip(p); ctx.lineWidth = r * 0.16; ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.stroke(p); ctx.restore(); // inner phase-dark rim
   ctx.lineWidth = Math.max(1, r * 0.07); ctx.strokeStyle = mem; ctx.stroke(p);
+  if (!hurt && r > 4) { ctx.lineWidth = Math.max(1.2, r * 0.13); ctx.strokeStyle = rimGrad(ctx, col, r); ctx.stroke(p); }   // key light
   if (o.wall) { ctx.lineWidth = Math.max(1, r * 0.05); ctx.strokeStyle = lite(col, 0.1, 0.5); ctx.save(); ctx.clip(p); ctx.lineWidth = r * 0.26; ctx.stroke(p); ctx.restore(); }
   ctx.fillStyle = "rgba(255,255,255,.14)"; ctx.beginPath(); ctx.ellipse(-r * 0.36, -r * 0.34, r * 0.2, r * 0.13, -0.6, 0, TAU); ctx.fill(); // highlight
 }
@@ -1314,6 +1753,8 @@ function drawCell(ctx, c, t) {
   const col = c.col, C = SP(col), hue = c.lysogen ? "#b388ff" : C.col, r = c.r, hurt = c.hurtT > 0;
   ctx.save(); ctx.translate(c.x, c.y);
   if (c.virion) { drawVirion(ctx, c, C, hue, t); ctx.restore(); return; }
+  const breathe = 1 + 0.025 * Math.sin(t * 1.7 + c.seed), sq = c.sq || 0;     // resting pulse + squash-and-stretch
+  if (breathe !== 1 || sq) ctx.scale(breathe * (1 + sq), breathe * (1 - sq * 0.8));
   if (c.secreting && showsToxin(c.col)) drawToxin(ctx, c, C);
   if (C.antibiotic) { const R0 = antiR(c) * C.antibiotic, g = ctx.createRadialGradient(0, 0, r, 0, 0, R0); g.addColorStop(0, "rgba(143,227,255,.13)"); g.addColorStop(1, "rgba(143,227,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R0, 0, TAU); ctx.fill(); ctx.setLineDash([3, 7]); ctx.lineWidth = 1; ctx.strokeStyle = "rgba(143,227,255,.25)"; ctx.stroke(); ctx.setLineDash([]); }
   if (c.quorum) { ctx.fillStyle = rgba(hue, 0.07); ctx.beginPath(); ctx.arc(0, 0, r * 2.2, 0, TAU); ctx.fill(); }
@@ -1334,6 +1775,7 @@ function drawCell(ctx, c, t) {
     case "vacuolar": drawVacuolar(ctx, c, C, hue, r, t, hurt); break;
   }
   if (c.inf) drawInfection(ctx, c, r * swell, t);
+  if (c.ghosts || c.integrate > 0 || c.lysogen) drawPhageMarks(ctx, c, r * swell, t);
   if (c.chronic) { for (let i = 0; i < 3; i++) { const a = c.seed + i * 2.1; flagellum(ctx, "#dcd0ff", Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9, r * 1.4, 1.5, t, i, a, 1); } }
   ctx.restore();
 }
@@ -1422,16 +1864,88 @@ function drawMould(ctx, c, C, hue, r, t, hurt) {
   else for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(0, -r * 0.5); ctx.lineTo(k * r * 0.3, -r * 0.8); ctx.stroke(); for (let j = 0; j < 4; j++) { ctx.fillStyle = lite(hue, 0.35, 0.85); ctx.beginPath(); ctx.arc(k * r * 0.3, -r * 0.85 - j * 4.2, 1.8, 0, TAU); ctx.fill(); } } // penicillus: brush of conidia
   ctx.restore(); vacuoles(ctx, c, r);
 }
+/* ---------------------------------------------------------------
+   A phage particle, drawn with real anatomy and staged adsorption.
+   Local space: capsid at the origin, tail runs along +Y. When it is
+   attached, +Y is rotated to point straight into the cell surface.
+   --------------------------------------------------------------- */
 function drawVirion(ctx, c, C, hue, t) {
-  const r = c.r, a = Math.atan2(c.vy, c.vx); ctx.rotate(a + Math.PI / 2); // tail points along travel
-  if (C.shape === "m13") { ctx.lineWidth = 1.6; ctx.strokeStyle = lite(hue, 0.4, 0.85); ctx.beginPath(); for (let i = 0; i <= 12; i++) { const u = i / 12; ctx.lineTo(Math.sin(u * 6 + t * 4 + c.seed) * r * 0.35, -r * 2.5 + u * r * 5); } ctx.stroke(); ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(0, -r * 2.5, 1.3, 0, TAU); ctx.fill(); return; }
-  const hp = hexPath(r, Math.PI / 6), g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r); g.addColorStop(0, lite(hue, 0.5, 0.95)); g.addColorStop(1, rgba(hue, 0.55)); ctx.fillStyle = g; ctx.fill(hp); ctx.lineWidth = 0.8; ctx.strokeStyle = lite(hue, 0.6, 0.9); ctx.stroke(hp);
-  ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.beginPath(); for (let i = 0; i < 6; i++) { const th = Math.PI / 6 + (i / 6) * TAU; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(th) * r, Math.sin(th) * r); } ctx.stroke(); // facets
-  ctx.strokeStyle = lite(hue, 0.5, 0.9);
-  if (C.shape === "lambda") { ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, r); for (let i = 1; i <= 8; i++) { const u = i / 8; ctx.lineTo(Math.sin(u * 5 + t * 3 + c.seed) * r * 0.5 * u, r + u * r * 3.2); } ctx.stroke(); return; }
-  ctx.fillStyle = lite(hue, 0.2, 0.8); ctx.fillRect(-r * 0.3, r * 0.85, r * 0.6, r * 0.3); ctx.fillRect(-r * 0.22, r * 1.1, r * 0.44, r * 1.5); // collar + sheath
-  const bp = hexPath(r * 0.42); ctx.save(); ctx.translate(0, r * 2.7); ctx.fill(bp); ctx.restore(); // baseplate
-  ctx.lineWidth = 0.8; ctx.beginPath(); for (let i = 0; i < 6; i++) { const s = i < 3 ? -1 : 1, k = i % 3; ctx.moveTo(s * r * 0.3, r * 2.7); ctx.lineTo(s * r * (0.9 + k * 0.25), r * (2.3 + k * 0.4)); ctx.lineTo(s * r * (1.2 + k * 0.3), r * (3.2 + k * 0.3)); } ctx.stroke(); // six tail fibres
+  const r = c.r, ads = c.ads, stage = ads ? ads.stage : -1;
+  let dirx, diry;
+  if (ads) { dirx = -ads.nx; diry = -ads.ny; }                       // tail points into the cell
+  else { const v = hyp(c.vx, c.vy) || 1; dirx = c.vx / v; diry = c.vy / v; }
+  // local space runs capsid at the origin, tail down +Y; this maps local +Y onto (dirx, diry)
+  ctx.rotate(Math.atan2(-dirx, diry));
+  if (C.shape === "m13") {                                           // filamentous: a long flexible rod
+    ctx.lineWidth = 1.6; ctx.strokeStyle = lite(hue, 0.4, 0.9); ctx.beginPath();
+    for (let i = 0; i <= 12; i++) { const u = i / 12; ctx.lineTo(Math.sin(u * 6 + t * 4 + c.seed) * r * 0.35, -r * 2.5 + u * r * 5); }
+    ctx.stroke(); ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(0, -r * 2.5, 1.3, 0, TAU); ctx.fill(); return;
+  }
+  const contracted = stage >= 3, ejecting = stage >= 4;
+  const at = ads ? ads.t : 0;
+  const sheathL = contracted ? r * 1.0 : r * 1.7, sheathW = contracted ? r * 0.62 : r * 0.4;
+  // the tube is driven through fast, then holds in the periplasm before the genome follows
+  const tubeOut = ejecting ? r * (1.7 + 0.9 * easeOut(at / 0.35))
+                : contracted ? r * (0.5 + 1.2 * easeOut(at / 0.3)) : 0;
+  const plateY = r * 0.85 + sheathL;
+  glow(ctx, 0, 0, r * 3.4, hue, 0.5);
+  // --- long tail fibres: folded back while roaming, splayed onto the surface once bound ---
+  ctx.lineWidth = Math.max(0.8, r * 0.17); ctx.strokeStyle = lite(hue, 0.45, 0.85);
+  for (let i = 0; i < 6; i++) {
+    const side = i < 3 ? -1 : 1, k = i % 3, spread = 0.42 + k * 0.26;
+    ctx.beginPath(); ctx.moveTo(side * r * 0.28, plateY);
+    if (stage < 0) {                                                  // folded up against the sheath
+      ctx.quadraticCurveTo(side * r * (0.5 + k * 0.1), plateY - sheathL * 0.5, side * r * (0.35 + k * 0.12), r * 0.6);
+    } else {                                                          // extended, tips touching receptors
+      const reach = r * (1.5 + k * 0.45), drop = (ads && stage >= 1 ? r * 1.25 : r * 0.95);
+      ctx.quadraticCurveTo(side * reach * 0.8, plateY + drop * 0.35, side * reach * spread * 1.5, plateY + drop);
+    }
+    ctx.stroke();
+  }
+  // --- short tail fibres pin it down once anchored ---
+  if (stage >= 2) { ctx.lineWidth = Math.max(1, r * 0.2); ctx.strokeStyle = lite(hue, 0.7, 0.95);
+    for (let i = -1; i <= 1; i += 2) { ctx.beginPath(); ctx.moveTo(i * r * 0.3, plateY); ctx.lineTo(i * r * 0.5, plateY + r * 0.55); ctx.stroke(); } }
+  // --- tail tube: pushed through the envelope after contraction ---
+  if (tubeOut > 0) { ctx.strokeStyle = lite(hue, 0.8, 0.95); ctx.lineWidth = Math.max(1, r * 0.22);
+    ctx.beginPath(); ctx.moveTo(0, plateY); ctx.lineTo(0, plateY + tubeOut); ctx.stroke(); }
+  // --- contractile sheath ---
+  ctx.fillStyle = rgba(hue, contracted ? 0.85 : 0.65); ctx.strokeStyle = lite(hue, 0.4, 0.8); ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.rect(-sheathW / 2, r * 0.85, sheathW, sheathL); ctx.fill(); ctx.stroke();
+  if (contracted) for (let i = 0; i < 3; i++) { ctx.strokeStyle = rgba(hue, 0.5); ctx.beginPath(); ctx.moveTo(-sheathW / 2, r * 0.95 + i * sheathL * 0.3); ctx.lineTo(sheathW / 2, r * 0.95 + i * sheathL * 0.3); ctx.stroke(); }
+  // --- collar + baseplate: hexagon while roaming, star once it has reoriented ---
+  ctx.fillStyle = lite(hue, 0.25, 0.85); ctx.fillRect(-r * 0.4, r * 0.7, r * 0.8, r * 0.22);
+  ctx.save(); ctx.translate(0, plateY);
+  if (stage >= 1) { ctx.fillStyle = lite(hue, 0.45, 0.95); ctx.beginPath();
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU, rr = r * (i % 2 ? 0.26 : 0.52); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr * 0.6); } ctx.closePath(); ctx.fill(); }
+  else { ctx.fillStyle = lite(hue, 0.3, 0.9); ctx.fill(hexPath(r * 0.4)); }
+  ctx.restore();
+  // --- icosahedral head, emptying as the genome goes in ---
+  const hp = hexPath(r, Math.PI / 6), full = ejecting ? clamp(1 - (c.ads ? c.ads.t / 0.8 : 1), 0, 1) : 1;
+  const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+  g.addColorStop(0, lite(hue, 0.55, 0.95)); g.addColorStop(1, rgba(hue, 0.2 + 0.4 * full));
+  ctx.fillStyle = g; ctx.fill(hp); ctx.lineWidth = 0.9; ctx.strokeStyle = lite(hue, 0.65, 0.95); ctx.stroke(hp);
+  ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.beginPath();
+  for (let i = 0; i < 6; i++) { const th = Math.PI / 6 + (i / 6) * TAU; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(th) * r, Math.sin(th) * r); } ctx.stroke();
+  // --- DNA translocating down the tube ---
+  if (ejecting) { const u = c.ads ? clamp(c.ads.t / 0.8, 0, 1) : 1; ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = Math.max(1, r * 0.16);
+    ctx.setLineDash([3, 4]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, (plateY + tubeOut) * u); ctx.stroke(); ctx.setLineDash([]); }
+  if (C.shape === "lambda" && stage < 0) {                            // λ has a long flexible tail, no sheath
+    ctx.strokeStyle = lite(hue, 0.5, 0.85); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, r);
+    for (let i = 1; i <= 8; i++) { const u = i / 8; ctx.lineTo(Math.sin(u * 5 + t * 3 + c.seed) * r * 0.5 * u, r + u * r * 3.2); } ctx.stroke(); }
+}
+/* empty capsids left stuck on a host after ejection, and λ integrating its genome */
+function drawPhageMarks(ctx, c, r, t) {
+  if (c.ghosts) for (const gh of c.ghosts) {
+    const a = gh.a, x = Math.cos(a) * r, y = Math.sin(a) * r, al = clamp(1 - gh.t / 26, 0, 1) * 0.8;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a + Math.PI / 2);
+    ctx.strokeStyle = rgba(gh.col, al); ctx.lineWidth = 1; ctx.stroke(hexPath(r * 0.22 + 2));
+    ctx.beginPath(); ctx.moveTo(0, r * 0.22 + 2); ctx.lineTo(0, r * 0.22 + 7); ctx.stroke(); ctx.restore();
+  }
+  if (c.integrate > 0) {                                              // circularise, then insert into the nucleoid
+    const u = 1 - c.integrate / 1.2, rr = r * (0.55 - 0.35 * u);
+    ctx.strokeStyle = `rgba(185,140,255,${0.9 - u * 0.5})`; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(0, 0, Math.max(2, rr), 0, TAU); ctx.stroke();
+  } else if (c.lysogen) { ctx.strokeStyle = "rgba(185,140,255,.85)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(r * 0.1, 0, r * 0.16, 0, TAU); ctx.stroke(); }
 }
 function drawInfection(ctx, c, r, t) { const f = c.inf.t / c.inf.latent, n = Math.min(14, Math.floor(f * 14)), hue = CLASSES[c.inf.col.cls].col; ctx.fillStyle = rgba(hue, 0.2 + 0.4 * f); ctx.beginPath(); ctx.arc(0, 0, r * 0.95, 0, TAU); ctx.fill(); for (let i = 0; i < n; i++) { const a = hash(c.seed, i + 200) * TAU, d = hash(c.seed, i + 300) * r * 0.6; ctx.save(); ctx.translate(Math.cos(a) * d, Math.sin(a) * d); ctx.fillStyle = lite(hue, 0.5, 0.9); ctx.fill(hexPath(2.2)); ctx.restore(); } if (f > 0.85) { ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,255,255,${(f - 0.85) * 5})`; ctx.beginPath(); ctx.arc(0, 0, r * 1.05, 0, TAU); ctx.stroke(); } }
 function drawToxin(ctx, c, C) { const R0 = toxinR(c), tc = C.id === "pseudomonas" ? "#49c2b0" : C.id === "vibrio" ? "#ff9ab0" : C.guild === "lab" ? "#ffc6e0" : C.col, t = c.age; const g = ctx.createRadialGradient(0, 0, c.r * 0.6, 0, 0, R0); g.addColorStop(0, rgba(tc, 0.2)); g.addColorStop(1, rgba(tc, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R0, 0, TAU); ctx.fill(); for (let i = 0; i < 6; i++) { const a = hash(c.seed, i + 400) * TAU + t * 0.3 * (i % 2 ? 1 : -1), d = (0.4 + 0.5 * hash(c.seed, i + 500)) * R0 * (0.8 + 0.2 * Math.sin(t * 1.5 + i)); ctx.fillStyle = rgba(tc, 0.1); ctx.beginPath(); ctx.arc(Math.cos(a) * d, Math.sin(a) * d, R0 * 0.3, 0, TAU); ctx.fill(); } }
@@ -1513,9 +2027,9 @@ function mucosaPattern(ctx) {
 function drawEpithelium(ctx, vx0, vx1) {
   // the wall: muscle and lamina propria, then the epithelium facing the lumen
   ctx.fillStyle = mucosaPattern(ctx); ctx.fillRect(vx0, -300, vx1 - vx0, EPI + 300);
-  const g = ctx.createLinearGradient(0, -200, 0, EPI); g.addColorStop(0, "rgba(74,26,38,.97)"); g.addColorStop(0.55, "rgba(132,56,66,.9)"); g.addColorStop(1, "rgba(196,104,104,.85)");
+  const g = ctx.createLinearGradient(0, -200, 0, EPI); g.addColorStop(0, ART.crypt); g.addColorStop(0.5, ART.epiLow); g.addColorStop(1, ART.epiMid);
   ctx.fillStyle = g; ctx.fillRect(vx0, -300, vx1 - vx0, EPI);
-  const tissue = (x0, y0, x1, y1) => { const gg = ctx.createLinearGradient(x0, y0, x1, y1); gg.addColorStop(0, "rgba(206,116,112,.95)"); gg.addColorStop(0.55, "rgba(176,86,94,.92)"); gg.addColorStop(1, "rgba(140,66,84,.88)"); return gg; };
+  const tissue = (x0, y0, x1, y1) => { const gg = ctx.createLinearGradient(x0, y0, x1, y1); gg.addColorStop(0, ART.epiHi); gg.addColorStop(0.45, ART.epiMid); gg.addColorStop(1, ART.epiLow); return gg; };
   // villi: finger-like projections of the wall into the lumen
   for (const v of S.villi) {
     if (v.x < vx0 - 260 || v.x > vx1 + 260) continue;
@@ -1554,7 +2068,7 @@ function drawEpithelium(ctx, vx0, vx1) {
     for (let i = 0; i < 5; i++) {
       const x = e.x - 55 + i * 22 + hash(e.seed, i + 20) * 3, broken = e.hp < 0.6 && hash(e.seed, i) > e.hp + 0.25;
       if (broken) continue;
-      ctx.fillStyle = tum ? `rgba(226,110,150,.85)` : `rgba(${206 + hash(e.seed, i + 31) * 24 | 0},${128 + hash(e.seed, i + 41) * 22 | 0},${120 + hash(e.seed, i + 51) * 20 | 0},${0.5 + 0.35 * e.hp})`;
+      ctx.fillStyle = tum ? `rgba(240,110,160,.9)` : `rgba(${228 + hash(e.seed, i + 31) * 26 | 0},${132 + hash(e.seed, i + 41) * 30 | 0},${112 + hash(e.seed, i + 51) * 26 | 0},${0.74 + 0.22 * e.hp})`;
       const y0 = EPI - h2 + (tum ? hash(e.seed, i + 3) * 12 : 0);
       const hh = h2 + 2 + hash(e.seed, i + 11) * 18;
       ctx.fillRect(x, y0, 19, hh);
@@ -1568,7 +2082,7 @@ function drawEpithelium(ctx, vx0, vx1) {
   }
 }
 function draw() {
-  const ctx = X; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = "#06080c"; ctx.fillRect(0, 0, W, H);
+  const ctx = X; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = ART.ink; ctx.fillRect(0, 0, W, H);
   if (!S) return;
   const P = S.player, z = S.cam.z, shx = S.shake ? (rnd() - 0.5) * S.shake : 0, shy = S.shake ? (rnd() - 0.5) * S.shake : 0;
   const vx0 = S.cam.x - W / 2 / z - 80, vx1 = S.cam.x + W / 2 / z + 80, vy0 = S.cam.y - H / 2 / z - 80, vy1 = S.cam.y + H / 2 / z + 80;
@@ -1576,10 +2090,14 @@ function draw() {
   ctx.save(); ctx.translate(W / 2 + shx, H / 2 + shy); ctx.scale(z, z); ctx.translate(-S.cam.x, -S.cam.y);
   // lumen
   const reg = regionAt(S.cam.x), lg = ctx.createLinearGradient(0, EPI, 0, WORLD.h);
-  lg.addColorStop(0, "rgba(52,32,36,1)"); lg.addColorStop(0.18, "rgba(32,24,30,1)"); lg.addColorStop(0.6, "rgba(19,17,24,1)"); lg.addColorStop(1, "rgba(10,10,16,1)");
+  lg.addColorStop(0, ART.lumen0); lg.addColorStop(0.2, ART.plum0); lg.addColorStop(0.62, ART.plum1); lg.addColorStop(1, ART.lumen1);
   ctx.fillStyle = lg; ctx.fillRect(vx0, EPI - 40, vx1 - vx0, WORLD.h - EPI + 200);
-  // suspended matter in the lumen, parallaxed by depth
-  ctx.fillStyle = "rgba(190,170,150,.05)"; for (let i = 0; i < 70; i++) { const x = vx0 + ((i * 821 + S.time * 14) % (vx1 - vx0 + 400)) - 200, y = EPI + 120 + ((i * 457) % (WORLD.h - EPI - 200)); if (y < vy0 - 80 || y > vy1 + 80) continue; ctx.beginPath(); ctx.arc(x, y, 6 + (i % 5) * 4, 0, TAU); ctx.fill(); }
+  // FAR PLANE: distant villi and cells, blurred and scrolling at 0.45 parallax
+  if (PREFS.vfx) { const far = buildFar(), px = -S.cam.x * 0.45, py = (EPI - S.cam.y) * 0.3 * z + H * 0.1;
+    ctx.save(); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = 0.24;
+    const tw = far.width, th = far.height, ox = ((px % tw) + tw) % tw;
+    for (let x = -ox; x < W; x += tw) ctx.drawImage(far, x, clamp(py, -th * 0.6, H * 0.4), tw, th);
+    ctx.globalAlpha = 1; ctx.restore(); }
   drawEpithelium(ctx, vx0, vx1);
   // mucus layer
   ctx.beginPath(); ctx.moveTo(vx0, EPI);
@@ -1590,16 +2108,16 @@ function draw() {
   for (let i = 0; i < 26; i++) { const x = vx0 + i * ((vx1 - vx0) / 26) + Math.sin(S.time * 0.3 + i) * 20, th = 60 + mucusAt(x) * 170; ctx.strokeStyle = "rgba(210,240,255,.12)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, EPI + 10); ctx.quadraticCurveTo(x + 18, EPI + th * 0.6, x - 10, EPI + th); ctx.stroke(); }
   // oxygen haze near the wall
   const o2top = o2At(S.cam.x, EPI + 60), og = ctx.createLinearGradient(0, EPI - 20, 0, EPI + 520 + S.env.inflame * 500);
-  og.addColorStop(0, `rgba(120,200,255,${0.1 + 0.22 * o2top})`); og.addColorStop(1, "rgba(120,200,255,0)");
+  og.addColorStop(0, `rgba(106,184,255,${0.05 + 0.13 * o2top})`); og.addColorStop(1, "rgba(106,184,255,0)");
   ctx.fillStyle = og; ctx.fillRect(vx0, EPI - 40, vx1 - vx0, 900);
-  if (S.env.inflame > 0.1) { ctx.fillStyle = `rgba(255,90,90,${0.05 + 0.12 * S.env.inflame})`; ctx.fillRect(vx0, EPI - 60, vx1 - vx0, 420 + 500 * S.env.inflame); }
+  if (S.env.inflame > 0.1) { ctx.fillStyle = `rgba(255,60,80,${0.03 + 0.09 * S.env.inflame})`; ctx.fillRect(vx0, EPI - 60, vx1 - vx0, 420 + 500 * S.env.inflame); }
   // peristaltic flow streaks
   if (PREFS.vfx) { ctx.strokeStyle = `rgba(190,220,255,${0.05 + 0.1 * (S.env.flow - 1)})`; ctx.lineWidth = 2; for (let i = 0; i < 26; i++) { const y = EPI + 120 + ((i * 331) % (WORLD.h - EPI - 160)); if (y < vy0 || y > vy1) continue; const x = vx0 + ((i * 1013 + S.time * flowAt(0, y) * 9) % (vx1 - vx0 + 600)) - 300, len = 40 + flowAt(0, y) * 2.4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke(); } }
   // zones
   for (const zn of S.zones) {
     if (!vis(zn, zn.r)) continue; const a = Math.min(1, zn.life / Math.max(0.6, zn.max * 0.3));
-    if (zn.type === "biofilm") { ctx.save(); ctx.translate(zn.x, zn.y); const p = blobPath(zn.r, (an) => 1 + 0.09 * Math.sin(4 * an + zn.seed) + 0.05 * Math.sin(7 * an - zn.seed), 40); const g2 = ctx.createRadialGradient(0, 0, 0, 0, 0, zn.r); g2.addColorStop(0, rgba(zn.col, 0.17 * a)); g2.addColorStop(1, rgba(zn.col, 0.04 * a)); ctx.fillStyle = g2; ctx.fill(p); ctx.lineWidth = 2; ctx.strokeStyle = rgba(zn.col, 0.3 * a); ctx.stroke(p); for (let i = 0; i < 26; i++) { ctx.fillStyle = rgba(zn.col, 0.16 * a); ctx.beginPath(); ctx.arc((hash(zn.seed, i) - 0.5) * zn.r * 1.6, (hash(zn.seed, i + 40) - 0.5) * zn.r * 1.6, 2 + hash(zn.seed, i + 80) * 3, 0, TAU); ctx.fill(); } ctx.restore(); }
-    else { const rr = zn.type === "pulse" ? zn.r * (1.25 - 0.65 * (zn.life / zn.max)) : zn.r; const g2 = ctx.createRadialGradient(zn.x, zn.y, 0, zn.x, zn.y, rr); g2.addColorStop(0, rgba(zn.col, 0.17 * a)); g2.addColorStop(0.72, rgba(zn.col, 0.07 * a)); g2.addColorStop(1, rgba(zn.col, 0)); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(zn.x, zn.y, rr, 0, TAU); ctx.fill(); if (zn.type === "pulse") { ctx.strokeStyle = rgba(zn.col, 0.22 * a); ctx.lineWidth = 3; ctx.stroke(); } }
+    if (zn.type === "biofilm") { ctx.save(); ctx.translate(zn.x, zn.y); const p = blobPath(zn.r, (an) => 1 + 0.09 * Math.sin(4 * an + zn.seed) + 0.05 * Math.sin(7 * an - zn.seed), 40); const g2 = ctx.createRadialGradient(0, 0, 0, 0, 0, zn.r); g2.addColorStop(0, rgba(zn.col, 0.13 * a)); g2.addColorStop(1, rgba(zn.col, 0.02 * a)); ctx.fillStyle = g2; ctx.fill(p); ctx.lineWidth = 2; ctx.strokeStyle = rgba(zn.col, 0.22 * a); ctx.stroke(p); for (let i = 0; i < 26; i++) { ctx.fillStyle = rgba(zn.col, 0.16 * a); ctx.beginPath(); ctx.arc((hash(zn.seed, i) - 0.5) * zn.r * 1.6, (hash(zn.seed, i + 40) - 0.5) * zn.r * 1.6, 2 + hash(zn.seed, i + 80) * 3, 0, TAU); ctx.fill(); } ctx.restore(); }
+    else { const rr = zn.type === "pulse" ? zn.r * (1.25 - 0.65 * (zn.life / zn.max)) : zn.r; const g2 = ctx.createRadialGradient(zn.x, zn.y, 0, zn.x, zn.y, rr); g2.addColorStop(0, rgba(zn.col, 0.15 * a)); g2.addColorStop(0.72, rgba(zn.col, 0.05 * a)); g2.addColorStop(1, rgba(zn.col, 0)); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(zn.x, zn.y, rr, 0, TAU); ctx.fill(); if (zn.type === "pulse") { ctx.strokeStyle = rgba(zn.col, 0.3 * a); ctx.lineWidth = 3; ctx.stroke(); } }
   }
   // hyphae
   for (const h of S.hyph) {
@@ -1611,10 +2129,13 @@ function draw() {
     if (h.tip) { ctx.fillStyle = lite(hue, 0.5, 0.75 * a); ctx.beginPath(); ctx.arc(x2, y2, h.w * 0.6, 0, TAU); ctx.fill(); }
   }
   ctx.lineCap = "butt";
-  for (const n of S.nuts) { if (!vis(n)) continue; const sp2 = nutSprite(n.k), k = n.r / NUTRIENTS[n.k].r; ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.rot); ctx.scale(k, k); ctx.drawImage(sp2.c, -sp2.s / 2, -sp2.s / 2, sp2.s, sp2.s); ctx.restore(); }
+  for (const n of S.nuts) { if (!vis(n)) continue; const N = NUTRIENTS[n.k], sp2 = nutSprite(n.k), k = n.r / N.r;
+    if (PREFS.vfx && (N.meta || n.k === "atp" || n.k === "plasmid")) glow(ctx, n.x, n.y, n.r * 3.2, N.col, 0.7);
+    ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.rot); ctx.scale(k, k); ctx.drawImage(sp2.c, -sp2.s / 2, -sp2.s / 2, sp2.s, sp2.s); ctx.restore(); }
   // cells
   const cells = S.cells.filter((c) => !c.dead && vis(c, c.r * 3 + 70)).sort((a, b) => b.r - a.r);
   for (const c of cells) { c.aim = Math.atan2(c.aimY - c.y, c.aimX - c.x); drawCell(ctx, c, c.age); }
+  drawFx(ctx);
   // immune cells
   for (const m of S.immune) {
     if (!vis(m, 60)) continue; const col = m.kind === "neut" ? "#dfe9ff" : "#bdeeff"; ctx.save(); ctx.translate(m.x, m.y);
@@ -1626,23 +2147,30 @@ function draw() {
   // tags
   for (const col of S.cols) {
     if (col.dead) continue; const c = mainCell(col); if (!c || !vis(c)) continue; if (col !== P) { const pm2 = mainCell(P); if (pm2 && hyp(c.x - pm2.x, c.y - pm2.y) > senseR(P) * 1.5) continue; }
-    const C = SP(col), fs = Math.max(8, Math.min(13, 11 / z)); ctx.font = PF(fs); ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
+    const C = SP(col), fs = 11 / z;   // constant size on screen: a world-unit floor explodes when zoomed in ctx.font = PF(fs); ctx.textAlign = "center"; ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
     const oy = c.virion ? 14 : c.r * 1.5 + 12;
     ctx.fillStyle = col === P ? "#e8eef5" : col.team === P.team ? "#b388ff" : isCommensal(col) ? "#a8e6cf" : "#ffb3a0";
     ctx.strokeText(col.name, c.x, c.y - oy); ctx.fillText(col.name, c.x, c.y - oy);
-    ctx.font = PX(Math.max(8, 10 / z)); ctx.fillStyle = "#8a97a8"; const sub = col === P ? C.short : `Lv ${col.level} ${C.short}`;
+    ctx.font = PX(9 / z); ctx.fillStyle = "#8a97a8"; const sub = col === P ? C.short : `Lv ${col.level} ${C.short}`;
     ctx.strokeText(sub, c.x, c.y - oy - fs - 1); ctx.fillText(sub, c.x, c.y - oy - fs - 1);
     if (!c.virion && c.hp < c.maxhp - 0.5) { const hw = c.r * 2; ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(c.x - hw / 2, c.y + oy - 6, hw, 3.5); ctx.fillStyle = col === P ? "#7cf29a" : "#ff6b6b"; ctx.fillRect(c.x - hw / 2, c.y + oy - 6, hw * Math.max(0, c.hp / c.maxhp), 3.5); }
     if (c.iga > 0.3) { ctx.strokeStyle = `rgba(189,238,255,${c.iga})`; ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 6, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     if (col.shield > 0) { ctx.strokeStyle = `rgba(143,227,255,${0.3 + 0.3 * Math.sin(S.time * 8)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 9, 0, TAU); ctx.stroke(); }
-    if (col.grace > 0) { ctx.strokeStyle = `rgba(255,255,255,${0.25 + 0.25 * Math.sin(S.time * 6)})`; ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 12, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    if (col.grace > 0) { ctx.strokeStyle = `rgba(255,255,255,${0.1 + 0.1 * Math.sin(S.time * 6)})`; ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 12, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
   }
   // predator warning: anything near enough and big enough to swallow you
   { const pm = mainCell(P); if (pm && !pm.virion) for (const o of S.cells) { if (o.dead || o.col === P || !SP(o.col).engulf) continue; if (pm.mass >= o.mass * SP(o.col).engulf) continue; const d = hyp(o.x - pm.x, o.y - pm.y); if (d > 520) continue; const a = clamp(1 - d / 520, 0, 1); ctx.strokeStyle = `rgba(255,90,90,${0.25 + 0.5 * a * (0.6 + 0.4 * Math.sin(S.time * 7))})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 10, 0, TAU); ctx.stroke(); } }
   for (const p of S.parts) { ctx.globalAlpha = Math.min(1, p.t); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   for (const p of S.pops) { ctx.globalAlpha = Math.min(1, p.t); ctx.font = PF(p.big ? 15 / z : 11 / z); ctx.textAlign = "center"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.fillStyle = p.col; ctx.strokeText(p.s, p.x, p.y); ctx.fillText(p.s, p.x, p.y); } ctx.globalAlpha = 1;
   ctx.restore();
-  ctx.drawImage(overlay(senseR(P) * S.cam.z), 0, 0, W, H);
+  // NEAR PLANE: blurred debris drifting past the lens
+  if (PREFS.vfx) { const fore = buildFore(); ctx.save(); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = 0.5;
+    for (const f of fore) { f.x += f.vx * 0.016; if (f.x < -400) f.x = WORLD.w + 200;
+      const sx = (f.x - S.cam.x) * z * 1.32 + W / 2, sy = (f.y - S.cam.y) * z * 1.32 + H / 2;
+      if (sx < -f.r * 2 || sx > W + f.r * 2 || sy < -f.r * 2 || sy > H + f.r * 2) continue;
+      ctx.drawImage(f.c, sx - f.r, sy - f.r); }
+    ctx.globalAlpha = 1; ctx.restore(); }
+  applyPost(ctx, senseR(P) * S.cam.z);
   if (S.flash > 0) { ctx.fillStyle = `rgba(255,209,102,${S.flash * 0.35})`; ctx.fillRect(0, 0, W, H); }
   if (S.env.drug) { ctx.fillStyle = rgba(S.env.drug.col, 0.07 + 0.05 * Math.sin(S.time * 3)); ctx.fillRect(0, 0, W, H); }
   { const pm = mainCell(P), hp = pm ? pm.hp / pm.maxhp : 1, hurt = Math.min(0.22, Math.max((S.hurtFx || 0) * 0.5, hp < 0.35 ? (0.35 - hp) * 0.6 : 0));
@@ -1681,13 +2209,13 @@ function drawHUD() {
   for (const f of S.feed.slice(0, feedMax)) { ctx.globalAlpha = Math.min(1, f.t); ctx.fillStyle = f.col; let t2 = f.s; while (ctx.measureText(t2).width > feedW && t2.length > 8) t2 = t2.slice(0, -4) + "…"; ctx.fillText(t2, 12, y + 10); y += small ? 14 : 17; } ctx.globalAlpha = 1;
   // leaderboard
   const lb = S.cols.filter((c) => !c.dead).sort((a, b) => b.xp - a.xp).slice(0, small ? 5 : 9), lw = small ? 160 : 232, lx = W - lw - 10;
-  ctx.fillStyle = "rgba(11,13,18,.72)"; ctx.fillRect(lx, 10, lw, 26 + lb.length * 18);
+  panel(ctx, lx, 10, lw, 26 + lb.length * 18);
   ctx.font = PF(9); ctx.fillStyle = "#8a97a8"; ctx.fillText("ABUNDANCE", lx + 8, 24);
   lb.forEach((c, i) => { const yy = 42 + i * 18, me = c === P; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(lx + 6, yy - 10, lw - 12, 14); ctx.fillStyle = me ? "#1f6f8f" : dark(SP(c).col, 0.5, 1); ctx.fillRect(lx + 6, yy - 10, (lw - 12) * Math.min(1, c.xp / Math.max(1, lb[0].xp)), 14); ctx.font = PX(12); ctx.fillStyle = me ? "#fff" : "#e8eef5"; ctx.textAlign = "left"; ctx.fillText(`${c.name} · ${SP(c).short}`.slice(0, small ? 15 : 24), lx + 10, yy + 1); ctx.textAlign = "right"; ctx.fillStyle = "#c9d2dc"; ctx.fillText(fmt(c.xp), lx + lw - 10, yy + 1); });
   // environment panel: region, oxygen, pH, inflammation
   const m = mainCell(P) || { x: S.cam.x, y: S.cam.y };
   const ex = lx, ey = 10 + 26 + lb.length * 18 + 8, ew = lw, eh = small ? 74 : 86;
-  ctx.fillStyle = "rgba(11,13,18,.72)"; ctx.fillRect(ex, ey, ew, eh);
+  panel(ctx, ex, ey, ew, eh);
   const reg = regionAt(m.x), o2 = o2At(m.x, m.y), tol = o2Tol(P);
   ctx.font = PF(9); ctx.textAlign = "left"; ctx.fillStyle = reg.col; ctx.fillText(reg.n.toUpperCase(), ex + 8, ey + 16);
   ctx.fillStyle = "#8a97a8"; ctx.fillText("O₂", ex + 8, ey + 34);
@@ -1701,7 +2229,7 @@ function drawHUD() {
   else { ctx.fillStyle = "#8a97a8"; ctx.fillText("DIET: " + S.env.diet.toUpperCase(), ex + 8, ey + 82); }
   // minimap with fog and regions
   const ms = small ? 150 : 260, mh = small ? 48 : 76, mx = W - ms - 10, my = H - mh - (small ? 108 : 14);
-  ctx.fillStyle = "rgba(11,13,18,.8)"; ctx.fillRect(mx, my, ms, mh); ctx.strokeStyle = "#2a3142"; ctx.lineWidth = 2; ctx.strokeRect(mx, my, ms, mh);
+  panel(ctx, mx, my, ms, mh);
   for (const r of REGIONS) { const x = mx + (r.x / WORLD.w) * ms; ctx.fillStyle = rgba(r.col, 0.25); const nx = REGIONS[REGIONS.indexOf(r) + 1]; ctx.fillRect(x, my, ((nx ? nx.x : WORLD.w) - r.x) / WORLD.w * ms, mh); ctx.fillStyle = "#8a97a8"; ctx.font = PF(7); ctx.fillText(r.n.slice(0, 3).toUpperCase(), x + 3, my + 9); }
   ctx.drawImage(fogBitmap(GW, GH), mx, my, ms, mh);
   for (const col of S.cols) { if (col.dead) continue; const c = mainCell(col); if (!c || (!S.fog[gi(c.x, c.y)] && col !== P)) continue; ctx.fillStyle = col === P ? "#5ab4e0" : col.team === P.team ? "#b388ff" : isCommensal(col) ? "#7cf29a" : "#ff6b6b"; ctx.beginPath(); ctx.arc(mx + (c.x / WORLD.w) * ms, my + (c.y / WORLD.h) * mh, col === P ? 3.5 : 2, 0, TAU); ctx.fill(); }
@@ -1711,9 +2239,9 @@ function drawHUD() {
   const bw2 = small ? 86 : 104, bh = small ? 46 : 50, bx0 = W / 2 - bw2 - 6, by0 = H - bh - (small ? 44 : 54);
   [["sp", C.sp, "SPACE", P.cdSp], ["ult", C.ult, "Q", P.cdUlt]].forEach(([w, aid, key, cd], i) => {
     const A = ABIL[aid], x = bx0 + i * (bw2 + 12), ready = cd <= 0;
-    ctx.fillStyle = ready ? "rgba(31,111,143,.9)" : "rgba(17,20,28,.9)"; ctx.fillRect(x, by0, bw2, bh);
-    if (!ready) { const f = 1 - cd / (A.cd || 1); ctx.fillStyle = "rgba(90,180,224,.35)"; ctx.fillRect(x, by0 + bh * (1 - f), bw2, bh * f); }
-    ctx.strokeStyle = ready ? "#5ab4e0" : "#2a3142"; ctx.lineWidth = 2; ctx.strokeRect(x, by0, bw2, bh);
+    panel(ctx, x, by0, bw2, bh, { r: 9, top: ready ? "rgba(64,30,52,.95)" : "rgba(22,10,20,.95)", bot: ready ? "rgba(40,16,34,.95)" : "rgba(14,6,14,.95)", line: ready ? rgba(ART.gold, 0.5) : "rgba(255,190,200,.1)" });
+    sweep(ctx, x, by0, bw2, bh, 1 - cd / (A.cd || 1), ART.cyan);
+    if (ready && PREFS.vfx) glow(ctx, x + bw2 / 2, by0 + bh / 2, bw2 * 0.9, ART.gold, 0.16);
     ctx.textAlign = "center"; ctx.font = PF(8); ctx.fillStyle = "#8a97a8"; ctx.fillText(key, x + bw2 / 2, by0 + 11);
     ctx.font = PX(small ? 11 : 12); ctx.fillStyle = ready ? "#fff" : "#8a97a8";
     const words = A.n.split(" "); let line = "", lines = [];
@@ -1725,7 +2253,9 @@ function drawHUD() {
   // xp / mass bar
   const bw = Math.min(460, W - 40), bx = (W - bw) / 2, by = H - 30;
   const need = xpFor(P.level + 1) - xpFor(P.level), have = P.xp - xpFor(P.level), f2 = P.level >= LVCAP ? 1 : clamp(have / need, 0, 1);
-  ctx.fillStyle = "rgba(11,13,18,.8)"; ctx.fillRect(bx, by, bw, 17); ctx.fillStyle = "#ffd166"; ctx.fillRect(bx + 2, by + 2, (bw - 4) * f2, 13);
+  panel(ctx, bx, by, bw, 17, { r: 8 });
+  ctx.save(); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx + 2, by + 2, Math.max(6, (bw - 4) * f2), 13, 6); else ctx.rect(bx + 2, by + 2, (bw - 4) * f2, 13);
+  const xg = ctx.createLinearGradient(bx, 0, bx + bw, 0); xg.addColorStop(0, ART.gold); xg.addColorStop(1, ART.orange); ctx.fillStyle = xg; ctx.fill(); ctx.restore();
   ctx.font = PF(10); ctx.textAlign = "center"; ctx.fillStyle = "#0b0d12"; ctx.fillText(`LV ${P.level} ${C.short.toUpperCase()}`, bx + bw / 2, by + 12);
   ctx.font = PF(10); ctx.fillStyle = "#e8eef5";
   ctx.fillText(`${P.name} · ${C.host ? alive(P).length + " PARTICLES · " + hostsOf(P) + " HOSTS" : "MASS " + Math.round(totalMass(P)) + " IN " + alive(P).length + " CELL" + (alive(P).length > 1 ? "S" : "")} · ${fmt(P.xp)} XP`, bx + bw / 2, by - 6);
@@ -1734,7 +2264,7 @@ function drawHUD() {
   // stat bars
   const rows = STATS.length, rh = small ? 14 : 17, pw = small ? 116 : 160, px0 = 10, py0 = small ? H - rows * rh - 132 : H - rows * rh - 44;
   if (!small || P.free > 0) {
-    ctx.fillStyle = "rgba(11,13,18,.7)"; ctx.fillRect(px0, py0 - 16, pw + 28, rows * rh + 20);
+    panel(ctx, px0, py0 - 16, pw + 28, rows * rh + 20);
     ctx.font = PF(8); ctx.textAlign = "left"; ctx.fillStyle = P.free ? "#ffd166" : "#8a97a8"; ctx.fillText(P.free ? `${P.free} ADAPTATION POINT${P.free > 1 ? "S" : ""}` : "ADAPTATIONS", px0 + 6, py0 - 5);
     STATS.forEach((s, i) => {
       const yy = py0 + i * rh, v = P.pts[s.k]; ctx.fillStyle = "#1a1f2b"; ctx.fillRect(px0 + 6, yy + 2, pw, rh - 4);
@@ -1970,7 +2500,7 @@ if (DEBUG) window.PIO = {
   player: () => S && S.player, cells: () => S && alive(S.player), addXP: (n) => gainXP(S.player, n), setLevel: (L) => gainXP(S.player, Math.max(0, xpFor(L) - S.player.xp)),
   useSp: () => useAbility(S.player, "sp"), useUlt: () => useAbility(S.player, "ult"), addGene: (g) => addGene(S.player, g), genePool: () => genePool(S.player),
   fire: (on) => (S.auto = !!on), fireEvent: (id) => { const e = scheduleEvent(id); e.t = e.lead; return e; }, forceEvent: (id) => { const e = scheduleEvent(id); e.t = 0; e.phase = "warn"; e.lead = 0.01; return e; },
-  spawnBot, topUpGuilds, hudClick, openPause, closePause, openGene, takeGene, openSpec, openStrain, setSpecies, specialise: (k) => { setSpecies(S.player, k); S.player.specialised = 1; S.specOpen = 0; hide("gpick"); if (!S.over) S.paused = false; },
+  spawnBot, addCell, mkFx, witness, INTER, beginAdsorption, ADS, topUpGuilds, hudClick, openPause, closePause, openGene, takeGene, openSpec, openStrain, setSpecies, specialise: (k) => { setSpecies(S.player, k); S.player.specialised = 1; S.specOpen = 0; hide("gpick"); if (!S.over) S.paused = false; },
   quickStart: (typeKey, spKey) => { startRun("T", typeKey); if (spKey) { setSpecies(S.player, spKey, true); } S.player.specialised = 1; S.player.strained = 1; hide("gpick"); hide("pause"); S.paused = false; return S.player.sp; }, TYPES, TYPEKEYS, toTitle, engulf, infect, lyse, divide, growHypha, damage, die, o2At, flowAt, mucusAt, centroid, mainCell, totalMass, hostsOf, SP, spendPt: (k) => spendPt(S.player, k), director, useAbility, senseR, o2Tol, GUILD_N, regionAt, EPI, WORLD,
 };
 </script>

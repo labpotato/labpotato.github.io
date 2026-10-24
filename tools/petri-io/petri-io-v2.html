@@ -511,6 +511,158 @@ function music(on) {
   const osc = [55, 82.4, 110, 164.8].map((f, i) => { const o = AC.createOscillator(), og = AC.createGain(); o.type = i % 2 ? "sine" : "triangle"; o.frequency.value = f; og.gain.value = 0.25; const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.03 + i * 0.017; lg.gain.value = 0.2; lfo.connect(lg).connect(og.gain); lfo.start(); o.connect(og).connect(lp); o.start(); return o; });
   MUSIC = { g, osc };
 }
+
+/* =====================================================================
+   THE SECOND WAVE OF EVENTS
+   Each one is telegraphed, explained in one line of real biology, and
+   reversible. The ones with a `goal` are interactive: there is something
+   you can do while the clock runs, and the outcome depends on it.
+   ===================================================================== */
+ev("cleanse", { n: "Bowel preparation", lead: 11, dur: 30, weight: 0.8, pressure: 0.9, col: "#9fe8ff",
+  warn: () => "BOWEL PREP SCHEDULED", sub: () => "osmotic flush: almost everything is going to be swept out",
+  bio: () => "Polyethylene glycol holds water in the lumen and washes the contents out. It drops total bacterial load by orders of magnitude within hours. Most communities recover in days, but not all of them come back the same.",
+  goal: () => "Hold onto the mucosa or the adhesive crypts", goalHint: "stay below the epithelium line" });
+ev("norovirus", { n: "Norovirus", lead: 9, dur: 34, weight: 0.9, pressure: 1, col: "#c9b3ff",
+  warn: () => "VIRAL GASTROENTERITIS", sub: () => "the host empties the lumen and inflames it",
+  bio: () => "Norovirus infects the host's own epithelial cells, not the bacteria. The damage is indirect: blunted villi, fast transit and an inflamed surface, which changes who can hold on." });
+ev("ppi", { n: "Proton pump inhibitor", lead: 10, dur: 48, weight: 1, pressure: 0.5, col: "#ffd166",
+  warn: () => "GASTRIC ACID SUPPRESSED", sub: () => "oral and upper-tract organisms survive the stomach now",
+  bio: () => "Stomach acid is the gut's first filter. Suppress it and organisms that would normally be killed on the way down arrive alive, so the small intestine fills with species that do not belong there." });
+ev("iron", { n: "Iron supplement", lead: 8, dur: 32, weight: 1, pressure: 0.6, col: "#ff9345",
+  warn: () => "UNABSORBED IRON ARRIVING", sub: () => "iron-scavenging Enterobacteriaceae bloom",
+  bio: () => "Most oral iron is never absorbed and reaches the colon. The host normally keeps iron locked away precisely because pathogens need it; a supplement hands it straight to the organisms best at taking it up." });
+ev("fibreless", { n: "Fibre-free diet", lead: 9, dur: 46, weight: 1.1, pressure: 0.7, col: "#ff8a5c",
+  warn: () => "FIBRE IS RUNNING OUT", sub: () => "the mucus layer starts being eaten instead",
+  bio: () => "With no dietary glycans left, fibre degraders switch to the only glycan still available: the mucin of the mucus layer. The barrier thins from the inside, and the epithelium ends up closer to the lumen than it should ever be." });
+ev("bacteriocinwar", { n: "Bacteriocin arms race", lead: 8, dur: 30, weight: 1, pressure: 0.5, col: "#5ef0b0",
+  warn: () => "BACTERIOCIN PRODUCTION SPIKING", sub: () => "narrow-spectrum killing between close relatives",
+  bio: () => "Bacteriocins are ribosomally made peptides aimed at close relatives competing for the same niche. Producers carry a matched immunity gene, so the damage falls on everyone else nearby." });
+ev("phagetherapy", { n: "Phage therapy dose", lead: 10, dur: 34, weight: 0.9, pressure: 0.8, col: "#b98cff",
+  warn: () => "PHAGE COCKTAIL ADMINISTERED", sub: () => "a defined cocktail, aimed at specific receptors",
+  bio: () => "A therapeutic cocktail is chosen for host range: each phage binds one receptor on one group of strains. Anything without that receptor is untouched, which is the entire point, and also the reason resistance appears so fast.",
+  goal: () => "Survive the dose", goalHint: "receptor loss, capsule or a CRISPR spacer all work" });
+ev("biofilmmature", { n: "Mucosal biofilm maturation", lead: 9, dur: 40, weight: 1, pressure: -0.2, col: "#e3c77a",
+  warn: () => "A BIOFILM IS CONSOLIDATING", sub: () => "matrix thickens: residents dig in, newcomers cannot",
+  bio: () => "A mature biofilm is a polysaccharide matrix with gradients inside it. Cells deep in it grow slowly and survive drugs that kill the same strain in suspension, and new arrivals cannot reach the surface at all." });
+ev("appendix", { n: "Appendix reseeding", lead: 8, dur: 26, weight: 0.8, pressure: -0.9, col: "#a8e6cf",
+  warn: () => "RESEEDING FROM THE APPENDIX", sub: () => "a protected reservoir refills the colon",
+  bio: () => "The appendix holds a biofilm-protected reservoir of the normal community, shielded from whatever swept the colon. After a severe disturbance it reseeds downstream, which is one reason the same strains often come back." });
+ev("travel", { n: "Travel dysbiosis", lead: 9, dur: 38, weight: 1, pressure: 0.8, col: "#ff6b6b",
+  warn: () => "FOREIGN STRAINS ARRIVING", sub: () => "new arrivals compete with the residents",
+  bio: () => "A change of food and water delivers a continuous inoculum of unfamiliar strains. Most fail to establish, because the residents already hold the niches; the ones that succeed usually do so right after something else cleared the way." });
+ev("cdiffrecur", { n: "C. difficile recurrence", lead: 10, dur: 36, weight: 0.9, pressure: 1.2, col: "#ff5d6c",
+  warn: () => "SPORES ARE GERMINATING AGAIN", sub: () => "the reservoir that antibiotics could never reach",
+  bio: () => "Spores are metabolically inert, so no antibiotic touches them. They germinate when primary bile acids reach them unconverted, which is exactly the state a community left in after a course. That is why recurrence follows treatment rather than preceding it.",
+  goal: () => "Restore bile acid conversion", goalHint: "bile salt hydrolase carriers block germination" });
+ev("aad", { n: "Antibiotic-associated diarrhoea", lead: 8, dur: 30, weight: 1, pressure: 0.9, col: "#ffb3a0",
+  warn: () => "FERMENTATION HAS COLLAPSED", sub: () => "unfermented carbohydrate pulls water into the lumen",
+  bio: () => "When the fermenters are gone, carbohydrate that would have become short-chain fatty acids stays osmotically active instead. Water follows it into the lumen and transit speeds up, which washes out whatever was still holding on." });
+ev("biliary", { n: "Bile duct obstruction", lead: 10, dur: 40, weight: 0.8, pressure: 0.7, col: "#cfe08f",
+  warn: () => "BILE FLOW BLOCKED", sub: () => "no bile acids: fat stays undigested and the brake comes off",
+  bio: () => "Bile acids are detergents and signalling molecules at once. Without them, organisms normally held back by bile overgrow the small intestine, and the secondary bile acids that keep C. difficile spores dormant are never made." });
+ev("shortbowel", { n: "Accelerated transit", lead: 7, dur: 28, weight: 1, pressure: 0.8, col: "#8fe3ff",
+  warn: () => "TRANSIT TIME COLLAPSING", sub: () => "only what can hold on, or divide fast enough, stays",
+  bio: () => "Residence time is a selection pressure in its own right. When the contents move through in hours instead of a day, the community is reduced to whatever adheres to the mucosa or outgrows the washout rate.",
+  goal: () => "Hold position against the current", goalHint: "adhesins and the mucus layer both help" });
+ev("flare", { n: "Inflammatory flare", lead: 10, dur: 42, weight: 1, pressure: 1.1, col: "#ff5d6c",
+  warn: () => "CALPROTECTIN RISING", sub: () => "neutrophils, oxygen and nitrate flood the mucosa",
+  bio: () => "An inflamed mucosa leaks oxygen and nitrate into a compartment that is normally anaerobic. Strict anaerobes lose their advantage, facultative Enterobacteriaceae gain one, and neutrophil calprotectin strips the zinc and manganese out of the mucus on top of that." });
+
+/* ---------------------------------------------------------------------
+   handlers for the second wave. Keeping them in one table rather than in
+   the big switches keeps each event's whole behaviour in one place.
+   --------------------------------------------------------------------- */
+const EVH = {
+  cleanse: {
+    start: (e) => { S.env.flow = 5.4; for (let i = 0; i < GW; i++) S.mucus[i] *= 0.5; sfx("flow"); },
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion) continue;
+        const held = c.col.fl.adhere && c.y < EPI + 240; if (!held) { c.x += 150 * dt; if (rnd() < dt * 0.25) damage(c, 9 * dt * 6, null, "flow"); } } },
+    track: (e) => { const m = mainCell(S.player); return m ? clamp(1 - (m.y - EPI) / 520, 0, 1) : 0; },
+    end: (e) => { S.env.flow = 1; }
+  },
+  norovirus: {
+    start: (e) => { S.env.flow = 2.6; S.env.inflame = Math.max(S.env.inflame, 0.45); },
+    tick: (e, dt) => { for (const q of S.epi) if (rnd() < dt * 0.5) q.hp = clamp(q.hp - dt * 0.3, 0.15, 1); },
+    end: (e) => { S.env.flow = 1; }
+  },
+  ppi: {
+    start: (e) => { for (let i = 0; i < 3; i++) spawnBot(pick(["lacto", "entero", "kleb"]), clamp(S.player.level, 4, 24), R(0, 900)); },
+    tick: (e, dt) => { S.env.phShift = 1.1; if (rnd() < dt * 0.3) spawnBot(pick(["lacto", "entero", "hpylori"]), clamp(S.player.level, 4, 24), R(0, 1200)); },
+    end: (e) => { S.env.phShift = 0; }
+  },
+  iron: {
+    start: (e) => { for (let i = 0; i < 26; i++) spawnNut("iron", R(0, WORLD.w), EPI + R(60, 700)); },
+    tick: (e, dt) => { if (rnd() < dt * 1.6) spawnNut("iron", R(0, WORLD.w), EPI + R(60, 700));
+      for (const col of S.cols) if (!col.dead && col.fl.sidero) col.boost = Object.assign(col.boost || {}, { growth: 1.3 }); },
+    end: (e) => { for (const col of S.cols) if (col.boost) delete col.boost.growth; }
+  },
+  fibreless: {
+    start: (e) => { S.env.diet = "fast"; },
+    tick: (e, dt) => { for (let i = 0; i < GW; i++) S.mucus[i] = Math.max(0.08, S.mucus[i] - dt * 0.03);
+      for (const c of S.cells) if (!c.dead && !c.virion && c.col.fl.mucin && rnd() < dt * 0.4) damageEpi(c.x, dt * 0.05, 0.004); },
+    end: (e) => { S.env.diet = "mixed"; }
+  },
+  bacteriocinwar: {
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion || !c.col.fl.bacteriocin) continue;
+        near(c.x, c.y, 130, (o) => { if (o.kind !== "cell" || o.virion || o.team === c.team) return;
+          if (!SP(o.col).tags.includes("bacteria") || o.col.fl.bacteriocin) return;   // producers carry immunity
+          damage(o, 7 * dt, c.col, "toxin"); }); } }
+  },
+  phagetherapy: {
+    start: (e) => { e.hit0 = 0; for (let i = 0; i < 3; i++) spawnBot(pick(["crass", "lambda"]), clamp(S.player.level + 3, 6, 30)); },
+    tick: (e, dt) => { if (rnd() < dt * 0.9) { const ph = S.cols.find((c) => !c.dead && SP(c).host);
+        if (ph) { const m = mainCell(ph); if (m) for (let i = 0; i < 2; i++) addCell(ph, R(0, WORLD.w), EPI + R(80, 700), 1); } } },
+    track: (e) => { const P = S.player; return (P.fl.capsule || P.recLoss || (P.spacers || []).length || P.fl.rm || P.fl.abi) ? 1 : clamp(alive(P).length / 4, 0, 0.9); }
+  },
+  biofilmmature: {
+    start: (e) => { for (const z of S.zones) if (z.type === "biofilm") { z.r *= 1.35; z.life += 40; } },
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion) continue;
+        if (c.biofilm > 0) { c.hp = Math.min(c.maxhp, c.hp + c.maxhp * 0.02 * dt); c.inhib = Math.max(c.inhib || 0, 0.25); }
+        else if (c.biofilm < 0) c.stuck = 1; } }
+  },
+  appendix: {
+    start: (e) => { for (const k of ["btheta", "faecali", "bifido", "akk"]) spawnBot(k, clamp(Math.round(S.player.level * 0.8), 3, 24), R(WORLD.w * 0.55, WORLD.w * 0.8)); },
+    tick: (e, dt) => { if (rnd() < dt * 0.5) spawnBot(pick(["btheta", "faecali", "bifido", "lacto"]), clamp(Math.round(S.player.level * 0.7), 3, 22), R(WORLD.w * 0.55, WORLD.w * 0.85)); }
+  },
+  travel: {
+    tick: (e, dt) => { if (rnd() < dt * 0.6) spawnBot(pick(["ecoli", "kleb", "salmonella", "entero", "lacto", "vibrio"]), clamp(S.player.level, 4, 26), R(0, 700)); }
+  },
+  cdiffrecur: {
+    start: (e) => { const cd = spawnBot("cdiff", clamp(S.player.level + 2, 5, 28), R(WORLD.w * 0.5, WORLD.w * 0.9));
+      e.cd = cd; for (const c of cd.cells) { c.spore = 2; c.sporeT = 5; } },
+    tick: (e, dt) => { if (rnd() < dt * 0.3) { const c = pick(alive(e.cd || {}) || []); if (c) { c.spore = 2; c.sporeT = 4; } } },
+    track: (e) => { let bsh = 0, n = 0; for (const col of S.cols) { if (col.dead || !SP(col).tags.includes("bacteria")) continue; n++; if (col.fl.bsh) bsh++; } return n ? clamp(bsh / Math.max(3, n * 0.4), 0, 1) : 0; }
+  },
+  aad: {
+    start: (e) => { S.env.flow = 3.2; S.env.diet = "sugar"; },
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion) continue;
+        const C = SP(c.col); if (C.makes === "butyrate" || C.makes === "acetate") damage(c, 2.2 * dt, null, "starve"); } },
+    end: (e) => { S.env.flow = 1; S.env.diet = "mixed"; }
+  },
+  biliary: {
+    start: (e) => { S.env.noBile = 1; },
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion) continue;
+        if (SP(c.col).guild === "spore" && c.spore >= 2 && rnd() < dt * 0.5) { c.sporeT = Math.min(c.sporeT, 0.6); }   // nothing left to keep them dormant
+        if (regionAt(c.x).k === "ileum" && rnd() < dt * 0.3) c.mass = Math.min(SP(c.col).maxMass, c.mass + dt * 3); } },
+    end: (e) => { S.env.noBile = 0; }
+  },
+  shortbowel: {
+    start: (e) => { S.env.flow = 4.0; sfx("flow"); },
+    tick: (e, dt) => { for (const c of S.cells) { if (c.dead || c.virion) continue;
+        if (!c.col.fl.adhere && mucusAt(c.x) < 0.5) c.x += 90 * dt; } },
+    track: (e) => { const m = mainCell(S.player); if (!m) return 0; return clamp(1 - Math.abs(m.x - (e.x0 != null ? e.x0 : (e.x0 = m.x))) / 1800, 0, 1); },
+    end: (e) => { S.env.flow = 1; }
+  },
+  flare: {
+    start: (e) => { S.env.inflame = Math.max(S.env.inflame, 0.75); S.env.nitrate = 1; e.wave = 0; },
+    tick: (e, dt) => { S.env.inflame = clamp(S.env.inflame + dt * 0.012, 0, 1);
+      if ((e.wave -= dt) <= 0) { e.wave = 2.2; spawnImmune(clamp((S.player ? centroid(S.player)[0] : R(0, WORLD.w)) + R(-800, 800), 60, WORLD.w - 60)); }
+      for (const c of S.cells) { if (c.dead || c.virion) continue;
+        if (SP(c.col).o2 < 0.2) damage(c, 2.6 * dt, null, "o2");          // calprotectin and oxygen together
+        if (c.col.fl.sidero && rnd() < dt * 0.2) c.inhib = Math.max(c.inhib || 0, 0.3); } },
+    end: (e) => { S.env.nitrate = 0.4; }
+  },
+};
 /* =====================================================================
    ART DIRECTION — one palette, one light, three depth planes, one grade.
    Everything the renderer draws goes through these helpers so the whole
@@ -686,7 +838,7 @@ function o2At(x, y) {
   const reg = regionAt(x), base = reg.o2 * (1 + S.env.inflame * 1.6), depth = Math.max(0, y - EPI);
   return clamp(base * Math.exp(-depth / (260 + S.env.inflame * 420)) + S.o2mod[gi(x, y)], 0, 1.4);
 }
-const phAt = (x, y) => clamp(regionAt(x).ph + S.phmod[gi(x, y)], 3.5, 8.5);
+const phAt = (x, y) => clamp(regionAt(x).ph + S.phmod[gi(x, y)] + (S.env.phShift || 0), 3.5, 8.5);
 const mucusAt = (x) => S.mucus[clamp(Math.floor(x / GS), 0, GW - 1)] * S.env.mucusMul;
 const inMucus = (x, y) => y > EPI && y < EPI + 60 + mucusAt(x) * 170;
 function flowAt(x, y) { const prof = clamp((y - EPI) / 600, 0.25, 1); return S.env.flow * 26 * prof * (1 + 0.35 * Math.sin(S.time * 0.5 + x / 900)); }
@@ -740,7 +892,7 @@ function healEpi(x, n) { const e = epiAt(x); e.hp = clamp(e.hp + n, 0, 1); S.o2m
 /* ---------- nutrients ---------- */
 function mkNut(k, x, y) { const N = NUTRIENTS[k]; return { kind: "nut", id: ++UID, k, x, y, vx: 0, vy: R(-4, 4), mass: N.mass, mass0: N.mass, r: N.r, rot: rnd() * TAU, spin: R(-0.4, 0.4), dead: false, seed: rnd(), gene: N.gene ? pick(RES_GENES) : null }; }
 function spawnNut(k, x, y) {
-  if (!k) { const diet = S.env.diet, tbl = NUTKEYS.filter((q) => NUTRIENTS[q].w > 0).map((q) => [q, NUTRIENTS[q].w * (diet === "fibre" && (q === "fibre" || q === "starch") ? 3.5 : diet === "sugar" && q === "sugar" ? 3 : diet === "fast" && q !== "mucin" ? 0.25 : 1) * (q === "bile" ? regionAt(x || rnd() * WORLD.w).bile * 2 : 1)]);
+  if (!k) { const diet = S.env.diet, tbl = NUTKEYS.filter((q) => NUTRIENTS[q].w > 0).map((q) => [q, NUTRIENTS[q].w * (diet === "fibre" && (q === "fibre" || q === "starch") ? 3.5 : diet === "sugar" && q === "sugar" ? 3 : diet === "fast" && q !== "mucin" ? 0.25 : 1) * (q === "bile" ? (S.env.noBile ? 0 : regionAt(x || rnd() * WORLD.w).bile * 2) : 1)]);
     let roll = rnd() * tbl.reduce((s, t) => s + t[1], 0); k = "sugar"; for (const [kk, w] of tbl) { if (roll < w) { k = kk; break; } roll -= w; } }
   const N = NUTRIENTS[k];
   if (x === undefined) { x = rnd() * WORLD.w; y = N.where === "mucus" ? EPI + R(20, 170) : N.where === "epi" ? EPI + R(0, 120) : R(EPI + 200, WORLD.h - 60); }
@@ -1016,9 +1168,14 @@ function eventStart(e) {
     case "probiotic": for (const k of ["lacto", "bifido", "boulardii"]) spawnBot(k, clamp(Math.round(S.player.level * 0.7), 3, 22), R(0, 400)); break;
     case "fever": S.env.temp = 39; break;
   }
+  const h = EVH[id]; if (h && h.start) h.start(e);
+  if (e.def.goal) { e.goal = e.def.goal(e); e.prog = 0; toast(e.goal.toUpperCase()); }
   feedMsg(`${e.def.n}: ${typeof e.def.sub === "function" ? e.def.sub(e) : ""}`, e.def.col);
 }
 function eventTick(e, dt) {
+  const h = EVH[e.id];
+  if (h && h.tick) h.tick(e, dt);
+  if (h && h.track) e.prog = clamp(h.track(e), 0, 1);
   switch (e.id) {
     case "antibiotic": drugTick(e, dt); break;
     case "dysbiosis": S.env.inflame = clamp(S.env.inflame + dt * 0.02, 0, 1); S.env.nitrate = 1; if (rnd() < dt * 0.35) spawnNut("debris", R(0, WORLD.w), EPI + R(40, 300)); break;
@@ -1029,7 +1186,7 @@ function eventTick(e, dt) {
     }
     case "phagebloom": if (rnd() < dt * 1.4) { const col = S.cols.find((q) => !q.dead && SP(q).guild === "phage"); if (col && alive(col).length < MAX_VIRIONS) { const [x, y] = centroid(col); addCell(col, x + R(-200, 200), y + R(-200, 200), 1); } } break;
     case "flush": S.env.flow = 4.2; break;
-    case "bile": if (rnd() < dt * 5) spawnNut("bile", R(0, WORLD.w * 0.55), R(EPI + 150, WORLD.h - 100)); break;
+    case "bile": if (!S.env.noBile && rnd() < dt * 5) spawnNut("bile", R(0, WORLD.w * 0.55), R(EPI + 150, WORLD.h - 100)); break;
     case "mucusthin": for (let i = 0; i < GW; i++) S.mucus[i] = Math.max(0.05, S.mucus[i] - dt * 0.02); break;
     case "tumour": { if (rnd() < dt * 3) spawnNut(pick(["peptide", "debris", "sugar"]), e.x + R(-420, 420), EPI + R(30, 260)); S.o2mod[gi(e.x, EPI + 150)] -= dt * 0.4; S.phmod[gi(e.x, EPI + 150)] -= dt * 0.3; if (rnd() < dt * 0.2) { for (const q of S.epi) if (Math.abs(q.x - e.x) < 460 + e.t * 3) q.tumour = 1; } break; }
     case "feast": case "sugarrush": if (S.nuts.length < nutTarget() * 1.7 && rnd() < dt * 9) spawnNut(); break;
@@ -1037,6 +1194,8 @@ function eventTick(e, dt) {
   }
 }
 function eventEnd(e) {
+  const h = EVH[e.id]; if (h && h.end) h.end(e);
+  if (e.def.goal) resolveGoal(e);
   switch (e.id) {
     case "antibiotic": S.env.drug = null; S.env.drugT = 0; S.env.conc = 0; for (const c of S.cells) { c.persist = false; c.inhib = 0; } feedMsg(`The ${e.drug.n} course is over. Whatever survived now has room.`, "#8a97a8"); break;
     case "dysbiosis": S.env.nitrate = 0.4; break;
@@ -1220,6 +1379,18 @@ function passiveAct(col, c, dt) {
   }
 }
 function camZoom() { const P = S.player, C = SP(P), base = clamp(Math.min(W / 1200, H / 760) + 0.5, 0.7, 1.5); if (C.host) return base * 1.5; const m = mainCell(P), r = m ? m.r : 18; return base * clamp(Math.pow(34 / (15 + r), 0.6), 0.5, 1.4); }
+
+/* an interactive event pays out on what you actually managed to do while it ran */
+function resolveGoal(e) {
+  const P = S.player, won = (e.prog || 0) >= 0.6;
+  if (won) {
+    gainXP(P, 60 + 40 * (e.prog || 0));
+    feedMsg(`${e.def.n}: you came through it — ${e.def.goalHint || "the objective held"}`, "#7cf29a");
+    if (!S.over) { toast("OBJECTIVE MET"); sfx("ally"); }
+  } else {
+    feedMsg(`${e.def.n}: you did not manage it — ${e.def.goalHint || "the objective failed"}`, "#ff8a5c");
+  }
+}
 /* =====================================================================
    MECHANISM FX — every interaction that matters gets a visible, correctly
    oriented mechanism: a spear fired into a neighbour, a pilus that
@@ -2670,6 +2841,18 @@ function drawHUD() {
     ctx.font = PX(small ? 11 : 13); ctx.fillStyle = "#c9d2dc";
     ctx.fillText(typeof e.def.sub === "function" ? e.def.sub(e) : "", W / 2, ey2 + 17);
     if (!small) { const bio = typeof e.def.bio === "function" ? e.def.bio(e) : e.def.bio; ctx.font = PX(12); ctx.fillStyle = "#8a97a8"; wrapText(ctx, bio, W / 2, ey2 + 34, Math.min(760, W - 80), 15); }
+    // an interactive event states its objective and tracks it live
+    if (e.goal && !warn) {
+      const gw = Math.min(360, W - 120), gx = W / 2 - gw / 2, gy = ey2 + (small ? 24 : 72);
+      ctx.font = PF(small ? 9 : 10); ctx.textAlign = "center";
+      ctx.fillStyle = (e.prog || 0) >= 0.6 ? ART.mint : ART.gold;
+      ctx.fillText(`OBJECTIVE · ${e.goal.toUpperCase()}`, W / 2, gy);
+      const bar = (x, w2, col) => { ctx.fillStyle = col; ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, gy + 6, Math.max(0, w2), 7, 3.5); else ctx.rect(x, gy + 6, Math.max(0, w2), 7); ctx.fill(); };
+      bar(gx, gw, "rgba(10,4,12,.65)");
+      bar(gx, gw * clamp(e.prog || 0, 0, 1), (e.prog || 0) >= 0.6 ? ART.mint : ART.gold);
+      ey2 += small ? 22 : 26;
+    }
     ey2 += small ? 52 : 86;
   }
   // gene available

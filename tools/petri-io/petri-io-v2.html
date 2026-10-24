@@ -829,7 +829,24 @@ function sweep(ctx, x, y, w, h, f, col) {
 /* ---------- canvas and state ---------- */
 let S = null, UID = 0, W = 0, H = 0, DPR = 1;
 const cv = $("cv"), X = cv.getContext("2d");
-function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight; cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + "px"; cv.style.height = H + "px"; }
+/* Render scale is adaptive. This is a soft-focus microscopy look, so the
+   full device pixel ratio buys very little and costs a lot: every full-screen
+   fill scales with it. We start at 1.5 and let the frame loop walk it down
+   when frames get expensive, and back up when they are cheap again. */
+let DPRCAP = 1.5;
+function resize() {
+  DPR = Math.min(DPRCAP, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  cv.style.width = W + "px"; cv.style.height = H + "px";
+  POSTK = "";                                        // the post overlay is sized in device pixels
+}
+function adaptScale(ms) {
+  const a = (S.frameAvg = S.frameAvg == null ? ms : S.frameAvg * 0.94 + ms * 0.06);
+  if (S.scaleHold > 0) { S.scaleHold--; return; }
+  if (a > 21 && DPRCAP > 1) { DPRCAP = Math.max(1, DPRCAP - 0.25); S.scaleHold = 180; resize(); }
+  else if (a < 11 && DPRCAP < 1.5) { DPRCAP = Math.min(1.5, DPRCAP + 0.25); S.scaleHold = 180; resize(); }
+}
 window.addEventListener("resize", resize); resize();
 
 const GS = 200, GW = Math.ceil(WORLD.w / GS), GH = Math.ceil(WORLD.h / GS);
@@ -3204,6 +3221,7 @@ function drawHUD() {
   ctx.textAlign = "left"; ctx.font = PX(small ? 11 : 13); let y = small ? 150 : 14;
   const feedMax = small ? 3 : 7, feedW = small ? W - 24 : W * 0.45;
   for (const f of S.feed.slice(0, feedMax)) { ctx.globalAlpha = Math.min(1, f.t); ctx.fillStyle = f.col; let t2 = f.s; while (ctx.measureText(t2).width > feedW && t2.length > 8) t2 = t2.slice(0, -4) + "…"; ctx.fillText(t2, 12, y + 10); y += small ? 14 : 17; } ctx.globalAlpha = 1;
+  HUD.feedBottom = y;
   // leaderboard
   const lb = S.cols.filter((c) => !c.dead).sort((a, b) => b.xp - a.xp).slice(0, small ? 5 : 9), lw = small ? 160 : 232, lx = W - lw - 10;
   panel(ctx, lx, 10, lw, 26 + lb.length * 18);
@@ -3283,7 +3301,8 @@ function drawHUD() {
     });
   }
   // event banners
-  let ey2 = 96;
+  // the banner starts below whatever the feed is currently using
+  let ey2 = Math.max(96, (HUD.feedBottom || 0) + 26);
   for (const e of S.ev) {
     const warn = e.phase === "warn", t = warn ? Math.ceil(e.lead - e.t) : Math.ceil(e.dur - e.t);
     ctx.textAlign = "center"; ctx.font = PF(small ? 12 : 16);
@@ -3308,7 +3327,7 @@ function drawHUD() {
     ey2 += small ? 52 : 86;
   }
   // gene available
-  if (P.geneQ > 0) { const gy2 = small ? by0 - 10 : by - 28; ctx.textAlign = "center"; ctx.font = PF(small ? 10 : 13); ctx.fillStyle = Math.sin(S.time * 7) > 0 ? "#7fd7ff" : "#fff"; ctx.fillText(small ? "GENE READY · G" : "GENE AVAILABLE · PRESS G", W / 2, gy2); HUD.rects.push({ x: W / 2 - 140, y: gy2 - 14, w: 280, h: 20, act: "gene" }); }
+  if (P.geneQ > 0) { const gy2 = by0 - (small ? 12 : 16); ctx.textAlign = "center"; ctx.font = PF(small ? 10 : 13); ctx.fillStyle = Math.sin(S.time * 7) > 0 ? "#7fd7ff" : "#fff"; ctx.fillText(small ? "GENE READY · G" : "GENE AVAILABLE · PRESS G", W / 2, gy2); HUD.rects.push({ x: W / 2 - 140, y: gy2 - 14, w: 280, h: 20, act: "gene" }); }
   // pause button + touch sticks
   ctx.fillStyle = "rgba(17,20,28,.8)"; ctx.fillRect(W - 44, H - 40, 34, 30); ctx.font = PF(10); ctx.fillStyle = "#8a97a8"; ctx.textAlign = "center"; ctx.fillText("ESC", W - 27, H - 21);
   HUD.rects.push({ x: W - 44, y: H - 40, w: 34, h: 30, act: "pause" });
@@ -3517,7 +3536,7 @@ function frame(now) {
   if (S && !S.paused && !S.over) { acc += el; let n = 0; while (acc >= DT && n++ < 5) { step(DT); acc -= DT; } if (n >= 5) acc = 0; }
   else if (S && S.over) { acc = 0; }
   if (PREVIEWS.length && ($("title").classList.contains("show") || $("pause").classList.contains("show"))) tickPreviews(el);
-  if (S) { S.dtUI = el; draw(); }
+  if (S) { S.dtUI = el; const t0 = performance.now(); draw(); adaptScale(performance.now() - t0); }
 }
 requestAnimationFrame(frame);
 
@@ -3529,13 +3548,6 @@ if (DEBUG) window.PIO = {
   spawnBot, addCell, mkFx, witness, INTER, CODEX: INTER, codexBody, SIG, SIG_HELP, affordanceOf, nutAffordance, beginAdsorption, ADS, topUpGuilds, hudClick, openPause, closePause, openGene, takeGene, openSpec, openStrain, setSpecies, specialise: (k) => { setSpecies(S.player, k); S.player.specialised = 1; S.specOpen = 0; hide("gpick"); if (!S.over) S.paused = false; },
   quickStart: (typeKey, spKey) => { startRun("T", typeKey); if (spKey) { setSpecies(S.player, spKey, true); } S.player.specialised = 1; S.player.strained = 1; hide("gpick"); hide("pause"); S.paused = false; return S.player.sp; }, TYPES, TYPEKEYS, toTitle, engulf, infect, lyse, divide, growHypha, damage, die, o2At, flowAt, mucusAt, centroid, mainCell, totalMass, hostsOf, SP, spendPt: (k) => spendPt(S.player, k), director, useAbility, senseR, o2Tol, GUILD_N, regionAt, EPI, WORLD,
 };
-</script>
-<script data-goatcounter="https://labpotato.goatcounter.com/count"
-        data-goatcounter-settings='{"path":"/tools/petri-io"}'
-        async src="//gc.zgo.at/count.js"></script>
-</body>
-</html>
-
 /* the colour language, written out where the player can read it */
 function signalHelp() {
   const row = ([k, name, d]) => `<b style="color:${SIG[k].col}">${name.toUpperCase()}</b><div><span class="muted">${d}</span></div>`;
@@ -3543,3 +3555,9 @@ function signalHelp() {
     <p class="muted">Four signals, used for nothing else. Each pairs a colour with its own ring style and glyph, so they still read without colour vision. What counts as which depends on the species you are now and the genes you carry, so it changes as you do.</p>
     <div class="kv">${SIG_HELP.map(row).join("")}</div>`;
 }
+</script>
+<script data-goatcounter="https://labpotato.goatcounter.com/count"
+        data-goatcounter-settings='{"path":"/tools/petri-io"}'
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

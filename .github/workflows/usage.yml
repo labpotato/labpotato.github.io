@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: usage
-  cancel-in-progress: true
+  cancel-in-progress: false   # a second run waits for the first instead of stopping it
 
 jobs:
   update:
@@ -32,4 +32,6 @@ jobs:
           git add assets/usage.json
           if git diff --cached --quiet; then echo "No change"; exit 0; fi
           git commit -m "Update usage numbers"
-          git push
+          # main may have moved while the job ran: put this commit on top, then push (a few tries)
+          for i in 1 2 3; do git pull --rebase -q origin main && git push && exit 0; sleep 5; done
+          exit 1

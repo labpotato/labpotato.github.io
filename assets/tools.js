@@ -262,22 +262,23 @@ const TOOLS = [
     name: "Doc Reader",
     tagline: "Papers, reports and web pages, marked up",
     description:
-      "Open a PDF, Markdown file, web page or image; highlight, comment, draw and edit; export it with everything you added.",
+      "Open a PDF, Markdown, HTML, web page or image; highlight, comment, draw and edit; save it back or export it with everything you added.",
     icon: "reader",
     accent: "cyan",
     folder: "tools/doc-reader",
     features: [
-      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs",
-      "Word-style editing of Markdown and web pages, with tables and images",
-      "Exports an annotated PDF or Markdown; autosaves; Chrome extension for any page"
+      "Highlights, comment bubbles, Word-style text boxes, drawings and page edits on PDFs",
+      "Edit Markdown and HTML files like a Word document: tables, images (crop, rotate, resize), lists",
+      "Saves back into the file you opened; exports PDF, HTML or Markdown; Chrome extension for any page"
     ],
     versions: [
-      { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25",
+      { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
+      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-25",
         new: [
-          "PDF viewer with pages, outline, find, zoom; highlight, underline, strike, area, comment, text, pen, shapes, images",
-          "Edit the PDF's own text; rotate, delete, add and reorder pages; turn a PDF into an editable document",
-          "Markdown, web page and image documents with a Word-style editor; export PDF or Markdown with comments",
-          "Autosave in the browser, project files, and a Chrome extension that opens any page or PDF"
+          "Save (Ctrl+S) writes your changes back into the PDF, HTML, Markdown or image file you opened",
+          "HTML files open whole with their own styling and can be edited; every document exports as HTML, PDF or Markdown",
+          "Image editor: crop, rotate, flip, brightness, contrast, colour; drag a handle to resize",
+          "Text boxes on PDFs edit in place with bold, italic, size, colour and alignment; zoom for documents; fold handles on both panels"
         ] }
     ]
   }

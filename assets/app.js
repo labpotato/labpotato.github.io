@@ -551,6 +551,10 @@ const APP_GLYPH = {
   protein: `<path d="M10 37.5h28" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><rect x="12.5" y="26" width="6" height="9" rx="2" fill="#fff" fill-opacity=".7"/>
     <rect x="21" y="19" width="6" height="16" rx="2" fill="#fff" fill-opacity=".85"/><rect x="29.5" y="11" width="6" height="24" rx="2" fill="#fff"/>
     <rect x="31" y="14" width="3" height="5" rx="1.2" ${C} opacity=".55"/>`,
+  reader: `<rect x="11" y="7" width="26" height="34" rx="4" fill="#fff"/>
+    <rect x="16" y="14" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="20" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="26" width="10" height="2.6" rx="1.3" ${C} opacity=".3"/>
+    <rect x="15" y="19" width="12" height="4.6" rx="1.6" fill="#ffd84d" opacity=".85"/>
+    <path d="M30 30.5a4.5 4.5 0 1 1 1.6 3.4L29 35l.6-2.6A4.5 4.5 0 0 1 30 30.5z" ${C}/>`,
   cryobox: `<rect x="9" y="9" width="30" height="30" rx="4.5" fill="#fff"/>
     <g ${C}><circle cx="17" cy="17" r="3"/><circle cx="24" cy="17" r="3" opacity=".7"/><circle cx="31" cy="17" r="3"/><circle cx="17" cy="24" r="3" opacity=".45"/><circle cx="24" cy="24" r="3"/>
     <circle cx="31" cy="24" r="3" opacity=".7"/><circle cx="17" cy="31" r="3"/><circle cx="24" cy="31" r="3" opacity=".25"/><circle cx="31" cy="31" r="3" opacity=".25"/></g>`,

@@ -268,13 +268,14 @@ const TOOLS = [
     folder: "tools/doc-reader",
     features: [
       "Highlights, comment bubbles, Word-style text boxes, drawings and page edits on PDFs",
-      "Edit Markdown and HTML files like a Word document: tables, images (crop, rotate, resize), lists",
+      "HTML pages as they look, with a floating toolbar; or edit like a Word document",
       "Saves back into the file you opened; exports PDF, HTML or Markdown; Chrome extension for any page"
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
       { v: "v2", file: "doc-reader-v2.html", date: "2026-10-25",
         new: [
+          "Web view: HTML pages exactly as they look, with a floating toolbar; links and buttons work, double-click to edit, click a picture to enlarge it",
           "Save (Ctrl+S) writes your changes back into the PDF, HTML, Markdown or image file you opened",
           "HTML files open whole with their own styling and can be edited; every document exports as HTML, PDF or Markdown",
           "Image editor: crop, rotate, flip, brightness, contrast, colour; drag a handle to resize",

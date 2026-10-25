@@ -451,6 +451,40 @@ code{font-family:var(--mono);font-size:.92em;background:var(--line);padding:1px 
 .anode.textbox b,.anode.textbox strong{font-weight:700}
 @media (max-width:760px){.left,.right{position:absolute}}
 
+/* ---- web view: the page full window, the tools floating on top ---- */
+.webview{position:fixed;inset:0;z-index:300;background:#fff}
+#wvFrame{display:block;width:100%;height:100%;border:0;background:#fff}
+.wv-bar{position:fixed;z-index:330;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:1px;padding:4px 6px;border-radius:14px;
+  background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);
+  border:1px solid var(--line-2);box-shadow:0 10px 30px rgba(15,23,42,.22),0 1px 2px rgba(15,23,42,.08);color:var(--ink);font-size:12.5px;max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none}
+.wv-bar .tb{height:30px;min-width:30px}
+.wv-grip{width:32px;height:30px;border:0;background:none;border-radius:9px;display:grid;place-items:center;cursor:grab;flex:0 0 auto}
+.wv-grip:hover{background:var(--line)}
+.wv-grip svg{width:24px;height:24px;overflow:visible}
+.wv-sep{width:1px;height:18px;background:var(--line);margin:0 3px;flex:0 0 auto}
+.wv-dot{width:14px;height:14px;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.wv-dotbtn{min-width:22px!important;padding:0 3px}
+.wv-bar.min{padding:4px}
+.wv-bar.min > :not(.wv-grip){display:none}
+.webview #right{position:fixed;right:12px;top:62px;bottom:12px;width:min(320px,calc(100vw - 24px));border:1px solid var(--line-2);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.22);z-index:325;overflow:hidden}
+.webview #right.closed{display:none}
+.webview .fold{display:none}
+body.webview .toast{z-index:620}
+/* picture viewer */
+.lightbox{position:fixed;inset:0;z-index:480;background:rgba(10,12,16,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 64px 20px;animation:popIn .15s}
+.lb-stage{flex:1;min-height:0;width:100%;display:grid;place-items:center;overflow:hidden}
+.lb-img{max-width:100%;max-height:calc(100vh - 130px);object-fit:contain;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5);border-radius:3px;cursor:zoom-in}
+.lightbox.actual .lb-stage{overflow:auto;place-items:start center}
+.lightbox.actual .lb-img{max-width:none;max-height:none;cursor:zoom-out}
+.lb-bar{display:flex;gap:8px;align-items:center;margin-top:12px;color:#e8eaee;font-size:13px;flex-wrap:wrap;justify-content:center}
+.lb-cap{max-width:50vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-count{color:#9aa0a9}
+.lb-x,.lb-nav{position:fixed;border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:42px;height:42px;display:grid;place-items:center}
+.lb-x:hover,.lb-nav:hover{background:rgba(255,255,255,.25)}
+.lb-x svg,.lb-nav svg{width:20px;height:20px}
+.lb-x{top:12px;right:14px}.lb-prev{left:12px;top:50%}.lb-next{right:12px;top:50%}
+@media (max-width:760px){.lightbox{padding:44px 8px 14px}.wv-bar .lbl{display:none}}
+
 </style>
 </head>
 <body>
@@ -550,6 +584,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--line);padding:1px 
       <form class="url-row" id="urlForm">
         <svg><use href="#i-web"/></svg>
         <input id="urlInput" type="url" placeholder="https://… a web page or a PDF link" aria-label="Web address">
+        <select id="webLayout" class="tsel" title="How a web page opens" aria-label="How a web page opens"><option value="original">As it looks</option><option value="article">Article only</option></select>
         <button class="btn" type="submit">Load</button>
       </form>
       <p class="url-note" id="urlNote"></p>
@@ -573,6 +608,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--line);padding:1px 
           <li>Export an annotated PDF or Markdown with comments as footnotes</li>
           <li>Saves back into the file you opened (PDF, HTML, Markdown, image); autosaves in this browser</li>
           <li>Crop, rotate and adjust any image; Word-style text boxes on PDFs</li>
+          <li>Web view: HTML pages as they look, links and buttons working, a floating toolbar on top</li>
         </ul>
       </div>
     </aside>
@@ -646,6 +682,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--line);padding:1px 
     <button class="tb" data-act="search" title="Find (Ctrl+F)"><svg><use href="#i-search"/></svg></button>
     <button class="tb" data-act="speak" id="speakBtn" title="Read aloud: the selection, or from the current page"><svg><use href="#i-speak"/></svg></button>
     <button class="tb" data-act="themeMenu" title="Reading colours: light, sepia, dark"><svg><use href="#i-sun"/></svg></button>
+    <button class="tb flow-only" data-act="webView" title="Web view: the page as a browser shows it, with a floating toolbar"><svg><use href="#i-web"/></svg><span class="lbl">Web view</span></button>
     <button class="tb pdf-only" data-act="convertFlow" title="Turn this PDF into an editable document (text, headings, figures)"><svg><use href="#i-doc"/></svg><span class="lbl">Edit as document</span></button>
     <button class="tb" data-act="toggleRight" title="Comments and highlights"><svg><use href="#i-notes"/></svg><span class="badge" id="noteCount">0</span></button>
   </div>
@@ -698,6 +735,40 @@ code{font-family:var(--mono);font-size:.92em;background:var(--line);padding:1px 
   </div>
 </div>
 
+<!-- web view: the page as a browser shows it, with a floating toolbar -->
+<div class="webview" id="webview" hidden>
+  <iframe id="wvFrame" title="Page"></iframe>
+  <div class="wv-bar" id="wvBar" role="toolbar" aria-label="Doc Reader">
+    <button class="wv-grip" title="Drag to move · click to fold"><svg viewBox="22 46 208 144" aria-hidden="true" style="stroke:none"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"></path><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"></ellipse><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"></ellipse><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"></path></svg></button>
+    <span class="wv-sep"></span>
+    <button class="tb" data-wv="hl" title="Highlight the selection (Ctrl+Shift+H)"><svg><use href="#i-hl"/></svg></button>
+    <button class="tb wv-dotbtn" data-wv="color" title="Highlight colour"><i class="wv-dot" id="wvColor"></i></button>
+    <button class="tb" data-wv="cmt" title="Comment on the selection (Ctrl+Alt+M)"><svg><use href="#i-comment"/></svg></button>
+    <button class="tb" data-wv="edit" id="wvEditAll" title="Edit the whole page (or double-click any one thing)"><svg><use href="#i-edit"/></svg><span class="lbl">Edit page</span></button>
+    <span class="wv-sep"></span>
+    <button class="tb" data-wv="undo" title="Undo"><svg><use href="#i-undo"/></svg></button>
+    <button class="tb" data-wv="redo" title="Redo"><svg><use href="#i-redo"/></svg></button>
+    <span class="wv-sep"></span>
+    <button class="tb" data-wv="zout" title="Zoom out (Ctrl −)"><svg><use href="#i-minus"/></svg></button>
+    <button class="tb zoom-val" data-wv="z1" id="wvZoomVal" title="Back to 100% (Ctrl+0)">100%</button>
+    <button class="tb" data-wv="zin" title="Zoom in (Ctrl +)"><svg><use href="#i-plus"/></svg></button>
+    <span class="wv-sep"></span>
+    <button class="tb" data-wv="notes" id="wvNotes" title="Comments and highlights"><svg><use href="#i-notes"/></svg><span class="badge" id="wvNoteCount">0</span></button>
+    <button class="tb" data-wv="save" title="Save (Ctrl+S)"><svg><use href="#i-save"/></svg></button>
+    <button class="tb" data-wv="export" title="Export as HTML, PDF or Markdown"><svg><use href="#i-export"/></svg></button>
+    <span class="wv-sep"></span>
+    <button class="tb" data-wv="editor" title="Back to the editor view (Word-style)"><svg><use href="#i-doc"/></svg><span class="lbl">Editor</span></button>
+    <button class="tb" data-wv="home" title="Your documents"><svg><use href="#i-home"/></svg></button>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-x" data-lb="close" title="Close (Esc)"><svg><use href="#i-x"/></svg></button>
+  <button class="lb-nav lb-prev" data-lb="prev" title="Previous (←)"><svg><use href="#i-prev"/></svg></button>
+  <div class="lb-stage"><img class="lb-img" alt=""></div>
+  <button class="lb-nav lb-next" data-lb="next" title="Next (→)"><svg><use href="#i-next"/></svg></button>
+  <div class="lb-bar"><span class="lb-cap"></span><span class="lb-count"></span>
+    <button class="btn small" data-lb="actual">Actual size</button><button class="btn small" data-lb="edit">Edit… (crop, rotate)</button><button class="btn small" data-lb="download">Download</button><button class="btn small" data-lb="link">Open link</button></div>
+</div>
 <div class="drop-overlay" id="dropOverlay" hidden><div>Drop to open</div></div>
 <div class="menu" id="menu" hidden role="menu"></div>
 <div class="pop" id="pop" hidden></div>
@@ -4896,7 +4967,7 @@ function noteItems() {
 let noteColorsOff = new Set();
 function refreshNotes() {
   const list = $("#notes"); list.innerHTML = ""; const items = noteItems(), f = $("#noteFilter").value, q = $("#noteSearch").value.trim().toLowerCase();
-  $("#noteCount").textContent = items.length;
+  $("#noteCount").textContent = items.length; if (S.webview) wvBarState();
   const rc = $("#rcolors"); rc.innerHTML = ""; COLORS.forEach(([c, n]) => rc.append(EL("i", { class: "sw" + (noteColorsOff.has(c) ? " off" : ""), style: "background:" + c, title: n + " (click to hide or show)", onclick: () => { noteColorsOff.has(c) ? noteColorsOff.delete(c) : noteColorsOff.add(c); refreshNotes(); } })));
   const shown = items.filter(it => (f === "all" || it.kind === f) && !noteColorsOff.has(it.color) && (!q || (it.quote + " " + it.text + " " + it.replies.map(r => r.text).join(" ")).toLowerCase().includes(q)));
   if (!shown.length) { list.append(EL("div", { class: "empty" }, items.length ? "Nothing matches the filter." : "No notes yet. Select text and pick Highlight or Comment, or use the tools above.")); return; }
@@ -4906,7 +4977,7 @@ function refreshNotes() {
     if (it.text || it.replies.length) { const c = EL("div", { class: "nc" }, it.text); it.replies.forEach(r => c.append(EL("div", { class: "r" }, r.text))); n.append(c); }
     if (!it.quote && !it.text) n.append(EL("div", { class: "nq muted" }, { draw: "Drawing or shape", edit: "Edit", comment: "Empty comment" }[it.kind] || ""));
     n.append(EL("div", { class: "nm" }, EL("span", { class: "tag" }, it.kind + (S.doc.kind === "pdf" ? " · p. " + it.page : "")), EL("span", {}, it.a?.at ? fmtTime(it.a.at) : "")));
-    n.addEventListener("click", e => { if (S.doc.kind === "pdf") { goToAnnot(it.a); openPop(it.a, null); } else { it.el.scrollIntoView({ block: "center", behavior: "smooth" }); flowSelect(it.id); openPop(flowAnnot(it.id), null); } });
+    n.addEventListener("click", e => { if (S.doc.kind === "pdf") { goToAnnot(it.a); openPop(it.a, null); } else if (S.webview) { S.sel = it.id; const at = wvFocus(it.id); openPop(flowAnnot(it.id), at); } else { it.el.scrollIntoView({ block: "center", behavior: "smooth" }); flowSelect(it.id); openPop(flowAnnot(it.id), null); } });
     list.append(n);
   }
 }
@@ -4986,7 +5057,7 @@ function rangeTextNodes(range) {
   if (range.endContainer.nodeType === 3 && range.endOffset < range.endContainer.length) range.endContainer.splitText(range.endOffset);
   // text nodes in the range, skipping the whitespace between tags (they would become empty marks)
   const cac = range.commonAncestorContainer, root = cac.nodeType === 3 ? cac.parentNode : cac;   // a walker never visits its own root
-  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => range.intersectsNode(n) && n.data.length && n.parentElement.closest("#flow") && (n.data.trim() || n.parentElement.closest("pre")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => range.intersectsNode(n) && n.data.length && (n.ownerDocument !== document || n.parentElement.closest("#flow")) && (n.data.trim() || n.parentElement.closest("pre")) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
   const out = []; let n; while ((n = w.nextNode())) { if (n === range.startContainer && range.startOffset >= n.length) continue; if (n === range.endContainer && range.endOffset === 0) continue; out.push(n); }
   return out;
 }
@@ -5069,6 +5140,7 @@ function imageTools(img) {
   B("25%", () => { img.style.width = "25%"; }); B("50%", () => { img.style.width = "50%"; }); B("100%", () => { img.style.width = "100%"; }); B("Original", () => { img.style.width = ""; });
   B("Left", () => { img.style.float = "left"; img.style.margin = "0 1em .5em 0"; }); B("Centre", () => { img.style.float = ""; img.style.display = "block"; img.style.margin = "0 auto"; });
   B("Caption", () => { let fig = img.closest("figure"); if (!fig) { fig = EL("figure"); img.replaceWith(fig); fig.append(img); } let cap = fig.querySelector("figcaption"); if (!cap) { cap = EL("figcaption", {}, "Caption"); fig.append(cap); } const rg = document.createRange(); rg.selectNodeContents(cap); getSelection().removeAllRanges(); getSelection().addRange(rg); });
+  B("Enlarge", () => openLightbox(img, $$("img", flowEl), () => flowChanged()));
   B("Edit…", async () => { const out = await editImage(img.src); if (out) { img.src = out; flowChanged(); } });
   B("Remove", () => { (img.closest("figure") || img).remove(); });
   document.body.append(t);
@@ -5129,6 +5201,245 @@ function cleanHtml(html, base) {
 }
 function mdToHtml(md) { marked.setOptions({ gfm: true, breaks: false }); let html = marked.parse(md); html = html.replace(/<li><input (?:checked="" )?disabled="" type="checkbox">/g, m => `<li class="task"><input type="checkbox"${/checked/.test(m) ? " checked" : ""}>`); return DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, ADD_ATTR: ["class", "checked"] }); }
 
+/* ---------- web view: the page exactly as a browser shows it, with a floating toolbar on top ----------
+   The document is rendered in an iframe (its own head and styles, no scripts). One click on a link
+   follows it, on a button presses it, on an image enlarges it; a double-click edits that element.
+   While web view is open, the iframe's body is the live copy; wvPull() copies it back into #flow. */
+const WV_CSS = `mark[data-id]{background:var(--hl,#ffe066);color:inherit;border-radius:2px;cursor:pointer}
+.cmt[data-id]{background:color-mix(in srgb,var(--c,#ffd166) 45%,transparent);border-bottom:2px solid var(--c,#ffd166);cursor:pointer}
+.lp-editing{outline:2px solid #0a5fd0!important;outline-offset:2px;cursor:text!important;background-clip:padding-box}
+.lp-press{transform:scale(.95);filter:brightness(.9);transition:transform .08s,filter .08s}
+.lp-flash{outline:3px solid #ff9f1c!important;outline-offset:3px;transition:outline-color .6s}
+img{cursor:zoom-in}
+body[contenteditable="true"] img{cursor:default}
+a[href],button,[role=button],input[type=button],input[type=submit]{cursor:pointer}`;
+let wvClickT = null, wvEditing = null;
+const wvFrame = () => $("#wvFrame"), wvDoc = () => wvFrame()?.contentDocument;
+
+function enterWebView() {
+  if (S.doc?.kind !== "flow") return toast("Web view is for HTML, Markdown and web pages. PDFs already show as they print.");
+  S.webview = true; S.wvZoom = S.wvZoom || 1; document.body.classList.add("webview");
+  const wv = $("#webview"); wv.hidden = false;
+  const base = S.doc.meta?.sourceUrl ? `<base href="${esc(S.doc.meta.sourceUrl)}">` : "";
+  const head = S.doc.meta?.head || `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${DEFAULT_HEAD_CSS}</style>`;
+  const fr = wvFrame(); fr.onload = bindFrame;
+  fr.srcdoc = `<!doctype html><html><head>${base}${head}<style id="lp-wv">${WV_CSS}</style></head><body>${flowEl.innerHTML}</body></html>`;
+  wv.append($("#right")); $("#right").classList.add("closed"); wvBarState(); closePop(); closeSelPop();
+}
+function exitWebView() {
+  if (!S.webview) return; wvStopEdit(); wvPull(); S.webview = false; document.body.classList.remove("webview");
+  $("#webview").hidden = true; closeLightbox(); $$(".wv-selpop").forEach(p => p.remove());
+  const panes = $(".panes"); panes.append($("#right")); $("#right").classList.toggle("closed", Prefs.get("right", true) === false);
+  wvFrame().srcdoc = "<!doctype html><title></title>"; layoutMargin(); buildOutline(); refreshNotes();
+}
+/* copy the live page back into the document (and so into autosave and the file) */
+function wvPull(silent) {
+  if (!S.webview) return; const d = wvDoc(); if (!d?.body) return;
+  const b = d.body.cloneNode(true);
+  b.querySelectorAll("[contenteditable]").forEach(e => e.removeAttribute("contenteditable"));
+  b.querySelectorAll(".lp-editing,.lp-press,.lp-flash,mark.on,.cmt.on").forEach(e => { e.classList.remove("lp-editing", "lp-press", "lp-flash", "on"); if (!e.className) e.removeAttribute("class"); });
+  b.removeAttribute("contenteditable");
+  const h = b.innerHTML; if (h === flowEl.innerHTML) return;
+  flowEl.innerHTML = h; S.doc.html = h; if (!silent) { changed({ soon: true, quiet: true }); refreshNotesSoon(); }
+}
+const wvPullSoon = debounce(() => wvPull(), 400);
+/* the other way: after undo, a colour change or a removed note */
+function wvPush() { const d = wvDoc(); if (!S.webview || !d?.body) return; wvEditing = null; d.body.innerHTML = flowEl.innerHTML; d.body.contentEditable = S.wvEditAll ? "true" : "inherit"; }
+// keep the iframe in step when the shared functions change #flow
+{ const o1 = applyColor; applyColor = a => { o1(a); if (S.webview && S.doc?.kind === "flow") wvPush(); };
+  const o2 = flowRemove; flowRemove = a => { o2(a); if (S.webview) wvPush(); };
+  const o3 = restore; restore = s => { o3(s); if (S.webview) wvPush(); }; }
+
+function bindFrame() {
+  const d = wvDoc(); if (!d || !S.webview) return;
+  d.documentElement.style.zoom = S.wvZoom; d.body.contentEditable = S.wvEditAll ? "true" : "inherit";
+  const off = () => wvFrame().getBoundingClientRect();
+  const pos = e => ({ clientX: e.clientX * (S.wvZoom || 1) + off().left, clientY: e.clientY * (S.wvZoom || 1) + off().top });
+  d.addEventListener("pointerdown", e => { closeMenu(); if (!e.target.closest?.(".lp-editing")) closePop(); $$(".wv-selpop").forEach(p => p.remove()); }, true);
+  d.addEventListener("click", e => {
+    const t = e.target; if (!t.closest) return;
+    const a = t.closest("a[href]"), btn = t.closest("button,input[type=button],input[type=submit],input[type=reset],[role=button]"), img = t.tagName === "IMG" ? t : null;
+    if (t.closest('[contenteditable="true"]')) { if (a || btn) e.preventDefault(); return; }   // editing: clicks place the caret
+    if (img || a || btn) {
+      e.preventDefault(); clearTimeout(wvClickT);
+      // wait a moment so a double-click (edit) can cancel the single-click action
+      wvClickT = setTimeout(() => { if (img) openLightbox(img, wvImages(), () => wvPull()); else if (a) wvFollow(a); else wvPress(btn); }, 260);
+      return;
+    }
+    const m = t.closest("mark[data-id],.cmt[data-id]");
+    if (m && d.getSelection().isCollapsed) { d.querySelectorAll("mark.on,.cmt.on").forEach(x => x.classList.remove("on")); d.querySelectorAll(`[data-id="${m.dataset.id}"]`).forEach(x => x.classList.add("on")); S.sel = m.dataset.id; openPop(flowAnnot(m.dataset.id), pos(e)); }
+  });
+  d.addEventListener("dblclick", e => {
+    clearTimeout(wvClickT); const t = e.target; if (!t.closest) return;
+    if (t.tagName === "IMG") { e.preventDefault(); return wvEditImage(t); }
+    if (t.matches("input[type=button],input[type=submit],input[type=reset]")) { e.preventDefault(); return wvEditInput(t); }
+    const el = t.closest("button,a,[role=button],summary,label,figcaption,h1,h2,h3,h4,h5,h6,p,li,td,th,dt,dd,blockquote,pre,caption,legend") || t.closest("span,div,section,article,header,footer,nav,aside,main");
+    if (!el || el === d.body || el.closest('[contenteditable="true"]') === el) return;
+    e.preventDefault(); wvStartEdit(el, e);
+  });
+  d.addEventListener("input", wvPullSoon);
+  d.addEventListener("mouseup", e => setTimeout(() => wvSelPop(e), 10));
+  d.addEventListener("submit", e => e.preventDefault(), true);
+  d.addEventListener("keydown", e => {
+    const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+    if (mod && k === "s") { e.preventDefault(); wvPull(true); e.shiftKey ? saveAs() : saveToSource(); }
+    else if (mod && (k === "=" || k === "+")) { e.preventDefault(); wvZoom(S.wvZoom * 1.15); }
+    else if (mod && k === "-") { e.preventDefault(); wvZoom(S.wvZoom / 1.15); }
+    else if (mod && k === "0") { e.preventDefault(); wvZoom(1); }
+    else if (mod && e.shiftKey && k === "h") { e.preventDefault(); wvMark("mark"); }
+    else if (mod && e.altKey && k === "m") { e.preventDefault(); wvMark("cmt"); }
+    else if (e.key === "Escape") { if (!$("#lightbox").hidden) closeLightbox(); else if (wvEditing) wvStopEdit(); else closePop(); }
+    else if (!$("#lightbox").hidden && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); lbStep(e.key === "ArrowRight" ? 1 : -1); }
+  });
+  d.addEventListener("wheel", e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); wvZoom(S.wvZoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); } }, { passive: false });
+  wvBarState();
+}
+const wvImages = () => [...wvDoc().images].filter(i => i.naturalWidth > 1 || i.width > 1);
+
+/* links and buttons do what they look like they do */
+function wvFollow(a) {
+  const raw = a.getAttribute("href") || "", d = wvDoc();
+  if (raw.startsWith("#")) { const id = decodeURIComponent(raw.slice(1)); const tgt = id ? (d.getElementById(id) || d.getElementsByName(id)[0]) : d.body; if (tgt) { tgt.scrollIntoView({ behavior: "smooth", block: "start" }); wvFlash(tgt); } else toast("No part of this page is called “" + id + "”."); return; }
+  if (/^javascript:/i.test(raw)) return toast("That link runs a script, which a saved page doesn't keep.");
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(raw) && !S.doc.meta?.sourceUrl) return toast("That link points to “" + raw + "”, a file next to the original page; it can't be opened from here.");
+  wvFlash(a); window.open(a.href, "_blank", "noopener");
+}
+function wvPress(btn) {
+  btn.classList.add("lp-press"); setTimeout(() => btn.classList.remove("lp-press"), 160);
+  const label = (btn.value || btn.textContent || "").trim().slice(0, 40) || "button";
+  if (btn.tagName === "SUMMARY") return;
+  const det = btn.closest("details"); if (det && btn.closest("summary")) { det.open = !det.open; return; }
+  const href = btn.getAttribute("formaction") || btn.dataset.href || btn.dataset.url || btn.getAttribute("href") || btn.closest("form")?.getAttribute("action");
+  if (href && !/^javascript:/i.test(href)) { try { window.open(new URL(href, S.doc.meta?.sourceUrl || location.href).href, "_blank", "noopener"); return; } catch (e) { /* fall through */ } }
+  toast(`“${label}” is a button. What it did came from the page's scripts, which a saved page doesn't keep. Double-click it to change its text.`);
+}
+function wvFlash(el) { el.classList.add("lp-flash"); setTimeout(() => { el.classList.remove("lp-flash"); if (!el.className) el.removeAttribute("class"); }, 900); }
+
+/* double-click editing of one element */
+function wvStartEdit(el, e) {
+  wvStopEdit(); const d = wvDoc(); wvEditing = el;
+  el.contentEditable = "true"; el.classList.add("lp-editing"); el.focus();
+  const r = d.caretRangeFromPoint ? d.caretRangeFromPoint(e.clientX, e.clientY) : null;
+  if (r && el.contains(r.startContainer)) { const s = d.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  const isBtn = el.matches("button,a,[role=button],summary");
+  el.addEventListener("keydown", ev => {
+    if (ev.key === "Escape" || (ev.key === "Enter" && isBtn)) { ev.preventDefault(); wvStopEdit(); }
+    else if (ev.key === " " && isBtn) { ev.preventDefault(); d.execCommand("insertText", false, " "); }   // a space would press the button
+    ev.stopPropagation();
+  });
+  el.addEventListener("blur", () => setTimeout(() => { if (wvEditing === el && d.activeElement !== el) wvStopEdit(); }, 120), { once: true });
+  wvBarState(); status("Editing: Esc or click elsewhere to finish");
+}
+function wvStopEdit() { const el = wvEditing; if (!el) return; wvEditing = null; el.removeAttribute("contenteditable"); el.classList.remove("lp-editing"); if (!el.className) el.removeAttribute("class"); wvPull(); wvBarState(); status(""); }
+async function wvEditInput(inp) {
+  const v = await modal(`<h3>Button text</h3><input type="text" name="v" value="${esc(inp.value)}"><div class="mrow"><button class="btn" data-cancel>Cancel</button><button class="btn primary" data-ok="ok">Change</button></div>`, { select: true });
+  if (v) { inp.value = v.v; inp.setAttribute("value", v.v); wvPull(); }
+}
+async function wvEditImage(img) { const out = await editImage(img.src); if (out) { img.src = out; img.removeAttribute("srcset"); wvPull(); } }
+
+/* highlight and comment on a selection in the page */
+function wvMark(kind) {
+  const d = wvDoc(), sel = d.getSelection(); let id = uid();
+  if (sel && !sel.isCollapsed) {
+    const range = sel.getRangeAt(0), nodes = rangeTextNodes(range); if (!nodes.length) return;
+    for (const n of nodes) { const w = d.createElement(kind === "mark" ? "mark" : "span"); if (kind !== "mark") w.className = "cmt"; w.dataset.id = id; w.style.setProperty(kind === "mark" ? "--hl" : "--c", S.color); n.parentNode.insertBefore(w, n); w.append(n); }
+    sel.removeAllRanges();
+  } else if (kind === "cmt") {
+    const n = sel?.anchorNode, block = n && (n.nodeType === 1 ? n : n.parentElement)?.closest("p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote,figure,button,a,div"); if (!block || block === d.body) return toast("Select some text, or click into a paragraph, first.");
+    const w = d.createElement("span"); w.className = "cmt"; w.dataset.id = id; w.style.setProperty("--c", S.color); while (block.firstChild) w.append(block.firstChild); block.append(w);
+  } else return toast("Select some text first.");
+  S.doc.comments[id] = { at: Date.now(), color: S.color, t: kind, text: "" };
+  $$(".wv-selpop").forEach(p => p.remove()); wvPull(); changed();
+  if (kind === "cmt") { const el = d.querySelector(`[data-id="${id}"]`), r = el.getBoundingClientRect(), o = wvFrame().getBoundingClientRect(); S.sel = id; openPop(flowAnnot(id), { clientX: r.right * S.wvZoom + o.left, clientY: r.top * S.wvZoom + o.top }, true); }
+}
+function wvSelPop(e) {
+  $$(".wv-selpop").forEach(p => p.remove()); const d = wvDoc(), sel = d?.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount || wvEditing) return;
+  const r = sel.getRangeAt(0).getBoundingClientRect(), o = wvFrame().getBoundingClientRect(), z = S.wvZoom || 1; if (!r.width) return;
+  const p = EL("div", { class: "imgtools wv-selpop", style: `position:fixed;z-index:340;left:${clamp(r.left * z + o.left, 8, innerWidth - 320)}px;top:${Math.max(8, r.top * z + o.top - 42)}px` });
+  const B = (l, fn) => p.append(EL("button", { onpointerdown: ev => ev.preventDefault(), onclick: fn }, l));
+  B("Highlight", () => wvMark("mark")); B("Comment", () => wvMark("cmt")); B("Copy", () => { navigator.clipboard.writeText(sel.toString()); toast("Copied."); p.remove(); }); B("Read aloud", () => speak(sel.toString()));
+  document.body.append(p);
+}
+function wvFocus(id) { const d = wvDoc(), el = d?.querySelector(`[data-id="${id}"]`); if (!el) return null; el.scrollIntoView({ block: "center", behavior: "smooth" }); d.querySelectorAll("mark.on,.cmt.on").forEach(x => x.classList.remove("on")); d.querySelectorAll(`[data-id="${id}"]`).forEach(x => x.classList.add("on")); const r = el.getBoundingClientRect(), o = wvFrame().getBoundingClientRect(); return { clientX: r.right * S.wvZoom + o.left + 8, clientY: r.top * S.wvZoom + o.top }; }
+function wvZoom(z) { S.wvZoom = clamp(z, .3, 3); const d = wvDoc(); if (d) d.documentElement.style.zoom = S.wvZoom; wvBarState(); }
+function wvToggleEditAll() { S.wvEditAll = !S.wvEditAll; wvStopEdit(); const d = wvDoc(); d.body.contentEditable = S.wvEditAll ? "true" : "inherit"; if (S.wvEditAll) d.body.focus(); else wvPull(); wvBarState(); toast(S.wvEditAll ? "Edit page: type anywhere. Links and buttons don't open while editing." : "Reading: links and buttons work again; double-click to edit one thing."); }
+
+/* the floating toolbar */
+/* a bar moved on a wide window must still be reachable on a narrow one */
+function wvKeepBarOnScreen() {
+  const bar = $("#wvBar"); if (!bar || bar.style.transform !== "none") return;
+  const r = bar.getBoundingClientRect(); if (r.right > innerWidth - 4) bar.style.left = Math.max(4, innerWidth - r.width - 4) + "px"; if (r.bottom > innerHeight - 4) bar.style.top = Math.max(4, innerHeight - r.height - 4) + "px";
+}
+function wvBarState() {
+  const bar = $("#wvBar"); if (!bar) return; requestAnimationFrame?.(wvKeepBarOnScreen);
+  $("#wvZoomVal").textContent = Math.round((S.wvZoom || 1) * 100) + "%";
+  $("#wvEditAll").classList.toggle("on", !!S.wvEditAll);
+  $("#wvColor").style.background = S.color;
+  $("#wvNoteCount").textContent = $("#noteCount").textContent;
+  $("#wvNotes").classList.toggle("on", !$("#right").classList.contains("closed"));
+  bar.classList.toggle("min", !!S.wvMin);
+}
+function bindWvBar() {
+  const bar = $("#wvBar");
+  bar.addEventListener("click", e => {
+    const b = e.target.closest("[data-wv]"); if (!b) return; const a = b.dataset.wv;
+    if (a === "hl") wvMark("mark"); else if (a === "cmt") wvMark("cmt");
+    else if (a === "color") menu(COLORS.map(([c, n]) => ({ node: EL("button", { class: S.color === c ? "on" : "", onclick: () => { S.color = c; Prefs.set("color", c); buildSwatches(); closeMenu(); wvBarState(); } }, EL("i", { class: "sw", style: "background:" + c }), n) })), b);
+    else if (a === "edit") wvToggleEditAll();
+    else if (a === "zin") wvZoom(S.wvZoom * 1.15); else if (a === "zout") wvZoom(S.wvZoom / 1.15); else if (a === "z1") wvZoom(1);
+    else if (a === "notes") { $("#right").classList.toggle("closed"); refreshNotes(); wvBarState(); }
+    else if (a === "undo") { wvPull(true); undo(); } else if (a === "redo") { wvPull(true); redo(); }
+    else if (a === "save") { wvPull(true); saveMenu(b); } else if (a === "export") { wvPull(true); exportMenu(b); }
+    else if (a === "editor") exitWebView(); else if (a === "home") { exitWebView(); goHome(); }
+    else if (a === "min") { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); }
+  });
+  $$("button", bar).forEach(b => b.addEventListener("pointerdown", e => e.preventDefault()));   // keep the page's selection
+  // drag the bar by its handle; remember where it was put
+  const grip = $(".wv-grip", bar);
+  // the grip captures the pointer, so the drag keeps going over the page's iframe
+  grip.addEventListener("pointerdown", e => {
+    e.preventDefault(); grip.setPointerCapture(e.pointerId); const r = bar.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top, x0 = e.clientX, y0 = e.clientY; let moved = false;
+    const mv = ev => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; bar.style.left = clamp(ev.clientX - dx, 4, innerWidth - bar.offsetWidth - 4) + "px"; bar.style.top = clamp(ev.clientY - dy, 4, innerHeight - bar.offsetHeight - 4) + "px"; bar.style.transform = "none"; };
+    const up = () => { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); if (moved) Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); else { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); } };
+    grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up);
+  });
+  grip.addEventListener("click", e => e.stopPropagation());
+  const p = Prefs.get("wvBarPos", null); if (p) { bar.style.left = p[0]; bar.style.top = p[1]; bar.style.transform = "none"; } S.wvMin = Prefs.get("wvMin", false);
+  addEventListener("resize", () => wvKeepBarOnScreen());
+}
+
+/* ---------- picture viewer: one image enlarged, with next/previous, actual size, edit, download ---------- */
+let LB = null;
+function openLightbox(img, list, onChange) {
+  list = list?.length ? list : [img]; LB = { list, i: Math.max(0, list.indexOf(img)), onChange, actual: false };
+  $("#lightbox").hidden = false; lbShow();
+}
+function lbShow() {
+  const lb = $("#lightbox"), im = LB.list[LB.i], big = $(".lb-img", lb);
+  big.src = im.currentSrc || im.src; lb.classList.toggle("actual", LB.actual);
+  const cap = im.closest("figure")?.querySelector("figcaption")?.textContent || im.alt || im.title || "";
+  $(".lb-cap", lb).textContent = cap; $(".lb-count", lb).textContent = LB.list.length > 1 ? `${LB.i + 1} / ${LB.list.length}` : "";
+  $$(".lb-nav", lb).forEach(b => b.hidden = LB.list.length < 2);
+  const a = im.closest("a[href]"); $("[data-lb=link]", lb).hidden = !a;
+}
+function lbStep(d) { LB.i = (LB.i + d + LB.list.length) % LB.list.length; LB.actual = false; lbShow(); }
+function closeLightbox() { $("#lightbox").hidden = true; LB = null; }
+function bindLightbox() {
+  const lb = $("#lightbox");
+  lb.addEventListener("click", async e => {
+    const b = e.target.closest("[data-lb]"); const im = LB?.list[LB.i];
+    if (e.target === lb || e.target.classList.contains("lb-stage")) return closeLightbox();
+    if (e.target.classList.contains("lb-img")) { LB.actual = !LB.actual; lbShow(); return; }
+    if (!b || !im) return; const a = b.dataset.lb;
+    if (a === "close") closeLightbox(); else if (a === "prev") lbStep(-1); else if (a === "next") lbStep(1);
+    else if (a === "actual") { LB.actual = !LB.actual; lbShow(); }
+    else if (a === "edit") { const out = await editImage(im.src); if (out) { im.src = out; im.removeAttribute("srcset"); LB.onChange?.(); lbShow(); } }
+    else if (a === "download") { try { const blob = await (await fetch(im.src)).blob(); download(blob, (im.alt || "image").replace(/[^\w.-]+/g, "_").slice(0, 40) + "." + (blob.type.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg")); } catch (er) { window.open(im.src, "_blank", "noopener"); } }
+    else if (a === "link") { const ln = im.closest("a[href]"); if (ln) window.open(ln.href, "_blank", "noopener"); }
+  });
+  document.addEventListener("keydown", e => { if (!LB) return; if (e.key === "Escape") closeLightbox(); else if (e.key === "ArrowRight") lbStep(1); else if (e.key === "ArrowLeft") lbStep(-1); });
+}
+
 /* ---------- opening, saving, exporting ---------- */
 function newDoc(kind, name, extra = {}) { return { id: uid(), kind, name, created: Date.now(), modified: Date.now(), annots: [], comments: {}, html: "", origHtml: "", pages: [], meta: {}, ...extra }; }
 function download(blob, name) { const u = URL.createObjectURL(blob); const a = EL("a", { href: u, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
@@ -5154,13 +5465,17 @@ async function openFile(f, handle) {
 function textToHtml(t) { return t.split(/\n{2,}/).map(p => "<p>" + esc(p).replace(/\n/g, "<br>") + "</p>").join(""); }
 async function openImageDoc(name, src, attach) { const im = await loadImage(src); const w = 612, h = Math.max(100, 612 * im.naturalHeight / im.naturalWidth); let d = newDoc("pdf", name, { src: null, pages: [{ id: uid(), img: { data: src, w, h }, rot: 0 }] }); if (attach) d = attach(d); return openPdfDoc(d); }
 /* an HTML file from disk: kept whole (its own styles scoped to the document), editable, and written back as a full page */
-function openHtmlFile(name, html, attach) {
+function openHtmlFile(name, html, attach, base) {
   const dom = new DOMParser().parseFromString(html, "text/html");
+  if (base) {   // a web page: make its addresses absolute so pictures, styles and links still work here
+    for (const [sel, at] of [["img[src]", "src"], ["a[href]", "href"], ["link[href]", "href"], ["source[srcset]", "srcset"], ["img[srcset]", "srcset"]]) dom.querySelectorAll(sel).forEach(el => { const v = el.getAttribute(at); if (!v || /^(data|blob|javascript|mailto|#)/i.test(v)) return; try { if (at === "srcset") el.setAttribute(at, v.split(",").map(p => { const [u, w] = p.trim().split(/\s+/); return new URL(u, base).href + (w ? " " + w : ""); }).join(", ")); else el.setAttribute(at, new URL(v, base).href); } catch (e) { /* leave */ } });
+    dom.querySelectorAll("img[data-src]:not([src]),img[data-src][src^='data:']").forEach(el => { try { el.setAttribute("src", new URL(el.dataset.src, base).href); } catch (e) { /* leave */ } });
+  }
   let comments = {}; const cj = dom.getElementById("lp-comments"); if (cj) { try { comments = JSON.parse(cj.textContent); } catch (e) { /* ignore */ } cj.remove(); }
   const head = [...dom.head.children].filter(e => /^(STYLE|TITLE|META)$/.test(e.tagName) || (e.tagName === "LINK" && /stylesheet/i.test(e.rel))).map(e => e.outerHTML).join("\n");
   const css = [...dom.querySelectorAll("style")].map(s => s.textContent).join("\n");
   dom.querySelectorAll("script,noscript,iframe,object,embed").forEach(e => e.remove());
-  const body = DOMPurify.sanitize(dom.body.innerHTML, { USE_PROFILES: { html: true, svg: true, svgFilters: true }, ADD_ATTR: ["style", "class", "id", "width", "height", "colspan", "rowspan", "target", "checked"], ADD_TAGS: ["mark"] });
+  const body = DOMPurify.sanitize(dom.body.innerHTML, { USE_PROFILES: { html: true, svg: true, svgFilters: true }, ADD_ATTR: ["style", "class", "id", "width", "height", "colspan", "rowspan", "target", "checked", "srcset", "sizes", "role", "formaction", "value", "type", "name"], ADD_TAGS: ["mark", "button"] });
   let d = newDoc("flow", (dom.title || name).trim(), { html: body, comments, orig: html, meta: { faithful: true, head, css } }); if (attach) d = attach(d);
   return openDoc(d);
 }
@@ -5173,6 +5488,7 @@ function scopeCss(css) {
   } catch (e) { return ""; }
 }
 function openHtmlDoc(name, html, url) {
+  if (Prefs.get("webLayout", "original") === "original") return openHtmlFile(name, html, d => { d.meta.sourceUrl = url || ""; return d; }, url);
   const dom = new DOMParser().parseFromString(html, "text/html");
   if (url) { const b = dom.createElement("base"); b.href = url; dom.head.prepend(b); }
   let title = dom.title || name, body;
@@ -5246,12 +5562,13 @@ async function showDoc() {
     flowEl.classList.toggle("faithful", !!d.meta?.faithful); $("#flow-filecss")?.remove(); if (d.meta?.css) { const sc = scopeCss(d.meta.css); if (sc) document.head.append(EL("style", { id: "flow-filecss" }, sc)); }
     S.flowZoom = 1; await setZoom("custom", 1);
     layoutMargin(); buildOutline(); updateFlowToolbar(); $("#thumbs").innerHTML = "";
+    if (d.meta?.faithful && Prefs.get("htmlWebView", true)) enterWebView();   // HTML files open as the page looks
   }
   work.classList.remove("loading"); pushHistory(); refreshNotes(); status("");
   document.title = d.name + " · Doc Reader"; if (!d.saved) { markDirty(); } else status("Opened", "ok");
   d.opened = Date.now(); saveSoon();
 }
-async function closeDoc() { if (S.doc && S.dirty) await saveNow(); $("#flow-filecss")?.remove(); S.fileHandle = null; S.confirmedOverwrite = false; if (S.pdf) { try { await S.pdf.destroy(); } catch (e) { /* ignore */ } } S.pdf = null; S.doc = null; speechSynthesis?.cancel?.(); S.speaking = false; }
+async function closeDoc() { if (S.webview) exitWebView(); if (S.doc && S.dirty) await saveNow(); $("#flow-filecss")?.remove(); S.fileHandle = null; S.confirmedOverwrite = false; if (S.pdf) { try { await S.pdf.destroy(); } catch (e) { /* ignore */ } } S.pdf = null; S.doc = null; speechSynthesis?.cancel?.(); S.speaking = false; }
 function goHome() { closeDoc().then(() => { work.hidden = true; $("#home").hidden = false; $("#homeBtn").hidden = true; $("#docActions").hidden = true; $("#docTitle").hidden = true; document.title = "Doc Reader · Lab Potato"; status(""); listRecent(); }); }
 async function makeThumb() { try { const v = S.views.values().next().value; if (!v) return; const vp = v.page.getViewport({ scale: 120 / v.page.getViewport({ scale: 1 }).width }); const c = EL("canvas", { width: vp.width, height: vp.height }); await v.page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise; S.doc.thumb = c.toDataURL("image/jpeg", .7); } catch (e) { /* no thumb */ } }
 
@@ -5259,7 +5576,7 @@ async function makeThumb() { try { const v = S.views.values().next().value; if (
 function markDirty() { S.dirty = true; S.doc && (S.doc.modified = Date.now()); status("Unsaved changes"); saveSoon(); }
 const saveSoon = debounce(() => saveNow(), 1500);
 async function saveNow() {
-  if (!S.doc) return; const d = S.doc; d.pages = S.pages.map(p => ({ id: p.id, src: p.src, blank: p.blank, img: p.img, rot: p.rot })); if (d.kind === "flow") d.html = flowEl.innerHTML; d.saved = true;
+  if (!S.doc) return; if (S.webview) wvPull(true); const d = S.doc; d.pages = S.pages.map(p => ({ id: p.id, src: p.src, blank: p.blank, img: p.img, rot: p.rot })); if (d.kind === "flow") d.html = flowEl.innerHTML; d.saved = true;
   try { await DB.put("docs", recordOf(d)); S.dirty = false; status("Saved " + new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }), "ok"); } catch (e) { console.warn(e); status("Could not autosave (" + (e.message || e) + ")", "err"); }
   if (S.fileHandle) writeFileHandle().catch(e => { console.warn(e); status("Could not write the file: " + (e.message || e), "err"); });
 }
@@ -5338,6 +5655,7 @@ function wrapText(s, font, size, maxW) { const words = s.split(" "), lines = [];
 
 /* Markdown export of a flow document: highlights as ==text==, comments as footnotes */
 function flowToMarkdown(opts = {}) {
+  if (S.webview) wvPull(true);
   const clone = flowEl.cloneNode(true); const notes = []; const seen = new Map();
   $$(".src-note,.readonly-note,iframe", clone).forEach(e => e.remove());
   $$(".cmt[data-id]", clone).forEach(el => { const id = el.dataset.id, c = S.doc.comments[id]; if (!c || (!c.text && !c.replies?.length)) { el.replaceWith(...el.childNodes); return; } let n = seen.get(id); if (!n) { n = notes.length + 1; seen.set(id, n); notes.push({ n, c, q: el.textContent }); } const fn = document.createTextNode(`[^${n}]`); el.after(fn); el.replaceWith(...el.childNodes); });
@@ -5361,6 +5679,7 @@ async function exportMarkdown(opts = {}) {
 const DEFAULT_HEAD_CSS = `body{max-width:760px;margin:40px auto;padding:0 20px;font:17px/1.6 Charter,Georgia,serif;color:#222}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px 9px}mark{background:var(--hl,#ffe066)}.cmt{background:#fff1b8;border-bottom:2px solid #f0c040}pre{background:#f3f3f3;padding:12px;border-radius:8px;overflow:auto}blockquote{border-left:3px solid #ccc;padding-left:1em;color:#555}`;
 /* a complete HTML page: the file's own head when it came from an HTML file, plus the comments so they survive a round trip */
 async function exportHtmlString(opts = {}) {
+  if (S.webview) wvPull(true);
   let body = S.doc.kind === "pdf" ? await pdfToHtml() : flowEl.innerHTML;
   { const t = EL("div", { html: body }); $$(".on,.sel", t).forEach(e => { e.classList.remove("on", "sel"); if (!e.className) e.removeAttribute("class"); }); body = t.innerHTML; }   // no transient UI classes in the file
   const comments = Object.fromEntries(Object.entries(S.doc.comments || {}).filter(([id, c]) => c.text || c.replies?.length || body.includes(`data-id="${id}"`)));
@@ -5392,6 +5711,7 @@ async function pdfToHtml() {
 /* ---- save back to the file that was opened, or to a new file ---- */
 async function verifyHandle(h) { try { if ((await h.queryPermission({ mode: "readwrite" })) === "granted") return true; return (await h.requestPermission({ mode: "readwrite" })) === "granted"; } catch (e) { return false; } }
 async function sourceBlob(ext) {
+  if (S.webview) wvPull(true);
   const d = S.doc;
   if (ext === "pdf") return new Blob([await exportPdf({ interactive: true, draw: false, summary: false, returnBytes: true })], { type: "application/pdf" });
   if (ext === "md" || ext === "markdown") return new Blob([d.kind === "pdf" ? await pdfToMarkdown() : flowToMarkdown({ embedImages: true })], { type: "text/markdown" });
@@ -5445,7 +5765,8 @@ async function pageImageBlob(entry, mime) {
   return new Promise(res => c.toBlob(res, mime, .92));
 }
 function commentsHtml() { const items = Object.entries(S.doc.comments).filter(([id, c]) => c.text || c.replies?.length); if (!items.length) return ""; return `<hr><h2>Comments</h2><ol>${items.map(([id, c]) => `<li><em>${esc($(`[data-id="${id}"]`, flowEl)?.textContent.slice(0, 120) || "")}</em><br>${esc(c.text || "")}${(c.replies || []).map(r => `<br>— ${esc(r.text)}`).join("")}</li>`).join("")}</ol>`; }
-function printFlow() { const cs = $$(".cmt[data-id]", flowEl); let n = 0; const seen = new Map(); cs.forEach(el => { const c = S.doc.comments[el.dataset.id]; if (!c?.text) return; if (!seen.has(el.dataset.id)) seen.set(el.dataset.id, ++n); el.dataset.n = seen.get(el.dataset.id); }); const extra = EL("div", { class: "print-only", html: commentsHtml() }); flowEl.append(extra); const st = EL("style", {}, `@media print{.cmt[data-n]::after{content:" [" attr(data-n) "]";font-size:.75em;color:#555}}`); document.head.append(st); window.print(); setTimeout(() => { extra.remove(); st.remove(); }, 1000); }
+function printFlow() {
+  if (S.webview) { wvPull(true); const d = wvDoc(), extra = d.createElement("div"); extra.innerHTML = commentsHtml(); d.body.append(extra); wvFrame().contentWindow.print(); setTimeout(() => extra.remove(), 1000); return; } const cs = $$(".cmt[data-id]", flowEl); let n = 0; const seen = new Map(); cs.forEach(el => { const c = S.doc.comments[el.dataset.id]; if (!c?.text) return; if (!seen.has(el.dataset.id)) seen.set(el.dataset.id, ++n); el.dataset.n = seen.get(el.dataset.id); }); const extra = EL("div", { class: "print-only", html: commentsHtml() }); flowEl.append(extra); const st = EL("style", {}, `@media print{.cmt[data-n]::after{content:" [" attr(data-n) "]";font-size:.75em;color:#555}}`); document.head.append(st); window.print(); setTimeout(() => { extra.remove(); st.remove(); }, 1000); }
 async function exportMenu(anchor) {
   const pdf = S.doc.kind === "pdf";
   menu([
@@ -5583,6 +5904,7 @@ function bindUI() {
       search: () => { showLeft("find"); $("#findIn").focus(); $("#findIn").select(); }, speak: () => speak(), themeMenu: () => themeMenu(b), convertFlow: convertToFlow,
       inlineCode: () => { const sel = getSelection(); if (!sel || sel.isCollapsed) return; insertHtml("<code>" + esc(sel.toString()) + "</code>"); }, checklist: toggleChecklist, alignMenu: () => alignMenu(b), link: linkPrompt,
       insertImage: () => pickImage(src => insertHtml(`<figure><img src="${src}"><figcaption></figcaption></figure><p><br></p>`)), tableMenu: () => tableMenu(b), flowHighlight, flowComment,
+      webView: enterWebView,
       replaceOne: () => replaceFind(false), replaceAll: () => replaceFind(true), copyNotes: () => { navigator.clipboard.writeText(notesMarkdown()); toast("Copied the notes as Markdown."); }
     };
     if (A[act]) { if (b.closest("#flowTools")) e.preventDefault(); A[act](); }
@@ -5648,7 +5970,8 @@ async function init() {
   await Prefs.load(); S.color = Prefs.get("color", COLORS[0][0]); buildSwatches();
   const th = Prefs.get("theme", "auto"); if (th !== "auto") document.documentElement.dataset.theme = th;
   if (Prefs.get("left", true) === false) $("#left").classList.add("closed"); if (Prefs.get("right", true) === false) $("#right").classList.add("closed"); showLeft(Prefs.get("ltab", "pages"));
-  bindUI(); listRecent();
+  bindUI(); bindWvBar(); bindLightbox(); listRecent();
+  $("#webLayout").value = Prefs.get("webLayout", "original"); $("#webLayout").addEventListener("change", e => Prefs.set("webLayout", e.target.value));
   if (IS_EXT) { $("#extCard").hidden = true; $$("a[href^='https://labpotato']").forEach(a => a.target = "_blank"); }
   // pdf.js worker: from the file next to this page in the extension, or from the inline copy on the website
   try { if (window.PDF_WORKER_SRC) pdfjsLib.GlobalWorkerOptions.workerSrc = window.PDF_WORKER_SRC; else { const src = document.getElementById("pdfworker")?.textContent; if (src) pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(URL.createObjectURL(new Blob([src.replace(/<\\\/script/g, "<\/script")], { type: "text/javascript" }))); } } catch (e) { console.warn("worker", e); }
@@ -5658,7 +5981,7 @@ async function init() {
 }
 document.addEventListener("DOMContentLoaded", init);
 /* a few names on window, for the tests and the console */
-Object.assign(window, { S, exportPdf, exportMarkdown, saveProjectFile, saveNow, goHome, convertToFlow, insertTable, insertImageFile, rotatePage, insertBlank, deletePage, setTheme, openUrl, openFile, flowHighlight, flowComment, saveToSource, exportHtmlString, pdfToHtml, pdfToMarkdown, setZoom, editImage, sourceBlob, flowChanged, redrawAllAnnots, selectAnnot, normRect });
+Object.assign(window, { S, exportPdf, exportMarkdown, saveProjectFile, saveNow, goHome, convertToFlow, insertTable, insertImageFile, rotatePage, insertBlank, deletePage, setTheme, openUrl, openFile, flowHighlight, flowComment, saveToSource, exportHtmlString, pdfToHtml, pdfToMarkdown, setZoom, editImage, sourceBlob, flowChanged, redrawAllAnnots, selectAnnot, normRect, enterWebView, exitWebView, wvDoc, wvPull, openLightbox, Prefs });
 
 })();
 </script>

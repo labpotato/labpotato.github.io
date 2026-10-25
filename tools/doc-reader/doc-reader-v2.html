@@ -485,6 +485,14 @@ body.webview .toast{z-index:620}
 .lb-x{top:12px;right:14px}.lb-prev{left:12px;top:50%}.lb-next{right:12px;top:50%}
 @media (max-width:760px){.lightbox{padding:44px 8px 14px}.wv-bar .lbl{display:none}}
 
+/* vertical bar along the left or right edge */
+.wv-bar.vert{flex-direction:column;padding:6px 4px;max-width:none;max-height:calc(100vh - 16px);overflow-x:visible;overflow-y:auto}
+.wv-bar.vert .lbl{display:none}
+.wv-bar.vert .wv-sep{width:18px;height:1px;margin:3px 0}
+.wv-bar.vert .zoom-val{min-width:0;font-size:11px;padding:0 2px}
+.wv-bar.vert .tb .badge{position:absolute;margin:-18px -18px 0 0;min-width:15px;height:15px;font-size:10px}
+.wv-bar.vert .tb{position:relative}
+
 </style>
 </head>
 <body>
@@ -759,6 +767,7 @@ body.webview .toast{z-index:620}
     <span class="wv-sep"></span>
     <button class="tb" data-wv="editor" title="Back to the editor view (Word-style)"><svg><use href="#i-doc"/></svg><span class="lbl">Editor</span></button>
     <button class="tb" data-wv="home" title="Your documents"><svg><use href="#i-home"/></svg></button>
+    <button class="tb" data-wv="turn" title="Stand the bar up (vertical) or lay it down; or drag it to a side edge"><svg><use href="#i-rotate"/></svg></button>
   </div>
 </div>
 <div class="lightbox" id="lightbox" hidden>
@@ -5365,6 +5374,19 @@ function wvZoom(z) { S.wvZoom = clamp(z, .3, 3); const d = wvDoc(); if (d) d.doc
 function wvToggleEditAll() { S.wvEditAll = !S.wvEditAll; wvStopEdit(); const d = wvDoc(); d.body.contentEditable = S.wvEditAll ? "true" : "inherit"; if (S.wvEditAll) d.body.focus(); else wvPull(); wvBarState(); toast(S.wvEditAll ? "Edit page: type anywhere. Links and buttons don't open while editing." : "Reading: links and buttons work again; double-click to edit one thing."); }
 
 /* the floating toolbar */
+/* the bar can stand up along the left or right edge so it doesn't cover the page */
+function wvSetVert(v, keepPlace) {
+  const bar = $("#wvBar"), r = bar.getBoundingClientRect(); S.wvVert = v; Prefs.set("wvVert", v); bar.classList.toggle("vert", v);
+  if (keepPlace) { bar.style.transform = "none"; bar.style.left = clamp(r.left, 4, innerWidth - bar.offsetWidth - 4) + "px"; bar.style.top = clamp(r.top, 4, innerHeight - bar.offsetHeight - 4) + "px"; Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); }
+  wvKeepBarOnScreen();
+}
+/* dropped near an edge: left/right edge → vertical against it; top/bottom edge → horizontal */
+function wvSnap(x, y) {
+  const bar = $("#wvBar"), E = 70;
+  if (x < E || x > innerWidth - E) { wvSetVert(true); bar.style.left = (x < E ? 8 : innerWidth - bar.offsetWidth - 8) + "px"; bar.style.top = clamp(y - bar.offsetHeight / 2, 8, innerHeight - bar.offsetHeight - 8) + "px"; }
+  else if (y < E || y > innerHeight - E) { wvSetVert(false); bar.style.left = clamp(x - bar.offsetWidth / 2, 8, innerWidth - bar.offsetWidth - 8) + "px"; bar.style.top = (y < E ? 8 : innerHeight - bar.offsetHeight - 8) + "px"; }
+  bar.style.transform = "none";
+}
 /* a bar moved on a wide window must still be reachable on a narrow one */
 function wvKeepBarOnScreen() {
   const bar = $("#wvBar"); if (!bar || bar.style.transform !== "none") return;
@@ -5392,6 +5414,7 @@ function bindWvBar() {
     else if (a === "save") { wvPull(true); saveMenu(b); } else if (a === "export") { wvPull(true); exportMenu(b); }
     else if (a === "editor") exitWebView(); else if (a === "home") { exitWebView(); goHome(); }
     else if (a === "min") { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); }
+    else if (a === "turn") wvSetVert(!S.wvVert, true);
   });
   $$("button", bar).forEach(b => b.addEventListener("pointerdown", e => e.preventDefault()));   // keep the page's selection
   // drag the bar by its handle; remember where it was put
@@ -5400,10 +5423,11 @@ function bindWvBar() {
   grip.addEventListener("pointerdown", e => {
     e.preventDefault(); grip.setPointerCapture(e.pointerId); const r = bar.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top, x0 = e.clientX, y0 = e.clientY; let moved = false;
     const mv = ev => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; bar.style.left = clamp(ev.clientX - dx, 4, innerWidth - bar.offsetWidth - 4) + "px"; bar.style.top = clamp(ev.clientY - dy, 4, innerHeight - bar.offsetHeight - 4) + "px"; bar.style.transform = "none"; };
-    const up = () => { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); if (moved) Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); else { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); } };
+    const up = ev => { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); if (moved) { wvSnap(ev.clientX, ev.clientY); Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); } else { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); } };
     grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up);
   });
   grip.addEventListener("click", e => e.stopPropagation());
+  S.wvVert = Prefs.get("wvVert", false); bar.classList.toggle("vert", S.wvVert);
   const p = Prefs.get("wvBarPos", null); if (p) { bar.style.left = p[0]; bar.style.top = p[1]; bar.style.transform = "none"; } S.wvMin = Prefs.get("wvMin", false);
   addEventListener("resize", () => wvKeepBarOnScreen());
 }

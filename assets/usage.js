@@ -255,7 +255,7 @@ function renderUsage(data) {
     document.getElementById("usage-geo-sum").textContent = tot ? `${nf(tot)} visits from ${(s.locations || []).length} countr${(s.locations || []).length === 1 ? "y" : "ies"} ${R.noun}` : "";
   } else emptyDemo();
   const sum = rows.reduce((a, r) => a + r.sum, 0), when = new Date(data.at), whenTxt = `${fmtD(when)}, ${when.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}`;
-  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated daily, last " + whenTxt : "checked " + whenTxt}`;
+  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated daily, last " + whenTxt : "counted " + whenTxt}${data.statsAt ? ` · map and sources from ${fmtD(new Date(data.statsAt))}` : ""}`;
   usageDebug();
 }
 
@@ -278,6 +278,12 @@ function initUsage() {
     sec.classList.add("loading");
     const f = await loadFile();
     current = f ? fromFile(f, range) : await fromCounter(range, fresh);
+    // the daily file is more than a day and a half old (the job failed or has not run): count live from the
+    // public counter for the graphs, and keep the map and sources from the file, saying how old they are
+    if (f && !(typeof window !== "undefined" && window.USAGE_SAMPLE) && Date.now() - Date.parse(f.generated) > 36 * 3600e3) {
+      const live = await fromCounter(range, fresh);
+      if (live && live.failed === 0 && live.rows?.length) { live.stats = current.stats; live.statsAt = Date.parse(f.generated); current = live; }
+    }
     sec.classList.remove("loading"); renderUsage(current);
   };
   seg.addEventListener("click", e => { const b = e.target.closest("[data-range]"); if (!b || b.dataset.range === range) return; range = b.dataset.range; go(false); });

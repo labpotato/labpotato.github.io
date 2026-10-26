@@ -32,18 +32,29 @@ DAYS = 400
 PAGES = ["locations", "toprefs"]   # countries and referring sites; GoatCounter can also give browsers, systems, sizes, languages
 
 
+RETRY_WAITS = [5, 15, 30, 60]   # seconds to wait before trying a flaky request again
+WINDOW_DAYS = 100               # the page-by-page numbers are asked for in pieces this long
+
+
 def api(path, **query):
-    """GET one API endpoint; waits and retries on the 4-requests-a-second limit."""
+    """GET one API endpoint. Waits and retries on the 4-requests-a-second limit, and on the
+    errors GoatCounter gives now and then for a request that works a moment later
+    (a 404 'not found' on a stats call, a 5xx, a dropped connection)."""
     url = f"{SITE}/api/v0/{path}?{urllib.parse.urlencode(query)}"
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
-    for attempt in range(6):
+    flaky = 0
+    for attempt in range(12):
         try:
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=90) as r:
                 time.sleep(0.3)
                 return json.load(r)
         except urllib.error.HTTPError as e:
             if e.code == 429:
                 time.sleep(float(e.headers.get("X-Rate-Limit-Reset", "2")) + 0.5)
+                continue
+            if (e.code == 404 or e.code >= 500) and flaky < len(RETRY_WAITS):
+                print(f"GoatCounter {path}: HTTP {e.code}, trying again in {RETRY_WAITS[flaky]} s", flush=True)
+                time.sleep(RETRY_WAITS[flaky]); flaky += 1
                 continue
             body = e.read().decode("utf-8", "replace")[:300]
             if e.code == 401:
@@ -57,6 +68,12 @@ def api(path, **query):
             print(f"GoatCounter {path}: HTTP {e.code} {body}\n  asked: {url}")
             probe()
             sys.exit(1)
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:   # network hiccup, not an answer
+            if flaky < len(RETRY_WAITS):
+                print(f"GoatCounter {path}: {e}, trying again in {RETRY_WAITS[flaky]} s", flush=True)
+                time.sleep(RETRY_WAITS[flaky]); flaky += 1
+                continue
+            sys.exit(f"GoatCounter {path}: {e}")
     sys.exit(f"GoatCounter {path}: still rate-limited after retries")
 
 
@@ -88,24 +105,29 @@ def main():
     days = [(start + timedelta(days=k)).strftime("%Y-%m-%d") for k in range(DAYS)]
     index = {d: k for k, d in enumerate(days)}
 
-    # visits per page per day, all pages in one go (paged 100 at a time)
-    paths, exclude = {}, []
-    while True:
-        q = {"start": stamp(start), "end": stamp(end), "group": "day", "limit": 100}
-        if exclude:
-            q["exclude_paths"] = ",".join(exclude)
-        res = api("stats/hits", **q)
-        for h in res.get("hits", []):
-            if h.get("event"):
-                continue
-            row = paths.setdefault(h["path"], [0] * DAYS)
-            for s in h.get("stats", []):
-                k = index.get(s.get("day"))
-                if k is not None:
-                    row[k] += int(s.get("daily", 0))
-            exclude.append(str(h["path_id"]))
-        if not res.get("more"):
-            break
+    # visits per page per day, a window of WINDOW_DAYS at a time (a lighter question than all 400 days at once),
+    # each window paged 100 pages at a time
+    paths = {}
+    for w0 in range(0, DAYS, WINDOW_DAYS):
+        ws = start + timedelta(days=w0)
+        we = min(end, (start + timedelta(days=min(DAYS, w0 + WINDOW_DAYS))).replace(hour=0, minute=0, second=0) - timedelta(seconds=1))
+        exclude = []
+        while True:
+            q = {"start": stamp(ws), "end": stamp(we), "group": "day", "limit": 100}
+            if exclude:
+                q["exclude_paths"] = ",".join(exclude)
+            res = api("stats/hits", **q)
+            for h in res.get("hits", []):
+                if h.get("event"):
+                    continue
+                row = paths.setdefault(h["path"], [0] * DAYS)
+                for s in h.get("stats", []):
+                    k = index.get(s.get("day"))
+                    if k is not None:
+                        row[k] += int(s.get("daily", 0))
+                exclude.append(str(h["path_id"]))
+            if not res.get("more"):
+                break
 
     # where visitors are and how they found the site, for each range
     ranges = {"week": 7, "month": 30, "year": 365, "all": None}

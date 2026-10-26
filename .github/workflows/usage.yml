@@ -24,7 +24,11 @@ jobs:
       - name: Read GoatCounter
         env:
           GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
-        run: python3 tools/build_usage.py
+        run: |
+          # GoatCounter now and then answers one request wrongly; the script retries each request,
+          # and this retries the whole job after a pause
+          for i in 1 2 3; do python3 tools/build_usage.py && exit 0; echo "Attempt $i failed"; sleep 90; done
+          exit 1
       - name: Save if anything changed
         run: |
           git config user.name "labpotato-bot"

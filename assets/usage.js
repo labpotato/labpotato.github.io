@@ -65,6 +65,41 @@ function fromFile(f, range) {
   return { range, src: "file", last, at: Date.parse(f.generated), labels: groups.map(g => g.l), rows, site, siteSum: site.reduce((a, v) => a + v, 0), stats: f.stats && f.stats[range], failed: 0, asked: 1 };
 }
 
+/* ---------- the days the file doesn't have yet (today, and yesterday if the job ran early), counted live ----------
+   The daily file stops at the day before it was made. The public counter fills in the rest, a request per tool
+   per missing day, kept for 10 minutes. If any request fails, the file's numbers are shown as they are. */
+async function liveTopUp(cur, f) {
+  const from = utc0(new Date(f.generated)), today = utc0(new Date()), days = [];
+  for (let d = +from; d <= +today; d += DAY) days.push(new Date(d));
+  if (!days.length || days.length > 3) return cur;
+  const key = "lp-usage-live", tag = days.map(utcDay).join(",");
+  let got = null;
+  try { const c = JSON.parse(localStorage.getItem(key) || "null"); if (c && c.tag === tag && Date.now() - c.at < 6e5) got = c.got; } catch (e) { /* storage blocked */ }
+  if (!got) {
+    const tools = liveTools(), jobs = [];
+    days.forEach(d => { const a = utcDay(d), b = utcDay(new Date(+d + DAY)); jobs.push(() => usageCount("TOTAL", a, b)); tools.forEach(t => jobs.push(() => usageCount(toolPathOf(t), a, b))); });
+    const res = await pool(jobs); if (res.some(r => r.err)) return cur;
+    got = days.map((d, i) => { const base = i * (tools.length + 1); return { total: res[base].n || 0, per: Object.fromEntries(tools.map((t, j) => [t.id, res[base + 1 + j].n || 0])) }; });
+    try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), tag, got })); } catch (e) { /* storage blocked */ }
+  }
+  const out = { ...cur, rows: cur.rows.map(r => ({ ...r, per: r.per.slice() })), labels: cur.labels.slice(), site: cur.site ? cur.site.slice() : null, liveAt: Date.now() };
+  if (cur.range === "week" || cur.range === "month") {
+    days.forEach((d, i) => {   // a new point per day, the oldest one drops off so the range keeps its length
+      out.labels.push(+d === +today ? "today" : fmtD(d)); out.labels.shift();
+      out.rows.forEach(r => { r.per.push(got[i].per[r.id] || 0); r.per.shift(); });
+      if (out.site) { out.site.push(got[i].total); out.site.shift(); }
+    });
+    out.last = "today";
+  } else {   // weeks and months: today's visits go into the latest bar
+    const k = out.labels.length - 1;
+    out.rows.forEach(r => { r.per[k] += got.reduce((a, g) => a + (g.per[r.id] || 0), 0); });
+    if (out.site) out.site[k] += got.reduce((a, g) => a + g.total, 0);
+  }
+  out.rows.forEach(r => { r.sum = r.per.reduce((a, v) => a + v, 0); });
+  if (out.site) out.siteSum = out.site.reduce((a, v) => a + v, 0);
+  return out;
+}
+
 /* ---------- source 2: GoatCounter's public counter (tool lines only) ---------- */
 const usageLog = [];
 async function usageCount(path, start, end) {
@@ -255,7 +290,7 @@ function renderUsage(data) {
     document.getElementById("usage-geo-sum").textContent = tot ? `${nf(tot)} visits from ${(s.locations || []).length} countr${(s.locations || []).length === 1 ? "y" : "ies"} ${R.noun}` : "";
   } else emptyDemo();
   const sum = rows.reduce((a, r) => a + r.sum, 0), when = new Date(data.at), whenTxt = `${fmtD(when)}, ${when.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}`;
-  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated daily, last " + whenTxt : "counted " + whenTxt}${data.statsAt ? ` · map and sources from ${fmtD(new Date(data.statsAt))}` : ""}`;
+  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated every 6 hours, last " + whenTxt + (data.liveAt ? " · today counted live" : "") : "counted " + whenTxt}${data.statsAt ? ` · map and sources from ${fmtD(new Date(data.statsAt))}` : ""}`;
   usageDebug();
 }
 
@@ -283,7 +318,7 @@ function initUsage() {
     if (f && !(typeof window !== "undefined" && window.USAGE_SAMPLE) && Date.now() - Date.parse(f.generated) > 36 * 3600e3) {
       const live = await fromCounter(range, fresh);
       if (live && live.failed === 0 && live.rows?.length) { live.stats = current.stats; live.statsAt = Date.parse(f.generated); current = live; }
-    }
+    } else if (f && !(typeof window !== "undefined" && window.USAGE_SAMPLE)) current = await liveTopUp(current, f);
     sec.classList.remove("loading"); renderUsage(current);
   };
   seg.addEventListener("click", e => { const b = e.target.closest("[data-range]"); if (!b || b.dataset.range === range) return; range = b.dataset.range; go(false); });

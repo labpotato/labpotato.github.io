@@ -61,11 +61,11 @@ const TOOLS = [
       { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20" },
       { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
       { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
-      { v: "v12", file: "lab-entry-v12.html", date: "2026-10-21",
+      { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27",
         new: [
-          "Results from every Lab Potato tool arrive live in a waiting room",
-          "A more compact week: the whole week on one screen",
-          "Markdown for AI now carries the figures as PNGs"
+          "Shows where your journal is loaded from and when it was last saved to a file; asks to save on close",
+          "Reminds you about daily reports you have not exported",
+          "Figures fill the panel and export as one picture per panel; long names wrap"
         ] }
     ]
   },
@@ -88,11 +88,11 @@ const TOOLS = [
     versions: [
       { v: "v1", file: "colony-counter-v1.html" },
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
-      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-21",
+      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-27",
         new: [
           "Open several plates and step through them, or Count all",
-          "Blue and white colonies counted apart",
-          "Transformation efficiency, and Send to Lab Entry"
+          "Transformation efficiency, and Send to Lab Entry",
+          "Opens TIFF plate images, including 16-bit and multi-page TIFFs"
         ] }
     ]
   },
@@ -240,18 +240,11 @@ const TOOLS = [
       { v: "v2", file: "cryobox-labeler-v2.html", date: "2026-10-13" },
       { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14" },
       { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20" },
-      { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21",
+      { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21" },
+      { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27",
         new: [
-          "Move, reorder or remove any drawer; Add, Move, Remove work the same everywhere",
-          "Caps without names: point at a vial to see it, or press Names",
-          "Black grid lines in the box; colour key moved off the box"
-        ] },
-      { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-22",
-        new: [
-          "A plain 2D plan of the box (with the bin); the 3D view stays where you turn it",
-          "Box rows skip I (A–H, J); change a box's type later; unordered boxes in cryobox size",
-          "Glossary for search; antibiotics written out (Kan → kanamycin); a date in the colony # fills the date",
-          "Shift-click ranges, one cap colour for many; groups move with their vials; sort A → Z"
+          "Shows where your inventory is loaded from and when it was last saved to a file",
+          "Asks before closing if there are changes not saved to a file"
         ] }
     ]
   },
@@ -269,17 +262,15 @@ const TOOLS = [
     features: [
       "Highlights, comment bubbles, Word-style text boxes, drawings and page edits on PDFs",
       "HTML pages as they look, with a floating toolbar; or edit like a Word document",
-      "Saves back into the file you opened; exports PDF, HTML or Markdown; Chrome extension for any page"
+      "Chrome extension works on top of any web page, like Liner: highlights and edits come back on your next visit"
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
-      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-25",
+      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-27",
         new: [
-          "Web view: HTML pages exactly as they look, with a floating toolbar; links and buttons work, double-click to edit, click a picture to enlarge it",
-          "Save (Ctrl+S) writes your changes back into the PDF, HTML, Markdown or image file you opened",
-          "HTML files open whole with their own styling and can be edited; every document exports as HTML, PDF or Markdown",
-          "Image editor: crop, rotate, flip, brightness, contrast, colour; drag a handle to resize",
-          "Text boxes on PDFs edit in place with bold, italic, size, colour and alignment; zoom for documents; fold handles on both panels"
+          "Extension: highlight, comment and edit right on the page, no new tab; it all comes back when you reopen the address",
+          "Toolbar can float or dock; menus open beside it at either edge; turning it moves it to a top corner",
+          "Web pages keep their own look; a page you opened before reopens with your changes"
         ] }
     ]
   }

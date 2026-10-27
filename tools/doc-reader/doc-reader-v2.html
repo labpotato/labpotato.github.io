@@ -492,6 +492,15 @@ body.webview .toast{z-index:620}
 .wv-bar.vert .zoom-val{min-width:0;font-size:11px;padding:0 2px}
 .wv-bar.vert .tb .badge{position:absolute;margin:-18px -18px 0 0;min-width:15px;height:15px;font-size:10px}
 .wv-bar.vert .tb{position:relative}
+/* v3: docked bar: its own strip along the top (or the left when standing); the page fills the rest */
+body.wv-docked .wv-bar{top:0!important;left:0!important;right:0;transform:none!important;border-radius:0;max-width:none;justify-content:center;border-width:0 0 1px;box-shadow:0 1px 3px rgba(15,23,42,.08);background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none}
+body.wv-docked #wvFrame{height:calc(100% - var(--wvbh,40px));margin-top:var(--wvbh,40px)}
+body.wv-docked.wv-vert .wv-bar{right:auto;bottom:0;justify-content:flex-start;border-width:0 1px 0 0;max-height:none}
+body.wv-docked.wv-vert #wvFrame{height:100%;margin-top:0;width:calc(100% - var(--wvbw,46px));margin-left:var(--wvbw,46px)}
+body.wv-docked .webview #right{top:calc(var(--wvbh,40px) + 10px)}
+body.wv-docked.wv-vert .webview #right{top:12px}
+body.wv-bar-right .webview #right{right:calc(12px + 52px)}
+.wv-bar .tb.on{background:var(--blue-l,#e6efff);color:var(--blue,#0a5fd0)}
 
 </style>
 </head>
@@ -600,10 +609,10 @@ body.webview .toast{z-index:620}
     <aside class="home-side">
       <div class="home-card" id="extCard">
         <h3><svg><use href="#i-puzzle"/></svg>Chrome extension</h3>
-        <p>Open any web page or PDF link with one click, including pages you are signed in to. It also loads web addresses that this page is not allowed to fetch.</p>
+        <p>Works on top of any web page, like Liner: select text and press <b>Highlight</b>, add comments, edit the page's text like a Word document. Everything is kept per address and comes back when you open the page again. One click also opens the page or a PDF here.</p>
         <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>Download the extension (.zip)</a>
         <details><summary>How to install</summary>
-          <ol><li>Unzip the file.</li><li>Open <code>chrome://extensions</code> and switch on <b>Developer mode</b> (top right).</li><li>Click <b>Load unpacked</b> and pick the unzipped folder.</li><li>Pin <b>Lab Potato Doc Reader</b>; click it on any page.</li></ol>
+          <ol><li>Unzip the file.</li><li>Open <code>chrome://extensions</code> and switch on <b>Developer mode</b> (top right).</li><li>Click <b>Load unpacked</b> and pick the unzipped folder.</li><li>Pin <b>Lab Potato Doc Reader</b>. On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>
         </details>
       </div>
       <div class="home-card">
@@ -767,7 +776,8 @@ body.webview .toast{z-index:620}
     <span class="wv-sep"></span>
     <button class="tb" data-wv="editor" title="Back to the editor view (Word-style)"><svg><use href="#i-doc"/></svg><span class="lbl">Editor</span></button>
     <button class="tb" data-wv="home" title="Your documents"><svg><use href="#i-home"/></svg></button>
-    <button class="tb" data-wv="turn" title="Stand the bar up (vertical) or lay it down; or drag it to a side edge"><svg><use href="#i-rotate"/></svg></button>
+    <button class="tb" data-wv="turn" title="Stand the bar up at the side or lay it along the top (it moves to the top corner)"><svg><use href="#i-rotate"/></svg></button>
+    <button class="tb" data-wv="dock" id="wvDock" title="Dock the bar in its own strip, so it never covers the page"><svg><use href="#i-side"/></svg><span class="lbl">Dock</span></button>
   </div>
 </div>
 <div class="lightbox" id="lightbox" hidden>
@@ -4391,7 +4401,11 @@ function menu(items, anchor, opts = {}) {
   m.hidden = false;
   let x, y;
   if (anchor instanceof Event) { x = anchor.clientX; y = anchor.clientY; }
-  else { const r = anchor.getBoundingClientRect(); x = opts.right ? r.right - m.offsetWidth : r.left; y = r.bottom + 4; }
+  else { const r = anchor.getBoundingClientRect(); x = opts.right ? r.right - m.offsetWidth : r.left; y = r.bottom + 4;
+    // v3: a menu from the standing (vertical) toolbar opens beside it, on the side with room
+    const vb = anchor.closest?.(".wv-bar.vert"); if (vb) { const br = vb.getBoundingClientRect(); x = br.left + br.width / 2 < innerWidth / 2 ? br.right + 6 : br.left - m.offsetWidth - 6; y = r.top; }
+    else if (anchor.closest?.(".wv-bar") && r.bottom + m.offsetHeight > innerHeight - 8) y = r.top - m.offsetHeight - 4; }
+  if (x < 8) x = 8;
   if (x + m.offsetWidth > innerWidth - 8) x = Math.max(8, innerWidth - m.offsetWidth - 8);
   if (y + m.offsetHeight > innerHeight - 8) y = Math.max(8, innerHeight - m.offsetHeight - 8);
   m.style.left = x + "px"; m.style.top = y + "px";
@@ -5232,7 +5246,7 @@ function enterWebView() {
   const base = S.doc.meta?.sourceUrl ? `<base href="${esc(S.doc.meta.sourceUrl)}">` : "";
   const head = S.doc.meta?.head || `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${DEFAULT_HEAD_CSS}</style>`;
   const fr = wvFrame(); fr.onload = bindFrame;
-  fr.srcdoc = `<!doctype html><html><head>${base}${head}<style id="lp-wv">${WV_CSS}</style></head><body>${flowEl.innerHTML}</body></html>`;
+  fr.srcdoc = `<!doctype html><html ${S.doc.meta?.htmlAttr || ""}><head>${base}${head}<style id="lp-wv">${WV_CSS}</style></head><body ${S.doc.meta?.bodyAttr || ""}>${flowEl.innerHTML}</body></html>`;   // v3: the page's own <html>/<body> classes and styles, so it looks as it did
   wv.append($("#right")); $("#right").classList.add("closed"); wvBarState(); closePop(); closeSelPop();
 }
 function exitWebView() {
@@ -5388,8 +5402,17 @@ function wvSnap(x, y) {
   bar.style.transform = "none";
 }
 /* a bar moved on a wide window must still be reachable on a narrow one */
+/* v3: turning the bar puts it in a top corner on the side it was on: standing at the left or right edge, or lying along the top */
+function wvTurn() {
+  const bar = $("#wvBar"), r = bar.getBoundingClientRect(), right = r.left + r.width / 2 > innerWidth / 2;
+  wvSetVert(!S.wvVert); bar.style.transform = "none";
+  bar.style.left = (right ? innerWidth - bar.offsetWidth - 8 : 8) + "px"; bar.style.top = "8px";
+  Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); wvBarState();
+}
+/* v3: floating (on top of the page, movable) or docked (its own strip, so it never covers the page) */
+function wvSetDock(on) { S.wvDock = on; Prefs.set("wvDock", on); if (on) S.wvMin = false; wvBarState(); }
 function wvKeepBarOnScreen() {
-  const bar = $("#wvBar"); if (!bar || bar.style.transform !== "none") return;
+  const bar = $("#wvBar"); if (!bar || bar.style.transform !== "none" || S.wvDock) return;
   const r = bar.getBoundingClientRect(); if (r.right > innerWidth - 4) bar.style.left = Math.max(4, innerWidth - r.width - 4) + "px"; if (r.bottom > innerHeight - 4) bar.style.top = Math.max(4, innerHeight - r.height - 4) + "px";
 }
 function wvBarState() {
@@ -5400,6 +5423,11 @@ function wvBarState() {
   $("#wvNoteCount").textContent = $("#noteCount").textContent;
   $("#wvNotes").classList.toggle("on", !$("#right").classList.contains("closed"));
   bar.classList.toggle("min", !!S.wvMin);
+  const r = bar.getBoundingClientRect(), right = !S.wvDock && r.left + r.width / 2 > innerWidth / 2;
+  document.body.classList.toggle("wv-docked", !!S.wvDock); document.body.classList.toggle("wv-vert", !!S.wvVert);
+  document.body.classList.toggle("wv-bar-right", !!S.wvVert && right); document.body.classList.toggle("wv-bar-left", !!S.wvVert && !right && !S.wvDock);
+  const db = $("#wvDock"); if (db){ db.classList.toggle("on", !!S.wvDock); db.title = S.wvDock ? "Docked: the bar has its own strip. Click to float it over the page again" : "Floating: click to dock the bar in its own strip, so it never covers the page"; $(".lbl", db).textContent = S.wvDock ? "Float" : "Dock"; }
+  if (S.wvDock) requestAnimationFrame?.(() => { const wv = $("#webview"); wv.style.setProperty("--wvbh", bar.offsetHeight + "px"); wv.style.setProperty("--wvbw", bar.offsetWidth + "px"); });
 }
 function bindWvBar() {
   const bar = $("#wvBar");
@@ -5414,21 +5442,22 @@ function bindWvBar() {
     else if (a === "save") { wvPull(true); saveMenu(b); } else if (a === "export") { wvPull(true); exportMenu(b); }
     else if (a === "editor") exitWebView(); else if (a === "home") { exitWebView(); goHome(); }
     else if (a === "min") { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); }
-    else if (a === "turn") wvSetVert(!S.wvVert, true);
+    else if (a === "turn") wvTurn();
+    else if (a === "dock") wvSetDock(!S.wvDock);
   });
   $$("button", bar).forEach(b => b.addEventListener("pointerdown", e => e.preventDefault()));   // keep the page's selection
   // drag the bar by its handle; remember where it was put
   const grip = $(".wv-grip", bar);
   // the grip captures the pointer, so the drag keeps going over the page's iframe
   grip.addEventListener("pointerdown", e => {
-    e.preventDefault(); grip.setPointerCapture(e.pointerId); const r = bar.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top, x0 = e.clientX, y0 = e.clientY; let moved = false;
+    e.preventDefault(); grip.setPointerCapture(e.pointerId); if (S.wvDock) { wvSetDock(false); bar.style.transform = "none"; } const r = bar.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top, x0 = e.clientX, y0 = e.clientY; let moved = false;
     const mv = ev => { if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return; moved = true; bar.style.left = clamp(ev.clientX - dx, 4, innerWidth - bar.offsetWidth - 4) + "px"; bar.style.top = clamp(ev.clientY - dy, 4, innerHeight - bar.offsetHeight - 4) + "px"; bar.style.transform = "none"; };
     const up = ev => { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); if (moved) { wvSnap(ev.clientX, ev.clientY); Prefs.set("wvBarPos", [bar.style.left, bar.style.top]); } else { S.wvMin = !S.wvMin; Prefs.set("wvMin", S.wvMin); wvBarState(); } };
     grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up);
   });
   grip.addEventListener("click", e => e.stopPropagation());
   S.wvVert = Prefs.get("wvVert", false); bar.classList.toggle("vert", S.wvVert);
-  const p = Prefs.get("wvBarPos", null); if (p) { bar.style.left = p[0]; bar.style.top = p[1]; bar.style.transform = "none"; } S.wvMin = Prefs.get("wvMin", false);
+  const p = Prefs.get("wvBarPos", null); if (p) { bar.style.left = p[0]; bar.style.top = p[1]; bar.style.transform = "none"; } S.wvMin = Prefs.get("wvMin", false); S.wvDock = Prefs.get("wvDock", false);
   addEventListener("resize", () => wvKeepBarOnScreen());
 }
 
@@ -5496,11 +5525,15 @@ function openHtmlFile(name, html, attach, base) {
     dom.querySelectorAll("img[data-src]:not([src]),img[data-src][src^='data:']").forEach(el => { try { el.setAttribute("src", new URL(el.dataset.src, base).href); } catch (e) { /* leave */ } });
   }
   let comments = {}; const cj = dom.getElementById("lp-comments"); if (cj) { try { comments = JSON.parse(cj.textContent); } catch (e) { /* ignore */ } cj.remove(); }
-  const head = [...dom.head.children].filter(e => /^(STYLE|TITLE|META)$/.test(e.tagName) || (e.tagName === "LINK" && /stylesheet/i.test(e.rel))).map(e => e.outerHTML).join("\n");
+  // v3: no <meta http-equiv> (a refresh or a security policy in a saved page sends the frame away or blocks its styles)
+  const head = [...dom.head.children].filter(e => (/^(STYLE|TITLE)$/.test(e.tagName) || (e.tagName === "META" && !e.hasAttribute("http-equiv"))) || (e.tagName === "LINK" && /stylesheet/i.test(e.rel))).map(e => e.outerHTML).join("\n");
+  // v3: the page's own <html> and <body> classes, styles and language (sites hang their layout and theme on them)
+  const attrs = el => [...el.attributes].filter(a => /^(class|style|lang|dir|data-[\w-]+|theme)$/i.test(a.name)).map(a => `${a.name}="${esc(a.value)}"`).join(" ");
+  const htmlAttr = attrs(dom.documentElement), bodyAttr = attrs(dom.body);
   const css = [...dom.querySelectorAll("style")].map(s => s.textContent).join("\n");
   dom.querySelectorAll("script,noscript,iframe,object,embed").forEach(e => e.remove());
-  const body = DOMPurify.sanitize(dom.body.innerHTML, { USE_PROFILES: { html: true, svg: true, svgFilters: true }, ADD_ATTR: ["style", "class", "id", "width", "height", "colspan", "rowspan", "target", "checked", "srcset", "sizes", "role", "formaction", "value", "type", "name"], ADD_TAGS: ["mark", "button"] });
-  let d = newDoc("flow", (dom.title || name).trim(), { html: body, comments, orig: html, meta: { faithful: true, head, css } }); if (attach) d = attach(d);
+  const body = DOMPurify.sanitize(dom.body.innerHTML, { FORCE_BODY: true, CUSTOM_ELEMENT_HANDLING: { tagNameCheck: /^[a-z][\w]*-[\w-]*$/, attributeNameCheck: /^[a-z][\w-]*$/, allowCustomizedBuiltInElements: true }, USE_PROFILES: { html: true, svg: true, svgFilters: true }, ADD_ATTR: ["style", "class", "id", "width", "height", "colspan", "rowspan", "target", "checked", "srcset", "sizes", "role", "formaction", "value", "type", "name"], ADD_TAGS: ["mark", "button", "style", "picture", "source"] });
+  let d = newDoc("flow", (dom.title || name).trim(), { html: body, comments, orig: html, meta: { faithful: true, head, css, htmlAttr, bodyAttr } }); if (attach) d = attach(d);
   return openDoc(d);
 }
 /* the file's own CSS, limited to the document so it can't restyle the app */
@@ -5511,7 +5544,14 @@ function scopeCss(css) {
     walk(st.sheet.cssRules); return out.join("\n");
   } catch (e) { return ""; }
 }
-function openHtmlDoc(name, html, url) {
+/* v3: the newest copy of a web address kept in this browser, so opening it again brings back your highlights and edits */
+const urlKey = u => String(u || "").replace(/#.*$/, "").replace(/\/$/, "");
+async function savedFor(url) { if (!url) return null; try { return (await DB.all("docs")).filter(d => d.meta?.sourceUrl && urlKey(d.meta.sourceUrl) === urlKey(url)).sort((a, b) => (b.modified || 0) - (a.modified || 0))[0] || null; } catch (e) { return null; } }
+async function reopenSaved(url, fresh) { const prev = !fresh && await savedFor(url); if (!prev) return false;
+  await (prev.kind === "pdf" ? openPdfDoc(prev) : openDoc(prev));
+  toast(`Opened your copy of this page from ${fmtTime(prev.modified)}, with your changes.`, { label: "Load it fresh", fn: () => openUrl(url, true) }); return true; }
+async function openHtmlDoc(name, html, url, fresh) {
+  if (url && await reopenSaved(url, fresh)) return;
   if (Prefs.get("webLayout", "original") === "original") return openHtmlFile(name, html, d => { d.meta.sourceUrl = url || ""; return d; }, url);
   const dom = new DOMParser().parseFromString(html, "text/html");
   if (url) { const b = dom.createElement("base"); b.href = url; dom.head.prepend(b); }
@@ -5522,8 +5562,9 @@ function openHtmlDoc(name, html, url) {
   if (url) out = `<p class="src-note">Source: <a href="${esc(url)}">${esc(url)}</a> · saved ${fmtTime(Date.now())}</p>` + out;
   return openDoc(newDoc("flow", title.replace(/[\\/:*?"<>|]/g, " ").trim() || name, { html: out, meta: { sourceUrl: url || "" } }));
 }
-async function openUrl(url) {
+async function openUrl(url, fresh) {
   url = url.trim(); if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  if (await reopenSaved(url, fresh)) return;
   const note = $("#urlNote"); note.className = "url-note"; note.textContent = "Loading " + url + " …"; status("Loading…");
   try {
     const r = await fetch(url, { mode: "cors", credentials: "omit" }); if (!r.ok) throw new Error("HTTP " + r.status);
@@ -5533,7 +5574,7 @@ async function openUrl(url) {
     const text = await r.text(); note.textContent = "";
     if (ct.includes("markdown") || /\.(md|markdown)$/i.test(fname)) return openDoc(newDoc("flow", fname, { html: mdToHtml(text), meta: { sourceUrl: url } }));
     if (ct.includes("text/plain")) return openDoc(newDoc("flow", fname, { html: textToHtml(text), meta: { sourceUrl: url } }));
-    return openHtmlDoc(fname, text, url);
+    return openHtmlDoc(fname, text, url, true);
   } catch (e) {
     console.warn(e); status("");
     if (IS_EXT) { note.className = "url-note err"; note.textContent = "Could not load that address (" + (e.message || e) + ")."; return; }
@@ -5820,6 +5861,7 @@ function saveMenu(anchor) {
     { label: S.fileHandle ? "Autosaving to " + S.fileHandle.name : "Autosave to a file on this computer…", sub: S.fileHandle ? "Click to pick another file" : "Pick a file once; it is kept up to date as you work", fn: chooseAutosaveFile },
     { sep: true },
     { label: "Rename", fn: () => { $("#docTitle").focus(); $("#docTitle").select(); } },
+    ...(S.doc.meta?.sourceUrl && /^https?:/i.test(S.doc.meta.sourceUrl) ? [{ label: "Load the page fresh from the web", sub: "Opens the address again as a new copy; this one stays in your list", fn: () => openUrl(S.doc.meta.sourceUrl, true) }] : []),
     ...(S.doc.kind === "flow" && S.doc.origHtml ? [{ label: "Revert to the original text", sub: "Undoes every edit, keeps nothing you changed", fn: async () => { if (await modal(`<h3>Revert?</h3><p>All edits, highlights and comments in this document are removed.</p><div class="mrow"><button class="btn" data-cancel>Keep</button><button class="btn danger" data-ok="ok">Revert</button></div>`)) { flowEl.innerHTML = S.doc.origHtml; S.doc.comments = {}; flowChanged(); layoutMargin(); refreshNotes(); } } }] : []),
     { label: "Remove from this browser", danger: true, fn: async () => { if (await modal(`<h3>Remove "${esc(S.doc.name)}"?</h3><p>Removed from this browser's saved list. Project files you saved are not affected.</p><div class="mrow"><button class="btn" data-cancel>Keep</button><button class="btn danger" data-ok="ok">Remove</button></div>`)) { const id = S.doc.id; S.dirty = false; S.doc = null; await DB.del("docs", id); goHome(); } } }
   ], anchor, { right: true });
@@ -5907,7 +5949,7 @@ function looseRanges(root, q) {
 /* ---- extension hooks: a captured page or a URL handed over by the extension ---- */
 async function extStart() {
   const q = new URLSearchParams(location.search);
-  if (q.get("cap") && IS_EXT) { const st = await chrome.storage.local.get(q.get("cap")); const cap = st[q.get("cap")]; if (cap) { chrome.storage.local.remove(q.get("cap")); if (cap.selection) return openDoc(newDoc("flow", (cap.title || "Selection").slice(0, 80), { html: cleanHtml(cap.selection, cap.url), meta: { sourceUrl: cap.url } })); return openHtmlDoc(cap.title || "page", cap.html, cap.url); } }
+  if (q.get("cap") && IS_EXT) { const st = await chrome.storage.local.get(q.get("cap")); const cap = st[q.get("cap")]; if (cap) { chrome.storage.local.remove(q.get("cap")); if (cap.selection) return openDoc(newDoc("flow", (cap.title || "Selection").slice(0, 80), { html: cleanHtml(cap.selection, cap.url), meta: { sourceUrl: cap.url } })); return openHtmlDoc(cap.title || "page", cap.html, cap.url, true); } }
   if (q.get("url")) { $("#urlInput").value = q.get("url"); return openUrl(q.get("url")); }
   if (q.get("file") && IS_EXT) { try { const r = await fetch(q.get("file")); return openPdfDoc(newDoc("pdf", decodeURIComponent(q.get("file").split("/").pop()), { src: await r.blob(), meta: { sourceUrl: q.get("file") } })); } catch (e) { toast("Could not read the file: " + e.message); } }
 }

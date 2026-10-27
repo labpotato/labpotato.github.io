@@ -165,7 +165,7 @@ table.t{border-collapse:collapse;width:100%;font-size:14px}
 .fillpop textarea{min-height:44px;font-size:13.5px;margin:4px 0 8px}
 
 /* name suggestions */
-#ac{position:fixed;z-index:60;width:320px;max-height:300px;overflow:auto;background:var(--card);border:1px solid var(--rule2);border-radius:10px;box-shadow:var(--shadow);padding:4px}
+#ac{position:fixed;z-index:60;width:max-content;min-width:260px;max-width:min(560px,calc(100vw - 16px));max-height:300px;overflow:auto;background:var(--card);border:1px solid var(--rule2);border-radius:10px;box-shadow:var(--shadow);padding:4px}
 #ac button{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;padding:6px 9px;border-radius:6px;cursor:pointer}
 #ac button b{font-weight:600;font-size:14px}
 #ac button span{font-size:12px;color:var(--muted)}
@@ -1327,6 +1327,27 @@ body:has(#bdGrid) [data-act="lkToggle"]{display:none!important}
 .bd-date{padding-top:4px;padding-bottom:4px}.bd-date .dtile{transform:scale(.86);transform-origin:left top}
 .bd-cell{padding:2px 0}
 .card.bk{padding:6px 10px 7px}.bk-t{font-size:14.5px}.bk-r{font-size:12.5px}
+/* v13: tighter page, wider tiles, the location bar and the export reminder */
+main{padding:12px 0 32px}
+.bd-grid{padding:var(--g2) var(--g3) var(--g2) 0}
+.card.bk{padding:7px 11px 8px}
+.card.bk .bk-t{padding-right:20px}
+.card.bk .bk-s{margin:3px 0 0;gap:3px 8px;align-items:center}
+.card.bk .bk-s .dayb{margin:0}
+.bk-dt{font-variant-numeric:tabular-nums}
+.bd-node.loose.before{border-style:dashed}
+.samp-n{width:100%;min-height:30px;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;line-height:1.35}
+#ac .ac-i,#ac li,#ac button{white-space:normal;overflow-wrap:anywhere}
+.locbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:0 0 8px;padding:4px 6px 4px 12px;min-height:34px;border:1px solid var(--rule2,var(--rule));border-radius:999px;background:var(--card);font:12px/1.35 var(--ui);color:var(--muted)}
+.locbar .lb-url{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.locbar code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent);padding:2px 8px;border-radius:999px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(40vw,460px)}
+.locbar .lb-sep{width:1px;height:16px;background:var(--rule)}
+.locbar .lb-warn b{color:#b45309}.locbar .lb-warn{color:#b45309}
+.locbar .lb-ok b{color:var(--ink)}
+.locbar .grow{flex:1}
+.exp-rem{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 8px;padding:7px 12px;border-radius:12px;background:color-mix(in srgb,#f59e0b 12%,var(--card));border:1px solid color-mix(in srgb,#f59e0b 40%,transparent);font:12.5px var(--ui)}
+.exp-rem .er-day{display:inline-flex}.exp-rem .er-day .btn:first-child{border-top-right-radius:0;border-bottom-right-radius:0}.exp-rem .er-x{border-top-left-radius:0;border-bottom-left-radius:0;padding-inline:7px}
+@media (max-width:760px){.locbar{border-radius:12px}.locbar .lb-sep{display:none}.locbar code{max-width:calc(100vw - 90px)}}
 </style>
 </head>
 <body>
@@ -3269,7 +3290,10 @@ async function saveNow(){ clearTimeout(saveT); saveT = null;
   if (E) E.blocks.forEach(b => { b.method = stepsText(b.steps); if (figDirty.has(b.id)) b.thumb = thumbOf(b); }); figDirty.clear();
   snapshot(); if (!E) return;
   if (!DB.ok){ saved('bad'); return; }
+  const js = entJs(E);   // v13: only a real change moves "last change" (opening a day is not one)
+  if (SAVEDJS.get(E.id) === js){ saved('ok'); return; } SAVEDJS.set(E.id, js);
   E.updatedAt = new Date().toISOString(); try { await DB.put('entries', E); saved('ok'); } catch (e){ saved('bad'); } }
+const SAVEDJS = new Map(), entJs = e => JSON.stringify(Object.assign({}, e, { updatedAt: '' }));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveT) saveNow(); });
 async function pruneEmpty(){
   for (const e of ALL.slice()){
@@ -3308,11 +3332,18 @@ function composeFigure(b, W){
     if (used + span > cols && row.length){ rows.push(row); row = []; used = 0; } row.push({ im, i, span }); used += span; });
   if (row.length) rows.push(row);
   const plan = []; let y = 0;
-  rows.forEach(r => { let x = 0, h = 0;
-    r.forEach(p => { p.w = unit * p.span + gap * (p.span - 1); p.src = panelSrc(p.im, Math.min(1600, Math.ceil(p.w * 1.5)));
-      p.a = aspOf(p.im) || (p.src ? p.src.width / p.src.height : 1); h = Math.max(h, p.w / p.a); });
-    h = Math.min(h, unit * 2.4);
-    r.forEach(p => { Object.assign(p, { x, y, h, lab }); x += p.w + gap; plan.push(p); });
+  /* v13: a row's panels share one height chosen so that, side by side at their own shapes, they fill the width exactly.
+     A lone tall picture is capped at 1.25x the width and centred, so it never becomes a long strip. */
+  rows.forEach(r => r.forEach(p => { p.src = panelSrc(p.im, 1600); p.a = aspOf(p.im) || (p.src ? p.src.width / p.src.height : 1); }));
+  const fitH = r => (W - gap * (r.length - 1)) / r.reduce((t, p) => t + p.a, 0);
+  if (rows.length > 1){ const L = rows[rows.length - 1], P = rows[rows.length - 2];   // a short last row joins the one above if the panels stay a fair size
+    if (L.length < P.length && fitH(P.concat(L)) >= W * 0.22){ rows.pop(); P.push(...L); } }
+  let prevH = 0;
+  rows.forEach((r, ri) => {
+    const sa = r.reduce((t, p) => t + p.a, 0);
+    let h = Math.min(fitH(r), W * (r.length === 1 ? 1.25 : 0.9)); if (ri && ri === rows.length - 1 && prevH) h = Math.min(h, prevH * 1.3); prevH = h;
+    let x = (W - (h * sa + gap * (r.length - 1))) / 2;
+    r.forEach(p => { Object.assign(p, { x, y, h, w: h * p.a, lab }); x += p.w + gap; plan.push(p); });
     y += lab + h + gap; });
   const cv = document.createElement('canvas'); cv.width = W; cv.height = Math.max(1, Math.round(y - gap));
   const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
@@ -3354,7 +3385,7 @@ async function ensureThumbs(){
   thumbing = false; if (VIEW.mode === 'home') renderHome();
 }
 async function openEntry(x){
-  E = x; activeBlock = null; openFill = null;
+  E = x; activeBlock = null; openFill = null; SAVEDJS.set(x.id, entJs(x));
   await ensureImgs(E.blocks);
   if (DB.ok) DB.put('settings', { key: 'last', value: E.id }).catch(() => {});
 }
@@ -3528,7 +3559,7 @@ function miniTable(b, n = 7){ const t = b.table; if (!t || !t.cols.length) retur
 function drawLinks(){
   const app = $('#app'); $$('.links,.lk-t', app).forEach(x => x.remove()); app.dataset.group = FILT.group;
   if ($('#bdGrid')){ app.classList.remove('lk-todo'); drawBoardLinks(); return; }
-  const on = VIEW.mode === 'home' && FILT.lines !== false, tOn = on && FILT.lineTodos !== false;
+  const on = VIEW.mode === 'home' && (FILT.group === 'tag' ? FILT.tagLines : FILT.lines) !== false, tOn = on && (FILT.group === 'tag' ? FILT.tagLineTodos === true : FILT.lineTodos !== false);
   app.classList.toggle('lk-todo', tOn); if (!on) return;
   const o = app.getBoundingClientRect(), R = e => { const r = e.getBoundingClientRect(); return { l: r.left - o.left, t: r.top - o.top, r: r.right - o.left, b: r.bottom - o.top, w: r.width, h: r.height }; };
   const cards = new Map($$('.card', app).map(c => [c.dataset.arg, c])), links = [];
@@ -3586,7 +3617,7 @@ function renderHome(){
   const plan = groups.filter(g => g[2] > td), rest = groups.filter(g => !(g[2] > td));
   const planHtml = plan.length ? `<details class="plan-fold" id="planFold" ${FILT.planOpen ? 'open' : ''}><summary>Planned: ${plan.length} day${plan.length > 1 ? 's' : ''}, ${plan.reduce((n, g) => n + g[1].length, 0)} experiment(s)</summary>${plan.map(grpHtml).join('')}</details>` : '';
   const restHtml = rest.map(g => g[2] === td ? `<section class="today-box">${grpHtml(g)}</section>` : grpHtml(g)).join('');
-  $('#app').innerHTML = `<div class="today-strip" id="todayStrip"><span>📍 Today is</span><b>${esc(fmtDay(td))}</b>
+  $('#app').innerHTML = locBar() + expReminder() + `<div class="today-strip" id="todayStrip"><span>📍 Today is</span><b>${esc(fmtDay(td))}</b>
       <span>${nToday ? `${nToday} to-do${nToday > 1 ? 's' : ''} for today` : 'nothing due today'}</span>
       <span class="grow"></span>${FILT.group === 'day' && list.length ? '<button class="btn sm ghost" data-act="jumpToday">↓ Jump to today</button>' : ''}
       <span class="strip-act"><button class="btn pri" data-act="newExp">+ Add experiment today</button>
@@ -3756,7 +3787,7 @@ function samplesHtml(b, bi){
   const P = `blocks.${bi}`;
   return `<section class="sec" id="sec_samples">${head('samples', '', bi, `${keepBtn(bi, 'samples')}<button class="btn ghost sm" data-act="addSample" data-arg="${bi}">Add row</button>`)}<div class="sec-b">
     <table class="t samples"><thead><tr><th style="width:36%">Name</th><th>Description</th><th class="narrow"><span class="sr">Remove</span></th></tr></thead><tbody>
-      ${b.samples.map((s, si) => `<tr><td><input type="text" data-bind="${P}.samples.${si}.name" data-noac data-sample="${bi}.${si}" value="${esc(s.name)}" list="dlNames" placeholder="for example pET28a GFP" aria-label="Name"></td>
+      ${b.samples.map((s, si) => `<tr><td><textarea rows="1" class="fit samp-n" data-bind="${P}.samples.${si}.name" data-sample="${bi}.${si}" placeholder="for example pET28a GFP" aria-label="Name">${esc(s.name)}</textarea></td>
         <td><textarea rows="1" class="fit" data-bind="${P}.samples.${si}.desc" placeholder="for example kanamycin resistance, T7 promoter" aria-label="Description">${esc(s.desc)}</textarea></td>
         <td class="narrow"><button class="btn ghost sm x" data-act="delSample" data-arg="${bi}.${si}" aria-label="Remove row">×</button></td></tr>`).join('')}
       ${b.samples.length ? '' : `<tr><td colspan="3" class="hint" style="padding:10px">No names yet. <button class="btn sm" data-act="addSample" data-arg="${bi}">Add the first one</button> or link an earlier experiment above and press ⇣ names.</td></tr>`}
@@ -3960,7 +3991,7 @@ function drawAc(){
   const el = AC.el, pos = caretXY(el, el.selectionStart), box = $('#ac'), g = $('#acGhost');
   box.innerHTML = AC.items.map((x, i) => `<button type="button" class="${i === AC.sel ? 'on' : ''}${x.own ? ' own' : ''}" data-ac="${i}" role="option" aria-selected="${i === AC.sel}"><b>${esc(x.name)}</b>${x.own ? '<i class="ac-own">this entry</i>' : ''}${x.desc ? `<span>${esc(x.desc)}</span>` : ''}</button>`).join('')
     + '<div class="ac-help">Tab: next word · →: all of it · ↑ ↓ choose · Esc close</div>';
-  box.hidden = false; const on = box.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' }); box.style.left = Math.min(pos.x, window.innerWidth - 330) + 'px'; box.style.top = (pos.y + pos.h + 4) + 'px';
+  box.hidden = false; const on = box.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' }); box.style.left = Math.max(8, Math.min(pos.x, window.innerWidth - box.offsetWidth - 8)) + 'px'; box.style.top = (pos.y + pos.h + 4) + 'px';
   const top = AC.items[AC.sel], nextCh = el.value.slice(el.selectionStart, el.selectionStart + 1);
   if (top.name.toLowerCase().startsWith(AC.token.toLowerCase()) && (!nextCh || /\s/.test(nextCh))){
     g.textContent = top.name.slice(AC.token.length); g.style.font = pos.font; g.style.left = pos.x + 'px'; g.style.top = pos.y + 'px'; g.style.lineHeight = pos.h + 'px'; g.hidden = false; el.classList.toggle('ac-ghosting', !el.value);
@@ -3996,8 +4027,8 @@ app.addEventListener('input', e => {
   if (HOME_CTL[el.id]){ FILT[HOME_CTL[el.id]] = el.value; saveSetting('filt', FILT); render();
     if (el.id === 'fQ'){ const n = $('#fQ'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
   if (el.tagName === 'TEXTAREA') autoGrow(el);
-  if (el.dataset.todotext){ const [bid, tid] = el.dataset.todotext.split('|'), it = findB(bid), t = it && it.b.todos.find(x => x.id === tid); if (t){ t.text = el.value; touch(it.e); } return; }
-  if (el.dataset.gentext){ const t = GEN.find(x => x.id === el.dataset.gentext); if (t){ t.text = el.value; saveSetting('general', GEN); } return; }
+  if (el.dataset.todotext){ const [bid, tid] = el.dataset.todotext.split('|'), it = findB(bid), t = it && it.b.todos.find(x => x.id === tid); if (t){ t.text = el.value; touch(it.e); } updateAc(el); return; }
+  if (el.dataset.gentext){ const t = GEN.find(x => x.id === el.dataset.gentext); if (t){ t.text = el.value; saveSetting('general', GEN); } updateAc(el); return; }
   if (el.dataset.bind && el.type !== 'radio' && el.tagName !== 'SELECT'){ if (el.classList.contains('title') && !el.classList.contains('sub') && el.dataset.old == null) el.dataset.old = getPath(E, el.dataset.bind) || ''; setPath(E, el.dataset.bind, el.value); scheduleSave();
     const mb = /^blocks\.(\d+)\./.exec(el.dataset.bind); if (mb && E.blocks[+mb[1]]) E.blocks[+mb[1]].auto = false;   // written in: no longer an untouched automatic entry
     if (/\.images\.\d+\.(label|caption)$/.test(el.dataset.bind)){ dirty(+el.dataset.bind.split('.')[1]); clearTimeout(drawT); drawT = setTimeout(drawFigs, 120); } }
@@ -4052,7 +4083,7 @@ app.addEventListener('change', e => {
   if (el.dataset.sample){ const [bi, si] = el.dataset.sample.split('.').map(Number), s = E.blocks[bi].samples[si];
     const known = NAMES.find(x => x.name.toLowerCase() === clean(s.name).toLowerCase());
     if (known && !clean(s.desc)){ s.desc = known.desc; s.name = known.name; scheduleSave(); rerender(); } }
-  if (/\.samples\.\d+\.(name|desc)$/.test(el.dataset.bind || '')){ const s = getPath(E, el.dataset.bind.replace(/\.(name|desc)$/, '')); rememberName(s.name, s.desc); $('#dlNames').innerHTML = allNames().map(x => `<option value="${esc(x.name)}">${esc(x.desc)}</option>`).join(''); }
+  if (/\.samples\.\d+\.(name|desc)$/.test(el.dataset.bind || '')){ const s = getPath(E, el.dataset.bind.replace(/\.(name|desc)$/, '')); rememberName(s.name, s.desc); const dl = $('#dlNames'); if (dl) dl.innerHTML = allNames().map(x => `<option value="${esc(x.name)}">${esc(x.desc)}</option>`).join(''); }
   if (el.dataset.bind && /\.title$/.test(el.dataset.bind) && openFill) rerender();
 });
 app.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('input.title') && !e.target.classList.contains('sub')) e.target.dataset.old = e.target.value; });
@@ -4132,8 +4163,8 @@ function bdCard(x, tag, segLab, g){
   return `<article class="card bk" style="--ec:${b.color}" data-act="openExp" data-arg="${b.id}" role="button" tabindex="0" aria-label="Open ${esc(t)}, ${esc(fmtDay(x.date))}">
     <button class="bk-ed" data-act="cardNote" data-arg="${b.id}" title="Add a comment" aria-label="Add a comment to ${esc(t)}">✎</button>
     ${segLab ? `<div class="bk-seg" data-g="${g || ''}" title="${esc(segLab)}: drag sideways to move this experiment to a free place" aria-label="Project tags of ${esc(segLab)}"><span class="bk-segn">${b.tags.length ? b.tags.map(t => `<span class="sg-t"${tgs(t)}>${esc(t)}</span>`).join('') : '<span class="sg-none">No project tag</span>'}</span><span class="bk-grip" aria-hidden="true">⠿</span></div>` : ''}
-    <div class="bk-t">${m ? `<span class="dayb">Day ${m[1]}</span>` : ''}<b>${esc(name)}</b></div>
-    <div class="bk-s">${b.status ? `<span class="sd s-${b.status}">● ${STATUS_TXT[b.status]}</span>` : x.date > td ? '<span class="bk-pl">Planned</span>' : ''}${tag ? `<span>${esc(new Date(x.date + 'T00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</span>` : ''}${b.kinds.length || (!g && b.tags.length) ? `<div class="bk-tags">${b.kinds.map(k => `<span class="kind tg"${tgs(k)} data-tk="${esc(key(k))}">${esc(k)}</span>`).join('')}${g ? '' : b.tags.map(t => `<span class="chip tg"${tgs(t)} data-tk="${esc(key(t))}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
+    <div class="bk-t"><b>${esc(name)}</b></div>
+    <div class="bk-s">${m ? `<span class="dayb">Day ${m[1]}</span>` : ''}${tag ? `<span class="bk-dt">${esc(new Date(x.date + 'T00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}</span>` : ''}${b.status ? `<span class="sd s-${b.status}">● ${STATUS_TXT[b.status]}</span>` : x.date > td ? '<span class="bk-pl">Planned</span>' : ''}${b.kinds.length || (!g && b.tags.length) ? `<div class="bk-tags">${b.kinds.map(k => `<span class="kind tg"${tgs(k)} data-tk="${esc(key(k))}">${esc(k)}</span>`).join('')}${g ? '' : b.tags.map(t => `<span class="chip tg"${tgs(t)} data-tk="${esc(key(t))}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
     ${fig}
     ${hl.length ? `<div class="bk-hl" title="Highlighted in Results">${hl.slice(0, 4).map(h => `<mark>${esc(h)}</mark>`).join('')}</div>` : ''}${hl.length || !r ? '' : `<div class="bk-r${fig ? ' short' : ''}">${rich(r)}</div>`}
     ${note ? `<div class="bk-n" title="${esc(note.author || '')}: ${esc(note.text)}">💬 ${esc(note.text)}</div>` : ''}</article>`;
@@ -4215,10 +4246,10 @@ function flowRanks(list){
   return rk;
 }
 function boardHtml(list){
-  const td = localDate(), tag = FILT.group === 'tag', flow = FILT.group === 'flow' || tag && FILT.tagSteps, lines = FILT.lines !== false;
+  const td = localDate(), tag = FILT.group === 'tag', flow = FILT.group === 'flow' || tag && FILT.tagSteps, lines = tag ? FILT.tagLines !== false : FILT.lines !== false;
   const dirI = tag ? 1 : -1;   // today (or the last step) on top; in the tag view, on the right
   const RK = flow ? flowRanks(list) : null, D = x => flow ? 'r' + String(RK.get(x.b.id)).padStart(4, '0') : x.date;
-  const { L, n, bands, cols, seg, grp } = laneMap(list, tag, flow ? D : undefined), todos = lines && FILT.lineTodos !== false;
+  const { L, n, bands, cols, seg, grp } = laneMap(list, tag, flow ? D : undefined), todos = lines && (tag ? FILT.tagLineTodos === true : FILT.lineTodos !== false);   // by tag: lines only unless asked
   let dates = [...new Set([...list.map(D), ...(flow ? [] : [td])])].sort(); const plan = flow ? [] : dates.filter(d => d > td);
   if (FILT.planHide && !flow) dates = dates.filter(d => d <= td);
   if (dirI < 0) dates.reverse();
@@ -4240,7 +4271,10 @@ function boardHtml(list){
         same = BD.nodes.find(nd => nd.a === f.b.id && !nd.loose && nd.tgts.slice().sort().join(',') === v.tgts.slice().sort().join(','));
       if (same){ same.html += html; same.done = same.done && v.ts.every(t => t.done); }
       else BD.nodes.push({ a: f.b.id, g: fwdGap(S.get(D(f))), tgts: v.tgts, color: x.b.color, done: v.ts.every(t => t.done), html }); });
-    if (ls.length) BD.nodes.push({ a: x.b.id, g: fwdGap(S.get(D(x))), tgts: [], color: x.b.color, loose: true, html: ls.map(t => tdRow(x, t, why(t))).join('') }); });
+    if (ls.length){ const s = S.get(D(x)), bg = dirI < 0 ? s : s - 1, hasBack = !flow && bg >= 0 && bg < K - 1;
+      const pre = hasBack ? ls.filter(t => isDate(t.due) && t.due <= x.date) : [], post = ls.filter(t => !pre.includes(t));
+      if (pre.length) BD.nodes.push({ a: x.b.id, g: bg, tgts: [], color: x.b.color, loose: true, before: true, html: pre.map(t => tdRow(x, t, ` <span class="bd-why">${esc(dueTxt(t.due))}</span>`)).join('') });
+      if (post.length) BD.nodes.push({ a: x.b.id, g: fwdGap(s), tgts: [], color: x.b.color, loose: true, html: post.map(t => tdRow(x, t, why(t))).join('') }); } });
   list.forEach(y => (y.b.links || []).forEach(id => { const x = byId.get(id); if (!vis(x) || !vis(y)) return; const [a, c] = later(y, x) ? [x, y] : later(x, y) ? [y, x] : [];
     if (!a || BD.edges.some(e => e[0] === a.b.id && e[1] === c.b.id)) return; BD.edges.push([a.b.id, c.b.id]);
     if (lines && !BD.nodes.some(nd => nd.a === a.b.id && nd.tgts.includes(c.b.id)) && !BD.direct.some(e => e.a === a.b.id && e.b === c.b.id)) BD.direct.push({ a: a.b.id, b: c.b.id, color: a.b.color, g: fwdGap(S.get(D(a))) }); }));
@@ -4308,7 +4342,7 @@ const PHI = 1.618;
 function fitCols(bd){
   if (bd.dataset.mode === 'tag' || innerWidth <= 760){ bd.style.removeProperty('--cw'); bd.style.removeProperty('--dw'); return; }
   const cs = getComputedStyle(bd), gap = parseFloat(cs.columnGap) || 0, W = bd.parentElement.clientWidth - parseFloat(cs.paddingRight) - 5 * gap - 2;
-  const dw = Math.round(clamp(Math.min(233, W / (5 + 1 / PHI)) / PHI, 112, 144)), cw = Math.floor(clamp((W - dw) / 5, 160, 233));
+  const dw = Math.round(clamp(W / 10, 116, 136)), cw = Math.floor(clamp((W - dw) / 4.25, 200, 300));   // v13: wider tiles (4 to a screen), so each day is shorter
   if (bd.style.getPropertyValue('--cw') !== cw + 'px') bd.style.setProperty('--cw', cw + 'px');
   if (bd.style.getPropertyValue('--dw') !== dw + 'px') bd.style.setProperty('--dw', dw + 'px');
 }
@@ -4316,14 +4350,14 @@ let bdFitT; window.addEventListener('resize', () => { clearTimeout(bdFitT); bdFi
 function drawBoardLinks(){
   const bd = $('#bdGrid'); if (!bd) return; $$('.bd-links,.bd-node', bd).forEach(x => x.remove());
   fitCols(bd);
-  if (FILT.lines === false){ bd.style.removeProperty('--rg'); drawGroups(bd); return; }
+  if ((bd.dataset.mode === 'tag' ? FILT.tagLines : FILT.lines) === false){ bd.style.removeProperty('--rg'); drawGroups(bd); return; }
   const tag = bd.dataset.mode === 'tag', dir = +bd.dataset.dir;
   const card = id => $(`.bd-cell[data-id="${id}"] .card`, bd), cell = id => $(`.bd-cell[data-id="${id}"]`, bd);
   const nodes = (BD.nodes || []).filter(n => card(n.a)).map(n => { const el = document.createElement('div'), tg = n.tgts.filter(card);
-    el.className = `bd-node${n.done ? ' done' : ''}${n.loose ? ' loose' : ''}`; el.style.setProperty('--ec', n.color); el.dataset.a = n.a; el.dataset.tg = tg.join(',');
+    el.className = `bd-node${n.done ? ' done' : ''}${n.loose ? ' loose' : ''}${n.before ? ' before' : ''}`; el.style.setProperty('--ec', n.color); el.dataset.a = n.a; el.dataset.tg = tg.join(',');
     el.innerHTML = n.html; el.style.visibility = 'hidden'; bd.append(el); return Object.assign({ el, tg }, n); });
   const need = Math.max(0, ...nodes.map(n => tag ? n.el.offsetWidth : n.el.offsetHeight));
-  const tabbed = !tag && nodes.some(n => $('.bk-seg', cell(n.a))), want = Math.round((need ? (tag ? clamp(need + 89, 89, 300) : clamp(need + 2, 24, 140)) : 8) + (tabbed ? 24 : 0) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
+  const tabbed = !tag && nodes.some(n => $('.bk-seg', cell(n.a))), want = Math.round((need ? (tag ? clamp(need + 89, 89, 300) : clamp(need + 2, 24, 140)) : 8) + (tabbed ? 34 : 0) + (BD.rgX || 0)), cur = parseFloat(bd.style.getPropertyValue('--rg'));
   if (Math.abs((cur || 0) - want) > 1) bd.style.setProperty('--rg', want + 'px');
   const o = bd.getBoundingClientRect(), R = el => { const r = el.getBoundingClientRect(); return { l: r.left - o.left, t: r.top - o.top, r: r.right - o.left, b: r.bottom - o.top }; };
   const U = r => tag ? [r.l, r.r] : [r.t, r.b], V = r => tag ? (r.t + r.b) / 2 : (r.l + r.r) / 2, VV = r => tag ? [r.t, r.b] : [r.l, r.r], XY = (u, v) => tag ? [u, v] : [v, u];
@@ -4412,12 +4446,13 @@ function drawBoardLinks(){
       d += ` L${XY(...S)} C${XY(m, a[1])} ${XY(m, b[1])} ${XY(...E)}`; }
     return d; };
   const svg = flows.map(f => { const parts = [];
-    if (f.n){ const a = [fwd(f.n.A), V(f.n.A)], ni = [back(f.n.N), V(f.n.N)]; parts.push([C(a, ni), 0]); }
+    if (f.n && f.n.before){ const ni = [fwd(f.n.N), V(f.n.N)], a = [back(f.n.A), V(f.n.A)]; parts.push([C(ni, a), 1]); }   // a to-do before its experiment leads into it
+    else if (f.n){ const a = [fwd(f.n.A), V(f.n.A)], ni = [back(f.n.N), V(f.n.N)]; parts.push([C(a, ni), 0]); }
     const fork = f.br.length > 1, cu = f.cu ?? f.p[0] + dir * 14, J = f.bent ? [cu, f.p[1]] : f.p;
     if (tag){ f.br.forEach(b => { const cn = b.kind === 'gutter' ? chan(gapBefore(b.id)) ?? (b.q[0] - dir * 14) : 0;
         parts.push([b.kind === 'rung' ? (m => `M${XY(...f.p)} C${XY(m, f.p[1])} ${XY(m, b.q[1])} ${XY(...b.q)}`)((f.p[0] + b.q[0]) / 2) : smooth(b.straight ? [f.p, b.q] : b.kind === 'climb' ? [f.p, J, [cu, b.xv], [b.cn2, b.xv], [b.cn2, b.q[1]], b.q] : [f.p, J, [cu, b.gv], [cn, b.gv], [cn, b.q[1]], b.q]), 1]); });
       const id = mkId(f.color);
-      return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.A) : dot(R(card(f.a)))}</g>`; }
+      return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.before ? f.n.N : f.n.A) : dot(R(card(f.a)))}</g>`; }
     if (f.bent) parts.push([P([f.p, J]), 0]);
     f.br.forEach(b => {
       if (b.straight) parts.push([P([J, b.q]), 1]);
@@ -4425,7 +4460,7 @@ function drawBoardLinks(){
       else if (b.kind === 'climb') parts.push([L2([J, [cu, b.xv], [b.cn2, b.xv], [b.cn2, b.q[1]], b.q]), 1]);
       else { const cn = chan(gapBefore(b.id)) ?? (b.q[0] - dir * 14); parts.push([roundPath([J, [cu, b.gv], [cn, b.gv], [cn, b.q[1]], b.q].map(([u, v]) => XY(u, v)), 12), 1]); } });
     const id = mkId(f.color), jn = fork && f.bent ? (([x, y]) => `<circle class="jn" cx="${x}" cy="${y}" r="3.5"/>`)(XY(...J)) : '';
-    return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.A) : dot(R(card(f.a)))}${jn}</g>`; }).join('');
+    return `<g class="lk${f.cls}" data-a="${f.a}" data-tg="${f.tg.join(',')}" style="--ec:${f.color}">${parts.map(([d, end]) => `<path d="${d}"${end ? ` marker-end="url(#${id})"` : ''}/>`).join('')}${f.n ? dot(f.n.before ? f.n.N : f.n.A) : dot(R(card(f.a)))}${jn}</g>`; }).join('');
   if (short > 1 && (BD.rgX || 0) < 90){ BD.rgX = (BD.rgX || 0) + Math.ceil(short); return drawBoardLinks(); }
   const defs = `<defs>${[...mk].map(([c, id]) => `<marker id="${id}" viewBox="0 0 10 10" refX="8.6" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:color-mix(in srgb,${c} var(--lk-mix),#fff)"/></marker>`).join('')}</defs>`;
   if (tag && !BD.scrolled){ const t = $('.bd-dh.is-today', bd), sc = $('#board'); if (t && sc){ sc.scrollLeft = Math.max(0, t.offsetLeft + t.offsetWidth - sc.clientWidth + 60); BD.scrolled = true; } }   // opens on today
@@ -4689,7 +4724,7 @@ A.bdUntangle = () => { const { L, cols } = laneMap(shown(), false), before = col
   FILT.colOrder = after; saveSetting('filt', FILT); render();
   showUndo('Columns sorted so linked experiments sit next to each other. Undo?', () => { FILT.colOrder = before; saveSetting('filt', FILT); render(); }); };
 
-A.bdMode = m => { FILT.lines = m !== 'none'; FILT.lineTodos = m === 'all'; saveSetting('filt', FILT); render(); };
+A.bdMode = m => { if (FILT.group === 'tag'){ FILT.tagLines = m !== 'none'; FILT.tagLineTodos = m === 'all'; } else { FILT.lines = m !== 'none'; FILT.lineTodos = m === 'all'; } saveSetting('filt', FILT); render(); };
 
 /* Groups: a faint outline around the tiles of one experiment. Drag its title tab sideways: every free place it fits lights up. */
 function grpBoxes(bd){ const o = bd.getBoundingClientRect(), m = new Map();
@@ -5128,7 +5163,12 @@ function mdLines(text){
 function scope(){ if (VIEW.mode === 'report') return repItems(); if (VIEW.mode === 'exp'){ const it = findB(VIEW.bid); return it ? [it] : []; } return shown().sort((a, b) => a.date.localeCompare(b.date) || a.bi - b.bi); }
 function fileBase(its){ if (its.length === 1) return `${its[0].date}_${slug(its[0].b.title) || 'experiment'}`;
   const d = its.map(x => x.date).sort(); return `${slug(FILT.tag) || 'lab_journal'}_${d[0]}${d[0] === d[d.length - 1] ? '' : '_to_' + d[d.length - 1]}`; }
-function figCanvases(its){ const out = {}; its.forEach((x, k) => { const f = composeFigure(x.b, 1800); if (f) out[`images/figure_${k + 1}.png`] = f.cv; }); return out; }
+const panelKey = (n, i) => `images/figure_${n}${String.fromCharCode(97 + i)}.png`;
+function panelCanvas(im){ const src = panelSrc(im, 2000); if (!src) return null; const a = aspOf(im); if (!a) return src;
+  const sa = src.width / src.height; let sw = src.width, sh = src.height; if (sa > a) sw = sh * a; else sh = sw / a;   // a fixed shape: centre crop, as on screen
+  const c = document.createElement('canvas'); c.width = Math.round(sw); c.height = Math.round(sh); c.getContext('2d').drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, sw, sh); return c; }
+/* v13: every panel is its own PNG, so each can be placed, resized or replaced on its own in Word, Notion or a slide. */
+function figCanvases(its){ const out = {}; its.forEach((x, k) => x.b.images.forEach((im, i) => { const c = panelCanvas(im); if (c) out[panelKey(k + 1, i)] = c; })); return out; }
 function buildMd(its){
   const L = [], tags = uniq(its.flatMap(x => x.b.tags)), dates = its.map(x => x.date).sort();
   const title = its.length === 1 ? clean(its[0].b.title) || 'Untitled' : VIEW.mode === 'report' ? `Lab journal, ${repLabel()}` : FILT.tag || 'Lab journal';
@@ -5141,7 +5181,7 @@ function buildMd(its){
     const meta = [`- Date: ${x.date}`]; if (b.kinds.length) meta.push(`- Experiment: ${b.kinds.join(', ')}`); if (b.status) meta.push(`- Outcome: ${STATUS_TXT[b.status]}`); if (b.tags.length) meta.push(`- Tags: ${b.tags.join(', ')}`);
     const ln = b.links.map(findB).filter(Boolean); if (ln.length) meta.push(`- Linked: ${ln.map(y => `${ttl(y.b) || 'Untitled'} (${y.date})`).join('; ')}`);
     L.push(...meta, '');
-    if (b.images.length) L.push(`### Figure ${n}`, '', `![Figure ${n}](images/figure_${n}.png)`, '', legendMd(b, n), '');
+    if (b.images.length) L.push(`### Figure ${n}`, '', ...b.images.flatMap((im, i) => [`**${LET(i)}**${clean(im.label) ? ' ' + clean(im.label) : ''}`, '', `![Figure ${n}${LET(i)}](${panelKey(n, i)})`, '']), legendMd(b, n), '');
     const ss = b.samples.filter(s => clean(s.name) || clean(s.desc));
     if (ss.length) L.push('### Strains, plasmids and constructs', '', '| Name | Description |', '| --- | --- |', ...ss.map(s => `| ${cellMd(s.name)} | ${cellMd(s.desc)} |`), '');
     const sec = (h, text) => { const ls = mdLines(text); if (ls.length) L.push(`### ${h}`, '', ...ls, ''); };
@@ -5175,7 +5215,19 @@ function buildMd(its){
 function blankWarn(md){ BLANK.lastIndex = 0; const n = (md.match(BLANK) || []).length; if (n) setTimeout(() => toast(`Note: ${n} blank${n > 1 ? 's' : ''} (_) still unfilled.`), 60); }
 async function copyText(t){ try { await navigator.clipboard.writeText(t); }
   catch (e){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } }
-async function prep(){ const its = scope(); if (!its.length){ toast('Nothing to export.'); return null; } await saveNow(); await ensureImgs(its.map(x => x.b)); return its; }
+let EXPD = {};   // v13: day -> when its daily report was last exported ('skip:' + time when marked not needed)
+async function prep(){ const its = scope(); if (!its.length){ toast('Nothing to export.'); return null; } await saveNow(); await ensureImgs(its.map(x => x.b));
+  if (VIEW.mode === 'report'){ const now = new Date().toISOString(); uniq(its.map(x => x.date)).forEach(d => { EXPD[d] = now; }); saveSetting('exported', EXPD); }
+  return its; }
+/* Past days (last 14) with experiments whose report was never exported, or was changed after it was. */
+function unexported(){ const td = localDate(), lim = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10), by = {};
+  items().forEach(x => { if (x.date >= td || x.date < lim || isEmpty(x.b)) return; by[x.date] = (x.e.updatedAt || '') > (by[x.date] || '') ? x.e.updatedAt || '' : by[x.date] || ''; });
+  return Object.keys(by).sort().reverse().filter(d => { const v = EXPD[d] || ''; return !v || (!v.startsWith('skip:') && by[d] > v); }); }
+function expReminder(){ const ds = unexported(); if (!ds.length) return '';
+  return `<div class="exp-rem" role="status"><span aria-hidden="true">📝</span><span><b>Daily report not exported</b> for ${ds.length} day${ds.length > 1 ? 's' : ''}:</span>${ds.slice(0, 6).map(d => `<span class="er-day"><button class="btn sm" data-act="repOpen" data-arg="${d}">${esc(fmtDay(d))}${EXPD[d] ? ' (changed since)' : ''}</button><button class="btn sm ghost er-x" data-act="repSkip" data-arg="${d}" title="Not needed for this day" aria-label="Not needed for ${esc(fmtDay(d))}">×</button></span>`).join('')}${ds.length > 1 ? '<button class="btn sm ghost" data-act="repSkipAll">Not needed for any</button>' : ''}</div>`; }
+A.repSkipAll = () => { const v = 'skip:' + new Date().toISOString(); unexported().forEach(d => { EXPD[d] = v; }); saveSetting('exported', EXPD); render(); };
+A.repOpen = d => go('#report/' + d);
+A.repSkip = d => { EXPD[d] = 'skip:' + new Date().toISOString(); saveSetting('exported', EXPD); render(); };
 A.copyMd = async () => { const its = await prep(); if (!its) return; const t = mdOut(buildMd(its)); await copyText(t); toast('Markdown copied. Text only: use Word or PDF to keep figures.'); blankWarn(t); };
 A.dlZip = async () => { const its = await prep(); if (!its) return; const z = new JSZip(), md = buildMd(its), mdo = mdOut(md); blankWarn(md); z.file(fileBase(its) + '.md', mdo);
   for (const [p, cv] of Object.entries(figCanvases(its))) z.file(p, await toBlob(cv));
@@ -5218,7 +5270,7 @@ function docXml(md, media){
     if (!l.trim()){ i++; continue; }
     if ((m = /^(#{1,3}) (.*)/.exec(l))){ out += para(runs(m[2]), `<w:pStyle w:val="Heading${m[1].length}"/>`); i++; continue; }
     if ((m = /^!\[[^\]]*\]\(([^)]+)\)$/.exec(l.trim()))){ const im = media[m[1]];
-      if (im){ let cx = 5760720, cy = Math.round(cx * im.h / im.w); const maxY = 7772400; if (cy > maxY){ cx = Math.round(cx * maxY / cy); cy = maxY; }
+      if (im){ let cx = 5760720, cy = Math.round(cx * im.h / im.w); const maxY = 5486400; if (cy > maxY){ cx = Math.round(cx * maxY / cy); cy = maxY; }
         out += para(pic(im.rid, cx, cy, ++pics), '<w:keepNext/>'); } i++; continue; }
     if (l.startsWith('|')){ const rows = []; while (i < ls.length && ls[i].startsWith('|')) rows.push(cells(ls[i++]));
       const hd = rows[0], body = rows.slice(2), gw = Math.floor(9360 / hd.length), bd = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="A6A6A6"/>`).join('');
@@ -5254,7 +5306,27 @@ A.print = async () => { const its = await prep(); if (!its) return; const map = 
 
 // ── Save to a file and open it again ─────────────────────────────────────────
 const PENDING = [];   // images kept in memory when browser storage is unavailable
-let FH = null;        // file handle, so Ctrl+S writes back to the same file (Chrome, Edge)
+let FH = null;        // file handle, so Ctrl+S writes back to the same file (Chrome, Edge); v13 keeps it between visits
+let FINFO = null;     // { name, savedAt, kind: 'saved' | 'opened' } of the last file written or opened
+const lastChange = () => ALL.reduce((m, e) => (e.updatedAt || '') > m ? e.updatedAt : m, '');
+const unsavedToFile = () => { const c = lastChange(); return !!c && (!FINFO || !FINFO.savedAt || c > FINFO.savedAt); };
+function browserName(){ const u = navigator.userAgent;
+  return /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox\//.test(u) ? 'Firefox' : /Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : 'this browser'; }
+function whereFrom(){ const p = decodeURIComponent(location.pathname);
+  return location.protocol === 'file:' ? { page: 'file://' + p, store: `${browserName()} storage for pages opened from this computer` }
+    : { page: location.host + p, store: `${browserName()} storage for ${location.host}` }; }
+const whenTxt = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+async function setFinfo(name, savedAt, kind){ FINFO = { name, savedAt, kind }; await saveSetting('fileInfo', FINFO); }
+async function writable(h){ try { const o = { mode: 'readwrite' }; return (await h.queryPermission(o)) === 'granted' || (await h.requestPermission(o)) === 'granted'; } catch (e){ return true; } }
+function locBar(){ const w = whereFrom(), lc = lastChange(), un = unsavedToFile();
+  return `<div class="locbar" role="group" aria-label="Where this journal is loaded from">
+    <span class="lb-ico" aria-hidden="true">🔒</span>
+    <span class="lb-url" title="${esc(w.page)}"><b>Loaded from</b> <code>${esc(w.page)}</code></span>
+    <span class="lb-sep"></span>
+    <span class="lb-k">Kept in <b>${esc(w.store)}</b>${lc ? `, last change ${esc(whenTxt(lc))}` : ''}</span>
+    <span class="lb-k ${un ? 'lb-warn' : 'lb-ok'}">${FINFO ? `${FINFO.kind === 'opened' ? 'Opened' : 'Saved to'} <b>${esc(FINFO.name)}</b> ${esc(whenTxt(FINFO.savedAt))}${un ? ', changed since' : ''}` : 'Not saved to a file yet'}</span>
+    ${un ? '<button class="btn sm pri" data-act="saveFile">Save file</button>' : ''}</div>`; }
+window.addEventListener('beforeunload', e => { if (saveT) saveNow(); if (FILT.askClose !== false && unsavedToFile()){ e.preventDefault(); e.returnValue = ''; } });
 async function backupBlob(from){
   await saveNow();
   const byId = new Map();
@@ -5268,12 +5340,12 @@ async function backupBlob(from){
 A.saveFile = async (fresh, from) => {
   const blob = await backupBlob(from), name = `lab_journal_${from ? 'from_' + from + '_' : ''}${localDate()}.json`, mb = (blob.size / 1e6).toFixed(1) + ' MB';
   if (window.showSaveFilePicker){
-    try { let h = FH; if (!h || fresh === 'new' || from) h = await showSaveFilePicker({ suggestedName: name, types: [{ description: 'Lab journal', accept: { 'application/json': ['.json'] } }] });
-      if (!from) FH = h;   // a partial file never becomes the Ctrl+S target
-      const w = await h.createWritable(); await w.write(blob); await w.close(); toast(`Saved ${from ? 'days from ' + fmtDay(from) + ' ' : ''}to ${h.name} (${mb}).${from ? '' : ' Ctrl+S saves again.'}`); return; }
+    try { let h = FH; if (h && !(await writable(h))) h = null; if (!h || fresh === 'new' || from) h = await showSaveFilePicker({ suggestedName: name, types: [{ description: 'Lab journal', accept: { 'application/json': ['.json'] } }] });
+      if (!from){ FH = h; saveSetting('fh', h); }   // a partial file never becomes the Ctrl+S target
+      const w = await h.createWritable(); await w.write(blob); await w.close(); if (!from){ await setFinfo(h.name, new Date().toISOString(), 'saved'); if (VIEW.mode === 'home') render(); } toast(`Saved ${from ? 'days from ' + fmtDay(from) + ' ' : ''}to ${h.name} (${mb}).${from ? '' : ' Ctrl+S saves again.'}`); return; }
     catch (e){ if (e.name === 'AbortError') return; if (!from) FH = null; }
   }
-  download(blob, name); toast(`Saved as a download (${mb}). Open it later with More, Open a saved file.`);
+  download(blob, name); if (!from){ await setFinfo(name + ' (Downloads)', new Date().toISOString(), 'saved'); if (VIEW.mode === 'home') render(); } toast(`Saved as a download (${mb}). Open it later with More, Open a saved file.`);
 };
 A.saveFrom = () => { const d = $('#saveFrom').value; if (!d){ toast('Pick the first day to save.'); $('#saveFrom').focus(); return; } A.saveFile('new', d); };
 A.saveFileAs = () => A.saveFile('new');
@@ -5281,7 +5353,7 @@ A.openFile = async mode => {
   const replace = mode === 'replace';
   if (window.showOpenFilePicker){
     try { const [h] = await showOpenFilePicker({ types: [{ description: 'Lab journal', accept: { 'application/json': ['.json'] } }] });
-      if (await importData(await h.getFile(), replace)) FH = h; return; }
+      if (await importData(await h.getFile(), replace)){ FH = h; saveSetting('fh', h); } return; }
     catch (e){ if (e.name === 'AbortError') return; }
   }
   $('#fileDraft').dataset.replace = replace ? '1' : ''; $('#fileDraft').click();
@@ -5326,7 +5398,8 @@ Anything here that is not in a saved file will be lost. Cancel and use Save file
   if (E) E = ALL.find(y => y.id === E.id) || null;
   if (E) await ensureImgs(E.blocks);
   if (d.lists) await mergeLists(d.lists);
-  toast(`${replace ? 'Replaced everything: ' : ''}Opened ${n} day${n === 1 ? '' : 's'} from ${file.name || 'the file'}${kept ? `; kept ${kept} newer day${kept === 1 ? '' : 's'} already here` : ''}.`);
+  await setFinfo(file.name || 'the file', d.savedAt || new Date(file.lastModified || Date.now()).toISOString(), 'opened');
+  toast(`${replace ? 'Replaced everything: ' : ''}Opened ${n} day${n === 1 ? '' : 's'} from ${file.name || 'the file'} (saved ${whenTxt(d.savedAt) || 'at an unknown time'})${kept ? `; kept ${kept} newer day${kept === 1 ? '' : 's'} already here` : ''}.`);
   route(); ensureThumbs(); return true;
 }
 $('#fileDraft').addEventListener('change', async e => { const f = e.target.files[0], rep = e.target.dataset.replace === '1'; e.target.value = ''; e.target.dataset.replace = ''; if (f) importData(f, rep); });
@@ -5416,15 +5489,15 @@ document.addEventListener('click', e => { $$('details[open]').forEach(d => { if 
 document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details.linkpick') && e.target.open){ const q = $('#linkQ'); if (q) q.focus(); } else if (e.target.matches && e.target.matches('details.linkpick')) hidePeek(); }, true);
 A.dlMd = async () => { const its = await prep(); if (!its) return; const base = fileBase(its), figs = Object.entries(figCanvases(its));
   // each figure link points at a PNG saved next to the .md, and says so in words for an AI that only reads the text
-  const md = mdOut(buildMd(its)).replace(/^!\[([^\]]*)\]\(images\/(figure_\d+)\.png\)$/gm, (m, alt, f) => `![${alt}](${base}_${f}.png)\n\n*Image attached as ${base}_${f}.png.*`);
+  const md = mdOut(buildMd(its)).replace(/^!\[([^\]]*)\]\(images\/(figure_\d+[a-z]*)\.png\)$/gm, (m, alt, f) => `![${alt}](${base}_${f}.png)\n\n*Image attached as ${base}_${f}.png.*`);
   blankWarn(md); download(new Blob([md], { type: 'text/markdown;charset=utf-8' }), base + '.md');
   for (const [p, cv] of figs){ await new Promise(r => setTimeout(r, 350)); download(await toBlob(cv), base + '_' + p.replace(/^images\//, '')); }
-  toast(figs.length ? `Saved the .md and ${figs.length} figure PNG${figs.length > 1 ? 's' : ''}. Upload them together to the AI chat. If the browser asks, allow several downloads.` : 'Saved the .md (this entry has no figures).');
+  toast(figs.length ? `Saved the .md and ${figs.length} panel PNG${figs.length > 1 ? 's' : ''}. Upload them together to the AI chat. If the browser asks, allow several downloads.` : 'Saved the .md (this entry has no figures).');
   if (window.LPMascot && figs.length) LPMascot.cheer('Figures packed for the robot!'); };
 A.dlMdOne = async () => { const its = await prep(); if (!its) return; const figs = figCanvases(its), map = {};
   for (const [p, cv] of Object.entries(figs)){ const k = Math.min(1, 1400 / cv.width), c = document.createElement('canvas'); c.width = Math.round(cv.width * k); c.height = Math.round(cv.height * k);
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(cv, 0, 0, c.width, c.height); map[p] = c.toDataURL('image/jpeg', .86); }
-  const md = mdOut(buildMd(its)).replace(/\]\((images\/figure_\d+\.png)\)/g, (m, p) => map[p] ? `](${map[p]})` : m);
+  const md = mdOut(buildMd(its)).replace(/\]\((images\/figure_\d+[a-z]*\.png)\)/g, (m, p) => map[p] ? `](${map[p]})` : m);
   blankWarn(md); download(new Blob([md], { type: 'text/markdown;charset=utf-8' }), fileBase(its) + '.md'); };
 
 // ── Experiment tags: what is being done, and what usually comes next ────────
@@ -6226,12 +6299,14 @@ async function pruneImages(){ if (!DB.ok) return;
     CODES = await setting('codes', null) || uniq(ALL.map(x => x.code));
     NAMES = await setting('names', null);
     if (!NAMES){ NAMES = []; const oldTags = await setting('tags', []); ALL.forEach(x => x.blocks.forEach(b => b.samples.forEach(s => rememberName(s.name, s.desc)))); (oldTags || []).forEach(t => rememberName(t, '')); }
-    PAGEW = await setting('pagew', '90'); ROLL = await setting('roll', {}) || {}; GEN = await setting('general', []) || []; Object.assign(FILT, await setting('filt', {})); AUTHOR = await setting('author', '');
+    FINFO = await setting('fileInfo', null); FH = await setting('fh', null); EXPD = await setting('exported', {}) || {}; PAGEW = await setting('pagew', '90'); ROLL = await setting('roll', {}) || {}; GEN = await setting('general', []) || []; Object.assign(FILT, await setting('filt', {})); AUTHOR = await setting('author', '');
   }
   applyPagew();
   await route();
   pruneImages();
   ensureThumbs();
+  { const w = whereFrom(), lc = lastChange(), nu = unexported().length;
+    if (ALL.length) setTimeout(() => toast(`Loaded ${ALL.length} day${ALL.length === 1 ? '' : 's'} from ${w.store}${lc ? `, last change ${whenTxt(lc)}` : ''}. ${FINFO ? `Last ${FINFO.kind === 'opened' ? 'file opened' : 'saved to file'}: ${FINFO.name}, ${whenTxt(FINFO.savedAt)}.` : 'Not saved to a file yet.'}${nu ? ` ${nu} daily report${nu > 1 ? 's' : ''} not exported.` : ''}`), 400); }
   window.LE = { get entry(){ return E; }, get all(){ return ALL; }, get view(){ return VIEW; }, buildMd, buildDocx, figCanvases, scope, saveNow, go, importData, A };
 })();
 </script>

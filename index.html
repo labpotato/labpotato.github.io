@@ -100,7 +100,7 @@
     <nav class="main-nav">
       <a href="#tools">Platform</a>
       <a href="#reviews">Customers</a>
-      <a href="#specs">Compliance</a>
+      <a href="#integrations">Lab Entry</a>
       <a href="#feedback">Support</a>
     </nav>
     <div class="theme-switch" role="group" aria-label="Colour theme">
@@ -188,7 +188,7 @@
 
       <div class="hero-actions">
         <a class="btn btn-primary" href="#tools">Explore the platform</a>
-        <a class="btn btn-ghost" href="#specs">Read the compliance brief</a>
+        <a class="btn btn-ghost" href="#integrations">How the tools connect</a>
       </div>
 
       <p class="hero-foot">No account. No trial period. No feature that disappears behind a plan.</p>
@@ -217,25 +217,41 @@
   </section>
 
 
-  <!-- ===================== INTEGRATIONS ===================== -->
+  <!-- ===================== CONNECTED TO LAB ENTRY ===================== -->
   <section id="integrations" class="section section-tint">
     <div class="wrap wrap-wide">
       <div class="section-head reveal">
-        <span class="section-tag">Integrations</span>
-        <h2>Seamless interoperability, mostly</h2>
-        <p>Results travel from tool to tool through a waiting room that lives in your browser. No API keys, no cloud, and no meeting to align on the roadmap.</p>
+        <span class="section-tag">Connected to Lab Entry</span>
+        <h2>What reaches your notebook, and how</h2>
+        <p>Every analysis tool has a <b>↗ Lab Entry</b> button. Press it and the result waits in Lab Entry until you file it under an experiment and a day. It all stays in this browser.</p>
       </div>
-      <div class="flow reveal">
-        <div class="flow-col"><a class="flow-node" href="tools/gibson-assembly/" data-flow="gibson-assembly"><span class="app-icon" data-glyph="gibson-assembly"></span><span><b>Gibson Assembly</b><small>Primers, then the expected band sizes</small></span></a><a class="flow-node" href="tools/cryobox-labeler/" data-flow="cryobox-labeler"><span class="app-icon" data-glyph="cryobox-labeler"></span><span><b>Cryobox Labeler</b><small>Where the tubes went</small></span></a></div>
-        <div class="flow-arrow">→<small>sizes, ladder</small></div>
-        <div class="flow-col"><a class="flow-node" href="tools/gel-labeler/" data-flow="gel-labeler"><span class="app-icon" data-glyph="gel-labeler"></span><span><b>Gel Labeler</b><small>Did the PCR work? Expected lane says</small></span></a><a class="flow-node" href="tools/colony-counter/" data-flow="colony-counter"><span class="app-icon" data-glyph="colony-counter"></span><span><b>Colony Counter</b><small>Several plates, one strip</small></span></a><a class="flow-node" href="tools/protein-quant/" data-flow="protein-quant"><span class="app-icon" data-glyph="protein-quant"></span><span><b>Protein Quant</b><small>Yield, ground out as particles</small></span></a><a class="flow-node" href="tools/microscopy-image-labeler/" data-flow="microscopy-image-labeler"><span class="app-icon" data-glyph="microscopy-image-labeler"></span><span><b>Microscopy Labeler</b><small>Panels and line profiles</small></span></a></div>
-        <div class="flow-arrow">↗<small>waiting room</small></div>
-        <div class="flow-col"><a class="flow-node flow-room" href="tools/lab-entry/" data-flow="lab-entry"><span class="app-icon" data-glyph="lab-entry"></span><span><b>Lab Entry</b><small>Every result lands here, live</small></span></a></div>
+      <div class="le-hub reveal">
+        <div class="le-list">
+          <a class="le-row" href="tools/gel-labeler/"><span class="app-icon" data-glyph="gel-labeler"></span><span class="le-name"><b>Gel Labeler</b><small>The labelled gel figure, the lane list, band sizes and quantified bands</small></span><span class="le-how">↗ Lab Entry</span></a>
+          <a class="le-row" href="tools/colony-counter/"><span class="app-icon" data-glyph="colony-counter"></span><span class="le-name"><b>Colony Counter</b><small>Plate pictures with the colonies marked, counts, CFU/mL and transformation efficiency</small></span><span class="le-how">↗ Lab Entry</span></a>
+          <a class="le-row" href="tools/protein-quant/"><span class="app-icon" data-glyph="protein-quant"></span><span class="le-name"><b>Protein Quant</b><small>Concentrations and yield per protein, the standard curve, as a table</small></span><span class="le-how">↗ Lab Entry</span></a>
+          <a class="le-row" href="tools/microscopy-image-labeler/"><span class="app-icon" data-glyph="microscopy-image-labeler"></span><span class="le-name"><b>Microscopy Labeler</b><small>The figure panels and line-profile plots</small></span><span class="le-how">↗ Lab Entry</span></a>
+          <a class="le-row" href="tools/gibson-assembly/"><span class="app-icon" data-glyph="gibson-assembly"></span><span class="le-name"><b>Gibson Assembly</b><small>Primers, the assembly map and the virtual gel</small></span><span class="le-how">↗ Lab Entry</span></a>
+        </div>
+        <div class="le-centre">
+          <a class="le-card" href="tools/lab-entry/"><span class="app-icon" data-glyph="lab-entry"></span><b>Lab Entry</b><small>Waiting room → experiment → day</small></a>
+          <ul class="le-facts">
+            <li><b>Text, a table and pictures</b> arrive together, with the tool's name and version.</li>
+            <li><b>Live:</b> an open Lab Entry tab shows a new result the moment you press the button.</li>
+            <li><b>Not connected:</b> Cryobox Labeler and Doc Reader keep their own files.</li>
+          </ul>
+        </div>
       </div>
+      <ol class="le-steps reveal">
+        <li><b>Press ↗ Lab Entry</b> in the tool's header when the result looks right.</li>
+        <li><b>It waits in the waiting room</b>: kept in this browser's storage (not uploaded anywhere).</li>
+        <li><b>File it</b>: in Lab Entry, drag it, or pick an experiment and a day; it becomes part of that day's entry and report.</li>
+        <li><b>Another computer?</b> Use <i>Save to file</i> in the tool's Lab Entry box and open the file in Lab Entry there.</li>
+      </ol>
       <div class="flow-notes reveal">
-        <div><b>↗ Lab Entry</b> sits in every tool's header. Press it and the result (text, table and picture) waits in Lab Entry until you file it under an experiment.</div>
-        <div><b>One ladder list.</b> The ladder you run most often comes first in the Gel Labeler and in the Gibson virtual gel, and Gibson passes its PCR sizes to the Gel Labeler's expected lane.</div>
-        <div><b>One address per tool.</b> <code>tools/gel-labeler/</code> and its siblings always open the newest version, so a bookmark or a link in your notes never goes stale.</div>
+        <div><b>Gibson → Gel Labeler.</b> Gibson passes its expected PCR sizes to the Gel Labeler's expected lane, and the ladder you use most comes first in both.</div>
+        <div><b>One address per tool.</b> <code>tools/lab-entry/</code> and its siblings always open the newest version, so bookmarks never go stale.</div>
+        <div><b>Same browser, same profile.</b> The waiting room is shared by tabs of one browser; a private window or another browser has its own.</div>
       </div>
     </div>
   </section>
@@ -263,21 +279,6 @@
         <p>Verified testimonials, collected by asking people in the corridor.</p>
       </div>
       <div class="quote-grid" id="quote-grid"></div>
-    </div>
-  </section>
-
-  <!-- ===================== SPECS ===================== -->
-  <section id="specs" class="section">
-    <div class="wrap specs-wrap">
-      <div class="section-head reveal">
-        <span class="section-tag">Compliance &amp; reliability</span>
-        <h2>Enterprise-grade, allegedly</h2>
-        <p>Full transparency on our infrastructure posture, security model, and organisational maturity.</p>
-      </div>
-      <dl class="spec-table reveal" id="spec-table"></dl>
-      <p class="spec-note reveal">
-        This document is not legally binding, has not been audited, and was written at 1:40&nbsp;am.
-      </p>
     </div>
   </section>
 

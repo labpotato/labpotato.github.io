@@ -1587,3 +1587,27 @@ details.tool-new>ul{margin-top:8px}
 @media (max-width:760px){.use-row{grid-template-columns:22px 40px 1fr 70px;grid-template-areas:"r i n a" "s s s t";row-gap:10px}
   .use-rank{grid-area:r}.use-icon{grid-area:i}.use-name{grid-area:n}.use-all{grid-area:a}.use-bar{display:none}.use-spark{grid-area:s}.use-now{grid-area:t}
   .use-seg button{padding:7px 12px}.use-panel{padding:12px}}
+
+/* ---- connected to Lab Entry ---- */
+.le-hub{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:18px;max-width:1120px;margin:8px auto 0;align-items:stretch}
+.le-list{display:grid;gap:8px}
+.le-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm);color:inherit;text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.le-row:hover{transform:translateX(3px);box-shadow:var(--shadow-md);text-decoration:none}
+.le-row .app-icon,.le-card .app-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center}
+.le-row .app-icon svg,.le-card .app-icon svg{width:30px;height:30px}
+.le-name b{display:block;font-size:15px;line-height:1.2}
+.le-name small{display:block;color:var(--text-muted);font-size:12.5px;line-height:1.4;margin-top:2px}
+.le-how{font-size:11.5px;font-weight:650;white-space:nowrap;padding:4px 9px;border-radius:999px;background:var(--bg-tint);color:var(--text-muted);border:1px solid var(--border)}
+.le-centre{display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:18px;border:1.5px dashed var(--border);background:var(--surface)}
+.le-card{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}
+.le-card b{font-size:18px}.le-card small{display:block;color:var(--text-faint);font-size:12.5px}
+.le-card .app-icon{width:48px;height:48px}.le-card .app-icon svg{width:38px;height:38px}
+.le-card span + b{margin-right:auto}
+.le-facts{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:13.5px;line-height:1.5;color:var(--text-muted)}
+.le-facts b{color:var(--text)}
+.le-steps{counter-reset:le;list-style:none;padding:0;margin:18px auto 0;max-width:1120px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.le-steps li{counter-increment:le;position:relative;padding:12px 14px 12px 44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:13.5px;line-height:1.5;color:var(--text-muted)}
+.le-steps li::before{content:counter(le);position:absolute;left:12px;top:12px;width:22px;height:22px;border-radius:50%;background:var(--accent,#0a5fd0);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.le-steps b{color:var(--text)}
+@media (max-width:980px){.le-hub{grid-template-columns:1fr}.le-steps{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.le-steps{grid-template-columns:1fr}.le-row{grid-template-columns:38px minmax(0,1fr)}.le-how{display:none}}

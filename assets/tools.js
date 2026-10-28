@@ -83,16 +83,16 @@ const TOOLS = [
     features: [
       "Finds the dish and counts, even colonies that touch",
       "Click to fix anything it missed, with undo",
-      "Exports the marked-up plate with count and CFU/mL"
+      "Exports to Excel, and the marked-up plate with count and CFU/mL"
     ],
     versions: [
       { v: "v1", file: "colony-counter-v1.html" },
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
-      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-27",
+      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28",
         new: [
-          "Open several plates and step through them, or Count all",
-          "Transformation efficiency, and Send to Lab Entry",
-          "Opens TIFF plate images, including 16-bit and multi-page TIFFs"
+          "Export to Excel (.xlsx): plates, averages, each sample and transformation efficiency",
+          "Opens TIFF plate images, including 16-bit and multi-page TIFFs",
+          "Transformation efficiency, and Send to Lab Entry"
         ] }
     ]
   },

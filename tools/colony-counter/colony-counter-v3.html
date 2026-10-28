@@ -673,8 +673,8 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <div class="field">
         <label for="ccPreset">Quick setup</label>
         <select id="ccPreset">
-          <option value="typical" selected>Typical plate (recommended)</option>
-          <option value="crowded">Crowded plate: many small colonies</option>
+          <option value="typical">Typical plate</option>
+          <option value="crowded" selected>Crowded plate: many small colonies (default)</option>
           <option value="sparse">Few, large, well-spaced colonies</option>
           <option value="exact">Exact count: I will check clumps myself</option>
           <option value="custom" hidden>Your own settings</option>
@@ -696,16 +696,16 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <div class="field">
         <label for="touchMode">Touching colonies</label>
         <select id="touchMode">
-          <option value="all" selected>Split, and estimate clumps (recommended)</option>
+          <option value="all">Split, and estimate clumps</option>
           <option value="split">Split; a solid clump counts as one</option>
           <option value="waist">Split only where the outline narrows</option>
-          <option value="none">Do not split: each blob is one colony</option>
+          <option value="none" selected>Do not split: each blob is one colony (default)</option>
         </select>
         <div class="statusline" id="touchNote"></div>
         <div hidden>
-          <input type="checkbox" id="splitTouching" checked>
-          <input type="checkbox" id="resolveClusters" checked>
-          <input type="checkbox" id="estimateClumps" checked>
+          <input type="checkbox" id="splitTouching">
+          <input type="checkbox" id="resolveClusters">
+          <input type="checkbox" id="estimateClumps">
         </div>
       </div>
 
@@ -5229,7 +5229,7 @@ function resetColonySettings() {
   $('rejectElongated').checked = false;
   $('lockThresholds').checked = false;
   $('upscale').value = 'auto';
-  applyPreset('typical', false); $('markStyle').value = 'dot';
+  applyPreset('crowded', false); $('markStyle').value = 'dot';
 
   if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; }
   learned = null; teachPicks = [];
@@ -5338,17 +5338,17 @@ function bindRerun(id, ev) { $(id).addEventListener(ev || 'change', () => { if (
 /* v3: the three splitting switches as one choice, from most to least splitting */
 const TOUCH = { all: [1, 1, 1], split: [1, 1, 0], waist: [1, 0, 0], none: [0, 0, 0] };
 const TOUCH_NOTE = {
-  all: 'Cuts touching colonies apart where the outline narrows, separates merged ones from the curves of their edges, and estimates a clump nothing can split from its area (marked ×n). Best for most plates.',
+  all: 'Cuts touching colonies apart where the outline narrows, separates merged ones from the curves of their edges, and estimates a clump nothing can split from its area (marked ×n).',
   split: 'Splits touching and merged colonies, but a solid clump counts as one, so you can zoom in and correct it by hand.',
   waist: 'Only cuts where the outline clearly narrows between two colonies. Safest for large, well-spaced colonies.',
-  none: 'Every connected blob counts as one colony. Only for very sparse plates.' };
+  none: 'Every connected blob counts as one colony, so nothing is split by mistake. The default; add any touching colonies by hand.' };
 const touchOf = () => Object.keys(TOUCH).find(k => TOUCH[k].join() === ['splitTouching', 'resolveClusters', 'estimateClumps'].map(id => +$(id).checked).join()) || 'all';
 function setTouch(m, run) { const t = TOUCH[m] || TOUCH.all; ['splitTouching', 'resolveClusters', 'estimateClumps'].forEach((id, i) => { $(id).checked = !!t[i]; });
   $('touchMode').value = m; $('touchNote').textContent = TOUCH_NOTE[m]; if (run && roi) runDetect(); }
-const PRESET = { typical: { sens: 50, touch: 'all', mark: 100, nums: true }, crowded: { sens: 62, touch: 'all', mark: 80, nums: false }, sparse: { sens: 40, touch: 'waist', mark: 100, nums: true }, exact: { sens: 50, touch: 'split', mark: 100, nums: true } };
+const PRESET = { typical: { sens: 50, touch: 'all', mark: 100, nums: true }, crowded: { sens: 62, touch: 'none', mark: 80, nums: false }, sparse: { sens: 40, touch: 'waist', mark: 100, nums: true }, exact: { sens: 50, touch: 'split', mark: 100, nums: true } };
 const PRESET_NOTE = {
   typical: 'Balanced sensitivity, touching colonies split, solid clumps estimated.',
-  crowded: 'Finds fainter, smaller colonies; splits and estimates clumps; numbers off so the plate stays readable.',
+  crowded: 'Finds fainter, smaller colonies; does not split them, so each blob counts once; numbers off so the plate stays readable. The default.',
   sparse: 'Finds fewer, clearer colonies and only cuts at a clear waist, so big colonies are not split in two.',
   exact: 'Splits touching colonies but counts each solid clump as one: zoom in and add the rest by hand.' };
 function applyPreset(k, run) { const p = PRESET[k]; if (!p) return;
@@ -5362,7 +5362,7 @@ $('touchMode').addEventListener('change', e => { setTouch(e.target.value, true);
 $('sens').addEventListener('change', presetCheck);
 $('sensSeg').addEventListener('click', () => setTimeout(presetCheck, 0));
 $('markStyle').addEventListener('change', () => draw());
-setTouch(touchOf(), false); $('presetNote').textContent = PRESET_NOTE.typical;
+applyPreset('crowded', false);   // the default: crowded plate, no splitting
 
 /* v3: the Select tool's own list: shape, find the dish, whole image, clear */
 const SHAPE_NAME = { rect: 'Box', circle: 'Circle', lasso: 'Lasso' };

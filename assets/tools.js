@@ -91,7 +91,7 @@ const TOOLS = [
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28",
         new: [
           "Export to Excel (.xlsx), with the same columns as the table",
-          "Simpler settings: a quick setup, one choice for touching colonies; see-through rings with a centre dot",
+          "Simpler settings, starting on Crowded plate without splitting; see-through rings with a centre dot",
           "Clear what the counter found and mark by hand, with or without a plate area; Auto enhance for the image"
         ] }
     ]

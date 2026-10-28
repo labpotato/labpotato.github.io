@@ -197,6 +197,12 @@ a:hover { text-decoration: underline; }
 .sel-menu b { width: 18px; text-align: center; color: var(--accent); flex: none; }
 .sel-menu small { display: block; font-size: 11px; color: var(--text-faint); }
 .sel-menu .sm-warn b { color: var(--warn); }
+.sel-menu .sm-field { padding: 2px 9px 4px; margin: 0; }
+.sel-menu .sm-field .statusline { font-size: 11px; }
+.sel-menu .sm-tip { font-size: 11.5px; color: var(--text-muted); margin: 4px 9px 6px; line-height: 1.4; }
+.sel-menu { max-height: calc(100vh - 90px); overflow-y: auto; width: min(330px, calc(100vw - 16px)); }
+.tool-count { background: var(--accent); color: #fff; }
+.tool-count:hover { background: var(--accent-hover); color: #fff; }
 .sel-menu hr { border: 0; border-top: 1px solid var(--border-soft); margin: 4px 2px; }
 .tool-warn:not(:disabled):hover { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); }
 
@@ -599,6 +605,10 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
         <button class="tool tool-caret" id="mSelectMore" type="button" title="How to select the plate area" aria-label="Selection options" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
+        <button class="tool tool-count" id="btnCountTop" type="button" title="Count the colonies (Enter). With no plate area yet, it finds the dish first." disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="14.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="13" cy="14.5" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <span>Count</span>
+        </button>
         <button class="tool" id="mAdd" type="button" aria-pressed="false" title="Click empty space to add, click a marker to remove (A)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8.5v7M8.5 12h7"/></svg>
           <span>Add</span><kbd>A</kbd>
@@ -660,6 +670,14 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <button type="button" role="menuitem" data-shape="dish"><b>⌖</b><span>Find the dish<small>Detects the plate and selects inside its wall</small></span></button>
       <button type="button" role="menuitem" data-shape="whole"><b>⛶</b><span>Whole image<small>For a photo already cropped to the plate</small></span></button>
       <button type="button" role="menuitem" data-shape="clear" class="sm-warn"><b>✕</b><span>Clear the selection</span></button>
+      <hr>
+      <div class="field sm-field" id="marginField">
+        <div class="slider-row"><label for="edgeMargin">Ignore the outer edge</label><span class="val" id="marginVal">3%</span></div>
+        <input type="range" id="edgeMargin" min="0" max="15" value="3">
+        <div class="scale-ends"><span>count to the wall</span><span>15%</span></div>
+        <div class="statusline">The dish wall, the meniscus and any ring of condensation sit in the outermost few per cent and read as bright structure. Excluding a thin band is the single most effective way to stop false colonies around the rim.</div>
+      </div>
+      <p class="sm-tip"><b>Drop spots:</b> choose Circle and drag one round the first spot; then one click on any other spot places the same circle there and counts it.</p>
     </div>
     <div class="stage-menu drop-down" id="colonyMenu">
       <div class="smhead">
@@ -733,6 +751,7 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
         <span class="me"><i></i>added by you</span>
       </div>
 
+      <div class="statusline" id="diag" style="margin-top:8px;"></div>
       <details class="adv" id="advDetect">
         <summary>Fine tuning</summary>
         <div class="adv-body">
@@ -917,51 +936,15 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <div class="statusline">Pick or drop several photos at once to work through a set; <kbd class="key">[</kbd> and <kbd class="key">]</kbd> step between them. Nothing is uploaded: images stay in this tab.</div>
     </div>
 
-    <!-- 2 ------------------------------------------------ -->
-    <div class="panel muted" id="panel2">
-      <div class="phead"><span class="step">2</span><h3>Plate area</h3><span class="tag" id="roiTag"></span></div>
-      <div class="row">
-        <button class="btn btn-primary" id="btnAutoDish" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
-          Find the dish
-        </button>
-      </div>
-      <div class="row" style="margin-top:7px;">
-        <button class="btn btn-ghost btn-sm" id="btnRect" type="button">Draw box</button>
-        <button class="btn btn-ghost btn-sm" id="btnCircle" type="button">Draw circle</button>
-        <button class="btn btn-ghost btn-sm" id="btnLasso" type="button">Draw lasso</button>
-        <button class="btn btn-ghost btn-sm" id="btnWhole" type="button">Whole image</button>
-      </div>
-
-      <div class="field" id="marginField">
-        <div class="slider-row"><label for="edgeMargin">Ignore the outer edge</label><span class="val" id="marginVal">3%</span></div>
-        <input type="range" id="edgeMargin" min="0" max="15" value="3">
-        <div class="scale-ends"><span>count to the wall</span><span>15%</span></div>
-        <div class="statusline">The dish wall, the meniscus and any ring of condensation sit in the outermost few per cent and read as bright structure. Excluding a thin band is the single most effective way to stop false colonies around the rim.</div>
-      </div>
-      <div class="notice" id="spotTip"><b>Counting drop spots?</b> Choose <b>Draw circle</b> and drag one round the first spot. After that a single click on any other spot places a circle the same size there and counts it — the colonies you added or removed by hand stay with the spot they belong to.</div>
-      <div class="row" style="margin-top:9px;">
-        <button class="btn btn-warn btn-sm" id="btnClearRoi" type="button">Clear selection</button>
-      </div>
-    </div>
-
-    <!-- 3 ------------------------------------------------ -->
-    <div class="panel muted" id="panel3">
-      <div class="phead"><span class="step">3</span><h3>Count</h3><span class="tag" id="modeTag"></span></div>
-
-      <button class="btn btn-primary btn-lg" id="btnCount" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="14.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14" r="1.6" fill="currentColor" stroke="none"/><circle cx="9.5" cy="15" r="1.2" fill="currentColor" stroke="none"/></svg>
-        Count colonies
-      </button>
-
-      <div class="statusline">Colony settings live behind the <b>colony count</b> at the top of the plate; image and resolution settings behind <b>Adjust</b>, bottom right. Both are one click away while you're looking at the plate.</div>
-
-      <div class="statusline" id="diag"></div>
-    </div>
+    <!-- v3: the plate area and the count are on the stage (Select list, Count button, colony menu); these stay for the code that uses them -->
+    <div hidden id="panel2"><span id="roiTag"></span>
+      <button id="btnAutoDish" type="button"></button><button id="btnRect" type="button"></button><button id="btnCircle" type="button"></button>
+      <button id="btnLasso" type="button"></button><button id="btnWhole" type="button"></button><button id="btnClearRoi" type="button"></button></div>
+    <div hidden id="panel3"><span id="modeTag"></span><button id="btnCount" type="button"></button></div>
 
     <!-- 4 ------------------------------------------------ -->
     <div class="panel" id="panel4">
-      <div class="phead"><span class="step">4</span><h3>Results</h3></div>
+      <div class="phead"><span class="step">2</span><h3>Results</h3></div>
 
       <div class="field" style="margin-top:0;">
         <label>Plating method</label>
@@ -1005,7 +988,7 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
 
       <div class="tablewrap">
         <table id="tbl">
-          <thead><tr><th>Use</th><th>Row</th><th>Title</th><th>Colonies</th><th title="Dilution (10⁻ˣ)">Dilution</th><th>Volume (<span class="nocase">µL</span>)</th><th>CFU/<span class="nocase">mL</span></th><th>log₁₀</th><th>Countable range</th><th></th></tr></thead>
+          <thead><tr><th>Use</th><th>Row</th><th>Title</th><th>Colonies</th><th title="Dilution (10⁻ˣ)">Dilution</th><th>Volume (<span class="nocase">µL</span>)</th><th>CFU/<span class="nocase">mL</span></th><th>log₁₀</th><th title="Countable range">Range</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -5207,6 +5190,7 @@ function forceRecount() {
   cachedMode = null; scaleCache = null; runDetect({ redecide: true });
 }
 $('btnCount').onclick = forceRecount;
+$('btnCountTop').onclick = () => { if (!img) return; if (roi) forceRecount(); else $('btnAutoDish').click(); };
 $('btnRecountStage').onclick = forceRecount;
 
 // Every control that changes how colonies are found, restored to what the tool ships with. The
@@ -5894,7 +5878,7 @@ function setHint(t) { $('hint').textContent = t; }
 function unmute(id) { $(id).classList.remove('muted'); }
 function refreshUI() {
   const has = !!roi;
-  $('mAdd').disabled = !img; $('mRemove').disabled = !img;   // v3: mark colonies by hand with or without a plate area
+  $('mAdd').disabled = !img; $('mRemove').disabled = !img; $('btnCountTop').disabled = !img;   // v3: mark colonies by hand with or without a plate area
   $('btnRecountStage').disabled = !has;
   $('btnClearStage').disabled = !has;
   $('roiTag').textContent = !roi ? '' :

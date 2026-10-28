@@ -502,6 +502,23 @@ body.wv-docked.wv-vert .webview #right{top:12px}
 body.wv-bar-right .webview #right{right:calc(12px + 52px)}
 .wv-bar .tb.on{background:var(--blue-l,#e6efff);color:var(--blue,#0a5fd0)}
 
+/* ---- marks beside the scroll bar ---- */
+.mark-rail{position:fixed;z-index:60;width:16px;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.mark-rail.wv{z-index:320}
+.mark-rail .mr-step{pointer-events:auto;width:16px;height:14px;border:0;border-radius:4px;background:color-mix(in srgb,var(--card) 85%,transparent);color:var(--ink-3);font-size:8px;line-height:14px;padding:0;cursor:pointer;box-shadow:0 0 0 1px var(--line)}
+.mark-rail .mr-step:hover{color:var(--blue);background:var(--card)}
+.mr-track{position:relative;flex:1;width:12px;border-radius:6px;background:color-mix(in srgb,var(--ink) 5%,transparent);pointer-events:none}
+.mr-view{position:absolute;left:0;right:0;border-radius:6px;background:color-mix(in srgb,var(--blue) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blue) 35%,transparent);pointer-events:none}
+.mr-tick{position:absolute;left:50%;transform:translate(-50%,-50%);padding:0;border:0;cursor:pointer;background:var(--c);pointer-events:auto}
+.mr-tick.hl{width:12px;height:4px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+.mr-tick.ed{width:12px;height:4px;border-radius:2px;background:#8b5cf6}
+.mr-tick.cm{width:11px;height:11px;border-radius:50% 50% 50% 2px;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--c) 55%,#000)}
+.mr-tick:hover,.mr-tick.on{transform:translate(-50%,-50%) scale(1.5);z-index:2;box-shadow:0 0 0 2px var(--blue)}
+@keyframes markFlash{0%,100%{outline-color:transparent;box-shadow:none}20%,60%{outline:3px solid #ff9f1c;outline-offset:2px;box-shadow:0 0 0 6px rgba(255,159,28,.35)}}
+.mark-flash{animation:markFlash 1.9s ease-in-out;outline:3px solid transparent;border-radius:3px}
+g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 8px #ff9f1c)}
+@media print{.mark-rail{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -5492,6 +5509,102 @@ function bindLightbox() {
   });
   document.addEventListener("keydown", e => { if (!LB) return; if (e.key === "Escape") closeLightbox(); else if (e.key === "ArrowRight") lbStep(1); else if (e.key === "ArrowLeft") lbStep(-1); });
 }
+
+/* ---------- marks beside the scroll bar ----------
+   A thin strip next to the document's scroll bar with a tick for every highlight (in its colour) and a
+   bubble for every comment, at the height where it sits in the document; a faint box shows the part on
+   screen. Click a tick: the document scrolls there and the text flashes. Alt+Down / Alt+Up step through
+   them in order. Works for PDFs, documents and the web view. */
+let railIdx = -1;
+const rail = EL("div", { class: "mark-rail", id: "markRail", role: "navigation", "aria-label": "Highlights and comments in this document", hidden: "" });
+rail.append(EL("button", { class: "mr-step", type: "button", title: "Previous mark (Alt+Up)", "aria-label": "Previous mark", onclick: () => stepMark(-1) }, "▲"),
+  EL("div", { class: "mr-track" }, EL("div", { class: "mr-view" })),
+  EL("button", { class: "mr-step", type: "button", title: "Next mark (Alt+Down)", "aria-label": "Next mark", onclick: () => stepMark(1) }, "▼"));
+document.body.append(rail);
+const railTrack = $(".mr-track", rail), railView = $(".mr-view", rail);
+
+/* where each mark sits, as a fraction of the whole document's height */
+function railItems() {
+  if (!S.doc) return [];
+  const items = noteItems();
+  if (S.webview) {
+    const d = wvDoc(), se = d && d.scrollingElement; if (!se) return [];
+    const H = Math.max(1, se.scrollHeight);
+    return items.map(it => { const el = d.querySelector(`[data-id="${it.id}"]`); if (!el) return null; return { it, f: (el.getBoundingClientRect().top + se.scrollTop) / H }; }).filter(Boolean);
+  }
+  const H = Math.max(1, viewer.scrollHeight), top = viewer.getBoundingClientRect().top - viewer.scrollTop;
+  if (S.doc.kind === "pdf") {
+    return items.map(it => { const a = it.a, v = S.views.get(a.p); if (!v || !v.el) return null;
+      let y = 0; try { const px = a.rects ? boundsPx(v, a.rects) : a.rect ? pdfRectToPx(v, a.rect) : a.pt ? (() => { const p = v.vp.convertToViewportPoint(a.pt[0], a.pt[1]); return [p[0], p[1]]; })() : inkBounds(v, a); y = px[1]; } catch (e) { y = 0; }
+      return { it, f: (v.el.getBoundingClientRect().top - top + y) / H }; }).filter(Boolean);
+  }
+  return items.map(it => it.el ? { it, f: (it.el.getBoundingClientRect().top - top) / H } : null).filter(Boolean);
+}
+function drawRail() {
+  const marks = S.doc ? railItems() : [];
+  rail.hidden = !S.doc || !marks.length || Prefs.get("markRail", true) === false;
+  if (rail.hidden) return;
+  // the strip sits just inside the right edge of the visible document (the window in web view)
+  const box = S.webview ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : viewer.getBoundingClientRect();
+  const sbw = S.webview ? 16 : Math.max(0, viewer.offsetWidth - viewer.clientWidth);
+  Object.assign(rail.style, { top: (box.top + 6) + "px", height: Math.max(80, box.bottom - box.top - 12) + "px", left: (box.right - sbw - 18) + "px" });
+  rail.classList.toggle("wv", !!S.webview);
+  $$(".mr-tick", railTrack).forEach(t => t.remove());
+  marks.forEach(({ it, f }, k) => {
+    const t = EL("button", { type: "button", class: "mr-tick " + (it.kind === "comment" ? "cm" : it.kind === "edit" ? "ed" : "hl") + (it.id === S.sel ? " on" : ""), "data-k": k,
+      style: `top:${(clamp(f, 0, 1) * 100).toFixed(2)}%;--c:${it.color || "#ffe066"}`,
+      title: (it.kind === "comment" ? "Comment" : it.kind === "edit" ? "Edit" : "Highlight") + (S.doc.kind === "pdf" ? ", page " + it.page : "") + ": " + (it.text || it.quote || "").slice(0, 120),
+      onclick: () => goMark(k) });
+    railTrack.append(t);
+  });
+  rail._marks = marks; railViewBox();
+}
+/* the faint box: which part of the document is on screen */
+function railViewBox() {
+  if (rail.hidden) return;
+  let a, b;
+  if (S.webview) { const se = wvDoc()?.scrollingElement; if (!se) return; a = se.scrollTop / se.scrollHeight; b = (se.scrollTop + se.clientHeight) / se.scrollHeight; }
+  else { a = viewer.scrollTop / viewer.scrollHeight; b = (viewer.scrollTop + viewer.clientHeight) / viewer.scrollHeight; }
+  railView.style.top = (a * 100) + "%"; railView.style.height = Math.max(2, (b - a) * 100) + "%";
+}
+/* go to a mark: scroll it into the middle of the screen and make it flash */
+async function goMark(k) {
+  const m = rail._marks && rail._marks[k]; if (!m) return; railIdx = k; const it = m.it; S.sel = it.id;
+  if (S.doc.kind === "pdf") { await goToAnnot(it.a); $$(`#pages .page [data-id="${it.id}"]`).forEach(flashEl); }
+  else if (S.webview) { wvFocus(it.id); const d = wvDoc(); d.querySelectorAll(`[data-id="${it.id}"]`).forEach(x => { x.classList.add("lp-flash"); setTimeout(() => { x.classList.remove("lp-flash"); }, 1400); }); }
+  else { it.el.scrollIntoView({ block: "center", behavior: "smooth" }); flowSelect(it.id); afterScroll(viewer, () => $$(`[data-id="${it.id}"]`, flowEl).forEach(flashEl)); }
+  $$(".mr-tick", railTrack).forEach(t => t.classList.toggle("on", +t.dataset.k === k));
+  refreshNotesSel(it.id);
+}
+/* flash once the smooth scroll has arrived, so the eye lands on it */
+function afterScroll(el, fn) { let t = setTimeout(done, 900), last = -1, poll; function done() { clearTimeout(t); clearInterval(poll); fn(); }
+  poll = setInterval(() => { if (el.scrollTop === last) done(); last = el.scrollTop; }, 120); }
+function flashEl(n) { if (!n) return; n.classList.remove("mark-flash"); void n.offsetWidth; n.classList.add("mark-flash"); setTimeout(() => n.classList.remove("mark-flash"), 2000); }
+function refreshNotesSel(id) { $$("#notes .note").forEach(n => n.classList.toggle("on", n.dataset.id === id)); }
+/* Alt+Down / Alt+Up: the next or previous mark below or above what is on screen */
+function stepMark(dir) {
+  if (!rail._marks || !rail._marks.length) { drawRail(); if (!rail._marks || !rail._marks.length) return toast("No highlights or comments in this document yet."); }
+  const n = rail._marks.length;
+  if (railIdx < 0 || railIdx >= n) { const se = S.webview ? wvDoc()?.scrollingElement : viewer; const mid = se ? (se.scrollTop + se.clientHeight / 2) / se.scrollHeight : 0;
+    railIdx = dir > 0 ? rail._marks.findIndex(m => m.f > mid) : (() => { let j = -1; rail._marks.forEach((m, i) => { if (m.f < mid) j = i; }); return j; })(); if (railIdx < 0) railIdx = dir > 0 ? 0 : n - 1; goMark(railIdx); return; }
+  goMark((railIdx + dir + n) % n);
+}
+const drawRailSoon = debounce(drawRail, 120);
+{ const o = refreshNotes; refreshNotes = (...a) => { const r = o(...a); drawRailSoon(); return r; }; }
+viewer.addEventListener("scroll", () => requestAnimationFrame(railViewBox), { passive: true });
+addEventListener("resize", drawRailSoon);
+new ResizeObserver(drawRailSoon).observe(viewer);
+new ResizeObserver(drawRailSoon).observe(pagesEl);
+new ResizeObserver(drawRailSoon).observe(flowEl);
+document.addEventListener("keydown", e => { if (!S.doc || !e.altKey || e.ctrlKey || e.metaKey) return; if (e.key === "ArrowDown") { e.preventDefault(); stepMark(1); } else if (e.key === "ArrowUp") { e.preventDefault(); stepMark(-1); } });
+/* web view: the page lives in a frame, so follow its scrolling and keys too */
+{ const o = bindFrame; bindFrame = (...a) => { o(...a); const d = wvDoc(); if (!d) return;
+    d.addEventListener("scroll", () => requestAnimationFrame(railViewBox), { passive: true });
+    d.addEventListener("keydown", e => { if (e.altKey && !e.ctrlKey && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); stepMark(e.key === "ArrowDown" ? 1 : -1); } });
+    if (d.defaultView) new d.defaultView.ResizeObserver(drawRailSoon).observe(d.body);
+    drawRailSoon(); };
+  const e1 = enterWebView, e2 = exitWebView; enterWebView = (...a) => { const r = e1(...a); setTimeout(drawRail, 300); return r; }; exitWebView = (...a) => { const r = e2(...a); setTimeout(drawRail, 50); return r; }; }
+{ const o = closeDoc; closeDoc = async (...a) => { const r = await o(...a); railIdx = -1; drawRail(); return r; }; }
 
 /* ---------- opening, saving, exporting ---------- */
 function newDoc(kind, name, extra = {}) { return { id: uid(), kind, name, created: Date.now(), modified: Date.now(), annots: [], comments: {}, html: "", origHtml: "", pages: [], meta: {}, ...extra }; }

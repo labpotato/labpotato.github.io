@@ -142,11 +142,13 @@ async function fromCounter(range, fresh) {
 const css = (name, fb) => (getComputedStyle(document.documentElement).getPropertyValue(name) || "").trim() || fb;
 const niceMax = (v) => { if (v <= 4) return 4; const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; };
 
-/* one line graph: every tool as a quiet grey line, the chosen one (or all tools together) in colour */
+/* running total: each point is every opening from the start of the range up to that day, week or month */
+const cum = (per) => { let t = 0; return per.map(v => (t += v)); };
+/* one line graph of running totals: every tool as a quiet grey line, the chosen one (or all tools together) in colour */
 function lineChart(el, data, focus) {
   const W = 1000, H = 280, L = 46, R = 190, T = 16, B = 30, n = data.labels.length;
-  const series = data.rows.map(r => ({ id: r.id, per: r.per, color: accentOf(TOOLS.find(t => t.id === r.id)), name: TOOLS.find(t => t.id === r.id).name }));
-  const all = { id: "all", name: "All tools", per: data.labels.map((_, k) => data.rows.reduce((a, r) => a + r.per[k], 0)), color: css("--accent", "#0a5fd0") };
+  const series = data.rows.map(r => ({ id: r.id, per: cum(r.per), color: accentOf(TOOLS.find(t => t.id === r.id)), name: TOOLS.find(t => t.id === r.id).name }));
+  const all = { id: "all", name: "All tools", per: cum(data.labels.map((_, k) => data.rows.reduce((a, r) => a + r.per[k], 0))), color: css("--accent", "#0a5fd0") };
   const hi = focus === "all" ? all : series.find(s => s.id === focus) || all;
   const ymax = niceMax(Math.max(1, ...hi.per, ...(focus === "all" ? [] : series.flatMap(s => s.per))));
   const x = (k) => n === 1 ? L + (W - L - R) / 2 : L + k * (W - L - R) / (n - 1), y = (v) => T + (H - T - B) * (1 - v / ymax);
@@ -156,7 +158,7 @@ function lineChart(el, data, focus) {
   const grid = css("--border", "#e6e5e1"), mute = css("--text-faint", "#8e929c"), quiet = css("--use-quiet", "#c9ccd3");
   const others = (focus === "all" ? series : series.filter(s => s !== hi)).map(s => `<path d="${pathOf(s.per)}" fill="none" stroke="${quiet}" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>`).join("");
   const last = hi.per[n - 1];
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="use-svg" role="img" aria-label="${esc2(hi.name)}: ${hi.per.map((v, k) => `${data.labels[k]} ${v}`).join(", ")}">
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="use-svg" role="img" aria-label="${esc2(hi.name)}, running total: ${hi.per.map((v, k) => `${data.labels[k]} ${v}`).join(", ")}">
     ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${grid}" stroke-width="1"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" class="use-ax">${nf(v)}</text>`).join("")}
     ${xl.map(k => `<text x="${x(k)}" y="${H - 8}" text-anchor="${n > 1 && k === 0 ? "start" : n > 1 && k === n - 1 ? "end" : "middle"}" class="use-ax">${esc2(data.labels[k].replace(/^wk of /, ""))}</text>`).join("")}
     ${others}
@@ -173,7 +175,7 @@ function lineChart(el, data, focus) {
     g.setAttribute("visibility", "visible"); g.querySelector(".use-xh").setAttribute("x1", x(k)); g.querySelector(".use-xh").setAttribute("x2", x(k));
     const hd = g.querySelector(".use-hd"); hd.setAttribute("cx", x(k)); hd.setAttribute("cy", y(hi.per[k]));
     const top = series.map(s => [s.name, s.per[k], s.color]).sort((a, b) => b[1] - a[1]).slice(0, 4);
-    tip.innerHTML = `<b>${esc2(data.labels[k])}</b><div class="use-tip-hi"><i style="background:${hi.color}"></i>${esc2(hi.name)}<span>${nf(hi.per[k])}</span></div>${focus === "all" ? top.map(([nm, v, c]) => `<div><i style="background:${c}"></i>${esc2(nm)}<span>${nf(v)}</span></div>`).join("") : ""}`;
+    tip.innerHTML = `<b>Total by ${esc2(data.labels[k].replace(/^wk of /, "week of "))}</b><div class="use-tip-hi"><i style="background:${hi.color}"></i>${esc2(hi.name)}<span>${nf(hi.per[k])}</span></div>${focus === "all" ? top.map(([nm, v, c]) => `<div><i style="background:${c}"></i>${esc2(nm)}<span>${nf(v)}</span></div>`).join("") : ""}`;
     tip.hidden = false;
     const tx = (x(k) / W) * r.width, w = tip.offsetWidth; tip.style.left = Math.min(r.width - w - 4, Math.max(4, tx + 14 > r.width - w ? tx - w - 14 : tx + 14)) + "px"; tip.style.top = "10px";
   };
@@ -272,14 +274,14 @@ function renderUsage(data) {
   // one row per tool with its own little line
   box.innerHTML = rows.map((r, ix) => {
     const t = TOOLS.find(x => x.id === r.id); if (!t) return "";
-    const now = r.per[r.per.length - 1], before = r.per.length > 1 ? r.per[r.per.length - 2] : now, trend = now > before ? "up" : now < before ? "down" : "flat";
+    const now = r.per[r.per.length - 1];
     return `<a class="use-row${focus === r.id ? " on" : ""}" data-row="${r.id}" style="--card:${accentOf(t)}" href="${USAGE_LINK_BASE}${toolPath(t, latestOf(t))}" target="_blank" rel="noopener" title="Open ${esc2(t.name)}">
       <span class="use-rank">${ix + 1}</span><span class="app-icon use-icon">${appGlyph(t)}</span>
       <span class="use-name"><b>${esc2(t.name)}</b><small>${esc2(t.short || t.tagline)}</small></span>
       <span class="use-bar" aria-hidden="true"><i style="width:${(100 * r.sum / top).toFixed(1)}%"></i></span>
-      <span class="use-all"><b>${nf(r.sum)}</b><small>opened</small></span>
-      ${spark(r.per, accentOf(t), data.labels)}
-      <span class="use-now ${trend}" title="${R.last} vs the one before"><b>${nf(now)}</b><small>${R.last}</small></span></a>`;
+      <span class="use-now" title="Added ${R.last}"><b>+${nf(now)}</b><small>${R.last}</small></span>
+      ${spark(cum(r.per), accentOf(t), data.labels)}
+      <span class="use-all"><b>${nf(r.sum)}</b><small>opened</small></span></a>`;   // the total sits at the far right
   }).join("");
   // where visitors are
   if (data.stats) {

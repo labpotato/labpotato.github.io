@@ -266,11 +266,11 @@ const TOOLS = [
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
-      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-27",
+      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28",
         new: [
-          "Extension: highlight, comment and edit right on the page, no new tab; it all comes back when you reopen the address",
-          "Toolbar can float or dock; menus open beside it at either edge; turning it moves it to a top corner",
-          "Web pages keep their own look; a page you opened before reopens with your changes"
+          "Marks beside the scroll bar: click one to jump there and see it flash; Alt+Up/Down steps through them",
+          "Extension works on top of any page: highlight, comment, edit; outline, a note per page, backup and restore",
+          "Toolbar can float or dock; a page you opened before reopens with your changes"
         ] }
     ]
   }

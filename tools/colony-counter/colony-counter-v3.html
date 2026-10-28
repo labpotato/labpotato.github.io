@@ -188,6 +188,16 @@ a:hover { text-decoration: underline; }
   border: 1px solid currentColor; border-radius: 4px; padding: 0 3px; margin-left: 2px;
 }
 .tool:disabled { opacity: .4; cursor: not-allowed; }
+.tool-caret { padding: 6px 5px; margin-left: -3px; }
+.tool-caret svg { width: 12px; height: 12px; }
+.sel-menu { position: fixed; z-index: 30; min-width: 250px; max-width: calc(100vw - 16px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 5px; }
+.sel-menu button { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 7px 9px; border-radius: 8px; font: inherit; font-size: 13px; color: var(--text); cursor: pointer; }
+.sel-menu button:hover { background: var(--bg-tint); }
+.sel-menu button[aria-checked="true"] { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.sel-menu b { width: 18px; text-align: center; color: var(--accent); flex: none; }
+.sel-menu small { display: block; font-size: 11px; color: var(--text-faint); }
+.sel-menu .sm-warn b { color: var(--warn); }
+.sel-menu hr { border: 0; border-top: 1px solid var(--border-soft); margin: 4px 2px; }
 .tool-warn:not(:disabled):hover { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); }
 
 .count-pill {
@@ -283,6 +293,7 @@ a:hover { text-decoration: underline; }
   display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
   margin-top: 11px; font-size: 11.5px; color: var(--text-muted);
 }
+.note-inline{font-weight:400;color:var(--text-faint)}
 .legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .legend i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; flex: none; }
 .legend .hi { color: var(--oi-green); }
@@ -550,11 +561,11 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
   <button class="header-link" id="hToLE" type="button" title="Send the counts to a Lab Entry experiment (it waits in Lab Entry's waiting room)">↗ <span>Lab Entry</span></button>
   <div class="hmenu-wrap"><button class="header-link" id="hExport" type="button" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Export</span></button>
     <div class="hmenu" id="hExportMenu" hidden role="menu">
-      <button data-click="btnXlsx" role="menuitem"><span>Excel workbook (.xlsx)<small>Plates, averages, each sample and transformation efficiency, one sheet each</small></span></button>
-      <button data-click="btnCsv" role="menuitem"><span>Table (.txt for Excel)<small>Title, count, dilution, volume, CFU/mL, then the averages, as numbers</small></span></button>
+      <button data-click="btnXlsx" role="menuitem"><span>Excel workbook (.xlsx)<small>The table, the averages, each sample and transformation efficiency</small></span></button>
+      <button data-click="btnCsv" role="menuitem"><span>Table (.txt)<small>The same columns as the table and the workbook, tab-separated</small></span></button>
       <button data-click="btnCountsTxt" role="menuitem"><span>Counts only (.txt)<small>One colony count per line</small></span></button>
       <button data-click="btnCopyCounts" role="menuitem"><span>Copy counts<small>To paste into a spreadsheet column</small></span></button>
-      <hr><button data-click="btnPng" role="menuitem"><span>Marked plate image (.png)<small>Every counted colony circled, with the total</small></span></button>
+      <hr><button data-click="btnPng" role="menuitem"><span>Marked plate image (.png)<small>The plate with every counted colony marked, and the total</small></span></button>
     </div></div>
   <button class="header-link" id="btnHelp" type="button" title="Keyboard shortcuts (press ?)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9.5 14h5"/></svg>
@@ -583,7 +594,10 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
         </button>
         <button class="tool" id="mSelect" type="button" aria-pressed="false" title="Draw the plate area (S)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/></svg>
-          <span>Select</span><kbd>S</kbd>
+          <span id="selLab">Select</span><kbd>S</kbd>
+        </button>
+        <button class="tool tool-caret" id="mSelectMore" type="button" title="How to select the plate area" aria-label="Selection options" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <button class="tool" id="mAdd" type="button" aria-pressed="false" title="Click empty space to add, click a marker to remove (A)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8.5v7M8.5 12h7"/></svg>
@@ -603,6 +617,10 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
         <button class="tool" id="btnRedo" type="button" title="Redo (Ctrl+Shift+Z)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9H9a5 5 0 0 0 0 10h6"/><path d="m16 5 4 4-4 4"/></svg>
           <span class="sr-only">Redo</span>
+        </button>
+        <button class="tool tool-warn" id="btnClearAuto" type="button" title="Remove every colony the counter found and keep only the ones you marked. Undo brings them back; Count finds them again." disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="9" r="3.2"/><circle cx="15.5" cy="15" r="3.2"/><path d="M4 20 20 4"/></svg>
+          <span>Clear found</span>
         </button>
         <button class="tool tool-warn" id="btnClearStage" type="button" title="Clear the selection and its count (Delete)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
@@ -634,6 +652,15 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
     </div>
 
     <!-- ===== colony options: drops down from the count pill ===== -->
+    <div class="sel-menu" id="selMenu" hidden role="menu" aria-label="Selection">
+      <button type="button" role="menuitemradio" data-shape="rect"><b>▭</b><span>Box<small>Drag a rectangle</small></span></button>
+      <button type="button" role="menuitemradio" data-shape="circle"><b>◯</b><span>Circle<small>Centre, then drag to the wall; one click repeats it on drop spots</small></span></button>
+      <button type="button" role="menuitemradio" data-shape="lasso"><b>✎</b><span>Lasso<small>Draw round the area freehand</small></span></button>
+      <hr>
+      <button type="button" role="menuitem" data-shape="dish"><b>⌖</b><span>Find the dish<small>Detects the plate and selects inside its wall</small></span></button>
+      <button type="button" role="menuitem" data-shape="whole"><b>⛶</b><span>Whole image<small>For a photo already cropped to the plate</small></span></button>
+      <button type="button" role="menuitem" data-shape="clear" class="sm-warn"><b>✕</b><span>Clear the selection</span></button>
+    </div>
     <div class="stage-menu drop-down" id="colonyMenu">
       <div class="smhead">
         <h4>Colonies</h4>
@@ -644,7 +671,19 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       </div>
 
       <div class="field">
-        <label>Sensitivity</label>
+        <label for="ccPreset">Quick setup</label>
+        <select id="ccPreset">
+          <option value="typical" selected>Typical plate (recommended)</option>
+          <option value="crowded">Crowded plate: many small colonies</option>
+          <option value="sparse">Few, large, well-spaced colonies</option>
+          <option value="exact">Exact count: I will check clumps myself</option>
+          <option value="custom" hidden>Your own settings</option>
+        </select>
+        <div class="statusline" id="presetNote"></div>
+      </div>
+
+      <div class="field">
+        <label>How many to find <span class="note-inline">(sensitivity)</span></label>
         <div class="seg" id="sensSeg" role="group">
           <button type="button" data-sens="32" aria-pressed="false">Fewer</button>
           <button type="button" data-sens="50" aria-pressed="true">Balanced</button>
@@ -655,7 +694,32 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       </div>
 
       <div class="field">
-        <div class="slider-row"><label for="markerSize">Detected marker size</label><span class="val" id="markerVal">100%</span></div>
+        <label for="touchMode">Touching colonies</label>
+        <select id="touchMode">
+          <option value="all" selected>Split, and estimate clumps (recommended)</option>
+          <option value="split">Split; a solid clump counts as one</option>
+          <option value="waist">Split only where the outline narrows</option>
+          <option value="none">Do not split: each blob is one colony</option>
+        </select>
+        <div class="statusline" id="touchNote"></div>
+        <div hidden>
+          <input type="checkbox" id="splitTouching" checked>
+          <input type="checkbox" id="resolveClusters" checked>
+          <input type="checkbox" id="estimateClumps" checked>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="markStyle">Marks on the plate</label>
+        <select id="markStyle">
+          <option value="dot" selected>See-through ring and a centre dot</option>
+          <option value="dotonly">Centre dot only</option>
+          <option value="ring">See-through ring only</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="slider-row"><label for="markerSize">Ring size</label><span class="val" id="markerVal">100%</span></div>
         <input type="range" id="markerSize" min="25" max="200" value="100">
         <div class="scale-ends"><span>smaller</span><span>larger</span></div>
       </div>
@@ -663,20 +727,10 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <label class="check"><input type="checkbox" id="showNumbers" checked><span>Number each colony
         <span class="note">Hidden automatically past 400 colonies, where the labels would cover the plate.</span></span></label>
 
-      <label class="check"><input type="checkbox" id="splitTouching" checked><span>Separate touching colonies
-        <span class="note">Cuts clusters apart where the shape still shows a waist between them.</span></span></label>
-
-      <label class="check"><input type="checkbox" id="resolveClusters" checked><span>Resolve fused clusters
-        <span class="note">Finds colonies that have merged past having a waist, from the arcs their outlines still show.</span></span></label>
-
-      <label class="check"><input type="checkbox" id="estimateClumps" checked><span>Estimate colonies in solid clumps
-        <span class="note">Last resort for a clump nothing can separate: estimates the number from its area and flags it.</span></span></label>
-
       <div class="legend" id="legend">
-        <span class="hi"><i></i>confident</span>
-        <span class="lo"><i></i>check this one</span>
-        <span class="cl"><i></i>clump, estimated</span>
-        <span class="me"><i></i>yours</span>
+        <span class="hi"><i></i>found</span>
+        <span class="cl"><i></i>clump, estimated (×n)</span>
+        <span class="me"><i></i>added by you</span>
       </div>
 
       <details class="adv" id="advDetect">
@@ -700,7 +754,7 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
             <label for="minArea">Minimum colony area (px², blank = automatic)</label>
             <input type="number" id="minArea" min="1" placeholder="automatic">
           </div>
-          <div class="field">
+          <div class="field" hidden>
             <div class="slider-row"><label for="confCut">Confidence cut-off</label><span class="val" id="confVal">0.60</span></div>
             <input type="range" id="confCut" min="0" max="95" value="60">
             <div class="scale-ends"><span>mark few for review</span><span>mark many</span></div>
@@ -763,6 +817,28 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <div class="field">
         <div class="slider-row"><label for="adjGamma">Gamma</label><span class="val" id="valGamma">1.00</span></div>
         <input type="range" id="adjGamma" min="30" max="300" value="100">
+      </div>
+      <div class="row" style="margin:2px 0 10px;"><button class="btn btn-primary btn-sm" id="btnEnhance" type="button" title="Evens out the lighting, stretches the levels and boosts local contrast">Auto enhance</button></div>
+      <label class="check"><input type="checkbox" id="adjFlat"><span>Even out the lighting
+        <span class="note">Removes a bright centre, a dark edge or a lamp's gradient, so colonies everywhere stand out the same.</span></span></label>
+      <div class="field">
+        <label for="adjChan">Colour channel</label>
+        <select id="adjChan">
+          <option value="rgb" selected>Full colour</option>
+          <option value="best">Best contrast channel (automatic)</option>
+          <option value="r">Red only</option>
+          <option value="g">Green only</option>
+          <option value="b">Blue only</option>
+        </select>
+        <div class="statusline">One channel often separates colonies from the agar better (green on blood agar, red on MacConkey). It turns the picture grey, so blue/white sorting needs Full colour.</div>
+      </div>
+      <div class="field">
+        <div class="slider-row"><label for="adjSat">Colour strength</label><span class="val" id="valSat">0</span></div>
+        <input type="range" id="adjSat" min="-100" max="100" value="0">
+      </div>
+      <div class="field">
+        <div class="slider-row"><label for="adjSharp">Sharpen edges</label><span class="val" id="valSharp">0</span></div>
+        <input type="range" id="adjSharp" min="0" max="100" value="0">
       </div>
       <label class="check"><input type="checkbox" id="adjClahe"><span>Local contrast (CLAHE)</span></label>
       <div class="field">
@@ -929,7 +1005,7 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
 
       <div class="tablewrap">
         <table id="tbl">
-          <thead><tr><th>Use</th><th>#</th><th>Title</th><th>Count</th><th>Dil.</th><th><span class="nocase">µL</span></th><th>CFU/<span class="nocase">mL</span></th><th>Flag</th><th></th></tr></thead>
+          <thead><tr><th>Use</th><th>Row</th><th>Title</th><th>Colonies</th><th title="Dilution (10⁻ˣ)">Dilution</th><th>Volume (<span class="nocase">µL</span>)</th><th>CFU/<span class="nocase">mL</span></th><th>log₁₀</th><th>Countable range</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -942,13 +1018,13 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
       <div id="bySample"></div>
 
       <div class="row" style="margin-top:10px;">
-        <button class="btn btn-ghost btn-sm" id="btnXlsx" type="button" title="An Excel workbook: the plates with CFU/mL and log10, the averages, each sample, and the transformation efficiency">Export to Excel (.xlsx)</button>
-        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button" title="Title, row, count, dilution, volume, CFU/mL, then the averages - as numbers Excel reads as numbers">Export table (.txt)</button>
-        <button class="btn btn-ghost btn-sm" id="btnCountsTxt" type="button" title="One colony count per line, nothing else">Counts only (.txt)</button>
-        <button class="btn btn-ghost btn-sm" id="btnCopyCounts" type="button" title="Copy the counts, one per line, to paste into a spreadsheet column">Copy counts</button>
+        <button class="btn btn-ghost btn-sm" id="btnXlsx" type="button" title="The table, the averages, each sample and transformation efficiency">Excel workbook (.xlsx)</button>
+        <button class="btn btn-ghost btn-sm" id="btnCsv" type="button" title="The same columns as the table and the workbook, tab-separated">Table (.txt)</button>
+        <button class="btn btn-ghost btn-sm" id="btnCountsTxt" type="button" title="One colony count per line">Counts only (.txt)</button>
+        <button class="btn btn-ghost btn-sm" id="btnCopyCounts" type="button" title="To paste into a spreadsheet column">Copy counts</button>
       </div>
       <div class="row" style="margin-top:7px;">
-        <button class="btn btn-ghost btn-sm" id="btnPng" type="button">Export marked image</button>
+        <button class="btn btn-ghost btn-sm" id="btnPng" type="button" title="The plate with every counted colony marked, and the total">Marked plate image (.png)</button>
         <button class="btn btn-warn btn-sm" id="btnClearTable" type="button" disabled>Clear table</button>
       </div>
       <div class="statusline">The table is kept in this browser, so closing the tab does not lose it. It never leaves your machine.</div>
@@ -4025,7 +4101,19 @@ const MARK = {
 function markColour(c) {
   if (c.src === 'manual') return MARK.manual;
   if (c.clump) return MARK.clump;
-  return (c.conf != null && c.conf < confCut()) ? MARK.low : MARK.high;
+  return MARK.high;   // v3: no separate "check this one" colour; every found colony is drawn alike
+}
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
+/* one colony mark: a see-through ring at its edge (so the colony itself stays visible) and a solid centre dot.
+   u is one screen pixel in image units on the stage, or the line width of an exported image. */
+function paintMark(g, c, x, y, r, u) {
+  const st = ($('markStyle') || {}).value || 'dot', col = markColour(c), man = c.src === 'manual';
+  if (st !== 'dotonly') { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.lineWidth = (man ? 1.8 : 1.5) * u; g.strokeStyle = rgba(col, man ? 0.7 : 0.5); g.stroke(); }
+  if (st !== 'ring' && !(c.clump && c.n > 1)) {
+    const d = Math.max(1.7 * u, Math.min(r * 0.3, 3.4 * u));
+    g.beginPath(); g.arc(x, y, d, 0, Math.PI * 2); g.fillStyle = col; g.fill();
+    g.lineWidth = 0.9 * u; g.strokeStyle = 'rgba(255,255,255,0.9)'; g.stroke();
+  }
 }
 function confCut() { return (+$('confCut').value) / 100; }
 // What a colony's marker is actually drawn at - kept in one place so hit-testing always matches
@@ -4119,7 +4207,7 @@ window.addEventListener('paste', e => {
 // ============================================================
 // image adjustment (display and measurement are the same pixels)
 // ============================================================
-const adj = { bright: 0, contrast: 0, gamma: 1, clahe: false, clip: 2.5 };
+const adj = { bright: 0, contrast: 0, gamma: 1, clahe: false, clip: 2.5, flat: false, chan: 'rgb', sat: 0, sharp: 0 };
 let lut = null;
 
 function buildLut() {
@@ -4173,10 +4261,50 @@ function claheLuminance(data, w, h, clip, tx, ty) {
   }
 }
 
+/* uneven lighting: divide by a heavily blurred copy of the brightness (computed on a small grid, so it is fast on big photos) */
+function flattenLight(a, w, h) {
+  const f = Math.max(1, Math.ceil(Math.max(w, h) / 320)), sw = Math.ceil(w / f), sh = Math.ceil(h / f), S = new Float32Array(sw * sh), N = new Float32Array(sw * sh);
+  for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 2) { const i = (y * w + x) * 4, k = ((y / f) | 0) * sw + ((x / f) | 0); S[k] += a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114; N[k]++; }
+  let B = S.map((v, k) => N[k] ? v / N[k] : 0);
+  const R = Math.max(2, Math.round(Math.max(sw, sh) / 14));
+  const box = (src, horiz) => { const out = new Float32Array(src.length), L = horiz ? sw : sh, M = horiz ? sh : sw;
+    for (let m = 0; m < M; m++) { let acc = 0, cnt = 0; const at = q => horiz ? m * sw + q : q * sw + m;
+      for (let q = 0; q < Math.min(L, R + 1); q++) { acc += src[at(q)]; cnt++; }
+      for (let q = 0; q < L; q++) { out[at(q)] = acc / cnt; const add = q + R + 1, rem = q - R; if (add < L) { acc += src[at(add)]; cnt++; } if (rem >= 0) { acc -= src[at(rem)]; cnt--; } } }
+    return out; };
+  for (let p = 0; p < 3; p++) B = box(box(B, true), false);
+  let mean = 0; for (const v of B) mean += v; mean /= B.length;
+  for (let y = 0; y < h; y++) { const fy = Math.min(sh - 1.001, Math.max(0, y / f - 0.5)), y0 = fy | 0, wy = fy - y0;
+    for (let x = 0; x < w; x++) { const fx = Math.min(sw - 1.001, Math.max(0, x / f - 0.5)), x0 = fx | 0, wx = fx - x0, k = y0 * sw + x0;
+      const bg = B[k] * (1 - wx) * (1 - wy) + B[k + 1] * wx * (1 - wy) + B[k + sw] * (1 - wx) * wy + B[k + sw + 1] * wx * wy, gn = mean / Math.max(8, bg), i = (y * w + x) * 4;
+      a[i] *= gn; a[i + 1] *= gn; a[i + 2] *= gn; } }
+}
+/* one colour channel as grey; "best" is the channel whose values spread the most (the most contrast) */
+function oneChannel(a, which) {
+  let c = { r: 0, g: 1, b: 2 }[which];
+  if (which === 'best') { const sd = [0, 1, 2].map(k => { let s = 0, q = 0, n = 0; for (let i = k; i < a.length; i += 4 * 7) { s += a[i]; q += a[i] * a[i]; n++; } const m = s / n; return q / n - m * m; }); c = sd.indexOf(Math.max(...sd)); }
+  for (let i = 0; i < a.length; i += 4) { const v = a[i + c]; a[i] = a[i + 1] = a[i + 2] = v; }
+  return 'RGB'[c];
+}
+function saturate(a, s) { const k = 1 + s / 100; for (let i = 0; i < a.length; i += 4) { const l = a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114; a[i] = l + (a[i] - l) * k; a[i + 1] = l + (a[i + 1] - l) * k; a[i + 2] = l + (a[i + 2] - l) * k; } }
+/* unsharp mask on brightness: edges of small colonies get crisper without changing their colour */
+function sharpen(a, w, h, amt) {
+  const L = new Float32Array(w * h); for (let p = 0, i = 0; p < L.length; p++, i += 4) L[p] = a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114;
+  const T = new Float32Array(w * h), Bl = new Float32Array(w * h), r = 2, n = 2 * r + 1;
+  for (let y = 0; y < h; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += L[y * w + Math.min(w - 1, Math.max(0, x))];
+    for (let x = 0; x < w; x++) { T[y * w + x] = acc / n; acc += L[y * w + Math.min(w - 1, x + r + 1)] - L[y * w + Math.max(0, x - r)]; } }
+  for (let x = 0; x < w; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += T[Math.min(h - 1, Math.max(0, y)) * w + x];
+    for (let y = 0; y < h; y++) { Bl[y * w + x] = acc / n; acc += T[Math.min(h - 1, y + r + 1) * w + x] - T[Math.max(0, y - r) * w + x]; } }
+  const k = amt * 2;
+  for (let p = 0, i = 0; p < L.length; p++, i += 4) { const dv = k * (L[p] - Bl[p]); a[i] += dv; a[i + 1] += dv; a[i + 2] += dv; }
+}
 function applyAdjustments() {
   if (!img) return;
   const w = rawCanvas.width, h = rawCanvas.height;
   const d = rawCtx.getImageData(0, 0, w, h);
+  if (adj.flat) flattenLight(d.data, w, h);
+  if (adj.chan !== 'rgb') { const used = oneChannel(d.data, adj.chan); if (adj.chan === 'best') $('adjChan').options[1].textContent = 'Best contrast channel (now ' + { R: 'red', G: 'green', B: 'blue' }[used] + ')'; }
+  if (adj.sat) saturate(d.data, adj.sat);
   const neutral = adj.bright === 0 && adj.contrast === 0 && Math.abs(adj.gamma - 1) < 1e-6;
   if (!neutral) {
     buildLut();
@@ -4184,6 +4312,7 @@ function applyAdjustments() {
     for (let i = 0; i < a.length; i += 4) { a[i] = lut[a[i]]; a[i + 1] = lut[a[i + 1]]; a[i + 2] = lut[a[i + 2]]; }
   }
   if (adj.clahe) claheLuminance(d.data, w, h, adj.clip, 8, 8);
+  if (adj.sharp) sharpen(d.data, w, h, adj.sharp / 100);
   srcCtx.putImageData(d, 0, 0);
   draw();
 }
@@ -4198,7 +4327,8 @@ function scheduleAdjust() {
 }
 
 function resetAdjustments(redraw) {
-  adj.bright = 0; adj.contrast = 0; adj.gamma = 1; adj.clahe = false; adj.clip = 2.5;
+  adj.bright = 0; adj.contrast = 0; adj.gamma = 1; adj.clahe = false; adj.clip = 2.5; adj.flat = false; adj.chan = 'rgb'; adj.sat = 0; adj.sharp = 0;
+  $('adjFlat').checked = false; $('adjChan').value = 'rgb'; $('adjSat').value = 0; $('valSat').textContent = '0'; $('adjSharp').value = 0; $('valSharp').textContent = '0';
   $('adjBright').value = 0; $('adjContrast').value = 0; $('adjGamma').value = 100;
   $('adjClahe').checked = false; $('adjClip').value = 25;
   $('valBright').textContent = '0'; $('valContrast').textContent = '0';
@@ -4211,6 +4341,14 @@ $('adjContrast').addEventListener('input', e => { adj.contrast = +e.target.value
 $('adjGamma').addEventListener('input', e => { adj.gamma = e.target.value / 100; $('valGamma').textContent = adj.gamma.toFixed(2); scheduleAdjust(); });
 $('adjClip').addEventListener('input', e => { adj.clip = e.target.value / 10; $('valClip').textContent = adj.clip.toFixed(1); if (adj.clahe) scheduleAdjust(); });
 $('adjClahe').addEventListener('change', e => { adj.clahe = e.target.checked; scheduleAdjust(); });
+$('adjFlat').addEventListener('change', e => { adj.flat = e.target.checked; scheduleAdjust(); });
+$('adjChan').addEventListener('change', e => { adj.chan = e.target.value; cachedMode = null; scheduleAdjust(); });
+$('adjSat').addEventListener('input', e => { adj.sat = +e.target.value; $('valSat').textContent = e.target.value; scheduleAdjust(); });
+$('adjSharp').addEventListener('input', e => { adj.sharp = +e.target.value; $('valSharp').textContent = e.target.value; scheduleAdjust(); });
+// one click: even lighting, local contrast, a little sharpening, then levels stretched on the result
+$('btnEnhance').onclick = () => { if (!img) return; adj.flat = true; adj.clahe = true; adj.clip = 2.5; adj.sharp = 25;
+  $('adjFlat').checked = true; $('adjClahe').checked = true; $('adjClip').value = 25; $('valClip').textContent = '2.5'; $('adjSharp').value = 25; $('valSharp').textContent = '25';
+  runAutoLevels(); setHint('Enhanced: lighting evened out, local contrast and sharpening on, levels stretched. Reset in Image undoes it.'); };
 $('btnResetAdj').onclick = () => { resetAdjustments(true); if (roi) runDetect(); };
 function runAutoLevels() {
   if (!img) return;
@@ -4328,7 +4466,7 @@ function draw() {
     }
   }
 
-  if (faintWarning()) {
+  if (false && faintWarning()) {   // v3: faint, uncounted spots are no longer drawn (dashed rings made real colonies hard to judge)
     ctx.save();
     ctx.setLineDash([2.5 * px, 2.5 * px]);
     ctx.strokeStyle = 'rgba(200,204,212,0.85)'; ctx.lineWidth = 1.2 * px;
@@ -4344,15 +4482,7 @@ function draw() {
   for (const c of colonies) {
     idx++;
     const r = renderedRadius(c);
-    if (c.src === 'manual') {           // white casing, so black reads on dark agar too
-      ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-      ctx.lineWidth = 4 * px; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke();
-    }
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-    ctx.lineWidth = (c.src === 'manual' ? 2 : 1.7) * px;
-    ctx.strokeStyle = markColour(c);
-    ctx.stroke();
+    paintMark(ctx, c, c.x, c.y, r, px);
     if (c.clump && c.n > 1) {
       ctx.fillStyle = MARK.clump;
       ctx.font = (11 * px) + 'px system-ui, sans-serif';
@@ -4674,7 +4804,7 @@ viewport.addEventListener('pointerdown', e => {
   if (tool === 'add') {
     const hit = hitColony(p);
     if (hit >= 0) removeColonyAt(hit);
-    else { pushUndo(); manualAdd.push({ x: p.x, y: p.y }); mergeColonies(); }
+    else { pushUndo(); manualAdd.push({ x: p.x, y: p.y, free: !roi }); mergeColonies(); }
     return;
   }
   if (tool === 'remove') { removeAt(p); return; }
@@ -4795,26 +4925,27 @@ viewport.addEventListener('wheel', e => {
 // ============================================================
 // manual corrections
 // ============================================================
+let autoHidden = false;   // v3: "Clear found": the counter's colonies are hidden until the next Count
 function pushUndo() {
-  undoStack.push(JSON.stringify({ a: manualAdd, s: suppress }));
+  undoStack.push(JSON.stringify({ a: manualAdd, s: suppress, h: autoHidden }));
   if (undoStack.length > 120) undoStack.shift();
   redoStack = [];
   refreshUndo();
 }
 function applySnapshot(str) {
   const o = JSON.parse(str);
-  manualAdd = o.a; suppress = o.s;
+  manualAdd = o.a; suppress = o.s; autoHidden = !!o.h;
   mergeColonies();
 }
 function undo() {
   if (!undoStack.length) return;
-  redoStack.push(JSON.stringify({ a: manualAdd, s: suppress }));
+  redoStack.push(JSON.stringify({ a: manualAdd, s: suppress, h: autoHidden }));
   applySnapshot(undoStack.pop());
   refreshUndo();
 }
 function redo() {
   if (!redoStack.length) return;
-  undoStack.push(JSON.stringify({ a: manualAdd, s: suppress }));
+  undoStack.push(JSON.stringify({ a: manualAdd, s: suppress, h: autoHidden }));
   applySnapshot(redoStack.pop());
   refreshUndo();
 }
@@ -4822,7 +4953,7 @@ function refreshUndo() { $('btnUndo').disabled = !undoStack.length; $('btnRedo')
 // A new selection starts clean. Colonies added or struck out by hand belong to the area they were
 // made on, and carried onto the next spot they would be counted there too.
 function resetCorrections() {
-  manualAdd = []; suppress = []; undoStack = []; redoStack = [];
+  manualAdd = manualAdd.filter(m => m.free); suppress = []; undoStack = []; redoStack = []; autoHidden = false;   // marks made with no area stay; they count once inside the new one
   countDirty = false;
   refreshUndo();
 }
@@ -4835,6 +4966,14 @@ function keepCorrectionsInside() {
   refreshUndo();
 }
 $('btnUndo').onclick = undo; $('btnRedo').onclick = redo;
+/* v3: when the counter sees things that are not there, clear its marks and count by hand; Undo or Count brings them back */
+function clearFound() {
+  const n = colonies.filter(c => c.src !== 'manual').length;
+  if (!n) { setHint('There are no colonies found by the counter to clear.'); return; }
+  pushUndo(); autoHidden = true; mergeColonies(); setTool('add');
+  setHint('Cleared ' + n + ' colonies the counter found. Click each colony to mark it yourself. Undo brings them back; Count finds them again.');
+}
+$('btnClearAuto').onclick = clearFound;
 
 // Accept a click anywhere within the colony's own outline, or within a comfortable screen-space
 // radius of its centre, whichever is larger — so small colonies stay clickable when zoomed out.
@@ -4866,8 +5005,8 @@ function removeAt(p) { removeColonyAt(hitColony(p)); }
 // Manual corrections survive a re-run. A removal is stored as a point, not as an index, so changing
 // the sensitivity or the selection does not silently resurrect every colony the user struck out.
 function mergeColonies() {
-  const kept = autoColonies.filter(c => !suppress.some(s => Math.hypot(s.x - c.x, s.y - c.y) < Math.max(6, (s.r || c.r) * 1.2)));
-  colonies = kept.concat(manualAdd.map(m => ({ x: m.x, y: m.y, r: manualRadius(), n: 1, src: 'manual' })));
+  const kept = autoHidden ? [] : autoColonies.filter(c => !suppress.some(s => Math.hypot(s.x - c.x, s.y - c.y) < Math.max(6, (s.r || c.r) * 1.2)));
+  colonies = kept.concat(manualAdd.filter(m => !roi || !m.free || inRoi(m)).map(m => ({ x: m.x, y: m.y, r: manualRadius(), n: 1, src: 'manual' })));
   draw();
   refreshCount();
 }
@@ -4889,13 +5028,14 @@ function refreshCount() {
   const clumps = colonies.filter(c => c.clump);
   const kc = colonies.filter(c => c.kind === 'colour').length, kw = colonies.filter(c => c.kind === 'white').length;
   if (kc && kw) bits.push(kc + ' blue/coloured · ' + kw + ' white');
-  if (low) bits.push(low + ' to check');
+  void low;
   if (clumps.length) bits.push(clumps.length + ' clump' + (clumps.length > 1 ? 's' : '') + ' estimated');
   if (manualAdd.length) bits.push(manualAdd.length + ' added by hand');
   if (suppress.length) bits.push(suppress.length + ' removed by hand');
-  const nF = faintWarning();
-  if (nF) bits.unshift('⚠ ' + nF + ' faint, not counted');
+
+  if (autoHidden) bits.unshift('found colonies cleared, counting by hand');
   $('countSub').textContent = bits.length ? bits.join(' · ') : (t ? 'automatic' : 'nothing counted yet');
+  { const b = $('btnClearAuto'); if (b) b.disabled = !colonies.some(c => c.src !== 'manual'); }
   if (!countDirty) $('countEntry').value = (roi || t) ? String(t) : '';
   syncCountEntry();
 }
@@ -4913,7 +5053,7 @@ function setTool(t) {
   setHint({
     pan: 'Drag to pan, scroll or pinch to zoom.',
     select: SHAPE_HINT[roiShape],
-    add: 'Click empty space to add a colony, or click a marked one to remove it.',
+    add: roi ? 'Click empty space to add a colony, or click a marked one to remove it.' : 'Click each colony to mark it; no plate area needed. Click a mark again to remove it.',
     remove: 'Click a marked colony to remove it.'
   }[t]);
   draw();
@@ -4929,7 +5069,7 @@ const SHAPE_HINT = {
   rect: 'Drag a box around the area to count. Drag the dots to adjust.'
 };
 function chooseShape(s) {
-  roiShape = s;
+  roiShape = s; selLabel();
   setTool('select');
   if (roi && roi.shape !== s) setHint('Draw again to replace the current selection with a ' +
     (s === 'circle' ? 'circle' : s === 'lasso' ? 'freehand outline' : 'box') + '.');
@@ -5063,6 +5203,7 @@ function runDetect(opts) {
 }
 function forceRecount() {
   if (!roi) return;
+  autoHidden = false;
   cachedMode = null; scaleCache = null; runDetect({ redecide: true });
 }
 $('btnCount').onclick = forceRecount;
@@ -5088,6 +5229,7 @@ function resetColonySettings() {
   $('rejectElongated').checked = false;
   $('lockThresholds').checked = false;
   $('upscale').value = 'auto';
+  applyPreset('typical', false); $('markStyle').value = 'dot';
 
   if (teachMode) { teachMode = false; teachPicks = []; $('btnTeach').textContent = 'Start picking'; }
   learned = null; teachPicks = [];
@@ -5112,7 +5254,7 @@ worker.onmessage = e => {
     if (!m.dish) { setHint('No dish found. Draw the area yourself with the Select tool.'); setTool('select'); return; }
     const f = ctxInfo.f;
     roi = { shape: 'circle', cx: m.dish.cx * f, cy: m.dish.cy * f, r: m.dish.r * f };
-    roiShape = 'circle';
+    roiShape = 'circle'; selLabel();
     resetCorrections(); autoColonies = []; colonies = [];
     clampRoi(); refreshUI(); draw();
     setHint('Dish found. Drag the dots if it is off, then the count updates.');
@@ -5158,8 +5300,8 @@ worker.onmessage = e => {
   mergeColonies();
   showDiag(m.diag);
   const nF = faintWarning();
-  if (nF) setHint(nF + ' faint objects (grey dotted rings) sit just below the cut-off and are not counted. If they are colonies — a dense spot of small colonies looks like this — press More in the colony menu, or type the count yourself in step 4. If they are agar texture or dust, carry on.');
-  else if (tool === 'select' || tool === 'pan') setHint(roi && roi.shape === 'circle' && tool === 'select' && lastSpotR > 0
+  void nF;   // v3: faint uncounted spots are no longer drawn or announced
+  if (tool === 'select' || tool === 'pan') setHint(roi && roi.shape === 'circle' && tool === 'select' && lastSpotR > 0
     ? 'Counted. Click once on the next spot to count it with a circle this size, or use Add and Remove to correct this one.'
     : 'Counted. Switch to Add or Remove to correct anything by hand — your corrections survive a re-count.');
 };
@@ -5193,6 +5335,50 @@ function showDiag(d) {
 // live re-run on control changes
 function bindRerun(id, ev) { $(id).addEventListener(ev || 'change', () => { if (roi) runDetect(); }); }
 ['splitTouching', 'estimateClumps', 'resolveClusters', 'rejectElongated', 'lockThresholds'].forEach(id => bindRerun(id));
+/* v3: the three splitting switches as one choice, from most to least splitting */
+const TOUCH = { all: [1, 1, 1], split: [1, 1, 0], waist: [1, 0, 0], none: [0, 0, 0] };
+const TOUCH_NOTE = {
+  all: 'Cuts touching colonies apart where the outline narrows, separates merged ones from the curves of their edges, and estimates a clump nothing can split from its area (marked ×n). Best for most plates.',
+  split: 'Splits touching and merged colonies, but a solid clump counts as one, so you can zoom in and correct it by hand.',
+  waist: 'Only cuts where the outline clearly narrows between two colonies. Safest for large, well-spaced colonies.',
+  none: 'Every connected blob counts as one colony. Only for very sparse plates.' };
+const touchOf = () => Object.keys(TOUCH).find(k => TOUCH[k].join() === ['splitTouching', 'resolveClusters', 'estimateClumps'].map(id => +$(id).checked).join()) || 'all';
+function setTouch(m, run) { const t = TOUCH[m] || TOUCH.all; ['splitTouching', 'resolveClusters', 'estimateClumps'].forEach((id, i) => { $(id).checked = !!t[i]; });
+  $('touchMode').value = m; $('touchNote').textContent = TOUCH_NOTE[m]; if (run && roi) runDetect(); }
+const PRESET = { typical: { sens: 50, touch: 'all', mark: 100, nums: true }, crowded: { sens: 62, touch: 'all', mark: 80, nums: false }, sparse: { sens: 40, touch: 'waist', mark: 100, nums: true }, exact: { sens: 50, touch: 'split', mark: 100, nums: true } };
+const PRESET_NOTE = {
+  typical: 'Balanced sensitivity, touching colonies split, solid clumps estimated.',
+  crowded: 'Finds fainter, smaller colonies; splits and estimates clumps; numbers off so the plate stays readable.',
+  sparse: 'Finds fewer, clearer colonies and only cuts at a clear waist, so big colonies are not split in two.',
+  exact: 'Splits touching colonies but counts each solid clump as one: zoom in and add the rest by hand.' };
+function applyPreset(k, run) { const p = PRESET[k]; if (!p) return;
+  $('sens').value = p.sens; $('sensVal').textContent = p.sens; syncSeg(p.sens); setTouch(p.touch, false);
+  $('markerSize').value = p.mark; $('markerVal').textContent = p.mark + '%'; $('showNumbers').checked = p.nums;
+  $('ccPreset').value = k; $('presetNote').textContent = PRESET_NOTE[k]; draw(); if (run && roi) runDetect(); }
+function presetCheck() { const p = PRESET[$('ccPreset').value]; if (p && +$('sens').value === p.sens && touchOf() === p.touch) return;
+  $('ccPreset').value = 'custom'; $('presetNote').textContent = 'Your own settings. Pick a setup above to go back to one.'; }
+$('ccPreset').addEventListener('change', e => { if (e.target.value !== 'custom') applyPreset(e.target.value, true); });
+$('touchMode').addEventListener('change', e => { setTouch(e.target.value, true); presetCheck(); });
+$('sens').addEventListener('change', presetCheck);
+$('sensSeg').addEventListener('click', () => setTimeout(presetCheck, 0));
+$('markStyle').addEventListener('change', () => draw());
+setTouch(touchOf(), false); $('presetNote').textContent = PRESET_NOTE.typical;
+
+/* v3: the Select tool's own list: shape, find the dish, whole image, clear */
+const SHAPE_NAME = { rect: 'Box', circle: 'Circle', lasso: 'Lasso' };
+function selLabel() { const l = $('selLab'); if (l) l.textContent = 'Select: ' + (SHAPE_NAME[roiShape] || 'Box'); }
+function closeSelMenu() { $('selMenu').hidden = true; $('mSelectMore').setAttribute('aria-expanded', 'false'); }
+$('mSelectMore').addEventListener('click', e => { e.stopPropagation(); const m = $('selMenu');
+  if (!m.hidden) return closeSelMenu();
+  m.querySelectorAll('[data-shape]').forEach(b => { if (SHAPE_NAME[b.dataset.shape]) b.setAttribute('aria-checked', String(b.dataset.shape === roiShape)); b.disabled = !img && !SHAPE_NAME[b.dataset.shape]; });
+  m.hidden = false; const r = $('mSelect').getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px'; m.style.top = (r.bottom + 6) + 'px'; $('mSelectMore').setAttribute('aria-expanded', 'true'); });
+$('selMenu').addEventListener('click', e => { const b = e.target.closest('[data-shape]'); if (!b) return; closeSelMenu(); const k = b.dataset.shape;
+  if (SHAPE_NAME[k]) chooseShape(k); else if (k === 'dish') $('btnAutoDish').click(); else if (k === 'whole') $('btnWhole').click(); else if (k === 'clear') clearSelection();
+  selLabel(); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#selMenu,#mSelectMore')) closeSelMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSelMenu(); });
+selLabel();
 $('minArea').addEventListener('change', () => { if (roi) runDetect(); });
 $('colonyType').addEventListener('change', () => { cachedMode = null; if (roi) runDetect({ redecide: true }); });
 let sensWheelTimer = null;
@@ -5350,6 +5536,9 @@ function flagFor(n, m) {
   if (n > hi) return { k: 'hi', t: '>' + hi };
   return { k: 'ok', t: lo + '–' + hi };
 }
+// the countable-range verdict in words, the same on screen, in every export and in Lab Entry
+function rangeWords(n, m) { const f = flagFor(n, m), [lo, hi] = RANGES[m] || RANGES.spread; return f.k === 'ok' ? 'in range (' + lo + '–' + hi + ')' : n === 'TNTC' ? 'TNTC' : f.k === 'lo' ? 'below ' + lo : 'above ' + hi; }
+const EXPORT_COLS = ['Title', 'Row', 'Colonies', 'Dilution (10^-x)', 'Volume plated (µL)', 'CFU/mL', 'log10 CFU/mL', 'Countable range'];
 
 function syncCountEntry() {
   const t = total();
@@ -5450,7 +5639,8 @@ function renderRows() {
       '<td><input type="text" class="count-edit' + (r.entered ? ' entered' : '') + '" inputmode="numeric" value="' + esc(r.n) + '" title="' + (r.entered ? 'Typed in by hand' : 'Detected count') + '. Edit to correct; TNTC is accepted."></td>' +
       '<td>10⁻' + r.dil + '</td><td>' + r.vol + '</td>' +
       '<td>' + (r.n === 'TNTC' ? '—' : fmtSci(rowCfu(r))) + '</td>' +
-      '<td><span class="flag ' + f.k + '">' + f.t + '</span></td>' +
+      '<td>' + (r.n === 'TNTC' || !(rowCfu(r) > 0) ? '—' : Math.log10(rowCfu(r)).toFixed(2)) + '</td>' +
+      '<td><span class="flag ' + f.k + '">' + rangeWords(r.n, method) + '</span></td>' +
       '<td><button class="rowdel" title="Remove row">×</button></td>';
     tr.querySelector('input[type="checkbox"]').onchange = e => { r.use = e.target.checked; renderRows(); };
     tr.querySelector('.rowtitle-edit').onchange = e => { r.title = e.target.value.trim(); renderRows(); };
@@ -5497,19 +5687,24 @@ $('btnCsv').onclick = () => {
   // Tab-separated: pasted straight into Excel it lands as columns on its own, no import dialog.
   // Plain ASCII throughout (µL -> uL) so nothing depends on how the receiving app reads the file's
   // encoding. A row the checkbox has turned off is left out entirely.
-  const lines = [['Title', 'Row', 'Count', 'Dilution (10^-x)', 'Volume (uL)', 'CFU/mL'].join('\t')];
+  // the same columns, rows and summary as the table on screen and the Excel workbook
+  const A = t => t.replace(/µ/g, 'u').replace(/–/g, '-');
+  const lines = [EXPORT_COLS.map(A).join('\t')];
   for (const r of used) {
-    lines.push([(r.title || '').replace(/\t/g, ' '), r.id, r.n, r.dil, r.vol, numForExport(rowCfu(r))].join('\t'));
+    const c = r.n === 'TNTC' ? NaN : rowCfu(r);
+    lines.push([(r.title || '').replace(/\t/g, ' '), r.id, r.n, r.dil, r.vol, numForExport(c), c > 0 ? logForExport(Math.log10(c)) : '', A(rangeWords(r.n, method))].join('\t'));
   }
   const s = summarise(used);
-  lines.push(['', 'Average', '', '', '', numForExport(s.mean)].join('\t'));
-  lines.push(['', 'SD', '', '', '', numForExport(s.sd)].join('\t'));
-  lines.push(['', 'Mean log10', '', '', '', logForExport(s.logMean)].join('\t'));
-  lines.push(['', 'SD log10', '', '', '', logForExport(s.logSd)].join('\t'));
+  lines.push('');
+  lines.push(['Average', '', '', '', '', numForExport(s.mean)].join('\t'));
+  lines.push(['SD', '', '', '', '', numForExport(s.sd)].join('\t'));
+  lines.push(['Mean log10', '', '', '', '', '', logForExport(s.logMean)].join('\t'));
+  lines.push(['SD log10', '', '', '', '', '', logForExport(s.logSd)].join('\t'));
+  lines.push(['Plates averaged', '', s.n].join('\t'));
   const g = groups(used);
   if (g.size > 1) {
     lines.push('');
-    lines.push(['Sample', 'n', 'Mean CFU/mL', 'SD', 'Mean log10', 'SD log10'].join('\t'));
+    lines.push(['Sample', 'Plates', 'Mean CFU/mL', 'SD', 'Mean log10', 'SD log10'].join('\t'));
     for (const [k, list] of g) {
       const q = summarise(list);
       lines.push([(k || 'untitled').replace(/\t/g, ' '), q.n, numForExport(q.mean), numForExport(q.sd), logForExport(q.logMean), logForExport(q.logSd)].join('\t'));
@@ -5566,9 +5761,9 @@ const num = v => (typeof v === 'number' && isFinite(v) ? v : '');
 const lg = v => (v > 0 && isFinite(v) ? Math.log10(v) : '');
 function workbookOf(used) {
   const B = v => ({ v, s: 1 }), SCI = v => ({ v: num(v), s: 2 }), DEC = v => ({ v: num(v), s: 3 }), s = summarise(used);
-  const plates = [['Title', 'Row', 'Colonies', 'Dilution (10^-x)', 'Volume plated (µL)', 'CFU/mL', 'log10 CFU/mL', 'In countable range?'].map(B)];
+  const plates = [EXPORT_COLS.map(B)];
   for (const r of used) { const c = r.n === 'TNTC' ? NaN : rowCfu(r), f = flagFor(r.n, method);
-    plates.push([r.title || '', r.id, r.n === 'TNTC' ? 'TNTC' : r.n, r.dil, r.vol, SCI(c), DEC(lg(c)), f.k === 'ok' ? 'yes' : f.t]); }
+    plates.push([r.title || '', r.id, r.n === 'TNTC' ? 'TNTC' : r.n, r.dil, r.vol, SCI(c), DEC(lg(c)), rangeWords(r.n, method)]); void f; }
   plates.push([], [B('Average'), '', '', '', '', { v: num(s.mean), s: 4 }], [B('SD'), '', '', '', '', SCI(s.sd)], [B('Mean log10'), '', '', '', '', '', DEC(s.logMean)], [B('SD log10'), '', '', '', '', '', DEC(s.logSd)], [B('Plates averaged'), '', s.n]);
   const sheets = [{ name: 'Plates', rows: plates, widths: [26, 6, 10, 15, 18, 14, 14, 30] }];
   const g = groups(used);
@@ -5658,14 +5853,7 @@ function markedCanvas() {
   for (const col of colonies) {
     i++;
     const x = col.x - bx, y = col.y - by, r = Math.max(3, col.src === 'manual' ? col.r : col.r * ms2);
-    if (col.src === 'manual') {
-      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
-      g.lineWidth = lw * 2.6; g.strokeStyle = 'rgba(255,255,255,0.85)'; g.stroke();
-    }
-    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
-    g.lineWidth = lw;
-    g.strokeStyle = markColour(col);
-    g.stroke();
+    paintMark(g, col, x, y, r, lw);
     if (col.clump && col.n > 1) {
       g.fillStyle = MARK.clump; g.font = 'bold ' + Math.max(10, r) + 'px sans-serif';
       g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -5706,14 +5894,14 @@ function setHint(t) { $('hint').textContent = t; }
 function unmute(id) { $(id).classList.remove('muted'); }
 function refreshUI() {
   const has = !!roi;
-  $('mAdd').disabled = !has; $('mRemove').disabled = !has;
+  $('mAdd').disabled = !img; $('mRemove').disabled = !img;   // v3: mark colonies by hand with or without a plate area
   $('btnRecountStage').disabled = !has;
   $('btnClearStage').disabled = !has;
   $('roiTag').textContent = !roi ? '' :
     (roi.shape === 'circle' ? 'circle r=' + Math.round(roi.r) + ' px' :
      roi.shape === 'lasso' ? 'freehand (' + roi.points.length + ' pts)' :
      'box ' + Math.round(roi.w) + '×' + Math.round(roi.h));
-  if (!has && (tool === 'add' || tool === 'remove')) setTool('select');
+  if (!img && (tool === 'add' || tool === 'remove')) setTool('select');
   refreshUndo();
   refreshCount();
   draw();
@@ -6066,7 +6254,7 @@ const LPInbox=(()=>{
     const lines = list.map(r => (r.title || 'Plate ' + r.id) + ': ' + r.n + ' colonies at 10⁻' + r.dil + ', ' + r.vol + ' µL plated → ' + (r.n === 'TNTC' ? 'TNTC' : fmtSci(rowCfu(r)) + ' CFU/mL') + (flagFor(r.n, method).k !== 'ok' ? ' (outside the countable range: ' + flagFor(r.n, method).t + ')' : ''));
     if (s.n > 1) lines.push('Mean ' + fmtSci(s.mean) + ' CFU/mL over ' + s.n + ' plates' + (isFinite(s.sd) && s.sd > 0 ? ' (SD ' + fmtSci(s.sd) + ')' : ''));
     if (te.ok) lines.push('Transformation efficiency ' + fmtSci(te.te) + ' transformants/µg (' + (+te.ug.toPrecision(3)) + ' µg DNA, ' + te.vol + ' of ' + te.rec + ' µL plated at 10⁻' + te.dil + ')');
-    const table = { cols: ['Title', 'Row', 'Colonies', 'Dilution (10^-x)', 'Volume plated (µL)', 'CFU/mL', 'Flag'], rows: list.map(r => [r.title || '', r.id, r.n, r.dil, r.vol, r.n === 'TNTC' ? '' : numForExport(rowCfu(r)), flagFor(r.n, method).k === 'ok' ? 'in range' : flagFor(r.n, method).t]) };
+    const table = { cols: EXPORT_COLS, rows: list.map(r => { const c = r.n === 'TNTC' ? NaN : rowCfu(r); return [r.title || '', r.id, r.n, r.dil, r.vol, r.n === 'TNTC' ? '' : numForExport(c), c > 0 ? logForExport(Math.log10(c)) : '', rangeWords(r.n, method)]; }) };
     const images = []; const c = colonies.length ? markedCanvas() : null;
     if (c) { const mx = 1400, k = Math.min(1, mx / Math.max(c.width, c.height)), t = document.createElement('canvas'); t.width = Math.round(c.width * k); t.height = Math.round(c.height * k); t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
       images.push({ name: (imgName.replace(/\.[^.]+$/, '') || 'plate') + '-counted.jpg', dataUrl: t.toDataURL('image/jpeg', 0.86), caption: total() + ' colonies counted' }); }

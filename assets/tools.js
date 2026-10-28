@@ -90,9 +90,9 @@ const TOOLS = [
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28",
         new: [
-          "Export to Excel (.xlsx): plates, averages, each sample and transformation efficiency",
-          "Opens TIFF plate images, including 16-bit and multi-page TIFFs",
-          "Transformation efficiency, and Send to Lab Entry"
+          "Export to Excel (.xlsx), with the same columns as the table",
+          "Simpler settings: a quick setup, one choice for touching colonies; see-through rings with a centre dot",
+          "Clear what the counter found and mark by hand, with or without a plate area; Auto enhance for the image"
         ] }
     ]
   },

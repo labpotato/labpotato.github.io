@@ -269,7 +269,7 @@ const TOOLS = [
       { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28",
         new: [
           "Marks beside the scroll bar: click one to jump there and see it flash; Alt+Up/Down steps through them",
-          "Extension works on top of any page: highlight, comment, edit; outline, a note per page, backup and restore",
+          "Extension: your highlights on every computer with Chrome Sync, and a daily backup file; outline and a note per page",
           "Toolbar can float or dock; a page you opened before reopens with your changes"
         ] }
     ]

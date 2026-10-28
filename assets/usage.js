@@ -279,9 +279,9 @@ function renderUsage(data) {
       <span class="use-rank">${ix + 1}</span><span class="app-icon use-icon">${appGlyph(t)}</span>
       <span class="use-name"><b>${esc2(t.name)}</b><small>${esc2(t.short || t.tagline)}</small></span>
       <span class="use-bar" aria-hidden="true"><i style="width:${(100 * r.sum / top).toFixed(1)}%"></i></span>
-      <span class="use-all"><b>${nf(r.sum)}</b><small>opened</small></span>
+      <span class="use-now" title="Added ${R.last}"><b>+${nf(now)}</b><small>${R.last}</small></span>
       ${spark(cum(r.per), accentOf(t), data.labels)}
-      <span class="use-now" title="Added ${R.last}"><b>+${nf(now)}</b><small>${R.last}</small></span></a>`;
+      <span class="use-all"><b>${nf(r.sum)}</b><small>opened</small></span></a>`;   // the total sits at the far right
   }).join("");
   // where visitors are
   if (data.stats) {

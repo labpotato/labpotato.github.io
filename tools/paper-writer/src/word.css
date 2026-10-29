@@ -16,8 +16,8 @@
 .tb .w-a sup{font-size:9px;vertical-align:5px}
 
 /* page width and margins */
-.flow-paper[data-w]{width:min(100%,calc(var(--pw,794px) + 220px))}
-.flow-paper[data-w].nomargin{width:min(100%,var(--pw,794px))}
+.flow-paper[data-w]{width:min(100%,calc((var(--pw,794px) + 220px) * var(--z,1)));grid-template-columns:minmax(0,1fr) calc(220px * var(--z,1))}
+.flow-paper[data-w].nomargin{width:min(100%,calc(var(--pw,794px) * var(--z,1)));grid-template-columns:minmax(0,1fr)}
 .flow-paper[data-w] .flow{max-width:var(--pw,794px)}
 .flow-paper[data-w="fill"],.flow-paper[data-w="fill"].nomargin{width:100%}
 .flow-paper[data-w="fill"] .flow{max-width:none}

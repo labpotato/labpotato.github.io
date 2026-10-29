@@ -178,12 +178,12 @@ function applyPage() {
   if (S.doc?.kind !== "flow") return; const p = pageCfg();
   paper.dataset.w = p.w; paper.style.setProperty("--pw", (p.w === "custom" ? p.px : PAGE_W[p.w] || 794) + "px"); flowEl.dataset.m = p.m;
   flowEl.style.fontFamily = p.font || ""; flowEl.style.fontSize = p.size ? p.size + "pt" : ""; flowEl.style.lineHeight = p.lh || "";
-  requestAnimationFrame(() => { placeGrip(); layoutMargin(); placeBar?.(); });
+  requestAnimationFrame(() => { placeGrip(); layoutMargin(); placeBar?.(); nudgeOverlays(); });
 }
 function setPage(patch, asDefault) { if (!S.doc) return; S.doc.meta = S.doc.meta || {}; S.doc.meta.page = { ...pageCfg(), ...patch }; if (asDefault) Prefs.set("pageDefaults", { ...S.doc.meta.page }); applyPage(); markDirty(); }
-function placeGrip() { grip.style.left = (flowEl.offsetLeft + flowEl.offsetWidth - 5) + "px"; grip.style.height = flowEl.offsetHeight + "px"; }
+function placeGrip() { const pr = paper.getBoundingClientRect(), fr = flowEl.getBoundingClientRect(); grip.style.left = (fr.right - pr.left - 5) + "px"; grip.style.top = (fr.top - pr.top) + "px"; grip.style.height = fr.height + "px"; }
 grip.addEventListener("pointerdown", e => {
-  e.preventDefault(); grip.setPointerCapture(e.pointerId); const x0 = e.clientX, w0 = flowEl.offsetWidth, z = S.flowZoom || 1; grip.classList.add("on");
+  e.preventDefault(); grip.setPointerCapture(e.pointerId); const z = S.flowZoom || 1, x0 = e.clientX, w0 = flowEl.getBoundingClientRect().width / z; grip.classList.add("on");
   const mv = ev => { const w = Math.round(clamp(w0 + (ev.clientX - x0) * 2 / z, 420, 4000)); S.doc.meta.page = { ...pageCfg(), w: "custom", px: w }; applyPage(); status(`Page width ${w}px (${(w / 37.8).toFixed(1)} cm)`); };
   const up = () => { grip.classList.remove("on"); grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); markDirty(); };
   grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up);
@@ -210,6 +210,17 @@ async function pageSetup() {
     <div class="mrow"><button class="btn" data-cancel>Cancel</button><button class="btn primary" data-ok="ok">Apply</button></div>`);
   if (!v) return; setPage({ w: v.w, px: clamp(+v.px || 900, 420, 4000), m: v.m, lh: v.lh, font: v.font, size: +v.size }, v.def);
 }
+
+/* ---- zoom the text and the comment margin, not the page box around them: extensions such as Grammarly draw their
+   underlines in an overlay next to the text, which a zoomed box would scale a second time ---- */
+{ const sz = setZoom; setZoom = async function (mode, val) {
+    if (S.doc?.kind !== "flow") return sz(mode, val);
+    S.flowZoom = mode === "custom" ? clamp(val, .4, 3) : 1; S.zoomMode = mode === "custom" ? "custom" : "width"; const z = S.flowZoom;
+    paper.style.zoom = ""; flowEl.style.zoom = z === 1 ? "" : z; marginEl.style.zoom = z === 1 ? "" : z; paper.style.setProperty("--z", z);
+    $("#zoomVal").textContent = Math.round(z * 100) + "%"; layoutMargin(); placeGrip(); nudgeOverlays();
+  }; }
+/* tell spelling and grammar extensions (Grammarly and the like) that the text moved, so they re-measure their underlines */
+const nudgeOverlays = debounce(() => { dispatchEvent(new Event("resize")); viewer.dispatchEvent(new Event("scroll")); placeBar(); }, 60);
 
 /* ---- word count ---- */
 const wcPill = EL("button", { class: "wc-pill", type: "button", title: "Word count (Ctrl+Shift+G)", onclick: () => wordCountDialog() }); viewer.append(wcPill);

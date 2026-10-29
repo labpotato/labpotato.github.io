@@ -291,11 +291,11 @@ const TOOLS = [
     ],
     versions: [
       { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29" },
-      { v: "v2", file: "paper-writer-v2.html", date: "2026-10-29",
+      { v: "v2", file: "paper-writer-v2.html", date: "2026-10-29" },
+      { v: "v3", file: "paper-writer-v3.html", date: "2026-10-29",
         new: [
-          "Review the AI's changes one by one in one colour: Tab accepts, Esc rejects, Revise sends just that part back; Show changes on or off",
-          "Paste keeps the source's look (or match the document, or plain text); links work with a bare address",
-          "Pick any Claude model with its price; page width box, and wide pages fold the side panels to make room"
+          "Works with Grammarly and other writing extensions: their underlines stay on the words at any zoom",
+          "Review the AI's changes one by one (Tab, Esc, Revise), paste that keeps its look, and every Claude model (from v2)"
         ] }
     ]
   }

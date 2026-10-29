@@ -4,11 +4,12 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v4.html`: the tool (v1 to v3 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v5.html`: the tool (v1 to v4 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
-  breaking Doc Reader (below).
-- `doc-reader-extension-v3.zip`: the Chrome extension (unzip, then `chrome://extensions` →
-  Developer mode → Load unpacked; v1 and v2 stay as legacy zips). It works on top of any page, like
+  breaking Doc Reader (below); v5 links extension v4.
+- `doc-reader-extension-v4.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+  Developer mode → Load unpacked; v1 to v3 stay as legacy zips). v4 has Lab Potato's Google
+  OAuth client built in, so Sign in with Google needs no setup. It works on top of any page, like
   Liner: a small potato opens the toolbar; select text to highlight or comment. Marks are kept per
   address and come back when the page is opened again. It also opens any page or PDF link in the
   reader with one click, including pages you are signed in to. Its reader is Doc Reader v4.
@@ -95,9 +96,12 @@ Sign-in needs one Google Cloud OAuth client, set up once:
    account that will sign in (while the app is in Testing). Publish the app later to let anyone sign in.
 3. Credentials → Create credentials → OAuth client ID → Application type **Web application**;
    Authorized redirect URI: `https://bpinomgodaijcohkedcjaddcokkpagen.chromiumapp.org/`
-4. Copy the client ID. In the extension's library page (right-click the toolbar icon →
-   Options) open **Setup**, paste it, Save, then **Sign in with Google**.
-   (Or send it to be built in as the default, so nobody has to paste it.)
+4. Copy the client ID. Lab Potato's is built in as `DEFAULT_CLIENT_ID` in
+   `src/extension/background.js` (extension v4 and later). To use a different project instead, open
+   the extension's library page (right-click the toolbar icon → Options) → **Use your own Google
+   Cloud project instead**, paste it, Save, then **Sign in with Google**.
+
+While the consent screen is in **Testing**, only the Google accounts listed under Test users can sign in.
 
 If the extension is later published on the Chrome Web Store, the Store assigns its own ID: put the
 Store's public key in `manifest.json` as `key` and add the new `https://<id>.chromiumapp.org/`

@@ -6,8 +6,8 @@ editor can't take over Doc Reader's menus, panels and styles) and sync.js (the e
 sync of documents). Paper Writer v1-v5 were built from these files. The Chrome extension is made from
 the built page by build-ext.py.
 
-    python3 tools/doc-reader/src/build.py v4
-    python3 tools/doc-reader/src/build-ext.py v4 v3
+    python3 tools/doc-reader/src/build.py v5
+    python3 tools/doc-reader/src/build-ext.py v5 v4
 
 Reads tools/doc-reader/doc-reader-v2.html (never changes it) and writes
 tools/doc-reader/doc-reader-vN.html. Each edit must match exactly once, so a
@@ -134,7 +134,7 @@ rep("""<p>Works on top of any web page, like Liner: select text and press <b>Hig
         <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>""",
     """<p>Works on top of any web page, like Liner: select text and press <b>Highlight</b> or add comments. They are kept per address and come back when you open the page again. One click opens the page here, looking as it does on the site, to edit a copy with the Word tools and the AI editor.</p>
         <p>Sign in with Google in the extension and your page highlights and your Doc Reader documents follow you to every computer where you sign in with the same account (kept in your own Google Drive); a daily backup file keeps a copy outside the browser.</p>
-        <a class="btn small" id="extLink" href="doc-reader-extension-v3.zip" download>""")
+        <a class="btn small" id="extLink" href="doc-reader-extension-v4.zip" download>""")   # v5: extension v4
 # v4: lookups by id skip a web page's elements of the same name (a page's #menu, #toast, #right)
 rep('const $ = (s, r = document) => r.querySelector(s);',
     'const $ = (s, r = document) => { const e = r.querySelector(s); return e && r === document && s[0] === "#" && e.closest("#flow") ? [...document.querySelectorAll(s)].find(x => !x.closest("#flow")) || e : e; };')

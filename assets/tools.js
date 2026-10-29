@@ -268,11 +268,10 @@ const TOOLS = [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
       { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28" },
       { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29" },
-      { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29",
+      { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29" },
+      { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29",
         new: [
-          "Web pages opened here keep their own look in the editor, and no longer break Doc Reader's menus and panels",
-          "Chrome extension v3: everything in Doc Reader v4; pages can't be edited live any more, with Revert for earlier edits",
-          "Sign in with Google in the extension and your documents follow you to every computer"
+          "Chrome extension v4: Sign in with Google works straight away, with no Google Cloud setup or client ID to paste"
         ] }
     ]
   }

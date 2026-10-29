@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://labpotato.github.io/</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/lab-entry/</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/colony-counter/</loc><lastmod>2026-10-28</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/gel-labeler/</loc><lastmod>2026-10-21</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/gibson-assembly/</loc><lastmod>2026-10-21</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/microscopy-image-labeler/</loc><lastmod>2026-10-21</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/protein-quant/</loc><lastmod>2026-10-21</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/cryobox-labeler/</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://labpotato.github.io/tools/doc-reader/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://labpotato.github.io/privacy.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://labpotato.github.io/terms.html</loc><lastmod>2026-10-29</lastmod></url>
 </urlset>

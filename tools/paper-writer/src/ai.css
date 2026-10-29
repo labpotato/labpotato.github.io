@@ -12,18 +12,24 @@
 ::highlight(ai-sel){background-color:color-mix(in srgb,var(--ai) 22%,transparent)}
 
 /* a change from the AI, in place in the text */
-.flow .ai-chg{border-radius:3px;cursor:pointer;-webkit-user-modify:read-only}
-.flow .ai-chg.on{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai) 55%,transparent);background:color-mix(in srgb,var(--ai) 6%,transparent)}
-.flow .ai-chg del.ai-d{color:var(--del);background:var(--del-l);text-decoration:line-through;text-decoration-thickness:1.5px}
-.flow .ai-chg ins.ai-i{color:var(--ins);background:var(--ins-l);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:2px}
+/* one colour for every AI change, like one reviewer in Word: deleted words struck through, new words underlined */
+.flow .ai-chg{cursor:pointer;-webkit-user-modify:read-only}
+.flow .ai-chg del.ai-d{color:var(--ai);text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.7}
+.flow .ai-chg ins.ai-i{color:var(--ai);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
 .flow .ai-chg del.ai-d + ins.ai-i{margin-left:2px}
+.flow .ai-chg .ai-h{border-radius:3px}
+.flow .ai-chg .ai-h.on{background:color-mix(in srgb,var(--ai) 13%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--ai) 13%,transparent)}
 .flow .ai-chg.rw del.ai-old{display:none}
 .flow .ai-chg.rw.showold del.ai-old{display:inline}
-.flow .ai-chg.rw ins.ai-new{color:inherit;background:color-mix(in srgb,var(--ai) 10%,transparent);text-decoration:underline dashed color-mix(in srgb,var(--ai) 70%,transparent);text-decoration-thickness:1.5px;text-underline-offset:3px}
-.flow .ai-chg.rw::before{content:"Rewrite";font:650 10px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--ai);border-radius:4px;padding:2px 5px;margin-right:4px;vertical-align:2px}
-.flow .ai-chg.busy{background:linear-gradient(90deg,color-mix(in srgb,var(--ai) 8%,transparent),color-mix(in srgb,var(--ai) 26%,transparent),color-mix(in srgb,var(--ai) 8%,transparent));background-size:200% 100%;animation:aiShimmer 1.1s linear infinite;cursor:progress}
+.flow .ai-chg.rw ins.ai-new{text-decoration-style:dashed}
+.flow .ai-chg.rw::before{content:"Rewrite";font:650 9.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ai);border:1px solid currentColor;border-radius:4px;padding:1px 4px;margin-right:4px;vertical-align:2px}
+.flow .ai-chg.busy,.flow .ai-h.busy{background:linear-gradient(90deg,color-mix(in srgb,var(--ai) 6%,transparent),color-mix(in srgb,var(--ai) 22%,transparent),color-mix(in srgb,var(--ai) 6%,transparent));background-size:200% 100%;animation:aiShimmer 1.1s linear infinite;cursor:progress}
 .flow .ai-chg.busy::before{content:"AI…";font:650 10px/1 var(--sans);color:var(--ai);margin-right:3px;vertical-align:2px}
 @keyframes aiShimmer{from{background-position:200% 0}to{background-position:0 0}}
+/* changes hidden: the text reads as if every change were accepted; the change being reviewed stays tinted */
+.flow.markup-off .ai-chg del.ai-d{display:none}
+.flow.markup-off .ai-chg ins.ai-i{color:inherit;text-decoration:none;margin:0}
+.flow.markup-off .ai-chg.rw::before{display:none}
 @media print{.flow .ai-chg del.ai-d{display:none}.flow .ai-chg ins.ai-i{color:inherit;background:none;text-decoration:none}.flow .ai-chg.rw::before{display:none}}
 
 /* the request box that opens on a selection */
@@ -53,10 +59,8 @@
 .ai-bar .tag svg{width:13px;height:13px}
 .ai-bar button{border:0;background:none;height:28px;padding:0 8px;border-radius:7px;color:var(--ink-2);font-size:12.5px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .ai-bar button:hover{background:var(--line);color:var(--ink)}
-.ai-bar button.ok{color:var(--ins);font-weight:650}
-.ai-bar button.ok:hover{background:var(--ins-l)}
-.ai-bar button.no{color:var(--del)}
-.ai-bar button.no:hover{background:var(--del-l)}
+.ai-bar button.ok{color:var(--ink);font-weight:650}
+.ai-bar button.ok:hover{background:var(--ai-l)}
 .ai-bar button:disabled{opacity:.4;cursor:default;background:none}
 .ai-bar kbd{font:600 10px/1 var(--sans);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:2px 4px;color:var(--ink-3)}
 .ai-bar .ver{color:var(--ink-3);font-size:11.5px;min-width:30px;text-align:center}
@@ -93,8 +97,8 @@
 .ai-msg.err{background:var(--del-l);border-color:transparent;color:var(--del)}
 .ai-st{font-size:10px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;padding:1px 5px;background:var(--line);color:var(--ink-2)}
 .ai-st.pending{background:var(--ai-l);color:var(--ai)}
-.ai-st.accepted{background:var(--ins-l);color:var(--ins)}
-.ai-st.rejected{background:var(--del-l);color:var(--del)}
+.ai-st.accepted,.ai-st.partly{background:var(--line);color:var(--ink)}
+.ai-st.rejected{background:none;color:var(--ink-3);border:1px solid var(--line-2)}
 .ai-chat-foot{border-top:1px solid var(--line);padding:8px 10px 10px;display:grid;gap:6px}
 .ai-chat-foot textarea{min-height:52px}
 .ai-chat-foot .row{display:flex;gap:6px;align-items:center}

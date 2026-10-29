@@ -3,19 +3,19 @@
 Write a paper in a Word-style editor with an AI editor. One offline HTML file, built on Doc Reader v2
 (its own browser database, `lp-paperwriter`, so documents never mix with Doc Reader's).
 
-- `paper-writer-v1.html`: the tool. Open it from the homepage, or double-click it on disk, then
-  **Try the sample paper** (made up, deliberately rough prose).
+- `paper-writer-v2.html`: the tool (v1 stays as a legacy release). Open it from the homepage, or
+  double-click it on disk, then **Try the sample paper** (made up, deliberately rough prose).
 - `src/`: what the tool is built from (see Building).
 
 ## AI editor
 
 | Part | How it works |
 |---|---|
-| AI connection | **AI settings** (the AI chip in the chat panel, Tools menu, or the start page): Demo (no key), Claude (your Anthropic key, any model; Opus 5.5 by default, effort selectable), OpenAI, Gemini, or any OpenAI-compatible server. Keys stay in the browser: forgotten when the tab closes unless "Remember" is ticked. |
+| AI connection | **AI settings** (Tools or Review menu, or the start page): Demo (no key), Claude (your Anthropic key), OpenAI, Gemini, or any OpenAI-compatible server. Claude models are listed with what they are for and their price (Opus 5.5 by default; Fable 5.1, Sonnet 5.5, Haiku 5.5 and earlier generations); the model chip in the chat panel switches model in one click. Keys stay in the browser: forgotten when the tab closes unless "Remember" is ticked. |
 | Ask from a selection | Select words inside one paragraph; **Ask AI** appears in the selection bar (or **Alt+A**, or the toolbar). Pick a quick request (editable list in settings) or type your own. |
-| One chat per document | The chat lives with the document (autosave and `.lpdoc`). The whole paper goes with the first request, and again only when it has changed by more than about 15% (or from the chat menu). Every request also carries its paragraph with the selection marked, and the section heading. The thread only grows, so Claude's prompt cache keeps working; the chat panel shows token use and cached tokens. |
-| Tracked changes in place | Only the selected part is replaced. Deletions are struck through in red, insertions underlined in green. When the answer changes most of the passage, the crossed-out words are hidden and it is labelled **Rewrite** (**Original** shows the old text; **As edits** / **As rewrite** switches the view). |
-| Review | **Tab** accepts, **Esc** rejects, **Ask again…** sends the same passage back with optional extra instructions; every version is kept (‹ 1/2 ›). Accept and reject go into undo. The AI is told which suggestions were accepted or rejected. |
+| One chat per document | The chat lives with the document, in this browser (autosave and `.lpdoc`), not on claude.ai: requests go to the API with your key. **⋯ → Download the chat** saves it as Markdown. The whole paper goes with the first request, and again only when it has changed by more than about 15% (or from the chat menu). Every request also carries its paragraph with the selection marked, and the section heading. The thread only grows, so Claude's prompt cache keeps working; the chat panel shows token use and cached tokens. |
+| Tracked changes in place | Only the selected part is replaced, shown in one colour like one reviewer in Word: deleted words struck through, new words underlined. When the answer changes most of the passage, the crossed-out words are hidden and it is labelled **Rewrite**. **Show changes** (eye button, Review menu) off shows the text as it reads with the changes. |
+| Review, one change at a time | Each edit is its own change. **Tab** accepts it and moves to the next, **Esc** rejects it, **Alt+↓ / Alt+↑** move between changes, **Revise…** sends just that part back to the AI (optionally saying what is wrong). **More** accepts or rejects the whole suggestion, asks again for the whole passage (versions are kept), or switches between word-by-word and rewrite views. Review menu: accept or reject everything. All of it goes into undo; the AI is told what was accepted, partly accepted or rejected. |
 
 Pending suggestions are left out of exports and saves to the original file (the original text is written),
 and the web view opens only once they are all reviewed.
@@ -25,8 +25,13 @@ and the web view opens only once they are all reviewed.
 - **Fonts and sizes** (toolbar), bigger/smaller, subscript and superscript, small caps, change case,
   line and paragraph spacing, first-line indent, format painter, clear formatting.
 - **Page**: A4, US Letter, wide, any width (drag the right edge of the page), or **fill the stage**
-  (no page edges); narrow, normal or wide margins; default font, size and line spacing (Page setup,
+  (no page edges), from the page box in the toolbar or the Page menu; wide pages fold the side panels to
+  make room, and the web view follows the same width; narrow, normal or wide margins; default font, size and line spacing (Page setup,
   optionally for every new document).
+- **Paste** keeps the source's look (fonts, sizes, bold, colours, heading sizes from Word or Google Docs);
+  the chip that appears switches to **Match this document** or **Plain text**; **Ctrl+Shift+V** pastes plain text.
+- **Links**: Ctrl+K or Insert → Link; Enter applies; a bare address gets https://, an e-mail gets mailto:;
+  click a link for Open / Edit / Remove.
 - **Insert**: footnotes (numbered automatically, listed at the end), table of contents (updates itself
   from the headings), page break, symbols (Greek, maths, units, arrows), date, tables, images, links, comments.
 - **Spelling**: offline English (UK) or (US) dictionaries with red wavy underlines, a list of common

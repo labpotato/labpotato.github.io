@@ -406,4 +406,154 @@ document.addEventListener("click", e => {
   if (A[a]) { e.preventDefault(); A[a](); }
 });
 $$(".menubar button, #flowTools [data-act^=w]").forEach(b => b.addEventListener("pointerdown", e => { saveRange(); e.preventDefault(); }));
+/* ---- inserting HTML: Chrome sometimes adds inline styles of its own to what it inserts; keep only the content's own ---- */
+{ const ih = insertHtml; insertHtml = function (html) {
+    const t = document.createElement("template"); t.innerHTML = html; t.content.querySelectorAll("[style]").forEach(e => e.setAttribute("data-pwk", ""));
+    const had = new Set($$("[style]", flowEl)); ih(t.innerHTML);
+    for (const el of $$("[style]", flowEl)) { if (had.has(el)) continue; if (el.hasAttribute("data-pwk")) continue; el.removeAttribute("style"); if ((el.tagName === "SPAN" || el.tagName === "FONT") && !el.attributes.length) el.replaceWith(...el.childNodes); }
+    $$("[data-pwk]", flowEl).forEach(e => e.removeAttribute("data-pwk")); S.doc && (S.doc.html = flowEl.innerHTML);
+  }; }
+/* ---- links: Enter applies, a bare address gets https://, an e-mail gets mailto:, a click shows Open / Edit / Remove ---- */
+function normUrl(u) { u = String(u || "").trim(); if (!u) return ""; if (/^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(u)) return "mailto:" + u; if (/^(#|\/|\.\/|\.\.\/)/.test(u) || /^[a-z][\w+.-]*:/i.test(u)) return u; return "https://" + u; }
+linkPrompt = async function () {
+  const sel = getSelection(), inFlow = sel.rangeCount && flowEl.contains(sel.anchorNode); if (!inFlow) useRange();
+  const a = elOf(sel.anchorNode)?.closest("#flow a"), saved = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null, collapsed = !saved || saved.collapsed;
+  const v = await modal(`<h3>${a ? "Edit link" : "Insert link"}</h3><div class="ai-f"><label>Web address, e-mail or #heading</label><input type="text" name="url" value="${esc(a?.getAttribute("href") || "")}" placeholder="example.org/page" spellcheck="false" autocomplete="url"></div>${collapsed && !a ? `<div class="ai-f"><label>Text to show (optional)</label><input type="text" name="text" placeholder="the address"></div>` : ""}<div class="mrow">${a ? '<button class="btn danger" data-ok="unlink">Remove link</button>' : ""}<span class="sp"></span><button class="btn" data-cancel>Cancel</button><button class="btn primary" data-ok="ok">Apply</button></div>`, { select: true });
+  if (!v) return; flowEl.focus({ preventScroll: true }); if (saved) { sel.removeAllRanges(); sel.addRange(saved); }
+  if (v.btn === "unlink") { if (a) { a.replaceWith(...a.childNodes); flowChanged(); } return; }
+  const url = normUrl(v.url); if (!url) return;
+  if (a) { a.setAttribute("href", url); flowChanged(); }
+  else if (collapsed) insertHtml(`<a href="${esc(url)}">${esc(v.text?.trim() || v.url.trim())}</a>`);
+  else cmd("createLink", url);
+};
+$("#modal").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && e.target.matches("input:not([type=checkbox]):not([type=radio])")) { const ok = $("#modal [data-ok='ok']") || $("#modal [data-ok]"); if (ok) { e.preventDefault(); ok.click(); } } });
+let linkCard = null;
+function closeLinkCard() { linkCard?.remove(); linkCard = null; }
+flowEl.addEventListener("click", e => {
+  const a = e.target.closest("a[href]"); closeLinkCard(); if (!a || a.closest("nav.toc") || e.ctrlKey || e.metaKey) return;
+  const r = a.getBoundingClientRect(), href = a.getAttribute("href");
+  linkCard = EL("div", { class: "imgtools link-card", style: `position:fixed;left:${clamp(r.left, 8, innerWidth - 340)}px;top:${r.bottom + 6}px` });
+  const B = (l, fn, t) => linkCard.append(EL("button", { title: t || "", onpointerdown: ev => ev.preventDefault(), onclick: ev => { ev.preventDefault(); closeLinkCard(); fn(); } }, l));
+  linkCard.append(EL("span", { class: "lc-url", title: href }, href.length > 42 ? href.slice(0, 40) + "…" : href));
+  B("Open ↗", () => { if (href.startsWith("#")) $(href, flowEl)?.scrollIntoView({ behavior: "smooth" }); else window.open(a.href, "_blank", "noopener"); }, "Open (or Ctrl+click the link)");
+  B("Edit", () => { const rg = document.createRange(); rg.selectNodeContents(a); getSelection().removeAllRanges(); getSelection().addRange(rg); saveRange(); linkPrompt(); });
+  B("Remove", () => { a.replaceWith(...a.childNodes); flowChanged(); });
+  document.body.append(linkCard);
+});
+document.addEventListener("pointerdown", e => { if (linkCard && !e.target.closest(".link-card")) closeLinkCard(); }, true);
+viewer.addEventListener("scroll", closeLinkCard, { passive: true });
+
+/* ---- paste keeps the source's look (fonts, sizes, bold, colours), like Word's "Keep source formatting";
+   the options chip switches to the document's own look or plain text; Ctrl+Shift+V pastes plain text ---- */
+const KEEP_TAGS = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI", "TABLE", "THEAD", "TBODY", "TFOOT", "TR", "TD", "TH", "CAPTION", "BLOCKQUOTE", "PRE", "CODE", "A", "IMG", "BR", "SUP", "SUB", "FIGURE", "FIGCAPTION", "HR", "B", "STRONG", "I", "EM", "U", "S"]);
+const BLOCKS = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "LI", "TD", "TH", "BLOCKQUOTE", "PRE", "FIGCAPTION", "CAPTION", "DIV"]);
+function pasteSandbox(html) {
+  const dom = new DOMParser().parseFromString(html, "text/html");
+  const css = [...dom.querySelectorAll("style")].map(x => x.textContent).join("\n").replace(/@import[^;]+;/g, "");
+  const body = DOMPurify.sanitize(dom.body.innerHTML, { ADD_ATTR: ["style", "colspan", "rowspan"], FORBID_TAGS: ["style", "script", "iframe", "form", "input", "button", "select", "textarea", "object", "embed", "video", "audio", "canvas", "svg"] });
+  const fr = EL("iframe", { sandbox: "allow-same-origin", style: "position:fixed;left:-10000px;top:0;width:900px;height:400px;border:0;visibility:hidden", "aria-hidden": "true" });
+  document.body.append(fr); const d = fr.contentDocument; d.open(); d.write(`<!doctype html><html><head><style>body{margin:0}${css.replace(/<\//g, "")}</style></head><body>${body}</body></html>`); d.close();
+  return { fr, d };
+}
+const isDarkGrey = c => { const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return false; const [r, g, b] = m.slice(1).map(Number); return Math.max(r, g, b) < 80 && Math.max(r, g, b) - Math.min(r, g, b) < 24; };
+/* mode: "keep" (source look as inline styles), "match" (structure, bold, italic only) */
+function pasteConvert(html, mode) {
+  const { fr, d } = pasteSandbox(html), win = fr.contentWindow, base = win.getComputedStyle(d.body);
+  const props = ["fontFamily", "fontSize", "fontWeight", "fontStyle", "color", "backgroundColor", "textDecorationLine", "verticalAlign", "fontVariantCaps"];
+  function styleFor(el, parentCs) {
+    const cs = win.getComputedStyle(el), out = [];
+    if (mode === "keep") {
+      if (cs.fontFamily !== parentCs.fontFamily && cs.fontFamily !== base.fontFamily) out.push(`font-family:${cs.fontFamily}`);
+      if (cs.fontSize !== parentCs.fontSize && cs.fontSize !== base.fontSize) out.push(`font-size:${Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2}pt`);
+      if (cs.color !== parentCs.color && !isDarkGrey(cs.color)) out.push(`color:${cs.color}`);
+      if (cs.backgroundColor !== parentCs.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent|rgb\(255, 255, 255\)/.test(cs.backgroundColor)) out.push(`background-color:${cs.backgroundColor}`);
+      if (cs.fontVariantCaps === "small-caps" && parentCs.fontVariantCaps !== "small-caps") out.push("font-variant:small-caps");
+      if (BLOCKS.has(el.tagName) && cs.textAlign && /center|right|justify/.test(cs.textAlign) && cs.textAlign !== parentCs.textAlign) out.push(`text-align:${cs.textAlign}`);
+    }
+    return { cs, out };
+  }
+  function walk(src, parentCs, dst) {
+    for (const n of src.childNodes) {
+      if (n.nodeType === 3) { dst.append(n.data.replace(/ /g, " ").replace(/[\r\n]+/g, " ")); continue; }
+      if (n.nodeType !== 1) continue;
+      const tag = n.tagName; if (/^(SCRIPT|STYLE|META|LINK|TITLE|O:P)$/.test(tag)) continue;
+      const { cs, out } = styleFor(n, parentCs);
+      const bold = +cs.fontWeight >= 600, pBold = +parentCs.fontWeight >= 600, ital = cs.fontStyle === "italic", pItal = parentCs.fontStyle === "italic";
+      const und = /underline/.test(cs.textDecorationLine) && !/underline/.test(parentCs.textDecorationLine), str = /line-through/.test(cs.textDecorationLine) && !/line-through/.test(parentCs.textDecorationLine);
+      const sup = cs.verticalAlign === "super" && parentCs.verticalAlign !== "super", sub = cs.verticalAlign === "sub" && parentCs.verticalAlign !== "sub";
+      let el;
+      if (tag === "A" && n.getAttribute("href")) el = EL("a", { href: n.getAttribute("href") });
+      else if (tag === "IMG") { const src2 = n.getAttribute("src"); if (src2 && !/^(file|cid):/i.test(src2)) dst.append(EL("img", { src: src2, alt: n.getAttribute("alt") || "" })); continue; }
+      else if (tag === "BR" || tag === "HR") { dst.append(EL(tag.toLowerCase())); continue; }
+      else if (/^(TD|TH)$/.test(tag)) { el = EL(tag.toLowerCase()); for (const at of ["colspan", "rowspan"]) if (n.getAttribute(at)) el.setAttribute(at, n.getAttribute(at)); }
+      else if (KEEP_TAGS.has(tag) && !/^(B|STRONG|I|EM|U|S|SUP|SUB)$/.test(tag)) el = EL(tag.toLowerCase());
+      else if (tag === "DIV" && [...n.childNodes].some(c => c.nodeType === 3 && c.data.trim())) el = EL("p");
+      else if (BLOCKS.has(tag) || /^(DIV|SECTION|ARTICLE|MAIN|HEADER|FOOTER|ASIDE|NAV|CENTER)$/.test(tag)) { walk(n, cs, dst); continue; }
+      else el = null;   // inline wrapper (span, font, b, i…): its look goes on a span or tags
+      let inner = el || document.createDocumentFragment(), leaf = inner;
+      const wrap = t => { const w = EL(t); leaf.append(w); leaf = w; };
+      // headings keep their tag; with "keep" their source size and weight go inline so they look as they did
+      if (el && /^H[1-6]$/.test(tag) && mode === "keep") { out.push(`font-size:${Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2}pt`, `font-weight:${cs.fontWeight}`); if (cs.fontFamily !== base.fontFamily) out.push(`font-family:${cs.fontFamily}`); }
+      if (out.length) { const st = [...new Map(out.map(x => [x.split(":")[0], x])).values()].join(";"); out.length = 0; out.push(st); if (el && (BLOCKS.has(tag) || /^H[1-6]$/.test(tag))) el.setAttribute("style", out.join(";")); else { const sp = EL("span", { style: out.join(";") }); leaf.append(sp); leaf = sp; } }
+      if (!/^H[1-6]$/.test(tag) || mode !== "keep") { if (bold && !pBold && !/^H[1-6]$|^TH$/.test(tag)) wrap("b"); }
+      if (ital && !pItal) wrap("i"); if (und) wrap("u"); if (str) wrap("s"); if (sup) wrap("sup"); if (sub) wrap("sub");
+      if (!bold && pBold && mode === "keep") { leaf.setAttribute?.("style", ((leaf.getAttribute?.("style") || "") + ";font-weight:normal").replace(/^;/, "")); }
+      walk(n, cs, leaf); dst.append(inner);
+    }
+  }
+  const out = document.createElement("div"); walk(d.body, base, out); fr.remove();
+  $$("p,li,h1,h2,h3,h4,h5,h6", out).forEach(x => { if (!x.textContent.trim() && !x.querySelector("img")) x.remove(); });
+  $$("span:not([style])", out).forEach(x => x.replaceWith(...x.childNodes));
+  return out.innerHTML;
+}
+function textOffset(node, off) { let n = 0; const w = document.createTreeWalker(flowEl, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) { if (t === node) return n + off; n += t.data.length; } if (node.nodeType === 1) { const r = document.createRange(); r.setStart(flowEl, 0); r.setEnd(node, off); return r.toString().length; } return n; }
+function pointAt(off) { const w = document.createTreeWalker(flowEl, NodeFilter.SHOW_TEXT); let t, n = 0; while ((t = w.nextNode())) { if (n + t.data.length >= off) return [t, off - n]; n += t.data.length; } return [flowEl, flowEl.childNodes.length]; }
+let pasteChip = null;
+function closePasteChip() { pasteChip?.remove(); pasteChip = null; }
+function doPaste(data, mode) {
+  if (mode === "text") { const paras = data.text.replace(/\r/g, "").split(/\n{2,}|\n/).map(x => x.trim()); if (paras.length > 1) insertHtml(paras.map(x => `<p>${esc(x) || "<br>"}</p>`).join("")); else document.execCommand("insertText", false, data.text); flowChanged(); return; }
+  if (!data.html) { if (/^(#|\*|-|\d+\.|>|\|)/m.test(data.text) && data.text.includes("\n")) insertHtml(mdToHtml(data.text)); else doPaste(data, "text"); return; }
+  insertHtml(pasteConvert(data.html, mode));
+}
+document.addEventListener("paste", e => {
+  if (!flowOn() || !e.target.closest?.("#flow") || e.target.closest(".ai-chg")) return;
+  const cd = e.clipboardData; if (!cd) return; const items = [...cd.items]; if (items.some(i => i.type.startsWith("image/")) && !cd.getData("text/html")) return;   // pictures: the editor's own paste
+  const data = { html: cd.getData("text/html"), text: cd.getData("text/plain") };
+  if (!data.html && !data.text) return;
+  e.preventDefault(); e.stopPropagation(); closePasteChip();
+  const sel = getSelection(), r = sel.getRangeAt(0), before = flowEl.innerHTML, a = textOffset(r.startContainer, r.startOffset), b = textOffset(r.endContainer, r.endOffset);
+  const mode = W.plainPaste ? "text" : (Prefs.get("pasteMode", "keep")); W.plainPaste = false;
+  doPaste(data, data.html ? mode : "text");
+  if (!data.html) return;
+  const rr = getSelection().rangeCount ? getSelection().getRangeAt(0).getBoundingClientRect() : null;
+  pasteChip = EL("div", { class: "imgtools paste-chip", style: `position:fixed;left:${clamp(rr?.left || 200, 8, innerWidth - 360)}px;top:${clamp((rr?.bottom || 200) + 8, 60, innerHeight - 50)}px` });
+  pasteChip.append(EL("span", { class: "lc-url" }, "Paste:"));
+  for (const [m, l, t] of [["keep", "Keep source formatting", "Fonts, sizes, bold and colours as in the source"], ["match", "Match this document", "Headings, lists, bold and italic; the document's own font and size"], ["text", "Plain text", "Ctrl+Shift+V"]]) {
+    pasteChip.append(EL("button", { class: m === mode ? "on" : "", title: t, onpointerdown: ev => ev.preventDefault(), onclick: ev => {
+      ev.preventDefault(); flowEl.innerHTML = before; const [n1, o1] = pointAt(a), [n2, o2] = pointAt(b), rg = document.createRange(); rg.setStart(n1, o1); rg.setEnd(n2, o2);
+      flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(rg); doPaste(data, m); if (m !== "text") Prefs.set("pasteMode", m); $$("button", pasteChip).forEach(x => x.classList.toggle("on", x === ev.currentTarget)); } }, l));
+  }
+  document.body.append(pasteChip); const chip = pasteChip; setTimeout(() => document.addEventListener("keydown", closePasteChip, { once: true }), 0); setTimeout(() => { if (pasteChip === chip) closePasteChip(); }, 15000);
+}, true);
+document.addEventListener("pointerdown", e => { if (pasteChip && !e.target.closest(".paste-chip")) closePasteChip(); }, true);
+document.addEventListener("keydown", e => { if (flowOn() && (e.ctrlKey || e.metaKey) && e.shiftKey && e.code === "KeyV" && e.target.closest?.("#flow")) W.plainPaste = true; }, true);
+
+/* ---- page width in the toolbar; wide pages fold the side panels so there is room; the web view follows the page ---- */
+const pwSel = $("#pageWSel");
+pwSel.innerHTML = [["a4", "A4"], ["letter", "Letter"], ["wide", "Wide"], ["fill", "Fill the stage"], ["custom", "Custom"]].map(([k, l]) => `<option value="${k}">${l}</option>`).join("");
+pwSel.addEventListener("change", () => { if (pwSel.value === "custom") { toast("Drag the right edge of the page to any width."); pwSel.value = pageCfg().w; return; } setPage({ w: pwSel.value }); });
+function makeRoom() {
+  const p = pageCfg(), need = p.w === "fill" ? Infinity : (p.w === "custom" ? p.px : PAGE_W[p.w] || 794) + 60; let folded = [];
+  if (need > viewer.clientWidth) for (const id of ["left", "right"]) { const el = $("#" + id); if (!el.classList.contains("closed") && need > viewer.clientWidth) { el.classList.add("closed"); folded.push(id === "left" ? "Pages" : "Notes"); } }
+  if (folded.length) toast(`Folded the ${folded.join(" and ")} panel${folded.length > 1 ? "s" : ""} to make room for the page.`);
+}
+{ const sp = setPage; setPage = function (patch, asDefault) { sp(patch, asDefault); if (patch.w && patch.w !== "a4" && patch.w !== "letter") setTimeout(() => { makeRoom(); applyPage(); }, 30); pwSel.value = pageCfg().w; wvPage(); }; }
+{ const ap = applyPage; applyPage = function () { ap(); if (S.doc?.kind === "flow") pwSel.value = pageCfg().w; }; }
+function wvPage() {
+  const d = S.webview && wvDoc(); if (!d || S.doc?.meta?.head) return; const p = pageCfg(), w = p.w === "fill" ? "none" : (p.w === "custom" ? p.px : PAGE_W[p.w] || 794) + "px";
+  let st = d.getElementById("lp-pw"); if (!st) { st = d.createElement("style"); st.id = "lp-pw"; d.head.append(st); }
+  st.textContent = `body{max-width:${w}!important;${p.w === "fill" ? "margin:24px!important;" : ""}${p.font ? `font-family:${p.font}!important;` : ""}${p.size ? `font-size:${p.size}pt!important;` : ""}${p.lh ? `line-height:${p.lh}!important;` : ""}}`;
+}
+$("#wvFrame").addEventListener("load", wvPage);
+
 Object.assign(window, { setFont, setSize, setPage, pageCfg, spellRun, spellPanel, insertFootnote, insertToc, changeCase, wordCountDialog, shortcutsHelp, SP });

@@ -285,15 +285,17 @@ const TOOLS = [
     accent: "violet",
     folder: "tools/paper-writer",
     features: [
-      "Ask AI on any selection: the answer comes back in place as tracked changes; Tab accepts, Esc rejects",
+      "Ask AI on any selection and review its changes one by one in place: Tab accepts, Esc rejects, Revise sends a part back",
       "One chat per document with your own Claude key, so the AI keeps the whole paper in view",
       "Word-style editing: fonts, footnotes, offline spell check, any page width and Word's shortcuts"
     ],
     versions: [
-      { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29",
+      { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29" },
+      { v: "v2", file: "paper-writer-v2.html", date: "2026-10-29",
         new: [
-          "Demo release: open the sample paper and try every control without a key (demo mode)",
-          "Connect Claude with your own Anthropic key, or another AI"
+          "Review the AI's changes one by one in one colour: Tab accepts, Esc rejects, Revise sends just that part back; Show changes on or off",
+          "Paste keeps the source's look (or match the document, or plain text); links work with a bare address",
+          "Pick any Claude model with its price; page width box, and wide pages fold the side panels to make room"
         ] }
     ]
   }

@@ -6,12 +6,29 @@
 
 const AI_PROVIDERS = {
   demo: { label: "Demo", sub: "No key, no AI: canned edits made in the browser, to try the tools" },
-  claude: { label: "Claude", sub: "Anthropic API, your own key", models: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1"], def: "claude-opus-5-5" },
+  claude: { label: "Claude", sub: "Anthropic API, your own key", def: "claude-opus-5-5" },
   openai: { label: "OpenAI", sub: "OpenAI API, your own key", base: "https://api.openai.com/v1" },
   gemini: { label: "Gemini", sub: "Google AI Studio key (OpenAI-compatible endpoint)", base: "https://generativelanguage.googleapis.com/v1beta/openai" },
   custom: { label: "Other", sub: "Any OpenAI-compatible server: OpenRouter, Ollama, LM Studio…" }
 };
 const AI_FALLBACK_MODELS = new Set(["claude-opus-5-5", "claude-fable-5-1", "claude-sonnet-5-5"]);   // server-side refusal fallbacks
+/* Claude models: id, name, what it is for, price per million tokens in / out (Anthropic API) */
+const CLAUDE_MODELS = [
+  ["claude-opus-5-5", "Opus 5.5", "Default: the best everyday choice", "$4 / $20"],
+  ["claude-fable-5-1", "Fable 5.1", "Most capable; slower and dearer", "$10 / $50"],
+  ["claude-sonnet-5-5", "Sonnet 5.5", "Fast and capable", "$2 / $10"],
+  ["claude-haiku-5-5", "Haiku 5.5", "Fastest and cheapest, for quick fixes", "$0.10 / $0.50"],
+  ["claude-fable-5", "Fable 5", "Earlier generation", "$10 / $50"],
+  ["claude-opus-5", "Opus 5", "Earlier generation", "$5 / $25"],
+  ["claude-sonnet-5", "Sonnet 5", "Earlier generation", "$2 / $10"],
+  ["claude-opus-4-8", "Opus 4.8", "Earlier generation", "$5 / $25"],
+  ["claude-opus-4-7", "Opus 4.7", "Earlier generation", "$5 / $25"],
+  ["claude-opus-4-6", "Opus 4.6", "Earlier generation", "$5 / $25"],
+  ["claude-sonnet-4-6", "Sonnet 4.6", "Earlier generation", "$3 / $15"],
+  ["claude-haiku-4-5", "Haiku 4.5", "Earlier generation", "$1 / $5"]
+];
+const claudeName = id => (CLAUDE_MODELS.find(m => m[0] === id) || [])[1] || id;
+const NO_EFFORT = new Set(["claude-haiku-4-5"]), NO_XHIGH = new Set(["claude-opus-4-6", "claude-sonnet-4-6"]);
 const AI_PRESETS = ["Better logical flow", "Make it more concise", "More formal academic tone", "Fix grammar and spelling", "Clarify the meaning", "Add appropriate hedging", "Strengthen the argument", "Simplify for a broad audience"];
 const AI_SYSTEM = `You are a meticulous academic editor working with the author of a scientific manuscript, inside their editor. During this conversation you receive the manuscript (sent once, and again when it has changed a lot) and requests about passages the author has selected, each with the paragraph around it.
 
@@ -24,6 +41,7 @@ For a request about a selected passage:
 <revision>the new passage</revision>
 <note>one short sentence on what you changed and why</note>
 - If the passage is best left as it is, return it unchanged and say why in the note.
+- When the author asks you to redo one marked part of your earlier version, put only the new text for that part in <revision>, written to fit between the text before and after it.
 
 For a message marked QUESTION, answer briefly in plain prose, with reference to the manuscript, and do not use the revision form.`;
 
@@ -43,7 +61,12 @@ function aiSetKey(p, k, remember) {
   try { if (k) sessionStorage.setItem("lpw-key-" + p, k); else sessionStorage.removeItem("lpw-key-" + p); } catch (e) { /* storage blocked */ }
   const all = { ...(Prefs.get("aiKeys", {}) || {}) }; if (remember && k) all[p] = k; else delete all[p]; Prefs.set("aiKeys", all);
 }
-function aiWho(c = aiCfg()) { return c.provider === "demo" ? "Demo mode (no AI)" : AI_PROVIDERS[c.provider].label + (aiModel(c) ? " · " + aiModel(c) : ""); }
+function aiWho(c = aiCfg()) { return c.provider === "demo" ? "Demo mode (no AI)" : AI_PROVIDERS[c.provider].label + (aiModel(c) ? " · " + (c.provider === "claude" ? claudeName(aiModel(c)) : aiModel(c)) : ""); }
+/* quick switch of model from the chat panel or the request box */
+function aiModelMenu(anchor) {
+  const c = aiCfg(), cur = aiModel(c), pick = id => { aiSetCfg({ ...c, provider: "claude", models: { ...c.models, claude: id } }); aiHome(); if (S.doc) aiRenderChat(); toast("AI: " + aiWho()); };
+  menu([{ head: c.provider === "claude" ? "Claude model" : "AI: " + aiWho(c) }, ...(c.provider === "claude" ? CLAUDE_MODELS.map(([id, n, d, p]) => ({ label: "Claude " + n, sub: `${d} · ${p}`, on: id === cur, fn: () => pick(id) })) : []), { sep: true }, { label: "AI settings…", sub: "Provider, key, model, effort", fn: () => aiSettings() }], anchor);
+}
 
 /* ---- the chat of the open document ---- */
 function aiState() {
@@ -127,7 +150,7 @@ function aiDiff(oldL, newL) {
   const chars = ts => ts.filter(t => !isWs(t)).reduce((s, t) => s + t.t.length, 0);
   const eq = runs.filter(r => r.kind === "=").reduce((s, r) => s + chars(r.eq), 0);
   const sim = eq / Math.max(1, chars(a), chars(b)), hunks = runs.filter(r => r.kind === "x").length, words = a.filter(t => /[\p{L}\p{N}]/u.test(t.t)).length;
-  const html = runs.map(r => r.kind === "=" ? renderTokens(r.eq) : (r.del.length ? `<del class="ai-d">${renderTokens(r.del)}</del>` : "") + (r.ins.length ? `<ins class="ai-i">${renderTokens(r.ins)}</ins>` : "")).join("");
+  const html = runs.map(r => r.kind === "=" ? renderTokens(r.eq) : `<span class="ai-h">${r.del.length ? `<del class="ai-d">${renderTokens(r.del)}</del>` : ""}${r.ins.length ? `<ins class="ai-i">${renderTokens(r.ins)}</ins>` : ""}</span>`).join("");
   return { html, sim, hunks, same: hunks === 0, big: sim < 0.5 || (hunks >= 4 && hunks / Math.max(1, words) > 0.3), oldHtml: renderTokens(a), newHtml: renderTokens(b) };
 }
 
@@ -156,7 +179,7 @@ function aiParagraph(span) {
   const block = span.closest(AI_BLOCK) || span.parentElement, c = block.cloneNode(true);
   for (const s of c.querySelectorAll(".ai-chg")) {
     const mine = s.dataset.ai === span.dataset.ai, ch = aiChange(s.dataset.ai);
-    s.replaceWith(document.createTextNode(mine ? "⟦" + lightText(ch.oldLight) + "⟧" : (ch ? lightText(ch.oldLight) : s.textContent)));
+    s.replaceWith(document.createTextNode(mine ? "⟦" + lightText(ch.oldLight) + "⟧" : (ch ? aiOrigFrag(s).textContent : s.textContent)));
   }
   return c.textContent.replace(/\s+/g, " ").trim();
 }
@@ -231,69 +254,128 @@ async function aiAsk(ch, o) {
   ch.sugg.push({ light, note, at: Date.now(), big: d.big }); ch.cur = ch.sugg.length - 1; ch.status = "pending"; ch.view = null;
   aiPaint(ch); aiSetActive(ch.id); aiCommit(); aiRenderChat();
 }
-/* draw the current suggestion of a change into its span */
+/* draw the current suggestion of a change into its span: each edit is its own <span class="ai-h"> to review */
 function aiPaint(ch) {
   const s = aiSpan(ch.id), sg = ch.sugg[ch.cur]; if (!s || !sg) return;
   const d = aiDiff(ch.oldLight, sg.light), rw = ch.view ? ch.view === "rw" : d.big;
-  s.className = "ai-chg" + (rw ? " rw" : "") + (ch.id === aiActive ? " on" : "");
-  s.innerHTML = rw ? `<del class="ai-d ai-old">${d.oldHtml}</del><ins class="ai-i ai-new">${d.newHtml}</ins>` : d.html;
-  s.title = (rw ? "AI rewrite" : "AI suggestion") + (sg.note ? ": " + sg.note : "") + " (Tab accepts)";
+  s.className = "ai-chg" + (rw ? " rw" : ""); delete s.dataset.acc; delete s.dataset.rej;
+  s.innerHTML = rw ? `<span class="ai-h"><del class="ai-d ai-old">${d.oldHtml}</del><ins class="ai-i ai-new">${d.newHtml}</ins></span>` : d.html;
+  s.title = (rw ? "AI rewrite" : "AI suggestion") + (sg.note ? ": " + sg.note : "");
 }
 function aiCommit() { S.doc.html = flowEl.innerHTML; changed({ quiet: true }); layoutMarginSoon(); refreshNotesSoon(); }
 
-/* ---- accept, reject ---- */
+/* ---- accept, reject: one edit at a time, or the whole suggestion ---- */
+let aiHunk = null;   // the edit the review bar is for
+const hunksIn = s => $$(".ai-h", s), allHunks = () => $$(".ai-chg:not(.busy) .ai-h", flowEl);
+const partOf = (h, sel) => { const f = document.createDocumentFragment(); const e = h.querySelector(sel); if (e) f.append(...e.childNodes); return f; };
+/* the text a suggestion stands for if its open edits are rejected (for exports and the AI): exact original if nothing was decided */
+function aiOrigFrag(s) {
+  const ch = aiChange(s.dataset.ai);
+  if (ch && !s.dataset.acc && !s.dataset.rej) return lightOrHtml(ch.oldHtml);
+  const c = s.cloneNode(true); hunksIn(c).forEach(h => h.replaceWith(partOf(h, "del"))); const f = document.createDocumentFragment(); f.append(...c.childNodes); return f;
+}
+function aiDecide(h, accept) {
+  const s = h?.closest(".ai-chg"); if (!s || s.classList.contains("busy") || h.classList.contains("busy")) return;
+  const ch = aiChange(s.dataset.ai), all = allHunks(), i = all.indexOf(h);
+  h.replaceWith(partOf(h, accept ? "ins" : "del")); s.dataset[accept ? "acc" : "rej"] = "1";
+  if (!hunksIn(s).length) aiFinish(s, ch);
+  aiCommit(); const rest = allHunks(); aiSetHunk(rest[Math.min(i, rest.length - 1)] || null); aiRenderChat();
+}
+/* every edit decided: the suggestion becomes plain text again */
+function aiFinish(s, ch) {
+  const acc = !!s.dataset.acc, rej = !!s.dataset.rej;
+  if (!acc) s.replaceWith(lightOrHtml(ch.oldHtml)); else { const last = s.lastChild; s.replaceWith(...s.childNodes); if (last && aiActive === ch.id) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(r); } }
+  flowEl.normalize(); ch.status = acc && rej ? "partly" : acc ? "accepted" : "rejected";
+  if (ch.via !== "demo") aiState().feedback.push(`${ch.status === "partly" ? "accepted part of" : ch.status} your version for request ${ch.n}`);
+}
 function aiAccept(id = aiActive) {
   const ch = aiChange(id), s = aiSpan(id); if (!ch || !s || s.classList.contains("busy")) return;
-  const frag = lightFrag(ch.sugg[ch.cur].light), last = frag.lastChild;
-  s.replaceWith(frag); ch.status = "accepted"; if (ch.via !== "demo") aiState().feedback.push(`accepted your version for request ${ch.n}`);
-  if (last) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(r); }
-  aiAfterResolve(id);
+  if (!s.dataset.acc && !s.dataset.rej) { const frag = lightFrag(ch.sugg[ch.cur].light); s.innerHTML = ""; s.append(frag); s.dataset.acc = "1"; }
+  else hunksIn(s).forEach(h => h.replaceWith(partOf(h, "ins"))), s.dataset.acc = "1";
+  aiFinish(s, ch); aiAfterResolve();
 }
 function aiReject(id = aiActive) {
   const ch = aiChange(id), s = aiSpan(id); if (!ch || !s || s.classList.contains("busy")) return;
-  s.replaceWith(lightOrHtml(ch.oldHtml)); ch.status = "rejected"; if (ch.via !== "demo") aiState().feedback.push(`rejected your version for request ${ch.n}`);
-  aiAfterResolve(id);
+  hunksIn(s).forEach(h => h.replaceWith(partOf(h, "del"))); s.dataset.rej = "1";
+  aiFinish(s, ch); aiAfterResolve();
 }
-function aiAfterResolve(id) {
-  aiCommit(); const left = $$(".ai-chg[data-ai]:not(.busy)", flowEl);
-  aiSetActive(left.length ? left[0].dataset.ai : null); aiRenderChat();
+function aiAfterResolve() { aiCommit(); aiSetHunk(allHunks()[0] || null); aiRenderChat(); }
+function aiDecideAll(accept) {
+  const ids = [...new Set($$(".ai-chg[data-ai]:not(.busy)", flowEl).map(s => s.dataset.ai))]; if (!ids.length) return toast("No AI suggestions to review.");
+  ids.forEach(id => accept ? aiAccept(id) : aiReject(id)); toast(`${accept ? "Accepted" : "Rejected"} ${ids.length} suggestion${ids.length === 1 ? "" : "s"}.`);
+}
+function aiStep(d) { const all = allHunks(); if (!all.length) return toast("No AI suggestions to review."); const i = all.indexOf(aiHunk); const h = all[(i < 0 ? (d > 0 ? 0 : all.length - 1) : i + d + all.length) % all.length]; aiSetHunk(h); h.scrollIntoView({ block: "center", behavior: "smooth" }); afterScroll(viewer, placeBar); }
+
+/* revise one edit: the AI rewrites just that part of its version */
+async function aiReviseHunk(h, extra) {
+  const s = h?.closest(".ai-chg"), ch = s && aiChange(s.dataset.ai); if (!ch || h.classList.contains("busy")) return;
+  const ins = h.querySelector("ins"), del = h.querySelector("del"), part = ins ? toLight(ins) : "", orig = del ? toLight(del) : "";
+  const c = s.cloneNode(true), PH = "\u0000PART\u0000"; hunksIn(c)[hunksIn(s).indexOf(h)].replaceWith(document.createTextNode(PH));
+  const passage = toLight(c).replace(PH, "⟦" + part + "⟧");
+  h.classList.add("busy"); aiBar();
+  try {
+    let res;
+    if (aiCfg().provider === "demo") { await sleep(500 + Math.random() * 500); res = demoPart(part, orig, extra || ch.instr); }
+    else res = await aiTurn(`Request ${ch.n}, one part again\nInstruction for the passage: ${ch.instr}\n\nYour current version of the passage, with the part to redo between ⟦ and ⟧:\n${passage}\n\nThe author's original text for that part: «${orig || "(nothing: you added this part)"}»\n${extra ? "What the author wants: " + extra : "The author is not happy with this part: write it differently."}\n\nReply with the new text for the marked part only, in <revision>, so it fits between the text before and after it.`);
+    if (!h.isConnected) return;
+    const sp = (part || orig).match(/^\s*/)[0], tr = (part || orig).match(/\s*$/)[0], body = cleanLight(res.revision ?? res.text).replace(/^\s+|\s+$/g, "");
+    const html = body ? renderTokens(lightTokens(sp + body + tr)) : "";
+    if (html) { let i2 = h.querySelector("ins"); if (!i2) { i2 = EL("ins", { class: "ai-i" }); h.append(i2); } i2.innerHTML = html; } else h.querySelector("ins")?.remove();
+    if (res.note) h.dataset.note = res.note.replace(/^Demo: /, ch.via === "demo" ? "Demo: " : "");
+    h.classList.remove("busy"); aiCommit(); aiSetHunk(h); flashEl(h); aiRenderChat();
+  } catch (e) { console.warn(e); h.classList.remove("busy"); aiBar(); toast("AI request failed: " + (e.message || e)); }
 }
 
-/* ---- the review bar ---- */
+/* ---- show changes on / off: off shows the text as it would read with every suggestion accepted ---- */
+function aiMarkup(on) { if (on != null) Prefs.set("aiMarkup", on); const show = Prefs.get("aiMarkup", true); flowEl.classList.toggle("markup-off", !show); $("#aiMarkupBtn")?.classList.toggle("on", show); placeBar(); return show; }
+
+/* ---- the review bar, under the edit being reviewed ---- */
 const aiBarEl = EL("div", { class: "ai-bar", hidden: "", role: "toolbar", "aria-label": "AI suggestion" }); document.body.append(aiBarEl);
-function aiSetActive(id) {
-  aiActive = id && aiSpan(id) ? id : null;
-  $$(".ai-chg.on", flowEl).forEach(e => e.classList.remove("on")); if (aiActive) aiSpan(aiActive).classList.add("on");
+function aiSetHunk(h) {
+  aiHunk = h && h.isConnected ? h : null; aiActive = aiHunk ? aiHunk.closest(".ai-chg").dataset.ai : null;
+  $$(".ai-h.on,.ai-chg.on", flowEl).forEach(e => e.classList.remove("on")); if (aiHunk) { aiHunk.classList.add("on"); aiHunk.closest(".ai-chg").classList.add("on"); }
   aiBar();
 }
+function aiSetActive(id) { const s = id && aiSpan(id); aiSetHunk(s ? (hunksIn(s)[0] || null) : null); if (s && !aiHunk) { aiActive = id; aiBar(); } }
 function aiBar() {
   const ch = aiActive && aiChange(aiActive), s = aiActive && aiSpan(aiActive);
   if (!ch || !s || S.doc?.kind !== "flow" || S.webview) { aiBarEl.hidden = true; return; }
-  const busy = s.classList.contains("busy"), sg = ch.sugg[ch.cur], rw = s.classList.contains("rw"), keepAgain = aiBarEl.querySelector(".again input");
-  const againVal = keepAgain?.value || "", againOpen = !!keepAgain && aiBarEl.dataset.for === ch.id;
+  const h = aiHunk && aiHunk.isConnected ? aiHunk : null, busy = s.classList.contains("busy") || !!h?.classList.contains("busy"), sg = ch.sugg[ch.cur], rw = s.classList.contains("rw");
+  const all = allHunks(), here = hunksIn(s), keep = aiBarEl.querySelector(".again input"), keepMode = aiBarEl.dataset.mode, againVal = keep?.value || "", againOpen = !!keep && !keep.closest(".again").hidden && aiBarEl.dataset.for === ch.id;
   aiBarEl.innerHTML = ""; aiBarEl.dataset.for = ch.id;
   const B = (lbl, fn, title, cls = "", dis = false) => { const b = EL("button", { type: "button", class: cls, title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }); b.innerHTML = lbl; b.disabled = dis; return b; };
   const row = EL("div", { class: "br" });
-  const tag = EL("span", { class: "tag" }, ICON("i-ai"), busy ? "Thinking…" : rw ? "Rewrite" : "Suggestion"); row.append(tag);
-  if (ch.sugg.length > 1) row.append(B("‹", () => { ch.cur = (ch.cur - 1 + ch.sugg.length) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiBar(); }, "Previous version", "", busy), EL("span", { class: "ver" }, `${ch.cur + 1}/${ch.sugg.length}`), B("›", () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiBar(); }, "Next version", "", busy));
+  row.append(EL("span", { class: "tag" }, ICON("i-ai"), busy ? "Thinking…" : rw ? "Rewrite" : "Change"));
+  if (all.length > 1 && h) row.append(B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver" }, `${all.indexOf(h) + 1} of ${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
   row.append(EL("span", { class: "bsep" }));
-  row.append(B("✓ Accept <kbd>Tab</kbd>", () => aiAccept(ch.id), "Accept this change (Tab)", "ok", busy));
-  row.append(B("✕ Reject <kbd>Esc</kbd>", () => aiReject(ch.id), "Reject: put the original text back (Esc)", "no", busy));
-  row.append(B("↻ Ask again…", () => { againRow.hidden = !againRow.hidden; if (!againRow.hidden) inp.focus(); placeBar(); }, "Send the same passage back, optionally with extra instructions", "", busy));
+  row.append(B("✓ Accept <kbd>Tab</kbd>", () => aiDecide(h, true), "Accept this change and go to the next (Tab)", "ok", busy || !h));
+  row.append(B("✕ Reject <kbd>Esc</kbd>", () => aiDecide(h, false), "Reject this change: keep the original words (Esc)", "", busy || !h));
+  row.append(B("✎ Revise…", () => openAgain("part"), "Send just this change back to the AI, optionally saying what is wrong", "", busy || !h));
   row.append(EL("span", { class: "bsep" }));
-  if (rw) row.append(B(s.classList.contains("showold") ? "Hide original" : "Original", () => { s.classList.toggle("showold"); aiBar(); }, "Show the original text crossed out next to the rewrite", "", busy));
-  row.append(B(rw ? "As edits" : "As rewrite", () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiBar(); }, rw ? "Show word-by-word deletions and insertions" : "Hide the crossed-out words and label it a rewrite", "", busy));
+  const more = B("More ▾", () => menu([
+    ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this suggestion`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this suggestion`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
+    { label: "Ask again for the whole passage…", sub: "A new version of everything you selected", fn: () => openAgain("all") },
+    ...(ch.sugg.length > 1 ? [{ label: `Version ${ch.cur + 1} of ${ch.sugg.length}: show the ${ch.cur + 1 < ch.sugg.length ? "next" : "first"}`, sub: "Changes you decided in this suggestion are reset", fn: () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } }] : []),
+    { label: rw ? "Show as word-by-word changes" : "Show as one rewrite", sub: "Changes you decided in this suggestion are reset", fn: () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } },
+    ...(rw ? [{ label: s.classList.contains("showold") ? "Hide the original text" : "Show the original text", fn: () => { s.classList.toggle("showold"); aiBar(); } }] : []),
+    { sep: true }, { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes", sub: "Off: read the text as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
+    { label: "Accept every suggestion in the document", fn: () => aiDecideAll(true) }, { label: "Reject every suggestion in the document", fn: () => aiDecideAll(false) }
+  ], more), "Whole suggestion, versions, view", "", busy);
+  row.append(more);
   aiBarEl.append(row);
-  if (sg?.note && !busy) aiBarEl.append(EL("div", { class: "bnote", title: sg.note }, sg.note.length > 180 ? sg.note.slice(0, 180) + "…" : sg.note));
-  const inp = EL("input", { type: "text", placeholder: "Extra instructions (optional), Enter sends", "aria-label": "Extra instructions" }); inp.value = againVal;
-  const again = () => { const x = inp.value.trim(); againRow.hidden = true; aiAgain(ch.id, x); };
-  const againRow = EL("div", { class: "again" }, inp, B("Send", again, "Ask again", "ok")); againRow.hidden = !againOpen;
-  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); again(); } if (e.key === "Escape") { againRow.hidden = true; placeBar(); } });
+  const note = h?.dataset.note || sg?.note; if (note && !busy) aiBarEl.append(EL("div", { class: "bnote", title: note }, note.length > 180 ? note.slice(0, 180) + "…" : note));
+  const inp = EL("input", { type: "text", "aria-label": "Instructions" }); inp.value = againVal;
+  let mode = keepMode || "part";
+  const send = () => { const x = inp.value.trim(); againRow.hidden = true; inp.value = ""; mode === "part" ? aiReviseHunk(h, x) : aiAgain(ch.id, x); };
+  const againRow = EL("div", { class: "again" }, inp, B("Send", send, "Send to the AI", "ok")); againRow.hidden = !againOpen;
+  function openAgain(m) { mode = m; aiBarEl.dataset.mode = m; inp.placeholder = m === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends"; againRow.hidden = false; inp.focus(); placeBar(); }
+  if (againOpen) inp.placeholder = mode === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends";
+  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); send(); } if (e.key === "Escape") { againRow.hidden = true; placeBar(); } });
   aiBarEl.append(againRow); aiBarEl.hidden = false; placeBar();
 }
 function placeBar() {
   if (aiBarEl.hidden) return; const s = aiActive && aiSpan(aiActive); if (!s) { aiBarEl.hidden = true; return; }
-  const rs = s.getClientRects(), last = rs[rs.length - 1] || s.getBoundingClientRect(), first = rs[0] || last, vr = viewer.getBoundingClientRect();
+  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), last = rs[rs.length - 1] || t.getBoundingClientRect(), first = rs[0] || last, vr = viewer.getBoundingClientRect();
   const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight; let y = last.bottom + 6;
   if (y + h > vr.bottom - 4) y = first.top - h - 6;
   aiBarEl.style.visibility = (last.bottom < vr.top || first.top > vr.bottom) ? "hidden" : "visible";
@@ -301,17 +383,19 @@ function placeBar() {
 }
 viewer.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
 addEventListener("resize", debounce(placeBar, 80));
-flowEl.addEventListener("click", e => { const c = e.target.closest(".ai-chg"); if (c && c.dataset.ai) { aiSetActive(c.dataset.ai); const ch = aiChange(c.dataset.ai); if (ch) aiRenderChat(); } });
-flowEl.addEventListener("input", debounce(() => { if (aiActive && !aiSpan(aiActive)) aiSetActive(null); else placeBar(); }, 150));
+flowEl.addEventListener("click", e => { const c = e.target.closest(".ai-chg"); if (c && c.dataset.ai) { const h = e.target.closest(".ai-h"); if (h) aiSetHunk(h); else aiSetActive(c.dataset.ai); aiRenderChat(); } });
+flowEl.addEventListener("input", debounce(() => { if (aiActive && !aiSpan(aiActive)) aiSetHunk(null); else placeBar(); }, 150));
 
-/* keys: Tab accepts, Esc rejects, Alt+A asks (before the editor's own Tab = indent) */
+/* keys: Tab accepts and Esc rejects the change at hand, Alt+↓/↑ move between changes, Alt+A asks */
 document.addEventListener("keydown", e => {
   if (!S.doc || S.doc.kind !== "flow" || S.webview) return;
   const inField = e.target.closest("input,textarea,select") || (e.target.closest("[contenteditable=true]") && !e.target.closest("#flow"));
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyA" && !inField) { e.preventDefault(); e.stopPropagation(); aiAskOpen(); return; }
-  if (!aiActive || inField || aiAskEl || !$("#modalBack").hidden || !$("#menu").hidden || !$("#pop").hidden) return;
-  if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); e.stopPropagation(); aiAccept(); }
-  else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); aiReject(); }
+  if (inField || aiAskEl || !$("#modalBack").hidden || !$("#menu").hidden || !$("#pop").hidden) return;
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === "ArrowDown" || e.key === "ArrowUp") && allHunks().length) { e.preventDefault(); e.stopPropagation(); aiStep(e.key === "ArrowDown" ? 1 : -1); return; }
+  if (!aiHunk || !aiHunk.isConnected) return;
+  if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); e.stopPropagation(); aiDecide(aiHunk, true); }
+  else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); aiDecide(aiHunk, false); }
 }, true);
 
 /* ---- the conversation with the AI ---- */
@@ -343,7 +427,7 @@ async function aiCall(messages, c, key) {
     if (c.provider === "claude") {
       const headers = { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2026-10-21", "anthropic-dangerous-direct-browser-access": "true" };
       const body = { model, max_tokens: 16000, system: AI_SYSTEM, messages: messages.map(m => ({ role: m.role, content: m.content })), cache_control: { type: "ephemeral" } };
-      if (c.effort) body.output_config = { effort: c.effort };
+      if (c.effort && !NO_EFFORT.has(model)) body.output_config = { effort: c.effort === "xhigh" && NO_XHIGH.has(model) ? "high" : c.effort };
       if (AI_FALLBACK_MODELS.has(model)) { headers["anthropic-beta"] = "server-side-fallback-2026-07-01"; body.fallbacks = "default"; }
       let r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers, body: JSON.stringify(body) }), data = await r.json().catch(() => ({}));
       if (r.status === 400 && body.fallbacks && /fallback/i.test(data.error?.message || "")) {   // an account without the fallback option: ask once more without it
@@ -426,6 +510,12 @@ function demoRevise(light, instr, attempt) {
   if (attempt > 0 && kind !== "flow" && kind !== "rewrite") { s = swaps(s, DEMO.formal); note += " Second pass also formalised the wording."; }
   return { revision: s, note: "Demo: " + note };
 }
+/* demo: redo one part. Short parts: tidy the wording, or go back to the author's own words */
+function demoPart(part, orig, instr) {
+  const src = part || orig, out = swaps(swaps(src, DEMO.concise), DEMO.formal);
+  if (out !== src && out.trim()) return { revision: out, note: "Demo: tightened the wording of this part." };
+  return { revision: orig || "", note: orig ? "Demo: went back to your original words for this part." : "Demo: dropped this addition." };
+}
 async function aiDemoRevise(ch, o) {
   await sleep(500 + Math.random() * 700);
   const instr = o.retry && o.extra ? o.extra + " " + ch.instr : ch.instr;
@@ -450,12 +540,12 @@ function aiRenderChat() {
     (u.calls ? ` ${u.calls} request${u.calls === 1 ? "" : "s"}` + (u.in || u.cacheRead ? `, tokens in ${k(u.in + u.cacheRead + u.cacheWrite)} (${k(u.cacheRead)} from cache), out ${k(u.out)}.` : ".") : "") + (pend ? ` <b>${pend} suggestion${pend === 1 ? "" : "s"} to review.</b>` : "") +
     (u.last > 150000 ? ` The chat is getting long: consider <button data-aiact="newchat">a new chat</button>.` : "");
   const log = $("#aiLog"); log.innerHTML = "";
-  if (!ai.log.length) log.innerHTML = `<div class="empty"><b>One chat for this document.</b> Select words in a paragraph, then press <b>Ask AI</b> (or Alt+A) and pick a request. The answer appears in the text as tracked changes: <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back.<br><br>The AI receives the whole paper once, then each request with its paragraph, so it keeps the full paper as reference. You can also ask questions about the paper below.</div>`;
+  if (!ai.log.length) log.innerHTML = `<div class="empty"><b>One chat for this document.</b> Select words in a paragraph, then press <b>Ask AI</b> (or Alt+A) and pick a request. The answer appears in the text as tracked changes: <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back.<br><br>The AI receives the whole paper once, then each request with its paragraph, so it keeps the full paper as reference. You can also ask questions about the paper below.<br><br><b>Where the chat is kept:</b> with this document, in this browser (and inside a saved .lpdoc project). Requests go to the AI's own API with your key, so they do not appear on claude.ai; <b>⋯ → Download the chat</b> keeps a copy.</div>`;
   for (const e of ai.log) {
     if (e.t === "req") {
       const ch = ai.changes[e.id]; if (!ch) continue; const st = aiStatus(ch), sg = ch.sugg[ch.cur];
       const m = EL("div", { class: "ai-msg req", title: st === "pending" ? "Show this change in the text" : "" });
-      m.append(EL("div", { class: "mh" }, EL("span", {}, "#" + ch.n), EL("span", { class: "ai-st " + st }, { busy: "thinking", pending: "to review", accepted: "accepted", rejected: "rejected", unchanged: "no change", failed: "failed", removed: "removed" }[st] || st), EL("span", { class: "sp" }), EL("span", {}, fmtTime(ch.at))));
+      m.append(EL("div", { class: "mh" }, EL("span", {}, "#" + ch.n), EL("span", { class: "ai-st " + st }, { busy: "thinking", pending: "to review", accepted: "accepted", partly: "partly accepted", rejected: "rejected", unchanged: "no change", failed: "failed", removed: "removed" }[st] || st), EL("span", { class: "sp" }), EL("span", {}, fmtTime(ch.at))));
       m.append(EL("div", { class: "in" }, ch.instr), EL("div", { class: "q" }, lightText(ch.oldLight).trim().slice(0, 200)));
       if (ch.error && st === "failed") m.append(EL("div", { class: "nt" }, ch.error));
       else if (sg?.note) m.append(EL("div", { class: "nt" }, (ch.sugg.length > 1 ? `v${ch.cur + 1}/${ch.sugg.length}: ` : "") + sg.note));
@@ -469,10 +559,19 @@ function aiChatMenu(anchor) {
   menu([
     { label: "AI settings…", icon: "i-ai", fn: () => aiSettings() },
     { label: "Send the paper again", sub: "Gives the AI the current text before your next request", fn: () => { const ai = aiState(); if (ai.paper) ai.paper.stale = true; toast("The current paper goes with your next request."); } },
+    { label: "Download the chat (.md)", sub: "Requests, the AI's versions and notes, questions and answers", fn: () => download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md") },
     { label: "Copy the chat", fn: () => { navigator.clipboard.writeText(aiState().log.map(e => e.t === "req" ? (c => `#${c.n} ${c.instr}\n> ${lightText(c.oldLight).trim()}\n${c.sugg[c.cur] ? "→ " + lightText(c.sugg[c.cur].light).trim() + (c.sugg[c.cur].note ? `\n(${c.sugg[c.cur].note})` : "") : ""}`)(aiState().changes[e.id] || { sugg: [], oldLight: "" }) : e.text).join("\n\n")); toast("Copied the chat."); } },
     { sep: true },
     { label: "Start a new chat", danger: true, sub: "The AI forgets this chat; suggestions in the text stay", fn: aiNewChat }
   ], anchor, { right: true });
+}
+function aiChatMarkdown() {
+  const ai = aiState(), c = aiCfg();
+  return `# AI chat: ${S.doc.name}\n\n_${aiWho(c)} · kept with this document in Paper Writer (not on claude.ai)_\n\n` + ai.log.map(e => {
+    if (e.t !== "req") return (e.t === "you" ? "**You:** " : e.t === "ans" ? "**AI:** " : "_") + e.text + (e.t === "info" || e.t === "err" ? "_" : "");
+    const ch = ai.changes[e.id]; if (!ch) return "";
+    return `### #${ch.n} ${ch.instr} (${aiStatus(ch)})\n\n> ${lightText(ch.oldLight).trim()}\n\n` + ch.sugg.map((v, i) => `**Version ${i + 1}:** ${lightText(v.light).trim()}${v.note ? `\n\n_${v.note}_` : ""}`).join("\n\n");
+  }).filter(Boolean).join("\n\n") + "\n";
 }
 async function aiNewChat() {
   if (!(await modal(`<h3>Start a new chat?</h3><p>The AI forgets the requests so far and gets a fresh copy of the paper with your next request. Suggestions still in the text stay there to accept or reject.</p><div class="mrow"><button class="btn" data-cancel>Keep this chat</button><button class="btn danger" data-ok="ok">New chat</button></div>`))) return;
@@ -481,7 +580,7 @@ async function aiNewChat() {
 }
 aiPanel.addEventListener("click", e => {
   const a = e.target.closest("[data-aiact]")?.dataset.aiact; if (!a) return;
-  if (a === "settings") aiSettings(); else if (a === "menu") aiChatMenu(e.target.closest("button")); else if (a === "newchat") aiNewChat(); else if (a === "close") aiTogglePanel(false);
+  if (a === "settings") aiModelMenu(e.target.closest("button")); else if (a === "menu") aiChatMenu(e.target.closest("button")); else if (a === "newchat") aiNewChat(); else if (a === "close") aiTogglePanel(false);
   else if (a === "send") { const ta = $("#aiQ"); const q = ta.value.trim(); if (!q) return ta.focus(); ta.value = ""; aiQuestion(q); }
 });
 $("#aiQ").addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("[data-aiact=send]", aiPanel).click(); } });
@@ -495,7 +594,7 @@ async function aiSettings(msg) {
     <div class="ai-f" data-for="key"><label for="aiKeyIn">API key</label><div class="inrow"><input type="password" id="aiKeyIn" name="key" autocomplete="off" spellcheck="false"><button class="btn small" type="button" data-aitest>Check key, load models</button></div>
       <small data-keyhelp></small><label class="chk" style="margin-top:5px"><input type="checkbox" name="remember"${c.remember ? " checked" : ""}> Remember the key in this browser (otherwise it is forgotten when you close the tab)</label></div>
     <div class="ai-f" data-for="base"><label for="aiBaseIn">Server address</label><input type="text" id="aiBaseIn" name="base" placeholder="https://openrouter.ai/api/v1  or  http://localhost:11434/v1" value="${esc(c.base)}"><small>The part before /chat/completions. The server must accept calls from a web page (CORS); Ollama needs OLLAMA_ORIGINS=*.</small></div>
-    <div class="ai-grid2"><div class="ai-f" data-for="model"><label for="aiModelIn">Model</label><input type="text" id="aiModelIn" name="model" list="aiModelList" spellcheck="false"><datalist id="aiModelList"></datalist><small data-modelhelp></small></div>
+    <div class="ai-grid2"><div class="ai-f" data-for="model"><label for="aiModelIn">Model</label><select id="aiModelSel" aria-label="Claude model"></select><input type="text" id="aiModelIn" name="model" list="aiModelList" spellcheck="false"><datalist id="aiModelList"></datalist><small data-modelhelp></small></div>
       <div class="ai-f" data-for="effort"><label for="aiEffortIn">Effort (Claude)</label><select id="aiEffortIn" name="effort">${["", "low", "medium", "high", "xhigh", "max"].map(x => `<option value="${x}"${x === c.effort ? " selected" : ""}>${x ? x[0].toUpperCase() + x.slice(1) : "Model default"}</option>`).join("")}</select><small>How hard the model thinks; lower is faster and cheaper.</small></div></div>
     <div class="ai-f"><label for="aiPresetsIn">Quick requests in the menu (one per line)</label><textarea class="presets" id="aiPresetsIn" name="presets">${esc(c.presets.join("\n"))}</textarea></div>
     <p class="ai-msgline" data-aimsg></p>
@@ -509,13 +608,20 @@ async function aiSettings(msg) {
     $("#aiKeyIn").value = keys[p] ?? aiKey(p); $("#aiModelIn").value = models[p] ?? P.def ?? "";
     $(".ai-f[data-for=key]", m).hidden = p === "demo"; $(".ai-f[data-for=model]", m).hidden = p === "demo"; $(".ai-f[data-for=base]", m).hidden = p !== "custom"; $(".ai-f[data-for=effort]", m).hidden = p !== "claude";
     $("[data-keyhelp]", m).innerHTML = p === "claude" ? 'From <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com → API keys</a>. Usage is billed to your Anthropic account.' : p === "openai" ? 'From <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com → API keys</a>.' : p === "gemini" ? 'From <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com → API key</a>.' : "Leave empty if the server needs none.";
-    $("[data-modelhelp]", m).textContent = p === "claude" ? "claude-opus-5-5 is the most capable everyday choice; sonnet is faster, haiku cheapest." : "Type the model ID, or load the list with your key.";
-    $("#aiModelList").innerHTML = (P.models || []).map(x => `<option value="${x}">`).join(""); line("");
+    $("[data-modelhelp]", m).textContent = p === "claude" ? "Price per million tokens in / out. A paragraph request is usually a few thousand tokens in (mostly cached) and a few hundred out." : "Type the model ID, or load the list with your key.";
+    $("#aiModelList").innerHTML = ""; line(""); claudeSel(p === "claude" ? [] : null);
   }
+  function claudeSel(extra) {
+    const sel = $("#aiModelSel"), inp = $("#aiModelIn"); if (!extra) { sel.hidden = true; inp.hidden = false; return; }
+    const more = extra.filter(id => !CLAUDE_MODELS.some(x => x[0] === id) && /^claude/.test(id));
+    sel.innerHTML = `<optgroup label="Current">${CLAUDE_MODELS.slice(0, 4).map(([id, n, d, pr]) => `<option value="${id}">Claude ${n}: ${d} (${pr})</option>`).join("")}</optgroup><optgroup label="Earlier">${CLAUDE_MODELS.slice(4).map(([id, n, d, pr]) => `<option value="${id}">Claude ${n} (${pr})</option>`).join("")}</optgroup>${more.length ? `<optgroup label="Also on your account">${more.map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join("")}</optgroup>` : ""}<option value="__other">Other: type a model ID…</option>`;
+    const v = inp.value.trim() || AI_PROVIDERS.claude.def; sel.value = [...sel.options].some(o => o.value === v) ? v : "__other"; sel.hidden = false; inp.hidden = sel.value !== "__other";
+  }
+  $("#aiModelSel").addEventListener("change", e => { const v = e.target.value, inp = $("#aiModelIn"); if (v === "__other") { inp.hidden = false; inp.value = ""; inp.focus(); } else { inp.hidden = true; inp.value = v; } });
   $$("input[name=provider]", m).forEach(r => r.addEventListener("change", show)); show();
   $("[data-aitest]", m).addEventListener("click", async () => {
     const p = val(); line("Checking…");
-    try { const ids = await aiListModels(p, $("#aiKeyIn").value.trim(), p === "custom" ? $("#aiBaseIn").value.trim() : AI_PROVIDERS[p].base || ""); $("#aiModelList").innerHTML = ids.map(x => `<option value="${esc(x)}">`).join(""); line(`Key works. ${ids.length} models available: pick one in the Model box.`, "ok"); }
+    try { const ids = await aiListModels(p, $("#aiKeyIn").value.trim(), p === "custom" ? $("#aiBaseIn").value.trim() : AI_PROVIDERS[p].base || ""); if (p === "claude") claudeSel(ids); $("#aiModelList").innerHTML = ids.map(x => `<option value="${esc(x)}">`).join(""); line(`Key works. ${ids.length} models available: pick one in the Model box.`, "ok"); }
     catch (e) { line("Did not work: " + (e instanceof TypeError ? "could not reach the server" : e.message), "err"); }
   });
   const v = await pr; m.classList.remove("ai-set"); if (!v) return;
@@ -525,6 +631,15 @@ async function aiSettings(msg) {
   aiHome(); if (S.doc) aiRenderChat(); toast("AI: " + aiWho());
 }
 
+function aiReviewMenu(anchor) {
+  const n = $$(".ai-chg[data-ai]:not(.busy)", flowEl).length, h = allHunks().length;
+  menu([{ head: n ? `${h} change${h === 1 ? "" : "s"} in ${n} AI suggestion${n === 1 ? "" : "s"}` : "No AI suggestions to review" },
+    { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes", sub: "Off: the text reads as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
+    { sep: true }, { label: "Next change", k: "Alt+↓", fn: () => aiStep(1) }, { label: "Previous change", k: "Alt+↑", fn: () => aiStep(-1) },
+    { label: "Accept change", k: "Tab", fn: () => aiDecide(aiHunk, true) }, { label: "Reject change", k: "Esc", fn: () => aiDecide(aiHunk, false) },
+    { sep: true }, { label: "Accept all changes in the document", fn: () => aiDecideAll(true) }, { label: "Reject all changes in the document", fn: () => aiDecideAll(false) },
+    { sep: true }, { label: "Ask AI about the selection", k: "Alt+A", fn: () => { useRange?.(); aiAskOpen(); } }, { label: "AI chat panel", fn: () => aiTogglePanel() }, { label: "AI model…", sub: aiWho(), fn: () => aiModelMenu(anchor) }, { label: "AI settings…", fn: () => aiSettings() }], anchor);
+}
 function aiHome() { const w = $("#aiHomeWho"); if (w) w.textContent = aiWho(); }
 
 /* ---- keep exports, the web view and undo honest about pending suggestions ---- */
@@ -532,7 +647,7 @@ function aiHome() { const w = $("#aiHomeWho"); if (w) w.textContent = aiWho(); }
 function withOriginals(fn) {
   return function (...args) {
     const chg = S.doc?.kind === "flow" ? $$(".ai-chg[data-ai]", flowEl) : []; if (!chg.length) return fn.apply(this, args);
-    const saved = chg.map(el => { const ch = aiChange(el.dataset.ai), f = ch ? lightOrHtml(ch.oldHtml) : document.createTextNode(el.textContent), nodes = f.nodeType === 11 ? [...f.childNodes] : [f]; if (!nodes.length) nodes.push(document.createTextNode("")); el.replaceWith(...nodes); return { el, nodes }; });
+    const saved = chg.map(el => { const f = aiChange(el.dataset.ai) ? aiOrigFrag(el) : document.createTextNode(el.textContent), nodes = f.nodeType === 11 ? [...f.childNodes] : [f]; if (!nodes.length) nodes.push(document.createTextNode("")); el.replaceWith(...nodes); return { el, nodes }; });
     const back = () => { for (const { el, nodes } of saved) { nodes[0].before(el); nodes.forEach(n => n.remove()); } };
     let r; try { r = fn.apply(this, args); } catch (e) { back(); throw e; }
     if (r && typeof r.then === "function") return r.finally(back);
@@ -555,11 +670,11 @@ function aiSync() {
   if (aiActive && !aiSpan(aiActive)) aiActive = null; aiSetActive(aiActive || $(".ai-chg[data-ai]", flowEl)?.dataset.ai || null); aiRenderChat();
 }
 { const sd = showDoc; showDoc = async function () {
-    aiActive = null; aiAskClose();
+    aiActive = null; aiHunk = null; aiAskClose();
     if (S.doc?.kind === "flow" && /ai-chg/.test(S.doc.html || "")) { const t = EL("div", { html: S.doc.html }); for (const s of t.querySelectorAll(".ai-chg")) { const ch = S.doc.ai?.changes?.[s.dataset.ai]; if (!ch || s.classList.contains("busy") || !ch.sugg?.[ch.cur]) s.replaceWith(ch ? lightOrHtml(ch.oldHtml) : document.createTextNode(s.textContent)); else s.classList.remove("on"); } S.doc.html = t.innerHTML; }
-    const r = await sd(); aiSync(); return r;
+    const r = await sd(); aiMarkup(); aiSync(); return r;
   }; }
-{ const gh = goHome; goHome = function () { aiActive = null; aiBar(); aiAskClose(); return gh(); }; }
+{ const gh = goHome; goHome = function () { aiActive = null; aiHunk = null; aiBar(); aiAskClose(); return gh(); }; }
 
 /* ---- the sample paper (made up, for trying the tools) ---- */
 const AI_SAMPLE = `<h1>Sub-inhibitory ciprofloxacin and biofilm formation in <i>Pseudomonas aeruginosa</i></h1>
@@ -582,6 +697,8 @@ document.addEventListener("click", e => {
   if (a === "aiAsk") { e.preventDefault(); aiAskOpen(); }
   else if (a === "aiPanel") aiTogglePanel();
   else if (a === "aiSettings") aiSettings();
+  else if (a === "aiMarkup") aiMarkup(!Prefs.get("aiMarkup", true));
+  else if (a === "wReview") aiReviewMenu(b);
   else if (a === "aiSample") openDoc(newDoc("flow", "Sample paper (made up)", { html: AI_SAMPLE }));
 });
 $("[data-act=aiAsk]")?.addEventListener("pointerdown", e => e.preventDefault());

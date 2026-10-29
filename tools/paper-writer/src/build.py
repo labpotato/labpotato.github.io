@@ -41,6 +41,7 @@ s = s[:i] + "\n" + css + s[i:]
 # icons, header
 rep("  </defs>\n</svg>", '''    <symbol id="i-ai" viewBox="0 0 24 24"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></symbol>
     <symbol id="i-spacing" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M5 4v16M3 6.5 5 4l2 2.5M3 17.5 5 20l2-2.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-brush" viewBox="0 0 24 24"><rect x="4" y="3" width="13" height="6" rx="1.5"/><path d="M17 6h3v5h-8v3"/><rect x="10.5" y="14" width="3" height="7" rx="1"/></symbol>
   </defs>
 </svg>''')
@@ -76,8 +77,8 @@ if n != 1:
 rep('''<div class="work" id="work" hidden>
   <div class="tbar" id="tbar">''', '''<div class="work" id="work" hidden>
   <div class="menubar" role="menubar" aria-label="Menus">
-    <button data-act="wEdit">Edit</button><button data-act="wInsert">Insert</button><button data-act="wFormat">Format</button><button data-act="wTools">Tools</button><button data-act="wPage">Page</button><button data-act="wHelp">Help</button>
-    <span class="mb-sp"></span><span class="mb-hint">Ctrl+/ shortcuts · F7 spelling · Alt+A ask AI</span>
+    <button data-act="wEdit">Edit</button><button data-act="wInsert">Insert</button><button data-act="wFormat">Format</button><button data-act="wReview">Review</button><button data-act="wTools">Tools</button><button data-act="wPage">Page</button><button data-act="wHelp">Help</button>
+    <span class="mb-sp"></span><span class="mb-hint">Ctrl+/ shortcuts · F7 spelling · Alt+A ask AI · Tab / Esc accept or reject a change</span>
   </div>
   <div class="tbar" id="tbar">''')
 
@@ -95,9 +96,21 @@ rep('<button class="tb fb sup" data-cmd="superscript" title="Superscript">x²</b
 rep('<button class="tb fb" data-act="alignMenu" id="alignBtn" title="Align"><svg><use href="#i-al"/></svg></button>',
     '<button class="tb fb" data-act="alignMenu" id="alignBtn" title="Align (Ctrl+L, E, R, J)"><svg><use href="#i-al"/></svg></button>\n      <button class="tb fb" data-act="wSpacing" title="Line and paragraph spacing"><svg><use href="#i-spacing"/></svg></button>\n      <button class="tb fb" data-act="wPainter" title="Format painter: copy the look of the text at the cursor, then select text to paint (Ctrl+Alt+C / Ctrl+Alt+V)"><svg><use href="#i-brush"/></svg></button>')
 rep('<button class="tb fb" data-act="flowComment" title="Comment on selection (Ctrl+Alt+M)"><svg><use href="#i-comment"/></svg></button>',
-    '<button class="tb fb" data-act="flowComment" title="Comment on selection (Ctrl+Alt+M)"><svg><use href="#i-comment"/></svg></button>\n      <span class="tsep"></span>\n      <button class="tb fb ai-btn" data-act="aiAsk" title="Ask AI about the selection (Alt+A)"><svg><use href="#i-ai"/></svg><span class="lbl">Ask AI</span></button>')
+    '<button class="tb fb" data-act="flowComment" title="Comment on selection (Ctrl+Alt+M)"><svg><use href="#i-comment"/></svg></button>\n      <span class="tsep"></span>\n      <button class="tb fb ai-btn" data-act="aiAsk" title="Ask AI about the selection (Alt+A)"><svg><use href="#i-ai"/></svg><span class="lbl">Ask AI</span></button>\n      <button class="tb fb on" data-act="aiMarkup" id="aiMarkupBtn" title="Show changes on / off: off shows the text as it reads with the AI changes"><svg><use href="#i-eye"/></svg></button>')
 rep('<button class="tb" data-act="toggleRight" title="Comments and highlights">',
     '<button class="tb flow-only ai-btn" data-act="aiPanel" id="aiPanelBtn" title="AI chat for this document"><svg><use href="#i-ai"/></svg><span class="lbl">AI</span></button>\n    <button class="tb" data-act="toggleRight" title="Comments and highlights">')
+
+
+# page width box next to zoom
+rep('''      <button class="tb" data-act="zoomIn" title="Zoom in (Ctrl +)"><svg><use href="#i-plus"/></svg></button>
+    </span>''', '''      <button class="tb" data-act="zoomIn" title="Zoom in (Ctrl +)"><svg><use href="#i-plus"/></svg></button>
+      <select class="tsel w-page flow-only" id="pageWSel" title="Page width: A4, Letter, wide, or the whole window (or drag the right edge of the page)" aria-label="Page width"></select>
+    </span>''')
+# the start page's "load a web page" fallback: this tool has no Chrome extension
+rep("Three ways round it: use the <b>Chrome extension</b> (right), or open the page in another tab, select all (Ctrl+A), copy, and press <b>Paste</b> here, or save the page as PDF from the browser's print dialog and drop it in.",
+    "Two ways round it: open the page in another tab, select all (Ctrl+A), copy, and press <b>Paste</b> here (or paste into a blank document), or save the page as PDF from the browser's print dialog and drop it in.")
+rep('''
+      <label class="opt"><input type="radio" name="how" value="ext"><div><b>Use the Chrome extension</b><span>One click opens any page, including ones you are signed in to.</span></div></label></div>''', '''</div>''')
 
 # the chat panel, after the notes panel
 rep('''      <div class="rfoot"><button class="btn small" data-act="copyNotes" title="Copy all highlights and comments as Markdown">Copy notes</button></div>

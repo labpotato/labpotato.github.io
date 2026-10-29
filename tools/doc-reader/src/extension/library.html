@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My marked pages · Lab Potato</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#18202c;--muted:#6b7480;--line:#e2e6ec;--blue:#0a5fd0}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1c222a;--ink:#e8edf3;--muted:#98a2ae;--line:#2e3742;--blue:#6ea8ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+header h1{font-size:17px;margin:0}header .grow{flex:1}
+main{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input[type=search]{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:14px}
+button,.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:9px;font-size:13px;cursor:pointer;text-decoration:none}
+button:hover,.btn:hover{border-color:var(--blue)}.danger{color:#c0392b}
+.page{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.page h2{font-size:15px;margin:0 0 2px}.page h2 a{color:var(--ink);text-decoration:none}.page h2 a:hover{color:var(--blue)}
+.url{color:var(--muted);font-size:12px;word-break:break-all}.meta{color:var(--muted);font-size:12px;margin-top:4px}
+.q{border-left:4px solid var(--c);padding:3px 10px;margin:6px 0;font-size:13px}.q .n{color:var(--blue);font-size:12.5px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pn{background:color-mix(in srgb,var(--blue) 8%,transparent);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:13px}
+.keep{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 12px}.keep h3{margin:0 0 8px;font-size:15px}
+.krow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.krow .sw{color:var(--ink)}.kst{color:var(--muted);font-size:12.5px;flex:1;min-width:180px}.kst.bad{color:#c0392b}
+.drive{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:6px}
+.gdot{width:10px;height:10px;border-radius:50%;background:#b9c0c8;display:inline-block}.gdot.on{background:#1a9e5c}.gdot.bad{background:#c0392b}
+button.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.steps{margin:6px 0;padding-left:20px;font-size:12.5px;color:var(--ink)}.steps li{margin:3px 0}
+#dCid{flex:1;min-width:260px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+details#dSetup summary{cursor:pointer;font-size:12.5px;color:var(--blue)}
+.khelp{color:var(--muted);font-size:12px;margin:2px 0 6px}.khelp code{font-size:11.5px}
+.empty{color:var(--muted);text-align:center;padding:40px}
+label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+</style></head>
+<body><header><img src="icon48.png" width="28" height="28" alt=""><h1>My marked pages</h1><span class="grow"></span><label class="sw"><input type="checkbox" id="btnOn"> Show the potato on every page</label></header>
+<main><div class="tools"><input type="search" id="q" placeholder="Search your highlights, comments and pages"><button id="allMd">Export all as Markdown</button><a class="btn" href="reader.html" target="_blank">Open Doc Reader</a></div>
+<section class="keep">
+  <h3>Keeping your highlights safe</h3>
+  <div class="drive" id="drive">
+    <div class="krow"><span class="gdot" id="gdot"></span><b>Google Drive sync</b><span class="kst" id="dSt">Not signed in</span>
+      <button id="dIn" class="pri">Sign in with Google</button><button id="dSync" hidden>Sync now</button><button id="dOut" hidden>Sign out</button></div>
+    <p class="khelp">Sign in on each computer with the same Google account: your highlights, comments and page notes follow you, and so do the documents you keep in Doc Reader (each saved as its own file). They are kept in a hidden app folder in your own Google Drive that only this extension can see.</p>
+    <details id="dSetup"><summary>Setup (once, by whoever runs this extension)</summary>
+      <ol class="steps"><li>In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>, create a project and enable the <b>Google Drive API</b>.</li>
+        <li>OAuth consent screen: External, add the scope <code>drive.appdata</code>, and add your own email as a test user.</li>
+        <li>Credentials → Create OAuth client ID → <b>Web application</b>, with this authorized redirect URI: <code id="dRedir">…</code></li>
+        <li>Paste the client ID here:</li></ol>
+      <div class="krow"><input id="dCid" placeholder="1234567890-abc….apps.googleusercontent.com"><button id="dCidSave">Save</button></div>
+      <p class="khelp">Extension ID: <code id="dExt">…</code></p></details>
+  </div>
+  <div class="krow"><label class="sw"><input type="checkbox" id="syncOn"> <b>Also use Chrome Sync</b></label><span class="kst" id="syncSt"></span><button id="syncNow">Sync now</button></div>
+  <p class="khelp">Uses Chrome Sync: sign in to Chrome with the same Google account on each computer and turn on sync (Settings → You and Google → Sync → Extensions). Chrome Sync holds about 100 KB for this extension, roughly a few hundred highlights; pages beyond that stay on this computer and in the backup file.</p>
+  <div class="krow"><label class="sw"><input type="checkbox" id="bkOn"> <b>Save a backup file every day</b></label><span class="kst" id="bkSt"></span><button id="bkNow">Save now</button><button id="backup" title="Pick where to save it">Save a copy as…</button><button id="restore">Restore…</button><input type="file" id="restoreIn" accept=".json,application/json" hidden></div>
+  <p class="khelp">Written to <code>Downloads/LabPotato/lab_potato_backup.json</code> after the day's first change, replacing yesterday's. If Chrome's data is cleared, choose Restore and pick that file: nothing is lost.</p>
+</section>
+<p class="meta" id="usage"></p><div id="list"></div></main>
+<script src="library.js"></script></body></html>

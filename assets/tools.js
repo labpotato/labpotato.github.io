@@ -260,18 +260,19 @@ const TOOLS = [
     accent: "cyan",
     folder: "tools/doc-reader",
     features: [
-      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; web pages as they look; a Chrome extension",
+      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; web pages as they look; a Chrome extension that syncs",
       "Write like in Word: fonts, footnotes, offline spell check, any page width, Word's shortcuts",
       "Ask AI on a selection with your own Claude key and review its changes one by one, as tracked changes"
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
       { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28" },
-      { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29",
+      { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29" },
+      { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29",
         new: [
-          "Paper Writer is now part of Doc Reader: Ask AI (Alt+A) on a selection, then Tab, Esc or Revise each change",
-          "Word-style writing: fonts and sizes, footnotes, contents, offline spell check (F7), page widths, Word's shortcuts",
-          "Your Paper Writer documents, AI chats and settings come over by themselves the first time you open it"
+          "Web pages opened here keep their own look in the editor, and no longer break Doc Reader's menus and panels",
+          "Chrome extension v3: everything in Doc Reader v4; pages can't be edited live any more, with Revert for earlier edits",
+          "Sign in with Google in the extension and your documents follow you to every computer"
         ] }
     ]
   }

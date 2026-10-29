@@ -255,50 +255,23 @@ const TOOLS = [
     name: "Doc Reader",
     tagline: "Papers, reports and web pages, marked up",
     description:
-      "Open a PDF, Markdown, HTML, web page or image; highlight, comment, draw and edit; save it back or export it with everything you added.",
+      "Open a PDF, Markdown, HTML, web page or image to mark up and edit, or write a paper with an AI editor.",
     icon: "reader",
     accent: "cyan",
     folder: "tools/doc-reader",
     features: [
-      "Highlights, comment bubbles, Word-style text boxes, drawings and page edits on PDFs",
-      "HTML pages as they look, with a floating toolbar; or edit like a Word document",
-      "Chrome extension works on top of any web page, like Liner: highlights and edits come back on your next visit"
+      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; web pages as they look; a Chrome extension",
+      "Write like in Word: fonts, footnotes, offline spell check, any page width, Word's shortcuts",
+      "Ask AI on a selection with your own Claude key and review its changes one by one, as tracked changes"
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
-      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28",
+      { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28" },
+      { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29",
         new: [
-          "Marks beside the scroll bar: click one to jump there and see it flash; Alt+Up/Down steps through them",
-          "Extension: sign in with Google and your highlights follow you to every computer (kept in your own Drive); daily backup file",
-          "Toolbar can float or dock; a page you opened before reopens with your changes"
-        ] }
-    ]
-  },
-  {
-    id: "paper-writer",
-    short: "Write papers with AI",
-    name: "Paper Writer",
-    tagline: "Demo: a Word-style editor with an AI editor",
-    description:
-      "Write your paper in a Word-style editor; select text, ask the AI, and review its answer as tracked changes.",
-    icon: "writer",
-    accent: "violet",
-    folder: "tools/paper-writer",
-    features: [
-      "Ask AI on any selection and review its changes one by one in place: Tab accepts, Esc rejects, Revise sends a part back",
-      "One chat per document with your own Claude key, so the AI keeps the whole paper in view",
-      "Word-style editing: fonts, footnotes, offline spell check, any page width and Word's shortcuts"
-    ],
-    versions: [
-      { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29" },
-      { v: "v2", file: "paper-writer-v2.html", date: "2026-10-29" },
-      { v: "v3", file: "paper-writer-v3.html", date: "2026-10-29" },
-      { v: "v4", file: "paper-writer-v4.html", date: "2026-10-29" },
-      { v: "v5", file: "paper-writer-v5.html", date: "2026-10-29",
-        new: [
-          "Grammarly keeps its underlines on the words at any zoom: zoom now really resizes the text instead of magnifying it",
-          "Continue on claude.ai: copies the paper and the AI chat into a new claude.ai chat",
-          "Where is this chat? shows where the chat is kept and exactly what was sent to the AI (v4)"
+          "Paper Writer is now part of Doc Reader: Ask AI (Alt+A) on a selection, then Tab, Esc or Revise each change",
+          "Word-style writing: fonts and sizes, footnotes, contents, offline spell check (F7), page widths, Word's shortcuts",
+          "Your Paper Writer documents, AI chats and settings come over by themselves the first time you open it"
         ] }
     ]
   }

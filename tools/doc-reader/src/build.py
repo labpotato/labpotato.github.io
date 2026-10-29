@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Build Paper Writer: Doc Reader v2 plus the AI editor (ai.css, ai.js) and Word-style editing
-(word.css, word.js, the nspell spell checker and its en-GB / en-US dictionaries in vendor/).
+"""Build Doc Reader v3 and later: Doc Reader v2 plus the AI editor (ai.css, ai.js), Word-style editing
+(word.css, word.js, the nspell spell checker and its en-GB / en-US dictionaries in vendor/) and the
+one-time import of Paper Writer's documents (merge.js). Paper Writer v1-v5 were built from these files.
 
-    python3 tools/paper-writer/src/build.py [vN]
+    python3 tools/doc-reader/src/build.py v3
 
 Reads tools/doc-reader/doc-reader-v2.html (never changes it) and writes
-tools/paper-writer/paper-writer-vN.html (default v1). Each edit must match exactly once, so a
+tools/doc-reader/doc-reader-vN.html. Each edit must match exactly once, so a
 newer Doc Reader that moved things fails loudly instead of building a broken file.
 Never rebuild over a published version: pass the next number.
 """
@@ -13,9 +14,9 @@ import pathlib, re, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-VER = sys.argv[1] if len(sys.argv) > 1 else "v1"
+VER = sys.argv[1] if len(sys.argv) > 1 else sys.exit("build.py: give the version to write, e.g. v3")
 SRC = ROOT / "tools/doc-reader/doc-reader-v2.html"
-OUT = HERE.parent / f"paper-writer-{VER}.html"
+OUT = HERE.parent / f"doc-reader-{VER}.html"
 V = HERE / "vendor"
 
 s = SRC.read_text(encoding="utf-8")
@@ -32,9 +33,8 @@ def rep(old, new, count=1):
 
 
 # head
-rep("<title>Doc Reader · Lab Potato</title>", "<title>Paper Writer · Lab Potato</title>")
 rep('<meta name="description" content="Read, highlight, comment on and edit PDFs, Markdown, web pages and images. Works offline; everything stays on your computer.">',
-    '<meta name="description" content="Write a paper in a Word-style editor with an AI editor: select text, ask for a change, review it as tracked changes. Works offline.">')
+    '<meta name="description" content="Read, highlight, comment on and edit PDFs, Markdown, web pages and images, or write a paper with an AI editor and Word-style tools. Works offline; documents stay on your computer.">')
 i = s.index("</style>\n</head>")
 s = s[:i] + "\n" + css + s[i:]
 
@@ -45,15 +45,15 @@ rep("  </defs>\n</svg>", '''    <symbol id="i-ai" viewBox="0 0 24 24"><path d="M
     <symbol id="i-brush" viewBox="0 0 24 24"><rect x="4" y="3" width="13" height="6" rx="1.5"/><path d="M17 6h3v5h-8v3"/><rect x="10.5" y="14" width="3" height="7" rx="1"/></symbol>
   </defs>
 </svg>''')
-rep('<h1 class="brand-tool">Doc Reader</h1>\n  <span class="ver-chip">v2</span>',
-    f'<h1 class="brand-tool">Paper Writer</h1>\n  <span class="ver-chip" title="Demo built on Doc Reader v2">{VER} · demo</span>')
+rep('<h1 class="brand-tool">Doc Reader</h1>\n  <span class="ver-chip">v2</span>', f'<h1 class="brand-tool">Doc Reader</h1>\n  <span class="ver-chip">{VER}</span>')
 
 # start page
-rep("<h2>Open a paper, report or web page</h2>", "<h2>Write your paper with an AI editor</h2>")
+rep("<h2>Open a paper, report or web page</h2>", "<h2>Open a paper, report or web page, or write one</h2>")
 rep('<button class="btn big" data-act="newBlank"><svg><use href="#i-new"/></svg>Blank document</button>',
-    '<button class="btn big" data-act="newBlank"><svg><use href="#i-new"/></svg>Blank document</button>\n        <button class="btn big" data-act="aiSample"><svg><use href="#i-ai"/></svg>Try the sample paper</button>')
-s, n = re.subn(r'<div class="home-card" id="extCard">.*?</details>\s*</div>',
-               '''<div class="home-card ai-card" id="aiCard">
+    '<button class="btn big" data-act="newBlank"><svg><use href="#i-new"/></svg>Blank document</button>\n        <button class="btn big" data-act="aiSample"><svg><use href="#i-ai"/></svg>AI editor sample</button>')
+s, n = re.subn(r'(<div class="home-card" id="extCard">.*?</details>\s*</div>)',
+               '''\\1
+      <div class="home-card ai-card" id="aiCard">
         <h3><svg><use href="#i-ai"/></svg>AI editor</h3>
         <p>Select words in a paragraph and press <b>Ask AI</b> (Alt+A); pick a request such as <i>Better logical flow</i>, or type your own. The answer comes back in place as tracked changes, or labelled <b>Rewrite</b> when it changes a lot. <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back with extra instructions.</p>
         <p>Each document keeps one chat: the AI gets the whole paper once, then each request with its paragraph. Use your own Claude (Anthropic) key, another AI, or the demo mode with no key.</p>
@@ -63,12 +63,12 @@ if n != 1:
     sys.exit("build.py: extension card not found")
 s, n = re.subn(r'<h3>What you can do</h3>\s*<ul class="ticks">.*?</ul>', '''<h3>What you can do</h3>
         <ul class="ticks">
-          <li>Word-style editing: fonts, sizes, headings, lists, tables, images, footnotes, contents, symbols</li>
-          <li>Page width: A4, Letter, wide, any width (drag the page edge) or fill the whole window</li>
-          <li>Offline spell check in English (UK) or (US), with lab and medical terms; F7 steps through</li>
-          <li>Word's keyboard shortcuts (Ctrl+/ lists them); word count; format painter; change case</li>
-          <li>Highlights and comment bubbles; export to PDF, HTML or Markdown; autosaves in this browser</li>
-          <li>Open a PDF and turn it into an editable document; open Markdown, HTML or web pages</li>
+          <li>Highlight in 6 colours, underline, strike, box any area or figure; comment bubbles with replies</li>
+          <li>Edit the PDF's own text, rotate, delete or add pages; text boxes, pen, shapes, images</li>
+          <li>Web view: HTML pages as they look, links and buttons working, a floating toolbar on top</li>
+          <li>Write like in Word: fonts, sizes, footnotes, contents, symbols, Word's shortcuts (Ctrl+/)</li>
+          <li>Ask AI on a selection and review its changes one by one; offline spell check (F7)</li>
+          <li>Page width A4, Letter, wide or the whole window; export PDF, HTML or Markdown; autosaves here</li>
         </ul>''', s, count=1, flags=re.S)
 if n != 1:
     sys.exit("build.py: feature list not found")
@@ -106,11 +106,6 @@ rep('''      <button class="tb" data-act="zoomIn" title="Zoom in (Ctrl +)"><svg>
     </span>''', '''      <button class="tb" data-act="zoomIn" title="Zoom in (Ctrl +)"><svg><use href="#i-plus"/></svg></button>
       <select class="tsel w-page flow-only" id="pageWSel" title="Page width: A4, Letter, wide, or the whole window (or drag the right edge of the page)" aria-label="Page width"></select>
     </span>''')
-# the start page's "load a web page" fallback: this tool has no Chrome extension
-rep("Three ways round it: use the <b>Chrome extension</b> (right), or open the page in another tab, select all (Ctrl+A), copy, and press <b>Paste</b> here, or save the page as PDF from the browser's print dialog and drop it in.",
-    "Two ways round it: open the page in another tab, select all (Ctrl+A), copy, and press <b>Paste</b> here (or paste into a blank document), or save the page as PDF from the browser's print dialog and drop it in.")
-rep('''
-      <label class="opt"><input type="radio" name="how" value="ext"><div><b>Use the Chrome extension</b><span>One click opens any page, including ones you are signed in to.</span></div></label></div>''', '''</div>''')
 
 # the chat panel, after the notes panel
 rep('''      <div class="rfoot"><button class="btn small" data-act="copyNotes" title="Copy all highlights and comments as Markdown">Copy notes</button></div>
@@ -129,15 +124,9 @@ data = "".join(f'<script type="text/plain" id="{i}">{(V / f).read_text(encoding=
 lib = "<script>/* nspell 2.1.5, MIT, (c) Titus Wormer */\n" + (V / "nspell.min.js").read_text(encoding="utf-8") + "\n</script>\n"
 rep('<script type="text/plain" id="pdfworker">', data + lib + '<script type="text/plain" id="pdfworker">')
 
-# app script: own database (separate from Doc Reader on the same site), names, the AI and Word layers
-rep('indexedDB.open("lp-docreader", 1)', 'indexedDB.open("lp-paperwriter", 1)')
-rep('document.title = d.name + " · Doc Reader";', 'document.title = d.name + " · Paper Writer";')
-rep('document.title = "Doc Reader · Lab Potato";', 'document.title = "Paper Writer · Lab Potato";')
-rep('app: "Lab Potato Doc Reader v2"', f'app: "Lab Potato Paper Writer {VER}"')
-rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n/* a few names on window, for the tests and the console */")
-
-# visits are counted under this tool's own path
-rep('''data-goatcounter-settings='{"path":"/tools/doc-reader"}\'''', '''data-goatcounter-settings='{"path":"/tools/paper-writer"}\'''')
+# app script: the AI and Word layers, and Paper Writer's documents brought over once
+rep('app: "Lab Potato Doc Reader v2"', f'app: "Lab Potato Doc Reader {VER}"')
+rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n/* a few names on window, for the tests and the console */")
 
 if OUT.exists() and "--force" not in sys.argv:
     print(f"note: overwriting {OUT.name} (fine before it is published; never after)")

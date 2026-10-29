@@ -1,4 +1,4 @@
-/* ---------- Paper Writer: Word-style editing on top of Doc Reader's editor ----------
+/* ---------- Doc Reader: Word-style editing for documents ----------
    Fonts and sizes, page width and margins, an offline spell checker (nspell + Hunspell en-GB / en-US),
    footnotes, table of contents, symbols, page breaks, change case, spacing, format painter, word count,
    and Word / Google Docs keyboard shortcuts. Runs inside Doc Reader's scope like ai.js. */

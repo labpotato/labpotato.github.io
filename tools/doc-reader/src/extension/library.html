@@ -37,11 +37,11 @@ label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute
     <div class="krow"><span class="gdot" id="gdot"></span><b>Google Drive sync</b><span class="kst" id="dSt">Not signed in</span>
       <button id="dIn" class="pri">Sign in with Google</button><button id="dSync" hidden>Sync now</button><button id="dOut" hidden>Sign out</button></div>
     <p class="khelp">Sign in on each computer with the same Google account: your highlights, comments and page notes follow you, and so do the documents you keep in Doc Reader (each saved as its own file). They are kept in a hidden app folder in your own Google Drive that only this extension can see.</p>
-    <details id="dSetup"><summary>Setup (once, by whoever runs this extension)</summary>
+    <details id="dSetup"><summary>Use your own Google Cloud project instead (optional)</summary>
       <ol class="steps"><li>In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>, create a project and enable the <b>Google Drive API</b>.</li>
         <li>OAuth consent screen: External, add the scope <code>drive.appdata</code>, and add your own email as a test user.</li>
         <li>Credentials → Create OAuth client ID → <b>Web application</b>, with this authorized redirect URI: <code id="dRedir">…</code></li>
-        <li>Paste the client ID here:</li></ol>
+        <li>Paste the client ID here (leave empty to use Lab Potato's):</li></ol>
       <div class="krow"><input id="dCid" placeholder="1234567890-abc….apps.googleusercontent.com"><button id="dCidSave">Save</button></div>
       <p class="khelp">Extension ID: <code id="dExt">…</code></p></details>
   </div>

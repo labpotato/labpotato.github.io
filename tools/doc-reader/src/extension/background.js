@@ -216,7 +216,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
    removed here or there stays removed), writes the result back, and updates any open page.
    Sign-in uses Chrome's web sign-in window with an OAuth client ID you paste into the library once. */
 let DRIVE = "https://www.googleapis.com";                 // the Drive API (a test can point this at a mock)
-const DEFAULT_CLIENT_ID = "";                             // filled in once the Google Cloud project exists
+const DEFAULT_CLIENT_ID = "502625246525-u3vf2hmn6dmgrlmq2p5j5m40eojpks2l.apps.googleusercontent.com";   // Lab Potato's Google Cloud project; a client ID pasted in the library overrides it
 const DFILE = "lab-potato-highlights.json", SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 const dstate = async () => (await chrome.storage.local.get("lp:drive"))["lp:drive"] || {};
 const setDstate = async o => chrome.storage.local.set({ "lp:drive": Object.assign(await dstate(), o) });

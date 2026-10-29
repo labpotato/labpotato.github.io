@@ -59,7 +59,6 @@ async function drawDrive() {
   st.className = "kst" + (d.error ? " bad" : "");
   st.textContent = on ? `Signed in${d.email ? " as " + d.email : ""} · last synced ${when(d.lastSync)}${d.pages != null ? ` · ${d.pages} page${d.pages === 1 ? "" : "s"}` : ""}${d.error ? " · " + d.error : ""}` : d.error ? d.error : "Not signed in";
   document.getElementById("dIn").hidden = on; document.getElementById("dSync").hidden = !on; document.getElementById("dOut").hidden = !on;
-  if (!d.clientId && !on) document.getElementById("dSetup").open = true;
 }
 document.getElementById("dCidSave").addEventListener("click", async () => { const v = document.getElementById("dCid").value.trim(); const d = (await chrome.storage.local.get("lp:drive"))["lp:drive"] || {}; d.clientId = v; await chrome.storage.local.set({ "lp:drive": d }); drawDrive(); });
 document.getElementById("dIn").addEventListener("click", async e => { e.target.disabled = true; e.target.textContent = "Signing in…"; const r = await chrome.runtime.sendMessage({ t: "driveSignIn" }); e.target.disabled = false; e.target.textContent = "Sign in with Google"; if (!r || !r.ok) alert("Google sign-in did not finish: " + ((r && r.error) || "unknown error") + (/not set up/.test(r && r.error || "") ? "\n\nOpen Setup below and paste the OAuth client ID first." : "")); drawDrive(); load(); });

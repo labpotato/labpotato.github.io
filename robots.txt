@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://labpotato.github.io/sitemap.xml

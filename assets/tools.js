@@ -273,6 +273,29 @@ const TOOLS = [
           "Toolbar can float or dock; a page you opened before reopens with your changes"
         ] }
     ]
+  },
+  {
+    id: "paper-writer",
+    short: "Write papers with AI",
+    name: "Paper Writer",
+    tagline: "Demo: a Word-style editor with an AI editor",
+    description:
+      "Write your paper in a Word-style editor; select text, ask the AI, and review its answer as tracked changes.",
+    icon: "writer",
+    accent: "violet",
+    folder: "tools/paper-writer",
+    features: [
+      "Ask AI on any selection: the answer comes back in place as tracked changes; Tab accepts, Esc rejects",
+      "One chat per document with your own Claude key, so the AI keeps the whole paper in view",
+      "Word-style editing: fonts, footnotes, offline spell check, any page width and Word's shortcuts"
+    ],
+    versions: [
+      { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29",
+        new: [
+          "Demo release: open the sample paper and try every control without a key (demo mode)",
+          "Connect Claude with your own Anthropic key, or another AI"
+        ] }
+    ]
   }
 
   /* ---------- TEMPLATE: copy this block for a new tool ----------

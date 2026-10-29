@@ -1,4 +1,4 @@
-/* ---------- Paper Writer demo: AI requests, tracked changes, review bar, chat panel ---------- */
+/* ---------- Doc Reader: AI requests, tracked changes, review bar, chat panel ---------- */
 :root{ --ai:#6f42c1; --ai-d:#55309c; --ai-l:#f2ecfc; --ins:#0b7a55; --ins-l:#e3f5ec; --del:#c0384b; --del-l:#fbe9ec; }
 :root[data-theme="dark"]{ --ai:#b59cff; --ai-d:#d3c4ff; --ai-l:#251d3a; --ins:#5fd6a6; --ins-l:#12291f; --del:#f58a98; --del-l:#2e171c; }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]):not([data-theme="sepia"]){ --ai:#b59cff; --ai-d:#d3c4ff; --ai-l:#251d3a; --ins:#5fd6a6; --ins-l:#12291f; --del:#f58a98; --del-l:#2e171c; } }

@@ -1,4 +1,4 @@
-/* ---------- Paper Writer demo: ask an AI about a selection, get the answer back as tracked changes ----------
+/* ---------- Doc Reader AI editor: ask an AI about a selection, get the answer back as tracked changes ----------
    Runs inside Doc Reader's scope (inserted by build.py), so it uses S, flowEl, $, EL, modal, menu, toast...
    One chat per document lives in S.doc.ai: the thread sent to the AI (append-only), the changes it proposed,
    and the log shown in the chat panel. A change in the text is <span class="ai-chg" data-ai="id">; its
@@ -219,6 +219,7 @@ async function aiRequest(range, instr) {
   const ch = ai.changes[id] = { id, n: ++ai.n, at: Date.now(), instr, oldHtml: hold.innerHTML, oldLight: toLight(hold), sugg: [], cur: -1, status: "busy", via: aiCfg().provider };
   getSelection().removeAllRanges();
   ai.log.push({ t: "req", id, at: ch.at });
+  if (!Prefs.get("aiPanelSeen")) { Prefs.set("aiPanelSeen", 1); aiTogglePanel(true); }
   aiRenderChat();
   try { await aiAsk(ch, {}); }
   catch (e) { console.warn(e); const s = aiSpan(id); if (s) { s.replaceWith(lightOrHtml(ch.oldHtml)); flowEl.normalize(); } ch.status = "failed"; ch.error = String(e.message || e); aiRenderChat(); toast("AI request failed: " + ch.error); }
@@ -594,14 +595,14 @@ function aiSentView() {
   const ai = aiState(), msgs = ai.thread.map((m, i) => {
     const blocks = typeof m.content === "string" ? [{ type: "text", text: m.content }] : m.content.filter(b => b.type === "text");
     const body = blocks.map(b => b.text.startsWith("The manuscript") || b.text.startsWith("An updated copy of the manuscript") ? `<details><summary>${esc(b.text.split("\n")[0])} (${wordCount(b.text).toLocaleString("en")} words)</summary><pre>${esc(b.text)}</pre></details>` : `<pre>${esc(b.text)}</pre>`).join("");
-    return `<div class="sent-msg ${m.role}"><div class="sent-who">${m.role === "user" ? "Sent by Paper Writer" : "The AI's reply"} · message ${i + 1}</div>${body}</div>`;
+    return `<div class="sent-msg ${m.role}"><div class="sent-who">${m.role === "user" ? "Sent by Doc Reader" : "The AI's reply"} · message ${i + 1}</div>${body}</div>`;
   }).join("");
   modal(`<h3>What was sent to the AI</h3><p>Every message in this document's chat, in order. Each request also carries the editing instructions shown first (the system prompt).</p><details class="sent-sys"><summary>System prompt</summary><pre>${esc(AI_SYSTEM)}</pre></details><div class="sent-list">${msgs || "<p>Nothing sent yet.</p>"}</div><div class="mrow"><button class="btn primary" data-cancel>Close</button></div>`);
   $("#modal").classList.add("sent-modal"); const off = () => { if ($("#modalBack").hidden) $("#modal").classList.remove("sent-modal"); else setTimeout(off, 300); }; setTimeout(off, 300);
 }
 /* claude.ai has no way for other apps to add chats, so: copy the paper and this chat, open a new claude.ai chat, paste */
 async function aiToClaudeAi() {
-  const text = `I am writing this paper and used an AI editor (Paper Writer) on it. Below are the current manuscript and our editing chat. Please read both and continue as my editor; I will ask follow-up questions here.\n\n<manuscript>\n${aiPaperText()}\n</manuscript>\n\n<editing_chat>\n${aiChatMarkdown()}</editing_chat>\n`;
+  const text = `I am writing this paper and used an AI editor (Lab Potato Doc Reader) on it. Below are the current manuscript and our editing chat. Please read both and continue as my editor; I will ask follow-up questions here.\n\n<manuscript>\n${aiPaperText()}\n</manuscript>\n\n<editing_chat>\n${aiChatMarkdown()}</editing_chat>\n`;
   let copied = true; try { await navigator.clipboard.writeText(text); } catch (e) { copied = false; }
   window.open("https://claude.ai/new", "_blank", "noopener");
   if (copied) toast("Copied the paper and this chat. In the new claude.ai chat, press Ctrl+V (⌘V) to paste it, then send.");
@@ -609,7 +610,7 @@ async function aiToClaudeAi() {
 }
 function aiChatMarkdown() {
   const ai = aiState(), c = aiCfg();
-  return `# AI chat: ${S.doc.name}\n\n_${aiWho(c)} · kept with this document in Paper Writer (not on claude.ai)_\n\n` + ai.log.map(e => {
+  return `# AI chat: ${S.doc.name}\n\n_${aiWho(c)} · kept with this document in Doc Reader (not on claude.ai)_\n\n` + ai.log.map(e => {
     if (e.t !== "req") return (e.t === "you" ? "**You:** " : e.t === "ans" ? "**AI:** " : "_") + e.text + (e.t === "info" || e.t === "err" ? "_" : "");
     const ch = ai.changes[e.id]; if (!ch) return "";
     return `### #${ch.n} ${ch.instr} (${aiStatus(ch)})\n\n> ${lightText(ch.oldLight).trim()}\n\n` + ch.sugg.map((v, i) => `**Version ${i + 1}:** ${lightText(v.light).trim()}${v.note ? `\n\n_${v.note}_` : ""}`).join("\n\n");
@@ -744,5 +745,5 @@ document.addEventListener("click", e => {
   else if (a === "aiSample") openDoc(newDoc("flow", "Sample paper (made up)", { html: AI_SAMPLE }));
 });
 $("[data-act=aiAsk]")?.addEventListener("pointerdown", e => e.preventDefault());
-{ const bs = buildSwatches; let once = false; buildSwatches = function () { bs(); if (once) return; once = true; aiHome(); if (Prefs.get("aiPanel", true) === false) aiTogglePanel(false); else { $("#aiPanelBtn")?.classList.add("on"); if (innerWidth < 1500) $("#right").classList.add("closed"); } }; }
+{ const bs = buildSwatches; let once = false; buildSwatches = function () { bs(); if (once) return; once = true; aiHome(); if (!Prefs.get("aiPanel", false)) aiTogglePanel(false); else { $("#aiPanelBtn")?.classList.add("on"); if (innerWidth < 1500) $("#right").classList.add("closed"); } }; }
 Object.assign(window, { aiAskOpen, aiRequest, aiAccept, aiReject, aiAgain, aiSettings, aiDiff, aiState, aiTarget, demoRevise });

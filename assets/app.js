@@ -37,7 +37,7 @@ function accentOf(tool) {
 }
 
 function iconSvg(name) {
-  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "cryobox", "dna", "chart", "calculator", "writer"];
+  const known = ["colony", "gel", "gibson", "microscopy", "protein", "flask", "cryobox", "dna", "chart", "calculator"];
   const key = known.includes(name) ? name : "flask";
   return `<svg viewBox="0 0 24 24" stroke="currentColor"><use href="#icon-${key}"></use></svg>`;
 }
@@ -555,9 +555,6 @@ const APP_GLYPH = {
     <rect x="16" y="14" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="20" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="26" width="10" height="2.6" rx="1.3" ${C} opacity=".3"/>
     <rect x="15" y="19" width="12" height="4.6" rx="1.6" fill="#ffd84d" opacity=".85"/>
     <path d="M30 30.5a4.5 4.5 0 1 1 1.6 3.4L29 35l.6-2.6A4.5 4.5 0 0 1 30 30.5z" ${C}/>`,
-  writer: `<rect x="11" y="7" width="26" height="34" rx="4" fill="#fff"/>
-    <rect x="16" y="14" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="20" width="12" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="26" width="8" height="2.6" rx="1.3" ${C} opacity=".3"/>
-    <path d="M31 23.5l1.6 4.1 4.1 1.6-4.1 1.6-1.6 4.1-1.6-4.1-4.1-1.6 4.1-1.6z" ${C}/>`,
   cryobox: `<rect x="9" y="9" width="30" height="30" rx="4.5" fill="#fff"/>
     <g ${C}><circle cx="17" cy="17" r="3"/><circle cx="24" cy="17" r="3" opacity=".7"/><circle cx="31" cy="17" r="3"/><circle cx="17" cy="24" r="3" opacity=".45"/><circle cx="24" cy="24" r="3"/>
     <circle cx="31" cy="24" r="3" opacity=".7"/><circle cx="17" cy="31" r="3"/><circle cx="24" cy="31" r="3" opacity=".25"/><circle cx="31" cy="31" r="3" opacity=".25"/></g>`,

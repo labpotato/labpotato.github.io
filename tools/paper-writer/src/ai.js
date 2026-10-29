@@ -538,7 +538,8 @@ function aiRenderChat() {
   const pend = $$(".ai-chg[data-ai]", flowEl).length;
   $("#aiStats").innerHTML = (ai.paper ? `Paper in this chat: ${ai.paper.words.toLocaleString("en")} words, sent ${fmtTime(ai.paper.at)}.` : c.provider === "demo" ? "Demo mode: nothing is sent anywhere." : "The paper is sent with your first request.") +
     (u.calls ? ` ${u.calls} request${u.calls === 1 ? "" : "s"}` + (u.in || u.cacheRead ? `, tokens in ${k(u.in + u.cacheRead + u.cacheWrite)} (${k(u.cacheRead)} from cache), out ${k(u.out)}.` : ".") : "") + (pend ? ` <b>${pend} suggestion${pend === 1 ? "" : "s"} to review.</b>` : "") +
-    (u.last > 150000 ? ` The chat is getting long: consider <button data-aiact="newchat">a new chat</button>.` : "");
+    (u.last > 150000 ? ` The chat is getting long: consider <button data-aiact="newchat">a new chat</button>.` : "") +
+    ` <button data-aiact="where">Where is this chat?</button>`;
   const log = $("#aiLog"); log.innerHTML = "";
   if (!ai.log.length) log.innerHTML = `<div class="empty"><b>One chat for this document.</b> Select words in a paragraph, then press <b>Ask AI</b> (or Alt+A) and pick a request. The answer appears in the text as tracked changes: <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back.<br><br>The AI receives the whole paper once, then each request with its paragraph, so it keeps the full paper as reference. You can also ask questions about the paper below.<br><br><b>Where the chat is kept:</b> with this document, in this browser (and inside a saved .lpdoc project). Requests go to the AI's own API with your key, so they do not appear on claude.ai; <b>⋯ → Download the chat</b> keeps a copy.</div>`;
   for (const e of ai.log) {
@@ -559,11 +560,42 @@ function aiChatMenu(anchor) {
   menu([
     { label: "AI settings…", icon: "i-ai", fn: () => aiSettings() },
     { label: "Send the paper again", sub: "Gives the AI the current text before your next request", fn: () => { const ai = aiState(); if (ai.paper) ai.paper.stale = true; toast("The current paper goes with your next request."); } },
+    { label: "Where is this chat?", sub: "Kept with this document in this browser, not on claude.ai", fn: aiWhere },
     { label: "Download the chat (.md)", sub: "Requests, the AI's versions and notes, questions and answers", fn: () => download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md") },
     { label: "Copy the chat", fn: () => { navigator.clipboard.writeText(aiState().log.map(e => e.t === "req" ? (c => `#${c.n} ${c.instr}\n> ${lightText(c.oldLight).trim()}\n${c.sugg[c.cur] ? "→ " + lightText(c.sugg[c.cur].light).trim() + (c.sugg[c.cur].note ? `\n(${c.sugg[c.cur].note})` : "") : ""}`)(aiState().changes[e.id] || { sugg: [], oldLight: "" }) : e.text).join("\n\n")); toast("Copied the chat."); } },
     { sep: true },
     { label: "Start a new chat", danger: true, sub: "The AI forgets this chat; suggestions in the text stay", fn: aiNewChat }
   ], anchor, { right: true });
+}
+/* where the chat lives, said plainly, with what was actually sent */
+function aiWhere() {
+  const ai = aiState(), c = aiCfg(), P = AI_PROVIDERS[c.provider], kb = Math.max(1, Math.round(JSON.stringify(ai).length / 1024));
+  const sent = ai.thread.length / 2, where = c.provider === "claude" ? "Anthropic's API" : c.provider === "demo" ? "" : P.label + "'s API";
+  const usage = c.provider === "claude" ? `Usage and cost appear on <a href="https://platform.claude.com/" target="_blank" rel="noopener">platform.claude.com</a> (the Claude Console), as token counts, not as conversations.` : c.provider === "openai" ? `Usage and cost appear in your OpenAI account, not as conversations.` : c.provider === "gemini" ? `Usage appears in Google AI Studio, not as conversations.` : "";
+  const v = modal(`<h3>Where is this chat?</h3>
+    <div class="where-map"><div class="wm-box on"><b>This document</b><span>in this browser${S.doc.handle || S.fileHandle ? ", and your autosave file" : ""}</span><small>${ai.log.length} entries · ${kb} KB</small></div>
+      <div class="wm-arrow">${c.provider === "demo" ? "✕" : "⇄"}</div>
+      <div class="wm-box">${c.provider === "demo" ? "<b>Nothing is sent</b><span>Demo mode works in the browser</span>" : `<b>${esc(where)}</b><span>your key · ${esc(aiWho(c))}</span><small>${sent} request${sent === 1 ? "" : "s"} in this chat</small>`}</div>
+      <div class="wm-arrow">✕</div><div class="wm-box off"><b>claude.ai</b><span>chats there are separate</span></div></div>
+    <ul class="where-list">
+      <li><b>Kept with this document, in this browser.</b> The chat is saved in the browser's storage for this site, together with the document, and inside an .lpdoc project file if you save one (Save menu). Open the document on another computer or browser and the chat is not there unless you bring the .lpdoc.</li>
+      ${c.provider === "demo" ? "" : `<li><b>Sent to ${esc(where)} with your key, one request at a time.</b> The API answers and keeps no chat history you can open later, so the chat never appears on claude.ai, which only lists conversations made in the claude.ai app. ${usage}</li>`}
+      <li><b>Lost if you clear this site's data</b> in the browser (or use a private window). Keep a copy with <b>Download the chat</b> below, or save the project file.</li>
+      <li><b>Start a new chat</b> (⋯ menu) to make the AI forget it; the document keeps the suggestions already in the text.</li>
+    </ul>
+    <div class="mrow"><button class="btn" data-where="sent"${ai.thread.length ? "" : " disabled"}>See exactly what was sent</button><button class="btn" data-where="dl">Download the chat (.md)</button><span class="sp"></span><button class="btn primary" data-cancel>Close</button></div>`);
+  $$("#modal [data-where]").forEach(b => { b.onclick = () => { if (b.dataset.where === "dl") download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md"); else { closeModal(null); aiSentView(); } }; });
+  return v;
+}
+/* the conversation exactly as the AI receives it: every request and reply, the paper copies folded */
+function aiSentView() {
+  const ai = aiState(), msgs = ai.thread.map((m, i) => {
+    const blocks = typeof m.content === "string" ? [{ type: "text", text: m.content }] : m.content.filter(b => b.type === "text");
+    const body = blocks.map(b => b.text.startsWith("The manuscript") || b.text.startsWith("An updated copy of the manuscript") ? `<details><summary>${esc(b.text.split("\n")[0])} (${wordCount(b.text).toLocaleString("en")} words)</summary><pre>${esc(b.text)}</pre></details>` : `<pre>${esc(b.text)}</pre>`).join("");
+    return `<div class="sent-msg ${m.role}"><div class="sent-who">${m.role === "user" ? "Sent by Paper Writer" : "The AI's reply"} · message ${i + 1}</div>${body}</div>`;
+  }).join("");
+  modal(`<h3>What was sent to the AI</h3><p>Every message in this document's chat, in order. Each request also carries the editing instructions shown first (the system prompt).</p><details class="sent-sys"><summary>System prompt</summary><pre>${esc(AI_SYSTEM)}</pre></details><div class="sent-list">${msgs || "<p>Nothing sent yet.</p>"}</div><div class="mrow"><button class="btn primary" data-cancel>Close</button></div>`);
+  $("#modal").classList.add("sent-modal"); const off = () => { if ($("#modalBack").hidden) $("#modal").classList.remove("sent-modal"); else setTimeout(off, 300); }; setTimeout(off, 300);
 }
 function aiChatMarkdown() {
   const ai = aiState(), c = aiCfg();
@@ -580,7 +612,7 @@ async function aiNewChat() {
 }
 aiPanel.addEventListener("click", e => {
   const a = e.target.closest("[data-aiact]")?.dataset.aiact; if (!a) return;
-  if (a === "settings") aiModelMenu(e.target.closest("button")); else if (a === "menu") aiChatMenu(e.target.closest("button")); else if (a === "newchat") aiNewChat(); else if (a === "close") aiTogglePanel(false);
+  if (a === "settings") aiModelMenu(e.target.closest("button")); else if (a === "menu") aiChatMenu(e.target.closest("button")); else if (a === "newchat") aiNewChat(); else if (a === "where") aiWhere(); else if (a === "close") aiTogglePanel(false);
   else if (a === "send") { const ta = $("#aiQ"); const q = ta.value.trim(); if (!q) return ta.focus(); ta.value = ""; aiQuestion(q); }
 });
 $("#aiQ").addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("[data-aiact=send]", aiPanel).click(); } });

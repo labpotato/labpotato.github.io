@@ -18,14 +18,21 @@
 /* page width and margins */
 .flow-paper[data-w]{width:min(100%,calc((var(--pw,794px) + 220px) * var(--z,1)));grid-template-columns:minmax(0,1fr) calc(220px * var(--z,1))}
 .flow-paper[data-w].nomargin{width:min(100%,calc(var(--pw,794px) * var(--z,1)));grid-template-columns:minmax(0,1fr)}
-.flow-paper[data-w] .flow{max-width:var(--pw,794px)}
+.flow-paper[data-w] .flow{max-width:calc(var(--pw,794px) * var(--z,1))}
 .flow-paper[data-w="fill"],.flow-paper[data-w="fill"].nomargin{width:100%}
 .flow-paper[data-w="fill"] .flow{max-width:none}
 .flow-wrap:has(.flow-paper[data-w="fill"]){padding:12px 12px 60px}
+/* zoom without CSS zoom on the text: font size, padding and height scale with --z */
+.flow-paper .flow{font-size:calc(var(--fs,16.5px) * var(--z,1));padding:calc(56px * var(--z,1)) calc(64px * var(--z,1)) calc(80px * var(--z,1));min-height:calc(800px * var(--z,1))}
+.flow-paper .flow[data-font="sans"]{--fs:15.5px}
+.flow-paper .flow[data-font="mono"]{--fs:14px}
+.flow-paper .flow img{zoom:var(--z,1)}
 @media (min-width:901px){
-  .flow[data-m="narrow"]{padding:36px 40px 60px}
-  .flow[data-m="wide"]{padding:80px 112px 100px}
+  .flow-paper .flow[data-m="narrow"]{padding:calc(36px * var(--z,1)) calc(40px * var(--z,1)) calc(60px * var(--z,1))}
+  .flow-paper .flow[data-m="wide"]{padding:calc(80px * var(--z,1)) calc(112px * var(--z,1)) calc(100px * var(--z,1))}
 }
+@media (max-width:900px){.flow-paper .flow{padding:calc(32px * var(--z,1)) calc(24px * var(--z,1)) calc(60px * var(--z,1))}}
+@media print{.flow-paper{--z:1}.flow-paper .flow{padding:0;min-height:0}}
 .page-grip{position:absolute;top:0;width:10px;cursor:ew-resize;z-index:3;border-radius:4px}
 .page-grip::after{content:"";position:absolute;left:4px;top:50%;width:3px;height:44px;margin-top:-22px;border-radius:2px;background:var(--line-2);opacity:0;transition:opacity .15s}
 .flow-paper:hover .page-grip::after,.page-grip.on::after{opacity:1}

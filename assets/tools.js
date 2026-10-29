@@ -293,10 +293,12 @@ const TOOLS = [
       { v: "v1", file: "paper-writer-v1.html", date: "2026-10-29" },
       { v: "v2", file: "paper-writer-v2.html", date: "2026-10-29" },
       { v: "v3", file: "paper-writer-v3.html", date: "2026-10-29" },
-      { v: "v4", file: "paper-writer-v4.html", date: "2026-10-29",
+      { v: "v4", file: "paper-writer-v4.html", date: "2026-10-29" },
+      { v: "v5", file: "paper-writer-v5.html", date: "2026-10-29",
         new: [
-          "Where is this chat? shows where the AI chat is kept (this browser, not claude.ai) and exactly what was sent to the AI",
-          "Works with Grammarly at any zoom (v3); review AI changes one by one with Tab, Esc and Revise (v2)"
+          "Grammarly keeps its underlines on the words at any zoom: zoom now really resizes the text instead of magnifying it",
+          "Continue on claude.ai: copies the paper and the AI chat into a new claude.ai chat",
+          "Where is this chat? shows where the chat is kept and exactly what was sent to the AI (v4)"
         ] }
     ]
   }

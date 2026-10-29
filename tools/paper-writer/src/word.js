@@ -22,6 +22,13 @@ function targetSel() { const sel = useRange(); if (!sel.rangeCount || !flowEl.co
 function done() { const s = getSelection(); if (s.rangeCount && flowEl.contains(s.anchorNode)) W.range = s.getRangeAt(0).cloneRange(); flowChanged(); syncFontUI(); }
 const C = name => () => { useRange(); cmd(name); };
 
+/* zoom multiplies sizes (font sizes, page width, padding) by --z instead of using CSS zoom on the text,
+   so writing extensions that copy the editor's styles to measure it (Grammarly) see the real sizes */
+const zf = () => S.flowZoom || 1;
+const zsize = v => `calc(${v} * var(--z, 1))`;
+const ZRE = /calc\(\s*([\d.]+(?:pt|px))\s*\*\s*var\(--z(?:,\s*1)?\)\s*\)/g;
+function zoomifySizes(root = flowEl) { for (const el of $$("[style*='font-size']", root)) { const v = el.style.fontSize; if (v && !v.includes("--z") && /^[\d.]+(pt|px)$/.test(v)) el.style.fontSize = zsize(v); } }
+
 /* ---- fonts and sizes ---- */
 const FONTS = [["", "Default"], ["Calibri, Carlito, 'Segoe UI', sans-serif", "Calibri"], ["Arial, Helvetica, sans-serif", "Arial"], ["'Helvetica Neue', Helvetica, Arial, sans-serif", "Helvetica"], ["'Times New Roman', Times, serif", "Times New Roman"], ["Georgia, serif", "Georgia"], ["Cambria, Caladea, Georgia, serif", "Cambria"], ["Charter, 'Iowan Old Style', Georgia, serif", "Charter"], ["Garamond, 'EB Garamond', 'Times New Roman', serif", "Garamond"], ["'Palatino Linotype', Palatino, 'Book Antiqua', serif", "Palatino"], ["Verdana, sans-serif", "Verdana"], ["Tahoma, sans-serif", "Tahoma"], ["'Trebuchet MS', sans-serif", "Trebuchet MS"], ["'Segoe UI', system-ui, sans-serif", "Segoe UI"], ["system-ui, sans-serif", "System sans"], ["'Courier New', Courier, monospace", "Courier New"], ["Consolas, Menlo, monospace", "Consolas"]];
 const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 60, 72];
@@ -44,7 +51,7 @@ function inlineStyle(prop, value) {
   for (let el of marked) {
     if (el.tagName === "FONT") { const sp = EL("span"); while (el.firstChild) sp.append(el.firstChild); el.replaceWith(sp); el = sp; }
     let v = value || ""; if (!v && prop === "font-family") { const anc = el.parentElement?.closest("[style*='font-family']"); if (anc && anc !== flowEl && flowEl.contains(anc)) v = getComputedStyle(flowEl).fontFamily; }
-    el.style[camel] = v; $$("[style]", el).forEach(c => { c.style[camel] = ""; });
+    el.style[camel] = camel === "fontSize" && v ? zsize(v) : v; $$("[style]", el).forEach(c => { c.style[camel] = ""; });
     if (!el.getAttribute("style")) el.removeAttribute("style");
     first = first || el; last = el;
   }
@@ -54,12 +61,12 @@ function inlineStyle(prop, value) {
 }
 function setFont(v) { inlineStyle("font-family", v); }
 function setSize(pt) { if (pt > 0) inlineStyle("font-size", pt + "pt"); }
-function curSize() { const s = getSelection(); const el = s.rangeCount && flowEl.contains(s.anchorNode) ? elOf(s.anchorNode) : flowEl; return Math.round(parseFloat(getComputedStyle(el).fontSize) * 0.75 * 2) / 2; }
+function curSize() { const s = getSelection(); const el = s.rangeCount && flowEl.contains(s.anchorNode) ? elOf(s.anchorNode) : flowEl; return Math.round(parseFloat(getComputedStyle(el).fontSize) * 0.75 / zf() * 2) / 2; }
 function stepSize(d) { saveRange(); const c = curSize(); const n = d > 0 ? SIZES.find(s => s > c + 0.01) || c + 12 : [...SIZES].reverse().find(s => s < c - 0.01) || Math.max(1, c - 1); setSize(n); }
 function bumpSize(d) { saveRange(); setSize(Math.max(1, curSize() + d)); }
 function syncFontUI() {
   if (!flowOn()) return; const s = getSelection();
-  const el = s.rangeCount && flowEl.contains(s.anchorNode) ? elOf(s.anchorNode) : flowEl, cs = getComputedStyle(el), pt = Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2;
+  const el = s.rangeCount && flowEl.contains(s.anchorNode) ? elOf(s.anchorNode) : flowEl, cs = getComputedStyle(el), pt = Math.round(parseFloat(cs.fontSize) * 0.75 / zf() * 2) / 2;
   if (![...sizeSel.options].some(o => +o.value === pt)) { $$("option.tmp", sizeSel).forEach(o => o.remove()); sizeSel.prepend(EL("option", { class: "tmp", value: pt }, String(pt))); }
   sizeSel.value = String(pt);
   const fam = firstFam(cs.fontFamily), base = firstFam(getComputedStyle(flowEl).fontFamily), own = el.closest("[style*='font-family']");
@@ -114,7 +121,7 @@ function smallCaps() { const sel = targetSel(); if (!sel) return toast("Select t
 function copyFormat() {
   const s = getSelection(); if (!s.rangeCount || !flowEl.contains(s.anchorNode)) return toast("Put the cursor in the text whose look you want to copy.");
   const el = elOf(s.getRangeAt(0).startContainer), cs = getComputedStyle(el), fcs = getComputedStyle(flowEl);
-  W.painter = { b: +cs.fontWeight >= 600, i: cs.fontStyle === "italic", u: !!el.closest("u"), s: !!el.closest("s,strike,del:not(.ai-d)"), sup: !!el.closest("sup"), sub: !!el.closest("sub"), color: cs.color !== fcs.color ? cs.color : "", family: cs.fontFamily !== fcs.fontFamily ? cs.fontFamily : "", size: cs.fontSize !== fcs.fontSize ? Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2 : 0, caps: cs.fontVariantCaps === "small-caps" };
+  W.painter = { b: +cs.fontWeight >= 600, i: cs.fontStyle === "italic", u: !!el.closest("u"), s: !!el.closest("s,strike,del:not(.ai-d)"), sup: !!el.closest("sup"), sub: !!el.closest("sub"), color: cs.color !== fcs.color ? cs.color : "", family: cs.fontFamily !== fcs.fontFamily ? cs.fontFamily : "", size: cs.fontSize !== fcs.fontSize ? Math.round(parseFloat(cs.fontSize) * 0.75 / zf() * 2) / 2 : 0, caps: cs.fontVariantCaps === "small-caps" };
   W.painterArmed = true; $("[data-act=wPainter]")?.classList.add("on"); toast("Format copied: select text to paint it (or Ctrl+Alt+V).");
 }
 function pasteFormat() {
@@ -177,7 +184,7 @@ function pageCfg() { return { w: "a4", px: 900, m: "normal", font: "", size: 12,
 function applyPage() {
   if (S.doc?.kind !== "flow") return; const p = pageCfg();
   paper.dataset.w = p.w; paper.style.setProperty("--pw", (p.w === "custom" ? p.px : PAGE_W[p.w] || 794) + "px"); flowEl.dataset.m = p.m;
-  flowEl.style.fontFamily = p.font || ""; flowEl.style.fontSize = p.size ? p.size + "pt" : ""; flowEl.style.lineHeight = p.lh || "";
+  flowEl.style.fontFamily = p.font || ""; flowEl.style.fontSize = ""; flowEl.style.setProperty("--fs", p.size ? p.size + "pt" : ""); flowEl.style.lineHeight = p.lh || "";
   requestAnimationFrame(() => { placeGrip(); layoutMargin(); placeBar?.(); nudgeOverlays(); });
 }
 function setPage(patch, asDefault) { if (!S.doc) return; S.doc.meta = S.doc.meta || {}; S.doc.meta.page = { ...pageCfg(), ...patch }; if (asDefault) Prefs.set("pageDefaults", { ...S.doc.meta.page }); applyPage(); markDirty(); }
@@ -211,12 +218,11 @@ async function pageSetup() {
   if (!v) return; setPage({ w: v.w, px: clamp(+v.px || 900, 420, 4000), m: v.m, lh: v.lh, font: v.font, size: +v.size }, v.def);
 }
 
-/* ---- zoom the text and the comment margin, not the page box around them: extensions such as Grammarly draw their
-   underlines in an overlay next to the text, which a zoomed box would scale a second time ---- */
+/* ---- zoom: sizes scale through --z (see zsize); only the comment margin and pictures use CSS zoom, never the text ---- */
 { const sz = setZoom; setZoom = async function (mode, val) {
     if (S.doc?.kind !== "flow") return sz(mode, val);
     S.flowZoom = mode === "custom" ? clamp(val, .4, 3) : 1; S.zoomMode = mode === "custom" ? "custom" : "width"; const z = S.flowZoom;
-    paper.style.zoom = ""; flowEl.style.zoom = z === 1 ? "" : z; marginEl.style.zoom = z === 1 ? "" : z; paper.style.setProperty("--z", z);
+    paper.style.zoom = ""; flowEl.style.zoom = ""; marginEl.style.zoom = z === 1 ? "" : z; paper.style.setProperty("--z", z);
     $("#zoomVal").textContent = Math.round(z * 100) + "%"; layoutMargin(); placeGrip(); nudgeOverlays();
   }; }
 /* tell spelling and grammar extensions (Grammarly and the like) that the text moved, so they re-measure their underlines */
@@ -401,14 +407,14 @@ document.addEventListener("keydown", e => {
 
 /* ---- upkeep after every change: footnote numbers, contents, spelling, word count ---- */
 let wBusy = false;
-const upkeep = debounce(() => { if (!flowOn() || wBusy) return; wBusy = true; try { const a = fnRenumber(), b = tocUpdate(); if (a || b) flowChanged(); } finally { wBusy = false; } placeGrip(); wcUpdate(); spellSoon(); }, 350);
+const upkeep = debounce(() => { if (!flowOn() || wBusy) return; wBusy = true; try { zoomifySizes(); const a = fnRenumber(), b = tocUpdate(); if (a || b) flowChanged(); } finally { wBusy = false; } placeGrip(); wcUpdate(); spellSoon(); }, 350);
 new MutationObserver(() => { if (!wBusy) upkeep(); }).observe(flowEl, { childList: true, characterData: true, subtree: true });
 document.addEventListener("selectionchange", () => { if (flowOn()) { wcSoon(); const s = getSelection(); if (s.rangeCount && flowEl.contains(s.anchorNode)) syncFontUISoon(); } });
 const syncFontUISoon = debounce(syncFontUI, 120);
-{ const sd2 = showDoc; showDoc = async function () { const r = await sd2(); if (S.doc?.kind === "flow") { applyPage(); spellApplyMode(); requestAnimationFrame(syncFontUI); } wcUpdate(); return r; }; }
+{ const sd2 = showDoc; showDoc = async function () { const r = await sd2(); if (S.doc?.kind === "flow") { wBusy = true; zoomifySizes(); wBusy = false; applyPage(); spellApplyMode(); requestAnimationFrame(syncFontUI); } wcUpdate(); return r; }; }
 { const ew2 = exitWebView; exitWebView = function () { const r = ew2(); applyPage(); wcUpdate(); return r; }; }
 /* exports carry the page font, size and line spacing */
-{ const eh = exportHtmlString; exportHtmlString = async function (o) { const h = await eh(o), p = pageCfg(); if (S.doc?.kind !== "flow" || !(p.font || p.size || p.lh)) return h; return h.replace("</head>", `<style>body{${p.font ? `font-family:${p.font};` : ""}${p.size ? `font-size:${p.size}pt;` : ""}${p.lh ? `line-height:${p.lh};` : ""}}</style>\n</head>`); }; }
+{ const eh = exportHtmlString; exportHtmlString = async function (o) { const h = (await eh(o)).replace(ZRE, "$1"), p = pageCfg(); if (S.doc?.kind !== "flow" || !(p.font || p.size || p.lh)) return h; return h.replace("</head>", `<style>body{${p.font ? `font-family:${p.font};` : ""}${p.size ? `font-size:${p.size}pt;` : ""}${p.lh ? `line-height:${p.lh};` : ""}}</style>\n</head>`); }; }
 
 /* ---- toolbar and menu bar wiring ---- */
 document.addEventListener("click", e => {
@@ -475,7 +481,7 @@ function pasteConvert(html, mode) {
     const cs = win.getComputedStyle(el), out = [];
     if (mode === "keep") {
       if (cs.fontFamily !== parentCs.fontFamily && cs.fontFamily !== base.fontFamily) out.push(`font-family:${cs.fontFamily}`);
-      if (cs.fontSize !== parentCs.fontSize && cs.fontSize !== base.fontSize) out.push(`font-size:${Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2}pt`);
+      if (cs.fontSize !== parentCs.fontSize && cs.fontSize !== base.fontSize) out.push(`font-size:${zsize(Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2 + "pt")}`);
       if (cs.color !== parentCs.color && !isDarkGrey(cs.color)) out.push(`color:${cs.color}`);
       if (cs.backgroundColor !== parentCs.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent|rgb\(255, 255, 255\)/.test(cs.backgroundColor)) out.push(`background-color:${cs.backgroundColor}`);
       if (cs.fontVariantCaps === "small-caps" && parentCs.fontVariantCaps !== "small-caps") out.push("font-variant:small-caps");
@@ -504,7 +510,7 @@ function pasteConvert(html, mode) {
       let inner = el || document.createDocumentFragment(), leaf = inner;
       const wrap = t => { const w = EL(t); leaf.append(w); leaf = w; };
       // headings keep their tag; with "keep" their source size and weight go inline so they look as they did
-      if (el && /^H[1-6]$/.test(tag) && mode === "keep") { out.push(`font-size:${Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2}pt`, `font-weight:${cs.fontWeight}`); if (cs.fontFamily !== base.fontFamily) out.push(`font-family:${cs.fontFamily}`); }
+      if (el && /^H[1-6]$/.test(tag) && mode === "keep") { out.push(`font-size:${zsize(Math.round(parseFloat(cs.fontSize) * 0.75 * 2) / 2 + "pt")}`, `font-weight:${cs.fontWeight}`); if (cs.fontFamily !== base.fontFamily) out.push(`font-family:${cs.fontFamily}`); }
       if (out.length) { const st = [...new Map(out.map(x => [x.split(":")[0], x])).values()].join(";"); out.length = 0; out.push(st); if (el && (BLOCKS.has(tag) || /^H[1-6]$/.test(tag))) el.setAttribute("style", out.join(";")); else { const sp = EL("span", { style: out.join(";") }); leaf.append(sp); leaf = sp; } }
       if (!/^H[1-6]$/.test(tag) || mode !== "keep") { if (bold && !pBold && !/^H[1-6]$|^TH$/.test(tag)) wrap("b"); }
       if (ital && !pItal) wrap("i"); if (und) wrap("u"); if (str) wrap("s"); if (sup) wrap("sup"); if (sub) wrap("sub");

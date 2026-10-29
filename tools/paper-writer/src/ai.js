@@ -561,6 +561,7 @@ function aiChatMenu(anchor) {
     { label: "AI settings…", icon: "i-ai", fn: () => aiSettings() },
     { label: "Send the paper again", sub: "Gives the AI the current text before your next request", fn: () => { const ai = aiState(); if (ai.paper) ai.paper.stale = true; toast("The current paper goes with your next request."); } },
     { label: "Where is this chat?", sub: "Kept with this document in this browser, not on claude.ai", fn: aiWhere },
+    { label: "Continue on claude.ai ↗", sub: "Copies the paper and this chat, opens a new claude.ai chat to paste into", fn: aiToClaudeAi },
     { label: "Download the chat (.md)", sub: "Requests, the AI's versions and notes, questions and answers", fn: () => download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md") },
     { label: "Copy the chat", fn: () => { navigator.clipboard.writeText(aiState().log.map(e => e.t === "req" ? (c => `#${c.n} ${c.instr}\n> ${lightText(c.oldLight).trim()}\n${c.sugg[c.cur] ? "→ " + lightText(c.sugg[c.cur].light).trim() + (c.sugg[c.cur].note ? `\n(${c.sugg[c.cur].note})` : "") : ""}`)(aiState().changes[e.id] || { sugg: [], oldLight: "" }) : e.text).join("\n\n")); toast("Copied the chat."); } },
     { sep: true },
@@ -581,10 +582,11 @@ function aiWhere() {
       <li><b>Kept with this document, in this browser.</b> The chat is saved in the browser's storage for this site, together with the document, and inside an .lpdoc project file if you save one (Save menu). Open the document on another computer or browser and the chat is not there unless you bring the .lpdoc.</li>
       ${c.provider === "demo" ? "" : `<li><b>Sent to ${esc(where)} with your key, one request at a time.</b> The API answers and keeps no chat history you can open later, so the chat never appears on claude.ai, which only lists conversations made in the claude.ai app. ${usage}</li>`}
       <li><b>Lost if you clear this site's data</b> in the browser (or use a private window). Keep a copy with <b>Download the chat</b> below, or save the project file.</li>
+      <li><b>Want it on claude.ai?</b> claude.ai has no way for other apps to add chats to your account. <b>Continue on claude.ai</b> below copies the paper and this chat and opens a new claude.ai chat: paste (Ctrl+V) and send, and it is a claude.ai chat from then on (a copy: what you write there does not come back here). For a lasting place, make a claude.ai Project for the paper and add the downloaded chat and the paper as project files.</li>
       <li><b>Start a new chat</b> (⋯ menu) to make the AI forget it; the document keeps the suggestions already in the text.</li>
     </ul>
-    <div class="mrow"><button class="btn" data-where="sent"${ai.thread.length ? "" : " disabled"}>See exactly what was sent</button><button class="btn" data-where="dl">Download the chat (.md)</button><span class="sp"></span><button class="btn primary" data-cancel>Close</button></div>`);
-  $$("#modal [data-where]").forEach(b => { b.onclick = () => { if (b.dataset.where === "dl") download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md"); else { closeModal(null); aiSentView(); } }; });
+    <div class="mrow"><button class="btn" data-where="sent"${ai.thread.length ? "" : " disabled"}>See exactly what was sent</button><button class="btn" data-where="dl">Download the chat (.md)</button><button class="btn" data-where="claude">Continue on claude.ai ↗</button><span class="sp"></span><button class="btn primary" data-cancel>Close</button></div>`);
+  $$("#modal [data-where]").forEach(b => { b.onclick = () => { const w = b.dataset.where; if (w === "dl") download(new Blob([aiChatMarkdown()], { type: "text/markdown" }), baseName(S.doc.name) + "-ai-chat.md"); else if (w === "claude") { closeModal(null); aiToClaudeAi(); } else { closeModal(null); aiSentView(); } }; });
   return v;
 }
 /* the conversation exactly as the AI receives it: every request and reply, the paper copies folded */
@@ -596,6 +598,14 @@ function aiSentView() {
   }).join("");
   modal(`<h3>What was sent to the AI</h3><p>Every message in this document's chat, in order. Each request also carries the editing instructions shown first (the system prompt).</p><details class="sent-sys"><summary>System prompt</summary><pre>${esc(AI_SYSTEM)}</pre></details><div class="sent-list">${msgs || "<p>Nothing sent yet.</p>"}</div><div class="mrow"><button class="btn primary" data-cancel>Close</button></div>`);
   $("#modal").classList.add("sent-modal"); const off = () => { if ($("#modalBack").hidden) $("#modal").classList.remove("sent-modal"); else setTimeout(off, 300); }; setTimeout(off, 300);
+}
+/* claude.ai has no way for other apps to add chats, so: copy the paper and this chat, open a new claude.ai chat, paste */
+async function aiToClaudeAi() {
+  const text = `I am writing this paper and used an AI editor (Paper Writer) on it. Below are the current manuscript and our editing chat. Please read both and continue as my editor; I will ask follow-up questions here.\n\n<manuscript>\n${aiPaperText()}\n</manuscript>\n\n<editing_chat>\n${aiChatMarkdown()}</editing_chat>\n`;
+  let copied = true; try { await navigator.clipboard.writeText(text); } catch (e) { copied = false; }
+  window.open("https://claude.ai/new", "_blank", "noopener");
+  if (copied) toast("Copied the paper and this chat. In the new claude.ai chat, press Ctrl+V (⌘V) to paste it, then send.");
+  else { download(new Blob([text], { type: "text/markdown" }), baseName(S.doc.name) + "-for-claude.md"); toast("Saved the paper and this chat as a file: attach it in the new claude.ai chat."); }
 }
 function aiChatMarkdown() {
   const ai = aiState(), c = aiCfg();

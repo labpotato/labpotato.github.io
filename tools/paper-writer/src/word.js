@@ -166,7 +166,7 @@ function symbolDialog() {
   saveRange(); const recent = Prefs.get("recentSym", []);
   const grid = (t, s) => `<div class="sym-g"><div class="sym-t">${t}</div><div class="sym-row">${s.map(c => `<button type="button" data-sym="${esc(c)}" title="U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}">${esc(c)}</button>`).join("")}</div></div>`;
   modal(`<h3>Insert a symbol</h3><p>Click to insert at the cursor; the dialog stays open. Non-breaking space: Ctrl+Shift+Space.</p>${recent.length ? grid("Recently used", recent) : ""}${SYMBOLS.map(([t, s]) => grid(t, s.split(" "))).join("")}<div class="mrow"><button class="btn primary" data-cancel>Done</button></div>`);
-  $("#modal").addEventListener("click", e => { const b = e.target.closest("[data-sym]"); if (!b) return; const c = b.dataset.sym; useRange(); document.execCommand("insertText", false, c); saveRange(); Prefs.set("recentSym", [c, ...Prefs.get("recentSym", []).filter(x => x !== c)].slice(0, 16)); });
+  $$("#modal [data-sym]").forEach(b => b.onclick = () => { const c = b.dataset.sym; useRange(); document.execCommand("insertText", false, c); saveRange(); Prefs.set("recentSym", [c, ...Prefs.get("recentSym", []).filter(x => x !== c)].slice(0, 16)); });
 }
 const insertDate = () => { useRange(); document.execCommand("insertText", false, new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })); };
 

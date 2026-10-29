@@ -3,7 +3,7 @@
 Write a paper in a Word-style editor with an AI editor. One offline HTML file, built on Doc Reader v2
 (its own browser database, `lp-paperwriter`, so documents never mix with Doc Reader's).
 
-- `paper-writer-v3.html`: the tool (v1 and v2 stay as legacy releases). Open it from the homepage, or
+- `paper-writer-v4.html`: the tool (v1 to v3 stay as legacy releases). Open it from the homepage, or
   double-click it on disk, then **Try the sample paper** (made up, deliberately rough prose).
 - `src/`: what the tool is built from (see Building).
 
@@ -13,7 +13,7 @@ Write a paper in a Word-style editor with an AI editor. One offline HTML file, b
 |---|---|
 | AI connection | **AI settings** (Tools or Review menu, or the start page): Demo (no key), Claude (your Anthropic key), OpenAI, Gemini, or any OpenAI-compatible server. Claude models are listed with what they are for and their price (Opus 5.5 by default; Fable 5.1, Sonnet 5.5, Haiku 5.5 and earlier generations); the model chip in the chat panel switches model in one click. Keys stay in the browser: forgotten when the tab closes unless "Remember" is ticked. |
 | Ask from a selection | Select words inside one paragraph; **Ask AI** appears in the selection bar (or **Alt+A**, or the toolbar). Pick a quick request (editable list in settings) or type your own. |
-| One chat per document | The chat lives with the document, in this browser (autosave and `.lpdoc`), not on claude.ai: requests go to the API with your key. **⋯ → Download the chat** saves it as Markdown. The whole paper goes with the first request, and again only when it has changed by more than about 15% (or from the chat menu). Every request also carries its paragraph with the selection marked, and the section heading. The thread only grows, so Claude's prompt cache keeps working; the chat panel shows token use and cached tokens. |
+| One chat per document | The chat lives with the document, in this browser (autosave and `.lpdoc`), not on claude.ai: requests go to the API with your key. **⋯ → Download the chat** saves it as Markdown. **Where is this chat?** (chat panel) shows this as a picture, and **See exactly what was sent** lists every request and reply as the AI received them. The whole paper goes with the first request, and again only when it has changed by more than about 15% (or from the chat menu). Every request also carries its paragraph with the selection marked, and the section heading. The thread only grows, so Claude's prompt cache keeps working; the chat panel shows token use and cached tokens. |
 | Tracked changes in place | Only the selected part is replaced, shown in one colour like one reviewer in Word: deleted words struck through, new words underlined. When the answer changes most of the passage, the crossed-out words are hidden and it is labelled **Rewrite**. **Show changes** (eye button, Review menu) off shows the text as it reads with the changes. |
 | Review, one change at a time | Each edit is its own change. **Tab** accepts it and moves to the next, **Esc** rejects it, **Alt+↓ / Alt+↑** move between changes, **Revise…** sends just that part back to the AI (optionally saying what is wrong). **More** accepts or rejects the whole suggestion, asks again for the whole passage (versions are kept), or switches between word-by-word and rewrite views. Review menu: accept or reject everything. All of it goes into undo; the AI is told what was accepted, partly accepted or rejected. |
 

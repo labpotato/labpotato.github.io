@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Build Doc Reader v3 and later: Doc Reader v2 plus the AI editor (ai.css, ai.js), Word-style editing
 (word.css, word.js, the nspell spell checker and its en-GB / en-US dictionaries in vendor/) and the
-one-time import of Paper Writer's documents (merge.js). Paper Writer v1-v5 were built from these files.
+one-time import of Paper Writer's documents (merge.js); from v4 also isolate.js (a web page shown in the
+editor can't take over Doc Reader's menus, panels and styles) and sync.js (the extension's Google Drive
+sync of documents). Paper Writer v1-v5 were built from these files. The Chrome extension is made from
+the built page by build-ext.py.
 
-    python3 tools/doc-reader/src/build.py v3
+    python3 tools/doc-reader/src/build.py v4
+    python3 tools/doc-reader/src/build-ext.py v4 v3
 
 Reads tools/doc-reader/doc-reader-v2.html (never changes it) and writes
 tools/doc-reader/doc-reader-vN.html. Each edit must match exactly once, so a
@@ -125,8 +129,17 @@ lib = "<script>/* nspell 2.1.5, MIT, (c) Titus Wormer */\n" + (V / "nspell.min.j
 rep('<script type="text/plain" id="pdfworker">', data + lib + '<script type="text/plain" id="pdfworker">')
 
 # app script: the AI and Word layers, and Paper Writer's documents brought over once
+# v4: extension v3 (no editing of live pages; documents sync through Google Drive)
+rep("""<p>Works on top of any web page, like Liner: select text and press <b>Highlight</b>, add comments, edit the page's text like a Word document. Everything is kept per address and comes back when you open the page again, on every computer where you sign in with Google (kept in your own Google Drive); a daily backup file keeps a copy outside the browser. One click also opens the page or a PDF here.</p>
+        <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>""",
+    """<p>Works on top of any web page, like Liner: select text and press <b>Highlight</b> or add comments. They are kept per address and come back when you open the page again. One click opens the page here, looking as it does on the site, to edit a copy with the Word tools and the AI editor.</p>
+        <p>Sign in with Google in the extension and your page highlights and your Doc Reader documents follow you to every computer where you sign in with the same account (kept in your own Google Drive); a daily backup file keeps a copy outside the browser.</p>
+        <a class="btn small" id="extLink" href="doc-reader-extension-v3.zip" download>""")
+# v4: lookups by id skip a web page's elements of the same name (a page's #menu, #toast, #right)
+rep('const $ = (s, r = document) => r.querySelector(s);',
+    'const $ = (s, r = document) => { const e = r.querySelector(s); return e && r === document && s[0] === "#" && e.closest("#flow") ? [...document.querySelectorAll(s)].find(x => !x.closest("#flow")) || e : e; };')
 rep('app: "Lab Potato Doc Reader v2"', f'app: "Lab Potato Doc Reader {VER}"')
-rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n/* a few names on window, for the tests and the console */")
+rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n/* a few names on window, for the tests and the console */")
 
 if OUT.exists() and "--force" not in sys.argv:
     print(f"note: overwriting {OUT.name} (fine before it is published; never after)")

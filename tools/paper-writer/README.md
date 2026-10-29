@@ -3,7 +3,7 @@
 Write a paper in a Word-style editor with an AI editor. One offline HTML file, built on Doc Reader v2
 (its own browser database, `lp-paperwriter`, so documents never mix with Doc Reader's).
 
-- `paper-writer-v2.html`: the tool (v1 stays as a legacy release). Open it from the homepage, or
+- `paper-writer-v3.html`: the tool (v1 and v2 stay as legacy releases). Open it from the homepage, or
   double-click it on disk, then **Try the sample paper** (made up, deliberately rough prose).
 - `src/`: what the tool is built from (see Building).
 
@@ -38,6 +38,9 @@ and the web view opens only once they are all reviewed.
   lab and medical terms, words in italics skipped (species names), right-click for suggestions,
   **F7** steps through the document like Word's Spelling pane, personal dictionary. The browser's own
   checker can be used instead (Tools menu).
+- **Zoom** scales the text and the comment margin, not the page box around them, so writing extensions
+  such as Grammarly keep their underlines on the words at any zoom (they are told to re-measure after a
+  zoom or page-width change). With Grammarly on, the built-in spell check can be turned off in Tools.
 - **Word count** in the corner (selection too), Ctrl+Shift+G for the full count.
 - **Shortcuts**: Word's keys in the text (Ctrl+/ lists them all); where a browser keeps one of Word's
   keys for itself, the Google Docs key works instead. In the text, Ctrl+= is subscript (Word) rather than zoom.

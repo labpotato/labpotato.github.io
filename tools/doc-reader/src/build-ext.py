@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Chrome extension from a built Doc Reader page and the extension's own files.
 
-    python3 tools/doc-reader/src/build-ext.py v5 v4
+    python3 tools/doc-reader/src/build-ext.py v6 v5
 
 Takes tools/doc-reader/doc-reader-<page>.html (made by build.py) and src/extension/ (manifest,
 background worker, on-page tools, library), and writes tools/doc-reader/doc-reader-extension-<ext>.zip.

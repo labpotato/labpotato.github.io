@@ -269,11 +269,12 @@ const TOOLS = [
       { v: "v2", file: "doc-reader-v2.html", date: "2026-10-28" },
       { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29" },
       { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29" },
-      { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29",
+      { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29" },
+      { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30",
         new: [
-          "AI edits show deleted words in red and new words in green; a slim button strip beside the page accepts or rejects them",
-          "Save each written document as a Google Doc as you write (Chrome extension v4, signed in with Google)",
-          "Chrome extension v4: Google sign-in works straight away, and it stays out of Doc Reader's own pages"
+          "Safety nets: removed documents wait 30 days under Recently removed, and earlier versions of what you write are kept while you type",
+          "Chrome extension v5: stays off on writing and chat sites (Claude, ChatGPT, Google Docs…) with a per-site switch; the highlight bubble has a close button and a light or dark look with your accent colour",
+          "Extension safety: Undo after removing a highlight, Recently removed in the library, a safety check, and a backup copy per weekday"
         ] }
     ]
   }

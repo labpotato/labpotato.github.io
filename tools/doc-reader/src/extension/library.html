@@ -25,7 +25,10 @@ button.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
 .steps{margin:6px 0;padding-left:20px;font-size:12.5px;color:var(--ink)}.steps li{margin:3px 0}
 #dCid{flex:1;min-width:260px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 details#dSetup summary{cursor:pointer;font-size:12.5px;color:var(--blue)}
-.khelp{color:var(--muted);font-size:12px;margin:2px 0 6px}.khelp code{font-size:11.5px}
+.khelp{color:var(--muted);font-size:12px;margin:2px 0 6px}
+.saferows{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.saferow{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px}.saferow .d{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px;background:#1a9e5c}.saferow.warn .d{background:#d29b1f}.saferow.bad .d{background:#c0392b}.saferow small{display:block;color:var(--muted)}
+.chips{display:inline-flex;flex-wrap:wrap;gap:6px}.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;font-size:12.5px}.chip button{all:unset;cursor:pointer;color:var(--muted)}.chip button:hover{color:#c0392b}
+#offAdd{flex:1;min-width:180px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}select{padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}.khelp code{font-size:11.5px}
 .empty{color:var(--muted);text-align:center;padding:40px}
 .welcome{background:color-mix(in srgb,var(--blue) 9%,var(--card));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:12px;padding:12px 14px;margin:0 0 12px}.welcome h3{margin:0 0 4px;font-size:15px}.welcome p{margin:4px 0}
 label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
@@ -36,6 +39,19 @@ label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute
   <h3>Used Lab Potato before?</h3>
   <p>This copy of the extension starts empty. To get your highlights back, either press <b>Sign in with Google</b> below (if you signed in before), or press <b>Restore…</b> and pick your backup file (<code>Downloads/LabPotato/lab_potato_backup.json</code>).</p>
   <p>Next time, update without losing anything: unzip the new version over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Don't press <b>Remove</b>.</p>
+</section>
+<section class="keep" id="safety">
+  <h3>Safety check</h3>
+  <div id="safeRows" class="saferows"></div>
+</section>
+<section class="keep" id="look">
+  <h3>Look and where it shows</h3>
+  <div class="krow"><label class="sw">Look <select id="lookSel"><option value="auto">Follow the system</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    <label class="sw">Accent <select id="accSel"><option value="#0a5fd0">Blue</option><option value="#c58d52">Potato</option><option value="#139171">Green</option><option value="#6a55d6">Purple</option><option value="#c94b6d">Pink</option><option value="#1f2733">Ink</option></select></label></div>
+  <p class="khelp">The toolbar, the highlight bubble and the notes panel on every page.</p>
+  <div class="krow"><label class="sw"><input type="checkbox" id="offDef"> <b>Stay off on writing and chat sites</b></label><span class="kst">Claude, ChatGPT, Gemini, Google Docs, Notion, Overleaf, Gmail, Slack, Teams, Figma and the like: places where you write, not read. The extension icon turns the tools on for a site anyway.</span></div>
+  <div class="krow"><b>Also off on</b><span id="offList" class="chips"></span><input id="offAdd" placeholder="add a site, e.g. example.com"><button id="offAddBtn">Add</button></div>
+  <div class="krow" id="onRow" hidden><b>Turned on by you</b><span id="onList" class="chips"></span></div>
 </section>
 <section class="keep">
   <h3>Keeping your highlights safe</h3>
@@ -57,5 +73,6 @@ label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute
   <p class="khelp">A file with all your highlights, saved once a day to <code>Downloads/LabPotato/lab_potato_backup.json</code> (each day replaces the last). If Chrome is reset or the extension removed, press <b>Restore…</b> and pick this file to get everything back.</p>
   <p class="khelp"><b>Updating the extension:</b> unzip the new version over the old folder and press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Pressing <b>Remove</b> deletes the highlights on this computer, so only do that after signing in with Google or saving a backup.</p>
 </section>
-<p class="meta" id="usage"></p><div id="list"></div></main>
+<p class="meta" id="usage"></p><div id="list"></div>
+<section class="keep" id="trash" hidden><h3>Recently removed</h3><p class="khelp">Pages removed in the last 30 days, here or from a page's ⋯ menu. Restore one, or it is deleted for good after 30 days.</p><div id="trashList"></div></section></main>
 <script src="library.js"></script></body></html>

@@ -18,7 +18,14 @@
   const KEY = "lp:" + location.href.replace(/#.*$/, "");
   const SKEY = "lp:settings";
   let DATA = { url: location.href.replace(/#.*$/, ""), title: document.title, created: Date.now(), updated: 0, marks: [], edits: [], pageNote: "" };
-  let SET = { open: false, pos: null, color: COLORS[0][0], button: true, dock: false, rail: true, progress: true };
+  let SET = { open: false, pos: null, color: COLORS[0][0], button: true, dock: false, rail: true, progress: true, look: "auto", accent: "#0a5fd0", off: [], on: [], offDefaults: true };
+  /* v5: sites where the tools stay off unless you turn them on there: places where you write or chat, not read */
+  const OFF_DEFAULT = ["claude.ai", "chatgpt.com", "chat.openai.com", "gemini.google.com", "copilot.microsoft.com", "perplexity.ai", "docs.google.com", "slides.google.com", "sheets.google.com", "drive.google.com", "mail.google.com", "calendar.google.com", "notion.so", "overleaf.com", "outlook.live.com", "outlook.office.com", "teams.microsoft.com", "app.slack.com", "discord.com", "figma.com", "canva.com", "onedrive.live.com", "word.office.com", "office.com", "app.grammarly.com", "github.dev", "colab.research.google.com", "benchling.com"];
+  const HOST = location.hostname.replace(/^www\./, "");
+  const onList = (list, h) => (list || []).some(d => h === d || h.endsWith("." + d));
+  const siteOff = () => !onList(SET.on, HOST) && (onList(SET.off, HOST) || (SET.offDefaults !== false && onList(OFF_DEFAULT, HOST)));
+  const ACCENTS = [["#0a5fd0", "Blue"], ["#c58d52", "Potato"], ["#139171", "Green"], ["#6a55d6", "Purple"], ["#c94b6d", "Pink"], ["#1f2733", "Ink"]];
+  let booted = false;
   let panelOpen = false, lost = [], tab = "notes", noteQ = "", railIdx = -1;
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -128,27 +135,28 @@
   const host = document.createElement("div"); host.id = "lp-dr-host"; host.style.cssText = "all:initial;position:fixed;z-index:2147483646;top:0;left:0;width:0;height:0";
   const root = host.attachShadow({ mode: "open" });
   root.innerHTML = `<style>
-  :host{all:initial}
+  :host{all:initial;--acc:var(--acc);--acc-soft:#e6efff}
   *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   .fab{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,0,0,.12);background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer;opacity:.82;transition:opacity .15s,transform .15s}
-  .fab:hover{opacity:1;transform:scale(1.06)} .fab svg{width:30px;height:30px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#0a5fd0;color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
+  .fab:hover{opacity:1;transform:scale(1.06)} .fab svg{width:30px;height:30px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
   .bar{position:fixed;display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:14px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border:1px solid rgba(0,0,0,.12);box-shadow:0 10px 30px rgba(15,23,42,.22);color:#18202c;font-size:12.5px;max-width:calc(100vw - 16px);flex-wrap:wrap}
   .bar.dock{left:0!important;right:0!important;top:0!important;border-radius:0;max-width:none;justify-content:center;border-width:0 0 1px}
   .bar button,.pop button,.sel button,.panel button{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;min-width:30px;padding:0 7px;border-radius:8px;font-size:12.5px;color:#18202c;white-space:nowrap}
-  .bar button:hover,.pop button:hover,.sel button:hover,.panel button:hover{background:#eef2f7} .bar button.on{background:#e6efff;color:#0a5fd0}
+  .bar button:hover,.pop button:hover,.sel button:hover,.panel button:hover{background:#eef2f7} .bar button.on{background:var(--acc-soft);color:var(--acc)}
   .bar .grip{cursor:grab;padding:0 4px} .bar .grip svg{width:26px;height:26px}
   .sep{width:1px;height:18px;background:#dfe4ea;margin:0 3px}
   .dot{width:15px;height:15px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);display:inline-block}
-  button.sw{min-width:24px;padding:0 3px} button.sw.on .dot{box-shadow:0 0 0 2px #fff,0 0 0 4px #0a5fd0}
-  .lnk{border:0;background:none;color:#0a5fd0;text-decoration:underline;cursor:pointer;padding:0;font:inherit}
+  button.sw{min-width:24px;padding:0 3px} button.sw.on .dot{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--acc)}
+  .lnk{border:0;background:none;color:var(--acc);text-decoration:underline;cursor:pointer;padding:0;font:inherit}
   b.bi{font-weight:800} i.ii{font-style:italic;font-family:Georgia,serif} u{text-decoration:underline} s{text-decoration:line-through}
-  .sel{position:fixed;display:flex;gap:2px;align-items:center;padding:3px;border-radius:11px;background:#1c2330;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-  .sel button{color:#fff;height:28px} .sel button:hover{background:rgba(255,255,255,.14)} .sel .pot svg{width:18px;height:18px}
+  .sel{position:fixed;display:flex;gap:2px;align-items:center;padding:3px;border-radius:11px;background:rgba(255,255,255,.97);border:1px solid rgba(0,0,0,.12);box-shadow:0 8px 24px rgba(15,23,42,.2);backdrop-filter:blur(10px)}
+  .sel button{color:#18202c;height:28px} .sel button:hover{background:#eef2f7} .sel .pot svg{width:18px;height:18px} .sel .x{min-width:26px;padding:0 4px;color:#6b7480;font-size:14px}
+  :host(.lp-dark) .sel{background:#1c2330;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .sel button{color:#fff} :host(.lp-dark) .sel button:hover{background:rgba(255,255,255,.14)} :host(.lp-dark) .sel .x{color:#aab3bf}
   .pop{position:fixed;width:300px;max-width:calc(100vw - 16px);background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:10px;color:#18202c;font-size:13px}
   .pop q{display:block;font-style:italic;color:#555;border-left:3px solid #ddd;padding-left:8px;margin:0 0 8px;max-height:72px;overflow:auto;quotes:none}
   textarea{width:100%;min-height:70px;border:1px solid #d5dbe3;border-radius:8px;padding:7px 8px;font-size:13px;resize:vertical;color:#18202c;background:#fff}
   .row{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap} .grow{flex:1}
-  .pri{background:#0a5fd0!important;color:#fff!important;padding:0 12px!important} .danger{color:#b42318!important}
+  .pri{background:var(--acc)!important;color:#fff!important;padding:0 12px!important} .danger{color:#b42318!important}
   .panel{position:fixed;right:12px;top:12px;bottom:12px;width:min(340px,calc(100vw - 24px));background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.22);display:flex;flex-direction:column;color:#18202c;font-size:13px}
   .panel h3{margin:0;font-size:14px;padding:12px 14px 8px;display:flex;align-items:center;gap:8px}
   .panel .list{overflow:auto;padding:0 10px 12px;flex:1}
@@ -161,21 +169,21 @@
   .menu small{color:#77808c;font-size:11px}
   .rail{position:fixed;top:8px;bottom:8px;width:12px;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
   .rail .st{all:unset;pointer-events:auto;width:14px;height:13px;border-radius:4px;background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.15);font:8px/13px sans-serif;text-align:center;color:#555;cursor:pointer}
-  .rail .st:hover{color:#0a5fd0}
+  .rail .st:hover{color:var(--acc)}
   .track{position:relative;flex:1;width:10px;border-radius:5px;background:rgba(0,0,0,.05);pointer-events:none}
   .view{position:absolute;left:0;right:0;border-radius:5px;background:rgba(10,95,208,.13);box-shadow:inset 0 0 0 1px rgba(10,95,208,.3);pointer-events:none}
   .tick{all:unset;position:absolute;left:50%;transform:translate(-50%,-50%);cursor:pointer;background:var(--c);pointer-events:auto}
   .tick.hl{width:10px;height:4px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
   .tick.cm{width:10px;height:10px;border-radius:50% 50% 50% 2px;box-shadow:0 0 0 1.5px rgba(0,0,0,.45)}
   .tick.ed{width:10px;height:4px;border-radius:2px;background:#8b5cf6}
-  .tick:hover,.tick.on{transform:translate(-50%,-50%) scale(1.6);z-index:2;box-shadow:0 0 0 2px #0a5fd0}
-  .prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,#cd9050,#0a5fd0);pointer-events:none;transition:width .1s}
-  .tabs{display:flex;gap:4px;padding:0 10px 6px}.tabs button{flex:1;height:28px!important;font-size:12px!important;background:#f1f4f8}.tabs button.on{background:#0a5fd0!important;color:#fff!important}
+  .tick:hover,.tick.on{transform:translate(-50%,-50%) scale(1.6);z-index:2;box-shadow:0 0 0 2px var(--acc)}
+  .prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,#cd9050,var(--acc));pointer-events:none;transition:width .1s}
+  .tabs{display:flex;gap:4px;padding:0 10px 6px}.tabs button{flex:1;height:28px!important;font-size:12px!important;background:#f1f4f8}.tabs button.on{background:var(--acc)!important;color:#fff!important}
   .search{width:calc(100% - 20px);margin:0 10px 6px;padding:6px 9px;border:1px solid #d5dbe3;border-radius:8px;font-size:12.5px;box-sizing:border-box;color:inherit;background:transparent}
   .ol{display:block;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;line-height:1.35}.ol:hover{background:#eef2f7}.ol.h2{padding-left:18px}.ol.h3{padding-left:30px;font-size:12px}.ol.h4{padding-left:42px;font-size:12px;color:#5b6472}
   .pnote{min-height:180px}
   [hidden]{display:none!important}
-  @media (prefers-color-scheme:dark){.bar,.pop,.panel,.menu,.fab{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} .bar button,.pop button,.panel button,.menu button{color:#e8edf3} .bar button:hover,.pop button:hover,.panel button:hover,.menu button:hover{background:#2b3440} textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} .item{border-color:#333d48} .item:hover{background:#252d37} .item .nt{color:#9cc3ff} .sep{background:#3a4450}}
+  :host(.lp-dark) .bar,:host(.lp-dark) .pop,:host(.lp-dark) .panel,:host(.lp-dark) .menu,:host(.lp-dark) .fab{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .bar button,:host(.lp-dark) .pop button,:host(.lp-dark) .panel button,:host(.lp-dark) .menu button{color:#e8edf3} :host(.lp-dark) .bar button:hover,:host(.lp-dark) .pop button:hover,:host(.lp-dark) .panel button:hover,:host(.lp-dark) .menu button:hover{background:#2b3440} :host(.lp-dark) textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} :host(.lp-dark) .item{border-color:#333d48} :host(.lp-dark) .item:hover{background:#252d37} :host(.lp-dark) .item .nt{color:#9cc3ff} :host(.lp-dark) .sep{background:#3a4450} :host(.lp-dark) .bar button.on{background:rgba(255,255,255,.1)}
   </style>
   <button class="fab" title="Lab Potato: highlight, comment and edit this page" aria-label="Open Lab Potato tools"></button>
   <div class="bar" role="toolbar" aria-label="Lab Potato" hidden></div>
@@ -183,6 +191,13 @@
   const $ = s => root.querySelector(s), railEl = $(".rail"), track = $(".track"), viewBox = $(".view"), prog = $(".prog"), fab = $(".fab"), bar = $(".bar"), selPop = $(".sel"), pop = $(".pop"), panel = $(".panel"), menuEl = $(".menu"), toastEl = $(".toast");
   const POTATO = `<svg viewBox="22 46 208 144" aria-hidden="true"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"/><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"/><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"/><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`;
   let toastT; function toast(m) { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3200); }
+  /* a toast with an Undo button: the last removal can be taken back for a few seconds */
+  function toastUndo(m, fn) { toastEl.innerHTML = `${esc(m)} <button class="lnk" style="color:#9cc3ff;margin-left:8px">Undo</button>`; toastEl.querySelector("button").onclick = () => { toastEl.hidden = true; fn(); }; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 7000); }
+  /* look: light, dark or follow the system; and the accent colour */
+  const sysDark = matchMedia("(prefers-color-scheme: dark)");
+  function applyLook() { const dark = SET.look === "dark" || (SET.look !== "light" && sysDark.matches); host.classList.toggle("lp-dark", dark);
+    const a = SET.accent || "#0a5fd0"; host.style.setProperty("--acc", a); host.style.setProperty("--acc-soft", a + "22"); }
+  sysDark.addEventListener("change", applyLook);
 
   /* ---------- the toolbar ---------- */
   function drawBar() {
@@ -245,7 +260,10 @@
       ...(DATA.edits.length ? [["revert", `Revert edited text (${DATA.edits.length})`, "Paragraphs edited with an earlier version get the page's own words back"]] : []),
       ["lib", "All my pages", "Every page you marked, to reopen or export"],
       ["button", SET.button ? "Hide the potato on pages" : "Show the potato on pages", SET.button ? "Open the tools from the extension icon (Alt+Shift+R) instead" : "A small button at the bottom right of every page"],
-      ["clear", "Remove everything on this page", "Highlights, comments, and any edits from earlier versions", true]];
+      ["look", "Look: " + (SET.look === "auto" ? "follows the system" : SET.look === "dark" ? "dark" : "light"), "Click to change: light, dark, or follow the system"],
+      ["accent", "Accent colour: " + ((ACCENTS.find(([c]) => c === SET.accent) || ACCENTS[0])[1]), "Click for the next colour"],
+      ["off", `Turn off on ${HOST}`, "The potato and the tools stay hidden on this site; the extension icon or All my pages turns them back on"],
+      ["clear", "Remove everything on this page", "Kept for 30 days under Recently removed in All my pages", true]];
     menuEl.innerHTML = items.map(([a, l, s, d]) => `<button data-m="${a}" class="${d ? "danger" : ""}"><span>${l}</span><small>${s}</small></button>`).join("");
     menuEl.hidden = false; const r = anchor.getBoundingClientRect(), w = menuEl.offsetWidth, h = menuEl.offsetHeight;
     menuEl.style.left = Math.min(Math.max(8, r.right - w), innerWidth - w - 8) + "px"; menuEl.style.top = (r.bottom + h + 6 < innerHeight ? r.bottom + 4 : Math.max(8, r.top - h - 4)) + "px";
@@ -262,21 +280,27 @@
     else if (a === "lib") chrome.runtime.sendMessage({ t: "library" });
     else if (a === "button") { SET.button = !SET.button; saveSet(); drawBar(); toast(SET.button ? "The potato shows on every page." : "Hidden. Open the tools with the extension icon or Alt+Shift+R."); }
     else if (a === "revert") revertEdits();
-    else if (a === "clear") { if (!confirm("Remove every highlight and comment on this page" + (DATA.edits.length ? " and put its own text back where it was edited" : "") + "?")) return; DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits); DATA.marks = []; DATA.edits = []; save(); drawBar(); drawPanel(); }
+    else if (a === "off") { SET.off = [...new Set([...(SET.off || []), HOST])]; SET.on = (SET.on || []).filter(h => h !== HOST); saveSet(); shutDown(); }
+    else if (a === "look") { SET.look = SET.look === "auto" ? "light" : SET.look === "light" ? "dark" : "auto"; saveSet(); applyLook(); toast("Look: " + (SET.look === "auto" ? "follows the system" : SET.look)); }
+    else if (a === "accent") { const i = ACCENTS.findIndex(([c]) => c === SET.accent); SET.accent = ACCENTS[(i + 1) % ACCENTS.length][0]; saveSet(); applyLook(); drawBar(); toast("Accent: " + ACCENTS.find(([c]) => c === SET.accent)[1]); }
+    else if (a === "clear") { const keep = JSON.parse(JSON.stringify(DATA)); try { await store.set({ ["lp:trash:" + KEY.slice(3)]: { data: keep, at: Date.now() } }); } catch (er) {} if (!confirm("Remove every highlight and comment on this page" + (DATA.edits.length ? " and put its own text back where it was edited" : "") + "?")) return; DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits); DATA.marks = []; DATA.edits = []; save(); drawBar(); drawPanel(); }
   });
   document.addEventListener("pointerdown", e => { if (!e.composedPath().includes(host)) { menuEl.hidden = true; } }, true);
 
   /* ---------- the selection bubble ---------- */
+  let selMute = 0;   // after ✕, the bubble stays away for a minute
   function showSelPop() {
+    if (Date.now() < selMute) { selPop.hidden = true; return; }
     const s = getSelection(); if (!s || s.isCollapsed || !s.rangeCount || !s.toString().trim()) { selPop.hidden = true; return; }
     const range = s.getRangeAt(0); if (host.contains(range.commonAncestorContainer)) return;
     const r = range.getBoundingClientRect(); if (!r.width && !r.height) { selPop.hidden = true; return; }
-    selPop.innerHTML = `<button data-s="hl" class="pot" title="Highlight with Lab Potato">${POTATO}Highlight</button>${COLORS.slice(0, 4).map(([c, nm]) => `<button data-s="c" data-c="${c}" title="${nm}"><i class="dot" style="background:${c}"></i></button>`).join("")}<button data-s="cmt" title="Comment">💬</button>`;
+    selPop.innerHTML = `<button data-s="hl" class="pot" title="Highlight with Lab Potato">${POTATO}Highlight</button>${COLORS.slice(0, 4).map(([c, nm]) => `<button data-s="c" data-c="${c}" title="${nm}"><i class="dot" style="background:${c}"></i></button>`).join("")}<button data-s="cmt" title="Comment">💬</button><button data-s="x" class="x" title="Close (Esc). To keep it away on this site: ⋯ → Turn off on this site">✕</button>`;
     selPop.hidden = false; const w = selPop.offsetWidth, h = selPop.offsetHeight;
     selPop.style.left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8) + "px"; selPop.style.top = (r.top - h - 8 > 4 ? r.top - h - 8 : r.bottom + 8) + "px";
   }
   selPop.addEventListener("mousedown", e => e.preventDefault());
   selPop.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; selPop.hidden = true;
+    if (b.dataset.s === "x") { selMute = Date.now() + 60000; return; }
     if (b.dataset.s === "c") { SET.color = b.dataset.c; saveSet(); }
     if (b.dataset.s === "cmt") { comment(); setOpen(true); return; }
     if (highlight()) setOpen(true);   // pressing Highlight opens the full tools
@@ -303,7 +327,8 @@
   }
   pop.addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (!b) return; const m = DATA.marks.find(x => x.id === pop.dataset.id); if (!m) return;
     if (b.dataset.p === "color") { m.color = b.dataset.c; marksOf(m.id).forEach(w => paint(w, m)); pop.querySelectorAll(".sw").forEach(x => x.classList.toggle("on", x === b)); save(); }
-    else if (b.dataset.p === "del") { unwrap(m.id); DATA.marks = DATA.marks.filter(x => x !== m); pop.hidden = true; save(); drawBar(); drawPanel(); }
+    else if (b.dataset.p === "del") { unwrap(m.id); DATA.marks = DATA.marks.filter(x => x !== m); pop.hidden = true; save(); drawBar(); drawPanel();
+      toastUndo("Highlight removed.", () => { DATA.marks.push(m); applyAll(); save(); drawBar(); drawPanel(); }); }
     else if (b.dataset.p === "ok") { m.note = pop.querySelector("textarea").value.trim(); marksOf(m.id).forEach(w => paint(w, m)); pop.hidden = true; save(); drawPanel(); }
   });
   /* click a highlight: its comment box */
@@ -382,26 +407,37 @@
 
   /* ---------- start ---------- */
   chrome.runtime.onMessage.addListener((msg, _s, reply) => {
-    if (msg.t === "toggle") { setOpen(!SET.open); reply({ ok: true }); }
+    if (!booted) {   // the tools are off on this site: the extension icon (or the library) turns them on here
+      if (msg.t === "toggle" || msg.t === "highlight") { SET.on = [...new Set([...(SET.on || []), HOST])]; SET.off = (SET.off || []).filter(h => h !== HOST); saveSet(); boot(true); reply({ ok: true, turnedOn: true }); }
+      else if (msg.t === "offSite") reply({ ok: true, already: true });
+      else reply({ ok: true, off: true });
+      return; }
+    if (msg.t === "offSite") { SET.off = [...new Set([...(SET.off || []), HOST])]; SET.on = (SET.on || []).filter(h => h !== HOST); saveSet(); shutDown(); reply({ ok: true }); }
+    else if (msg.t === "toggle") { setOpen(!SET.open); reply({ ok: true }); }
     else if (msg.t === "highlight") { if (highlight()) setOpen(true); reply({ ok: true }); }
     else if (msg.t === "ping") reply({ ok: true });
   });
-  chrome.storage.onChanged.addListener((ch, area) => { if (area === "local" && ch[SKEY] && ch[SKEY].newValue) { const o = SET.open; SET = Object.assign(SET, ch[SKEY].newValue); SET.open = o; drawBar(); }
+  chrome.storage.onChanged.addListener((ch, area) => { if (area === "local" && ch[SKEY] && ch[SKEY].newValue) { const o = SET.open; SET = Object.assign(SET, ch[SKEY].newValue); SET.open = o; if (booted && siteOff()) return shutDown(); if (!booted && !siteOff()) return boot(false); if (booted) { applyLook(); drawBar(); } }
     // this page's marks changed on another computer (Chrome Sync) or in another tab: show the newer copy
     if (area === "local" && ch[KEY]) { const nv = ch[KEY].newValue;
       if (nv && (nv.updated || 0) > (DATA.updated || 0)) { DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits.filter(ed => !(nv.edits || []).some(x => x.id === ed.id))); DATA = Object.assign({ marks: [], edits: [], pageNote: "" }, nv); DATA.edits.forEach(ed => ed.done = false); applyAll(); drawPanel(); toast("Lab Potato: highlights updated from your other computer."); }
       else if (!nv && (DATA.marks.length || DATA.edits.length) && !pendingSave) { DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits); DATA.marks = []; DATA.edits = []; DATA.pageNote = ""; drawBar(); drawPanel(); } } });
-  (async () => {
-    document.documentElement.append(host);
-    try { const st = await store.get([KEY, SKEY]); if (st[SKEY]) SET = Object.assign(SET, st[SKEY]); if (st[KEY]) DATA = Object.assign(DATA, st[KEY]); } catch (e) { /* storage unavailable */ }
+  function shutDown() { booted = false; SET.open = false; panelOpen = false; DATA.marks.forEach(m => unwrap(m.id)); host.remove(); document.documentElement.style.removeProperty("margin-top"); }
+  function boot(openNow) {
+    booted = true; document.documentElement.append(host); applyLook();
     DATA.edits.forEach(ed => ed.done = false);
-    SET.open = false;   // every page starts with just the potato; it opens when you click it or highlight
+    SET.open = !!openNow;   // every page starts with just the potato; it opens when you click it or highlight
     applyAll();
     // pages that build their text late (single-page apps): try again for a while as content appears
     if (lost.length || DATA.edits.some(ed => !ed.done)) { let tries = 0; const mo = new MutationObserver(() => { clearTimeout(mo.t); mo.t = setTimeout(() => { applyAll(); if ((!lost.length && DATA.edits.every(ed => ed.done)) || ++tries > 20) mo.disconnect(); }, 400); });
       mo.observe(document.body, { childList: true, subtree: true, characterData: true }); setTimeout(() => mo.disconnect(), 20000); }
     if (DATA.marks.length || DATA.edits.length) toast(`Lab Potato: ${DATA.marks.length} highlight${DATA.marks.length === 1 ? "" : "s"}${DATA.edits.length ? ` and ${DATA.edits.length} edit${DATA.edits.length === 1 ? "" : "s"}` : ""} restored from ${new Date(DATA.updated).toLocaleString()}${lost.length ? ` (${lost.length} not found on the page now)` : ""}.`);
     drawRail();
+    if (openNow) { drawBar(); toast(`Lab Potato is on for ${HOST} again.`); }
+  }
+  (async () => {
+    try { const st = await store.get([KEY, SKEY]); if (st[SKEY]) SET = Object.assign(SET, st[SKEY]); if (st[KEY]) DATA = Object.assign(DATA, st[KEY]); } catch (e) { /* storage unavailable */ }
+    if (!siteOff()) boot(false);
     window.__lpDR = { get data() { return DATA; }, highlight, setOpen, revertEdits, undoEdits, applyAll, stepMark, drawRail };   // for tests
   })();
 })();

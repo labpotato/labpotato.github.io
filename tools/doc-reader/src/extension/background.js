@@ -99,11 +99,13 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({ id: "lp-page", title: "Open this page in Doc Reader", contexts: ["page"] });
     chrome.contextMenus.create({ id: "lp-sel", title: "Open the selection in Doc Reader", contexts: ["selection"] });
     chrome.contextMenus.create({ id: "lp-link", title: "Open this link in Doc Reader", contexts: ["link"] });
+    chrome.contextMenus.create({ id: "lp-off", title: "Turn Lab Potato off on this site", contexts: ["page"] });
     chrome.contextMenus.create({ id: "lp-lib", title: "All my marked pages", contexts: ["action"] });
     chrome.contextMenus.create({ id: "lp-new", title: "New blank document in Doc Reader", contexts: ["action"] });
   });
 });
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === "lp-off" && tab?.id) { try { const r = await chrome.tabs.sendMessage(tab.id, { t: "offSite" }); if (r && r.already) return; } catch (e) {} return; }
   const id = info.menuItemId;
   if (id === "lp-hl") { if (!(await onPage(tab, { t: "highlight" }))) openPage(tab, true); }
   else if (id === "lp-tools") toggle(tab);
@@ -201,6 +203,9 @@ async function backupJson() { const all = await chrome.storage.local.get(null);
 async function saveBackup(reason) {
   const json = await backupJson(), url = "data:application/json;base64," + btoa(unescape(encodeURIComponent(json)));
   try { const id = await chrome.downloads.download({ url, filename: "LabPotato/lab_potato_backup.json", conflictAction: "overwrite", saveAs: false });
+    // v5: a copy per weekday as well, so a bad day's file never replaces the only good one (seven files at most)
+    const day = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+    try { await chrome.downloads.download({ url, filename: `LabPotato/lab_potato_backup_${day}.json`, conflictAction: "overwrite", saveAs: false }); } catch (e) { /* the daily copy is enough */ }
     await chrome.storage.local.set({ "lp:backupState": { ok: true, at: Date.now(), id, reason, bytes: json.length } }); return true; }
   catch (e) { await chrome.storage.local.set({ "lp:backupState": { ok: false, at: Date.now(), error: String(e.message || e) } }); return false; }
 }
@@ -308,6 +313,10 @@ async function driveSignOut() {
   await chrome.storage.session.remove("lp:tok"); await setDstate({ on: false, fileId: "", email: "" });
 }
 chrome.alarms.create("lp-drive", { periodInMinutes: 5 });
+/* v5: Recently removed (lp:trash:*) is emptied after 30 days */
+chrome.alarms.create("lp-trash", { periodInMinutes: 720 });
+chrome.alarms.onAlarm.addListener(async a => { if (a.name !== "lp-trash") return; const all = await chrome.storage.local.get(null), cut = Date.now() - 30 * 864e5;
+  const old = Object.keys(all).filter(k => k.startsWith("lp:trash:") && (!all[k] || (all[k].at || 0) < cut)); if (old.length) await chrome.storage.local.remove(old); });
 chrome.alarms.onAlarm.addListener(a => { if (a.name === "lp-drive") driveSync(false); });
 chrome.runtime.onStartup.addListener(() => setTimeout(() => driveSync(false), 3000));
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {

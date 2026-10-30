@@ -4,7 +4,7 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v7.html`: the tool (v1 to v6 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v8.html`: the tool (v1 to v7 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
@@ -136,4 +136,27 @@ Google Doc.
   40, `kv` key `snap:<id>`), and always before accepting or rejecting every AI change.
   File menu → Earlier versions… previews and restores; restoring keeps the current text too.
   Unreviewed AI suggestions are stored as their original words, as exports are.
+
+### Revision marks and the AI stage (Doc Reader v8, `src/stage.js`)
+
+Mark the text in place, then send a passage to a second pane where the AI's version shows as tracked
+changes while the original stays untouched:
+
+| Key | Mark | Sent to the AI as |
+|---|---|---|
+| Alt+X | cross out (red) | `Remove: «…»` |
+| Alt+W | cross out for better wording (amber) | `Replace «…» with better wording` |
+| Alt+C | note to the AI (yellow) | `About «…»: <note>` |
+| Alt+S | send the selection (one paragraph) to the stage | the marks above, plus anything typed in the Ask box |
+| Alt+Enter | Send back | |
+
+On the stage the usual review strip applies (Tab accepts, Esc rejects, ✎ asks for more, Alt+M shows
+the changed version only). **Send back** is enabled once every change is decided and puts the result
+where the passage was. The passage on the left is outlined while it is on the stage and stays editable;
+if its text differs from what was sent, Send back shows both versions and the author chooses (Keep mine,
+Keep both, Use the AI's): the AI's version never overwrites hand edits by itself. Discard closes the
+stage and leaves the original. While a stage is open the Pages, Notes and chat panels fold away; ⇔ in
+the stage's header brings them back. A `.rv-src` outline left in a saved document is removed on open;
+the marks (`.rv`) stay until removed (click a mark). Demo mode honours the marks, so the stage can be
+tried without a key.
 

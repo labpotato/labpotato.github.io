@@ -120,7 +120,8 @@ rep('''      <div class="rfoot"><button class="btn small" data-act="copyNotes" t
       <div class="ai-stats" id="aiStats"></div>
       <div class="ai-log" id="aiLog"></div>
       <div class="ai-chat-foot"><textarea id="aiQ" placeholder="Ask about the paper… (Enter sends)" aria-label="Ask about the paper"></textarea><div class="row"><span class="hint">Same chat, with the whole paper.</span><button class="btn small ai" data-aiact="send">Send</button></div></div>
-    </aside>''')
+    </aside>
+    <aside class="ai-stage closed" id="aiStage" aria-label="AI stage"></aside>''')
 
 # spell checker (nspell, MIT) and dictionaries (SCOWL / Hunspell en_GB-ise and en_US, see vendor/*.LICENSE.txt)
 data = "".join(f'<script type="text/plain" id="{i}">{(V / f).read_text(encoding="utf-8")}</script>\n' for i, f in
@@ -144,7 +145,7 @@ rep('On any page, click the small potato (bottom right) or the toolbar icon to o
     'On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>\n          <p><b>Updating to a new version:</b> unzip it over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Don\'t press <b>Remove</b>: that deletes the highlights kept on this computer (unless you signed in with Google or have a backup file).</p>')
 # v5: tells the Chrome extension (v4 and later) to stay off this page: Doc Reader has its own tools
 rep('<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="lab-potato-app" content="doc-reader">\n')
-rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n" + read("safety.js") + "\n/* a few names on window, for the tests and the console */")
+rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n" + read("safety.js") + "\n" + read("stage.js") + "\n/* a few names on window, for the tests and the console */")
 
 if OUT.exists() and "--force" not in sys.argv:
     print(f"note: overwriting {OUT.name} (fine before it is published; never after)")

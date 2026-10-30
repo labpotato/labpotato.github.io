@@ -75,7 +75,10 @@ function aiState() {
   return d.ai;
 }
 const aiChange = id => aiState()?.changes[id];
-const aiSpan = id => flowEl.querySelector(`.ai-chg[data-ai="${id}"]`);
+let aiExtraRoot = null;   // v8: the AI stage holds suggestions too (stage.js)
+const aiSpan = id => flowEl.querySelector(`.ai-chg[data-ai="${id}"]`) || (aiExtraRoot && aiExtraRoot.querySelector(`.ai-chg[data-ai="${id}"]`));
+const aiRoots = () => aiExtraRoot && aiExtraRoot.isConnected ? [flowEl, aiExtraRoot] : [flowEl];
+const inAiRoot = n => aiRoots().some(r => r.contains(n));
 let aiActive = null;   // id of the change the review bar is for
 
 /* ---- light HTML: text with only i, b, sup, sub, code (what the AI sees and returns) ---- */
@@ -213,7 +216,7 @@ document.addEventListener("pointerdown", e => { if (aiAskEl && !e.target.closest
 
 /* ---- a request: put the selection in a busy span, ask, show the answer as a change ---- */
 async function aiRequest(range, instr) {
-  const ai = aiState(); if (!range || !flowEl.contains(range.commonAncestorContainer)) return toast("The selection changed; select the text again.");
+  const ai = aiState(); if (!range || !inAiRoot(range.commonAncestorContainer)) return toast("The selection changed; select the text again.");
   const id = uid(), frag = range.extractContents(), hold = EL("div"); hold.append(frag.cloneNode(true));
   const span = EL("span", { class: "ai-chg busy", "data-ai": id, contenteditable: "false" }); span.append(frag); range.insertNode(span);
   const ch = ai.changes[id] = { id, n: ++ai.n, at: Date.now(), instr, oldHtml: hold.innerHTML, oldLight: toLight(hold), sugg: [], cur: -1, status: "busy", via: aiCfg().provider };
@@ -267,7 +270,7 @@ function aiCommit() { S.doc.html = flowEl.innerHTML; changed({ quiet: true }); l
 
 /* ---- accept, reject: one edit at a time, or the whole suggestion ---- */
 let aiHunk = null;   // the edit the review bar is for
-const hunksIn = s => $$(".ai-h", s), allHunks = () => $$(".ai-chg:not(.busy) .ai-h", flowEl);
+const hunksIn = s => $$(".ai-h", s), allHunks = () => aiRoots().flatMap(r => $$(".ai-chg:not(.busy) .ai-h", r));
 const partOf = (h, sel) => { const f = document.createDocumentFragment(); const e = h.querySelector(sel); if (e) f.append(...e.childNodes); return f; };
 /* the text a suggestion stands for if its open edits are rejected (for exports and the AI): exact original if nothing was decided */
 function aiOrigFrag(s) {
@@ -285,7 +288,7 @@ function aiDecide(h, accept) {
 /* every edit decided: the suggestion becomes plain text again */
 function aiFinish(s, ch) {
   const acc = !!s.dataset.acc, rej = !!s.dataset.rej;
-  if (!acc) s.replaceWith(lightOrHtml(ch.oldHtml)); else { const last = s.lastChild; s.replaceWith(...s.childNodes); if (last && aiActive === ch.id) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(r); } }
+  if (!acc) s.replaceWith(lightOrHtml(ch.oldHtml)); else { const last = s.lastChild; s.replaceWith(...s.childNodes); if (last && aiActive === ch.id && flowEl.contains(last)) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(r); } }
   flowEl.normalize(); ch.status = acc && rej ? "partly" : acc ? "accepted" : "rejected";
   if (ch.via !== "demo") aiState().feedback.push(`${ch.status === "partly" ? "accepted part of" : ch.status} your version for request ${ch.n}`);
 }
@@ -302,7 +305,7 @@ function aiReject(id = aiActive) {
 }
 function aiAfterResolve() { aiCommit(); aiSetHunk(allHunks()[0] || null); aiRenderChat(); }
 function aiDecideAll(accept) {
-  const ids = [...new Set($$(".ai-chg[data-ai]:not(.busy)", flowEl).map(s => s.dataset.ai))]; if (!ids.length) return toast("No AI suggestions to review.");
+  const ids = [...new Set(aiRoots().flatMap(r => $$(".ai-chg[data-ai]:not(.busy)", r)).map(s => s.dataset.ai))]; if (!ids.length) return toast("No AI suggestions to review.");
   ids.forEach(id => accept ? aiAccept(id) : aiReject(id)); toast(`${accept ? "Accepted" : "Rejected"} ${ids.length} suggestion${ids.length === 1 ? "" : "s"}.`);
 }
 function aiStep(d) { const all = allHunks(); if (!all.length) return toast("No AI suggestions to review."); const i = all.indexOf(aiHunk); const h = all[(i < 0 ? (d > 0 ? 0 : all.length - 1) : i + d + all.length) % all.length]; aiSetHunk(h); h.scrollIntoView({ block: "center", behavior: "smooth" }); afterScroll(viewer, placeBar); }
@@ -390,10 +393,11 @@ function aiBar() {
    page as wide as the window) the page's blank border; never over the text column */
 function placeBar() {
   if (aiBarEl.hidden) return; const s = aiActive && aiSpan(aiActive); if (!s) { aiBarEl.hidden = true; return; }
-  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), first = rs[0] || t.getBoundingClientRect(), last = rs[rs.length - 1] || first, vr = viewer.getBoundingClientRect(), pg = flowEl.getBoundingClientRect();
+  const onStage = aiExtraRoot && aiExtraRoot.contains(s), box = onStage ? aiExtraRoot : viewer, page = onStage ? aiExtraRoot : flowEl;
+  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), first = rs[0] || t.getBoundingClientRect(), last = rs[rs.length - 1] || first, vr = box.getBoundingClientRect(), pg = page.getBoundingClientRect();
   const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight, gap = 12, sideW = 256;
   let x, left = false;
-  const cs = getComputedStyle(flowEl), padR = parseFloat(cs.paddingRight) || 0, padL = parseFloat(cs.paddingLeft) || 0;
+  const cs = getComputedStyle(page), padR = parseFloat(cs.paddingRight) || 0, padL = parseFloat(cs.paddingLeft) || 0;
   if (vr.right - pg.right >= w + gap + 4) x = pg.right + gap;                          // the margin right of the page
   else if (pg.left - vr.left >= w + gap + 4) { x = pg.left - gap - w; left = true; }   // the margin left of the page
   else if (padR >= w + 8) x = pg.right - padR + (padR - w) / 2;                        // no margin: the page's blank right border

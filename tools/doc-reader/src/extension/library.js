@@ -8,8 +8,48 @@ async function load() {
   PAGES = Object.entries(all).filter(([k, v]) => k.startsWith("lp:") && !["lp:settings", "lp:syncState", "lp:backupState", "lp:drive", "lp:tomb"].includes(k) && v && v.url).map(([k, v]) => ({ key: k, ...v, marks: v.marks || [], edits: v.edits || [] })).sort((a, b) => (b.updated || 0) - (a.updated || 0));
   document.getElementById("btnOn").checked = (all["lp:settings"] || {}).button !== false;
   try { const b = await chrome.storage.local.getBytesInUse(null); document.getElementById("usage").textContent = `${PAGES.length} page${PAGES.length === 1 ? "" : "s"} · ${(b / 1024).toFixed(0)} KB kept in this browser's extension storage (chrome.storage.local). Back up to keep a copy outside the browser.`; } catch (e) {}
-  draw();
+  draw(); drawTrash(all); drawSafety(all); drawLook(all);
 }
+/* v5: Recently removed */
+function drawTrash(all) {
+  const t = Object.entries(all).filter(([k, v]) => k.startsWith("lp:trash:") && v && v.data).sort((a, b) => b[1].at - a[1].at), sec = document.getElementById("trash"); sec.hidden = !t.length;
+  document.getElementById("trashList").innerHTML = t.map(([k, v]) => `<div class="page" data-k="${esc(k)}"><h2>${esc(v.data.title || v.data.url)}</h2><div class="url">${esc(v.data.url)}</div><div class="meta">${(v.data.marks || []).length} highlights · removed ${new Date(v.at).toLocaleString()} · kept until ${new Date(v.at + 30 * 864e5).toLocaleDateString()}</div><div class="row"><button data-t="restore">Restore</button><button data-t="purge" class="danger">Delete forever</button></div></div>`).join("");
+}
+document.getElementById("trashList").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-t]"); if (!b) return; const k = b.closest(".page").dataset.k, v = (await chrome.storage.local.get(k))[k]; if (!v) return load();
+  if (b.dataset.t === "restore") { const key = "lp:" + k.slice(9), cur = (await chrome.storage.local.get(key))[key]; const d = Object.assign({}, v.data, { updated: Date.now() });
+    if (cur) { const byId = new Map([...(cur.marks || []), ...(d.marks || [])].map(m => [m.id, m])); d.marks = [...byId.values()]; }
+    await chrome.storage.local.set({ [key]: d }); await chrome.storage.local.remove(k); }
+  else if (confirm("Delete for good? This cannot be undone.")) await chrome.storage.local.remove(k);
+  load();
+});
+/* v5: the safety check: is there a copy of the highlights somewhere outside this browser? */
+function drawSafety(all) {
+  const s = all["lp:settings"] || {}, bs = all["lp:backupState"], d = all["lp:drive"] || {}, ss = all["lp:syncState"], n = PAGES.length, marks = PAGES.reduce((a, p) => a + p.marks.length, 0);
+  const ago = t => t ? Math.round((Date.now() - t) / 36e5) : null, rows = [];
+  rows.push({ c: "", t: `${n} page${n === 1 ? "" : "s"}, ${marks} highlight${marks === 1 ? "" : "s"}`, s: "kept in this browser" });
+  if (d.on && !d.error) rows.push({ c: ago(d.lastSync) > 24 ? "warn" : "", t: "Google Drive: signed in" + (d.email ? " as " + d.email : ""), s: d.lastSync ? `last synced ${when(d.lastSync)}` : "not synced yet" });
+  else rows.push({ c: "warn", t: "Google Drive: not signed in", s: d.error ? d.error : "Sign in below so your highlights are also in your own Drive" });
+  if (s.autoBackup === false) rows.push({ c: "warn", t: "Daily backup file: off", s: "Turn it on below, or press Save now before big changes" });
+  else if (bs && bs.ok) rows.push({ c: ago(bs.at) > 48 ? "warn" : "", t: "Daily backup file: saved " + when(bs.at), s: "Downloads/LabPotato, the latest plus one copy per weekday" });
+  else rows.push({ c: bs ? "bad" : "warn", t: "Daily backup file: " + (bs ? "failed" : "not saved yet"), s: bs && bs.error ? bs.error : "It is written a minute after the day's first change" });
+  rows.push({ c: s.sync === false ? "" : (ss && !ss.ok ? "warn" : ""), t: "Chrome Sync: " + (s.sync === false ? "off" : "on"), s: s.sync === false ? "optional" : `last ${when(ss && ss.at)}` });
+  const safe = (d.on && !d.error) || (bs && bs.ok && ago(bs.at) <= 48);
+  rows.unshift({ c: safe ? "" : "warn", t: safe ? "Your highlights have a copy outside this browser" : "Only this browser has your highlights", s: safe ? "If Chrome is reset or the extension removed, they come back" : "Sign in with Google or turn on the daily backup file" });
+  document.getElementById("safeRows").innerHTML = rows.map(r => `<div class="saferow ${r.c}"><span class="d"></span><div>${esc(r.t)}<small>${esc(r.s)}</small></div></div>`).join("");
+}
+/* v5: look, accent and the sites where the tools stay off */
+function drawLook(all) {
+  const s = all["lp:settings"] || {};
+  document.getElementById("lookSel").value = s.look || "auto"; document.getElementById("accSel").value = s.accent || "#0a5fd0"; document.getElementById("offDef").checked = s.offDefaults !== false;
+  const chips = (list, key) => (list || []).map(h => `<span class="chip">${esc(h)}<button data-rm="${esc(h)}" data-key="${key}" title="Remove">✕</button></span>`).join("") || '<span class="kst">none</span>';
+  document.getElementById("offList").innerHTML = chips(s.off, "off"); document.getElementById("onList").innerHTML = chips(s.on, "on"); document.getElementById("onRow").hidden = !(s.on || []).length;
+}
+document.getElementById("lookSel").addEventListener("change", e => setOpt("look", e.target.value));
+document.getElementById("accSel").addEventListener("change", e => setOpt("accent", e.target.value));
+document.getElementById("offDef").addEventListener("change", e => setOpt("offDefaults", e.target.checked));
+document.getElementById("offAddBtn").addEventListener("click", async () => { const v = document.getElementById("offAdd").value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0]; if (!v) return; const s = (await chrome.storage.local.get("lp:settings"))["lp:settings"] || {}; s.off = [...new Set([...(s.off || []), v])]; s.on = (s.on || []).filter(h => h !== v); await chrome.storage.local.set({ "lp:settings": s }); document.getElementById("offAdd").value = ""; });
+document.getElementById("look").addEventListener("click", async e => { const b = e.target.closest("[data-rm]"); if (!b) return; const s = (await chrome.storage.local.get("lp:settings"))["lp:settings"] || {}; s[b.dataset.key] = (s[b.dataset.key] || []).filter(h => h !== b.dataset.rm); await chrome.storage.local.set({ "lp:settings": s }); });
 function draw() {
   const q = document.getElementById("q").value.toLowerCase().trim(), box = document.getElementById("list");
   const list = PAGES.filter(p => !q || (p.title + " " + p.url + " " + p.marks.map(m => m.quote.exact + " " + m.note).join(" ")).toLowerCase().includes(q));
@@ -22,7 +62,7 @@ function draw() {
 document.getElementById("list").addEventListener("click", async e => {
   const b = e.target.closest("button[data-a]"); if (!b) return; const k = b.closest(".page").dataset.k, p = PAGES.find(x => x.key === k);
   if (b.dataset.a === "md") download(md(p), (p.title || "page").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) + "_notes.md");
-  if (b.dataset.a === "del" && confirm("Remove the highlights, comments and edits kept for this page?")) { await chrome.storage.local.remove(k); load(); }
+  if (b.dataset.a === "del" && confirm("Remove the highlights, comments and edits kept for this page? It stays under Recently removed for 30 days.")) { await chrome.storage.local.set({ ["lp:trash:" + k.slice(3)]: { data: p, at: Date.now() } }); await chrome.storage.local.remove(k); load(); }
 });
 document.getElementById("q").addEventListener("input", draw);
 /* back up and restore: every page's marks plus the settings, as one JSON file */

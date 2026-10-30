@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Lab Potato Doc Reader",
-  "version": "3.1",
+  "version": "5.0",
   "description": "Highlight and comment on any web page right where it is, and open it in Doc Reader to edit a copy with Word-style tools and an AI editor. Sign in with Google and your highlights and documents follow you to every computer.",
   "action": {
     "default_title": "Lab Potato: show or fold the tools on this page"
   },
   "icons": {
     "16": "icon16.png",
+    "32": "icon32.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },

@@ -6,8 +6,8 @@ editor can't take over Doc Reader's menus, panels and styles) and sync.js (the e
 sync of documents). Paper Writer v1-v5 were built from these files. The Chrome extension is made from
 the built page by build-ext.py.
 
-    python3 tools/doc-reader/src/build.py v5
-    python3 tools/doc-reader/src/build-ext.py v5 v4
+    python3 tools/doc-reader/src/build.py v6
+    python3 tools/doc-reader/src/build-ext.py v6 v5
 
 Reads tools/doc-reader/doc-reader-v2.html (never changes it) and writes
 tools/doc-reader/doc-reader-vN.html. Each edit must match exactly once, so a
@@ -134,7 +134,7 @@ rep("""<p>Works on top of any web page, like Liner: select text and press <b>Hig
         <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>""",
     """<p>Highlight and comment on any web page, like Liner: select text and press <b>Highlight</b>. Your marks come back whenever you open that page again. One click opens the page here, to edit a copy with the Word tools and the AI editor. (The extension stays hidden on Doc Reader's own pages.)</p>
         <p>Sign in with Google in the extension to see your highlights and documents on every computer you use; they are stored in your own Google Drive. You can also save each document as a Google Doc.</p>
-        <a class="btn small" id="extLink" href="doc-reader-extension-v4.zip" download>""")   # v5: extension v4
+        <a class="btn small" id="extLink" href="doc-reader-extension-v5.zip" download>""")   # v6: extension v5
 # v4: lookups by id skip a web page's elements of the same name (a page's #menu, #toast, #right)
 rep('const $ = (s, r = document) => r.querySelector(s);',
     'const $ = (s, r = document) => { const e = r.querySelector(s); return e && r === document && s[0] === "#" && e.closest("#flow") ? [...document.querySelectorAll(s)].find(x => !x.closest("#flow")) || e : e; };')
@@ -144,7 +144,7 @@ rep('On any page, click the small potato (bottom right) or the toolbar icon to o
     'On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>\n          <p><b>Updating to a new version:</b> unzip it over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Don\'t press <b>Remove</b>: that deletes the highlights kept on this computer (unless you signed in with Google or have a backup file).</p>')
 # v5: tells the Chrome extension (v4 and later) to stay off this page: Doc Reader has its own tools
 rep('<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="lab-potato-app" content="doc-reader">\n')
-rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n/* a few names on window, for the tests and the console */")
+rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n" + read("safety.js") + "\n/* a few names on window, for the tests and the console */")
 
 if OUT.exists() and "--force" not in sys.argv:
     print(f"note: overwriting {OUT.name} (fine before it is published; never after)")

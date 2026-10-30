@@ -4,13 +4,20 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v5.html`: the tool (v1 to v4 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v6.html`: the tool (v1 to v5 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
-  accept/reject strip beside the page, and can save each written document as a Google Doc.
-- `doc-reader-extension-v4.zip`: the Chrome extension (unzip, then `chrome://extensions` →
-  Developer mode → Load unpacked; v1 to v3 stay as legacy zips). v4 has Lab Potato's Google
-  OAuth client built in, so Sign in with Google needs no setup. It stays off Doc Reader's own pages
+  accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
+  the safety nets below (Recently removed, Earlier versions) and links extension v5.
+- `doc-reader-extension-v5.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+  Developer mode → Load unpacked; v1 to v4 stay as legacy zips). v4 has Lab Potato's Google
+  OAuth client built in, so Sign in with Google needs no setup. v5 stays off on writing and
+  chat sites by default (claude.ai, chatgpt.com, docs.google.com, notion.so, overleaf.com and
+  the like; the list is in `content.js` as `OFF_DEFAULT`); the extension icon turns it on for a
+  site, ⋯ → "Turn off on this site" turns it off, and the library lists both. The highlight
+  bubble has ✕; look (light, dark, follow the system) and accent colour are under ⋯ and in the
+  library. Removing a highlight offers Undo; "Remove everything" and the library's Remove keep
+  the page under Recently removed for 30 days; the daily backup also writes one copy per weekday. It stays off Doc Reader's own pages
   (they carry `<meta name="lab-potato-app" content="doc-reader">`). Update by unzipping over the old
   folder and pressing reload on `chrome://extensions`: pressing Remove deletes the highlights kept on
   that computer (Google sign-in or the backup file brings them back). It works on top of any page, like
@@ -119,4 +126,14 @@ updated about 15 s after typing stops. Turning it on asks Google once more for t
 `https://www.googleapis.com/auth/drive.file` scope (only files the extension creates); add that
 scope under Google Auth Platform → Data access. AI suggestions not yet accepted are left out of the
 Google Doc.
+
+### Safety nets (Doc Reader v6)
+
+- **Recently removed:** a document removed from the list (here or on another computer through
+  sync) is kept for 30 days (IndexedDB `kv` key `trash:<id>`) and can be restored from the
+  start page. The extension keeps removed pages the same way (`lp:trash:<url>`).
+- **Earlier versions:** while you write, a copy of the text is kept every 10 minutes (the last
+  40, `kv` key `snap:<id>`), and always before accepting or rejecting every AI change.
+  File menu → Earlier versions… previews and restores; restoring keeps the current text too.
+  Unreviewed AI suggestions are stored as their original words, as exports are.
 

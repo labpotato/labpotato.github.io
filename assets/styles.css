@@ -992,6 +992,19 @@ section { scroll-margin-top: calc(var(--header-h) + 10px); }
   padding: 54px 0 24px;
 }
 
+.footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 48px;
+  align-items: start;
+}
+@media (max-width: 760px) { .footer-inner { grid-template-columns: 1fr; gap: 32px; } }
+
+.footer-about h3 { font-size: 20px; font-weight: 660; margin-bottom: 10px; }
+.footer-about p { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--ink-soft); max-width: 48ch; }
+.footer-about-links a { color: #f1f2f4; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255, 255, 255, .3); }
+.footer-about-links a:hover { text-decoration-color: currentColor; }
+
 .footer-id {
   display: flex;
   gap: 22px;

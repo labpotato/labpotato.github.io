@@ -59,8 +59,8 @@ s, n = re.subn(r'(<div class="home-card" id="extCard">.*?</details>\s*</div>)',
                '''\\1
       <div class="home-card ai-card" id="aiCard">
         <h3><svg><use href="#i-ai"/></svg>AI editor</h3>
-        <p>Select words in a paragraph and press <b>Ask AI</b> (Alt+A); pick a request such as <i>Better logical flow</i>, or type your own. The answer comes back in place as tracked changes, or labelled <b>Rewrite</b> when it changes a lot. <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back with extra instructions.</p>
-        <p>Each document keeps one chat: the AI gets the whole paper once, then each request with its paragraph. Use your own Claude (Anthropic) key, another AI, or the demo mode with no key.</p>
+        <p>Select some text and press <b>Ask AI</b> (Alt+A). Pick a request such as <i>Better logical flow</i>, or type your own. The AI's edit appears right in your text: deleted words in red, new words in green, and a big change is labelled <b>Rewrite</b>. Press <b>Tab</b> to accept or <b>Esc</b> to reject; the small buttons beside the page do the same.</p>
+        <p>Each document has its own chat, so the AI always knows the whole paper. Use your own Claude (Anthropic) key or another AI. Demo mode works without a key.</p>
         <button class="btn small" data-act="aiSettings">AI settings…</button> <span class="muted" style="font-size:12px">Now: <span id="aiHomeWho">Demo mode (no AI)</span></span>
       </div>''', s, count=1, flags=re.S)
 if n != 1:
@@ -132,13 +132,18 @@ rep('<script type="text/plain" id="pdfworker">', data + lib + '<script type="tex
 # v4: extension v3 (no editing of live pages; documents sync through Google Drive)
 rep("""<p>Works on top of any web page, like Liner: select text and press <b>Highlight</b>, add comments, edit the page's text like a Word document. Everything is kept per address and comes back when you open the page again, on every computer where you sign in with Google (kept in your own Google Drive); a daily backup file keeps a copy outside the browser. One click also opens the page or a PDF here.</p>
         <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>""",
-    """<p>Works on top of any web page, like Liner: select text and press <b>Highlight</b> or add comments. They are kept per address and come back when you open the page again. One click opens the page here, looking as it does on the site, to edit a copy with the Word tools and the AI editor.</p>
-        <p>Sign in with Google in the extension and your page highlights and your Doc Reader documents follow you to every computer where you sign in with the same account (kept in your own Google Drive); a daily backup file keeps a copy outside the browser.</p>
+    """<p>Highlight and comment on any web page, like Liner: select text and press <b>Highlight</b>. Your marks come back whenever you open that page again. One click opens the page here, to edit a copy with the Word tools and the AI editor. (The extension stays hidden on Doc Reader's own pages.)</p>
+        <p>Sign in with Google in the extension to see your highlights and documents on every computer you use; they are stored in your own Google Drive. You can also save each document as a Google Doc.</p>
         <a class="btn small" id="extLink" href="doc-reader-extension-v4.zip" download>""")   # v5: extension v4
 # v4: lookups by id skip a web page's elements of the same name (a page's #menu, #toast, #right)
 rep('const $ = (s, r = document) => r.querySelector(s);',
     'const $ = (s, r = document) => { const e = r.querySelector(s); return e && r === document && s[0] === "#" && e.closest("#flow") ? [...document.querySelectorAll(s)].find(x => !x.closest("#flow")) || e : e; };')
 rep('app: "Lab Potato Doc Reader v2"', f'app: "Lab Potato Doc Reader {VER}"')
+# v5: updating the extension without losing highlights
+rep('On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>',
+    'On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>\n          <p><b>Updating to a new version:</b> unzip it over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Don\'t press <b>Remove</b>: that deletes the highlights kept on this computer (unless you signed in with Google or have a backup file).</p>')
+# v5: tells the Chrome extension (v4 and later) to stay off this page: Doc Reader has its own tools
+rep('<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="lab-potato-app" content="doc-reader">\n')
 rep("/* a few names on window, for the tests and the console */", read("ai.js") + "\n" + read("word.js") + "\n" + read("merge.js") + "\n" + read("isolate.js") + "\n" + read("sync.js") + "\n/* a few names on window, for the tests and the console */")
 
 if OUT.exists() and "--force" not in sys.argv:

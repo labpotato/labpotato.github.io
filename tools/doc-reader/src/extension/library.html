@@ -27,16 +27,22 @@ button.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
 details#dSetup summary{cursor:pointer;font-size:12.5px;color:var(--blue)}
 .khelp{color:var(--muted);font-size:12px;margin:2px 0 6px}.khelp code{font-size:11.5px}
 .empty{color:var(--muted);text-align:center;padding:40px}
+.welcome{background:color-mix(in srgb,var(--blue) 9%,var(--card));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:12px;padding:12px 14px;margin:0 0 12px}.welcome h3{margin:0 0 4px;font-size:15px}.welcome p{margin:4px 0}
 label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 </style></head>
 <body><header><img src="icon48.png" width="28" height="28" alt=""><h1>My marked pages</h1><span class="grow"></span><label class="sw"><input type="checkbox" id="btnOn"> Show the potato on every page</label></header>
 <main><div class="tools"><input type="search" id="q" placeholder="Search your highlights, comments and pages"><button id="allMd">Export all as Markdown</button><a class="btn" href="reader.html" target="_blank">Open Doc Reader</a></div>
+<section class="welcome" id="welcome" hidden>
+  <h3>Used Lab Potato before?</h3>
+  <p>This copy of the extension starts empty. To get your highlights back, either press <b>Sign in with Google</b> below (if you signed in before), or press <b>Restore…</b> and pick your backup file (<code>Downloads/LabPotato/lab_potato_backup.json</code>).</p>
+  <p>Next time, update without losing anything: unzip the new version over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Don't press <b>Remove</b>.</p>
+</section>
 <section class="keep">
   <h3>Keeping your highlights safe</h3>
   <div class="drive" id="drive">
     <div class="krow"><span class="gdot" id="gdot"></span><b>Google Drive sync</b><span class="kst" id="dSt">Not signed in</span>
       <button id="dIn" class="pri">Sign in with Google</button><button id="dSync" hidden>Sync now</button><button id="dOut" hidden>Sign out</button></div>
-    <p class="khelp">Sign in on each computer with the same Google account: your highlights, comments and page notes follow you, and so do the documents you keep in Doc Reader (each saved as its own file). They are kept in a hidden app folder in your own Google Drive that only this extension can see.</p>
+    <p class="khelp">Sign in on every computer you use, with the same Google account. Your highlights, comments and Doc Reader documents then appear on all of them. They are stored in a hidden folder in your own Google Drive that only this extension can open. In Doc Reader you can also turn on saving each document as a Google Doc.</p>
     <details id="dSetup"><summary>Use your own Google Cloud project instead (optional)</summary>
       <ol class="steps"><li>In <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>, create a project and enable the <b>Google Drive API</b>.</li>
         <li>OAuth consent screen: External, add the scope <code>drive.appdata</code>, and add your own email as a test user.</li>
@@ -46,9 +52,10 @@ label.sw{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute
       <p class="khelp">Extension ID: <code id="dExt">…</code></p></details>
   </div>
   <div class="krow"><label class="sw"><input type="checkbox" id="syncOn"> <b>Also use Chrome Sync</b></label><span class="kst" id="syncSt"></span><button id="syncNow">Sync now</button></div>
-  <p class="khelp">Uses Chrome Sync: sign in to Chrome with the same Google account on each computer and turn on sync (Settings → You and Google → Sync → Extensions). Chrome Sync holds about 100 KB for this extension, roughly a few hundred highlights; pages beyond that stay on this computer and in the backup file.</p>
+  <p class="khelp">A second, simpler way to share highlights between computers, through Chrome's own sync (Chrome Settings → You and Google → Sync → Extensions on). It only has room for a few hundred highlights; Google sign-in above has no such limit.</p>
   <div class="krow"><label class="sw"><input type="checkbox" id="bkOn"> <b>Save a backup file every day</b></label><span class="kst" id="bkSt"></span><button id="bkNow">Save now</button><button id="backup" title="Pick where to save it">Save a copy as…</button><button id="restore">Restore…</button><input type="file" id="restoreIn" accept=".json,application/json" hidden></div>
-  <p class="khelp">Written to <code>Downloads/LabPotato/lab_potato_backup.json</code> after the day's first change, replacing yesterday's. If Chrome's data is cleared, choose Restore and pick that file: nothing is lost.</p>
+  <p class="khelp">A file with all your highlights, saved once a day to <code>Downloads/LabPotato/lab_potato_backup.json</code> (each day replaces the last). If Chrome is reset or the extension removed, press <b>Restore…</b> and pick this file to get everything back.</p>
+  <p class="khelp"><b>Updating the extension:</b> unzip the new version over the old folder and press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Pressing <b>Remove</b> deletes the highlights on this computer, so only do that after signing in with Google or saving a backup.</p>
 </section>
 <p class="meta" id="usage"></p><div id="list"></div></main>
 <script src="library.js"></script></body></html>

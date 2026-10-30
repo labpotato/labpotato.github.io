@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="lab-potato-app" content="doc-reader">
 <title>Doc Reader · Lab Potato</title>
 <meta name="description" content="Read, highlight, comment on and edit PDFs, Markdown, web pages and images, or write a paper with an AI editor and Word-style tools. Works offline; documents stay on your computer.">
 <style>
@@ -534,23 +535,23 @@ g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 
 ::highlight(ai-sel){background-color:color-mix(in srgb,var(--ai) 22%,transparent)}
 
 /* a change from the AI, in place in the text */
-/* one colour for every AI change, like one reviewer in Word: deleted words struck through, new words underlined */
+/* deleted words red and struck through, new words green and underlined (as in Paper Writer v1) */
 .flow .ai-chg{cursor:pointer;-webkit-user-modify:read-only}
-.flow .ai-chg del.ai-d{color:var(--ai);text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.7}
-.flow .ai-chg ins.ai-i{color:var(--ai);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+.flow .ai-chg del.ai-d{color:var(--del);background:var(--del-l);text-decoration:line-through;text-decoration-thickness:1.5px}
+.flow .ai-chg ins.ai-i{color:var(--ins);background:var(--ins-l);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
 .flow .ai-chg del.ai-d + ins.ai-i{margin-left:2px}
 .flow .ai-chg .ai-h{border-radius:3px}
 .flow .ai-chg .ai-h.on{background:color-mix(in srgb,var(--ai) 13%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--ai) 13%,transparent)}
 .flow .ai-chg.rw del.ai-old{display:none}
 .flow .ai-chg.rw.showold del.ai-old{display:inline}
-.flow .ai-chg.rw ins.ai-new{text-decoration-style:dashed}
+.flow .ai-chg.rw ins.ai-new{color:inherit;background:color-mix(in srgb,var(--ai) 10%,transparent);text-decoration:underline dashed color-mix(in srgb,var(--ai) 70%,transparent)}
 .flow .ai-chg.rw::before{content:"Rewrite";font:650 9.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ai);border:1px solid currentColor;border-radius:4px;padding:1px 4px;margin-right:4px;vertical-align:2px}
 .flow .ai-chg.busy,.flow .ai-h.busy{background:linear-gradient(90deg,color-mix(in srgb,var(--ai) 6%,transparent),color-mix(in srgb,var(--ai) 22%,transparent),color-mix(in srgb,var(--ai) 6%,transparent));background-size:200% 100%;animation:aiShimmer 1.1s linear infinite;cursor:progress}
 .flow .ai-chg.busy::before{content:"AI…";font:650 10px/1 var(--sans);color:var(--ai);margin-right:3px;vertical-align:2px}
 @keyframes aiShimmer{from{background-position:200% 0}to{background-position:0 0}}
 /* changes hidden: the text reads as if every change were accepted; the change being reviewed stays tinted */
 .flow.markup-off .ai-chg del.ai-d{display:none}
-.flow.markup-off .ai-chg ins.ai-i{color:inherit;text-decoration:none;margin:0}
+.flow.markup-off .ai-chg ins.ai-i{color:inherit;background:none;text-decoration:none;margin:0}
 .flow.markup-off .ai-chg.rw::before{display:none}
 @media print{.flow .ai-chg del.ai-d{display:none}.flow .ai-chg ins.ai-i{color:inherit;background:none;text-decoration:none}.flow .ai-chg.rw::before{display:none}}
 
@@ -574,22 +575,30 @@ g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 
 .btn.ai{background:var(--ai);border-color:var(--ai);color:#fff}
 .btn.ai:hover{background:var(--ai-d);border-color:var(--ai-d)}
 
-/* the review bar under the active change */
-.ai-bar{position:fixed;z-index:420;display:flex;flex-direction:column;gap:4px;background:var(--card);border:1px solid var(--line-2);border-radius:11px;box-shadow:var(--sh-2);padding:4px;font-size:12.5px;max-width:min(680px,calc(100vw - 16px));animation:popIn .1s ease-out}
-.ai-bar .br{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
-.ai-bar .tag{font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ai);padding:0 7px 0 5px;display:inline-flex;align-items:center;gap:4px}
-.ai-bar .tag svg{width:13px;height:13px}
-.ai-bar button{border:0;background:none;height:28px;padding:0 8px;border-radius:7px;color:var(--ink-2);font-size:12.5px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+/* the review remote: a slim column in the margin beside the page, level with the change, so it never covers the text */
+.ai-bar{position:fixed;z-index:420;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card);border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--sh-2);padding:4px;font-size:12.5px;animation:popIn .1s ease-out}
+.ai-bar .br{display:flex;flex-direction:column;align-items:center;gap:1px}
+.ai-bar .tag{color:var(--ai);display:flex;align-items:center;justify-content:center;height:22px}
+.ai-bar .tag svg{width:15px;height:15px}
+.ai-bar .tag.busy svg{animation:aiSpin 1s linear infinite}
+@keyframes aiSpin{to{transform:rotate(360deg)}}
+.ai-bar button{border:0;background:none;width:32px;height:30px;padding:0;border-radius:8px;color:var(--ink-2);font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
 .ai-bar button:hover{background:var(--line);color:var(--ink)}
-.ai-bar button.ok{color:var(--ink);font-weight:650}
-.ai-bar button.ok:hover{background:var(--ai-l)}
-.ai-bar button:disabled{opacity:.4;cursor:default;background:none}
-.ai-bar kbd{font:600 10px/1 var(--sans);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:2px 4px;color:var(--ink-3)}
-.ai-bar .ver{color:var(--ink-3);font-size:11.5px;min-width:30px;text-align:center}
-.ai-bar .bsep{width:1px;height:18px;background:var(--line);margin:0 3px}
-.ai-bar .bnote{color:var(--ink-3);font-size:12px;padding:0 8px 3px;line-height:1.35;max-width:540px}
-.ai-bar .again{display:flex;gap:6px;padding:2px 4px 4px}
-.ai-bar .again input{height:30px;resize:none}
+.ai-bar button.ok{color:var(--ins);font-weight:700}
+.ai-bar button.ok:hover{background:var(--ins-l)}
+.ai-bar button.no{color:var(--del)}
+.ai-bar button.no:hover{background:var(--del-l)}
+.ai-bar button.on{background:var(--ai-l);color:var(--ai)}
+.ai-bar button:disabled{opacity:.35;cursor:default;background:none}
+.ai-bar .ver{color:var(--ink-3);font-size:10.5px;line-height:1.1;text-align:center;font-variant-numeric:tabular-nums}
+.ai-bar .bsep{width:18px;height:1px;background:var(--line);margin:2px 0}
+.ai-bar .side{position:absolute;top:0;width:250px;background:var(--card);border:1px solid var(--line-2);border-radius:11px;box-shadow:var(--sh-2);padding:8px 10px;font-size:12.5px;line-height:1.4;color:var(--ink-2)}
+.ai-bar.left .side{right:calc(100% + 6px)}.ai-bar:not(.left) .side{left:calc(100% + 6px)}
+.ai-bar .side .again{display:flex;gap:6px;margin-top:6px}
+.ai-bar .side .again:first-child{margin-top:0}
+.ai-bar .side .again input{height:30px;resize:none}
+.ai-bar .side .again button{width:auto;padding:0 10px;font-size:12.5px;background:var(--ai);color:#fff;font-weight:600}
+.ai-bar .side .again button:hover{background:var(--ai-d)}
 
 /* chat panel (one chat per document) */
 .ai-panel{flex:0 0 auto;width:340px;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;transition:width .18s}
@@ -668,6 +677,7 @@ g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 
 .modal details summary{cursor:pointer;font-size:12.5px;color:var(--ink-2)}
 .modal .sent-sys{margin:4px 0}
 @media (max-width:620px){.modal .where-map{flex-direction:column}.modal .wm-arrow{transform:rotate(90deg)}}
+.gd-row{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.gd-sw{display:flex;gap:7px;align-items:center;font-size:13px;color:var(--ink)}.gd-line{font-size:12px;margin:4px 0 0}
 
 /* ---------- Doc Reader: Word-style editing ---------- */
 /* menu bar above the toolbar */
@@ -886,17 +896,18 @@ g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 
     <aside class="home-side">
       <div class="home-card" id="extCard">
         <h3><svg><use href="#i-puzzle"/></svg>Chrome extension</h3>
-        <p>Works on top of any web page, like Liner: select text and press <b>Highlight</b> or add comments. They are kept per address and come back when you open the page again. One click opens the page here, looking as it does on the site, to edit a copy with the Word tools and the AI editor.</p>
-        <p>Sign in with Google in the extension and your page highlights and your Doc Reader documents follow you to every computer where you sign in with the same account (kept in your own Google Drive); a daily backup file keeps a copy outside the browser.</p>
+        <p>Highlight and comment on any web page, like Liner: select text and press <b>Highlight</b>. Your marks come back whenever you open that page again. One click opens the page here, to edit a copy with the Word tools and the AI editor. (The extension stays hidden on Doc Reader's own pages.)</p>
+        <p>Sign in with Google in the extension to see your highlights and documents on every computer you use; they are stored in your own Google Drive. You can also save each document as a Google Doc.</p>
         <a class="btn small" id="extLink" href="doc-reader-extension-v4.zip" download>Download the extension (.zip)</a>
         <details><summary>How to install</summary>
           <ol><li>Unzip the file.</li><li>Open <code>chrome://extensions</code> and switch on <b>Developer mode</b> (top right).</li><li>Click <b>Load unpacked</b> and pick the unzipped folder.</li><li>Pin <b>Lab Potato Doc Reader</b>. On any page, click the small potato (bottom right) or the toolbar icon to open the tools.</li></ol>
+          <p><b>Updating to a new version:</b> unzip it over the old folder, then press ↻ (reload) on <code>chrome://extensions</code>. Your highlights stay. Don't press <b>Remove</b>: that deletes the highlights kept on this computer (unless you signed in with Google or have a backup file).</p>
         </details>
       </div>
       <div class="home-card ai-card" id="aiCard">
         <h3><svg><use href="#i-ai"/></svg>AI editor</h3>
-        <p>Select words in a paragraph and press <b>Ask AI</b> (Alt+A); pick a request such as <i>Better logical flow</i>, or type your own. The answer comes back in place as tracked changes, or labelled <b>Rewrite</b> when it changes a lot. <b>Tab</b> accepts, <b>Esc</b> rejects, <b>Ask again</b> sends it back with extra instructions.</p>
-        <p>Each document keeps one chat: the AI gets the whole paper once, then each request with its paragraph. Use your own Claude (Anthropic) key, another AI, or the demo mode with no key.</p>
+        <p>Select some text and press <b>Ask AI</b> (Alt+A). Pick a request such as <i>Better logical flow</i>, or type your own. The AI's edit appears right in your text: deleted words in red, new words in green, and a big change is labelled <b>Rewrite</b>. Press <b>Tab</b> to accept or <b>Esc</b> to reject; the small buttons beside the page do the same.</p>
+        <p>Each document has its own chat, so the AI always knows the whole paper. Use your own Claude (Anthropic) key or another AI. Demo mode works without a key.</p>
         <button class="btn small" data-act="aiSettings">AI settings…</button> <span class="muted" style="font-size:12px">Now: <span id="aiHomeWho">Demo mode (no AI)</span></span>
       </div>
       <div class="home-card">
@@ -106393,49 +106404,66 @@ function aiSetHunk(h) {
   aiBar();
 }
 function aiSetActive(id) { const s = id && aiSpan(id); aiSetHunk(s ? (hunksIn(s)[0] || null) : null); if (s && !aiHunk) { aiActive = id; aiBar(); } }
+/* the review remote: a slim column of buttons in the page margin, level with the change being reviewed.
+   The AI's note and the "revise" box open beside it only when asked for, so nothing covers the passage. */
+let aiNoteOpen = false;
 function aiBar() {
   const ch = aiActive && aiChange(aiActive), s = aiActive && aiSpan(aiActive);
   if (!ch || !s || S.doc?.kind !== "flow" || S.webview) { aiBarEl.hidden = true; return; }
   const h = aiHunk && aiHunk.isConnected ? aiHunk : null, busy = s.classList.contains("busy") || !!h?.classList.contains("busy"), sg = ch.sugg[ch.cur], rw = s.classList.contains("rw");
   const all = allHunks(), here = hunksIn(s), keep = aiBarEl.querySelector(".again input"), keepMode = aiBarEl.dataset.mode, againVal = keep?.value || "", againOpen = !!keep && !keep.closest(".again").hidden && aiBarEl.dataset.for === ch.id;
   aiBarEl.innerHTML = ""; aiBarEl.dataset.for = ch.id;
-  const B = (lbl, fn, title, cls = "", dis = false) => { const b = EL("button", { type: "button", class: cls, title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }); b.innerHTML = lbl; b.disabled = dis; return b; };
+  const B = (lbl, fn, title, cls = "", dis = false) => { const b = EL("button", { type: "button", class: cls, title, "aria-label": title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }); b.innerHTML = lbl; b.disabled = dis; return b; };
+  const note = !busy && (h?.dataset.note || sg?.note) || "";
   const row = EL("div", { class: "br" });
-  row.append(EL("span", { class: "tag" }, ICON("i-ai"), busy ? "Thinking…" : rw ? "Rewrite" : "Change"));
-  if (all.length > 1 && h) row.append(B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver" }, `${all.indexOf(h) + 1} of ${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
+  row.append(EL("span", { class: "tag" + (busy ? " busy" : ""), title: busy ? "The AI is working on it…" : rw ? "AI rewrite: the passage was rewritten as a whole" : "AI change" }, ICON("i-ai")));
+  row.append(B("✓", () => aiDecide(h, true), "Accept this change (Tab)", "ok", busy || !h));
+  row.append(B("✕", () => aiDecide(h, false), "Reject this change and keep your words (Esc)", "no", busy || !h));
+  row.append(B("✎", () => openAgain("part"), "Ask the AI to redo this change, optionally saying what is wrong", "", busy || !h));
+  if (note) row.append(B("?", () => { aiNoteOpen = !aiNoteOpen; aiBar(); }, aiNoteOpen ? "Hide the AI's reason" : "Why did the AI change this?", aiNoteOpen ? "on" : ""));
+  if (all.length > 1 && h) row.append(EL("span", { class: "bsep" }), B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver", title: "Change " + (all.indexOf(h) + 1) + " of " + all.length }, `${all.indexOf(h) + 1}/${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
   row.append(EL("span", { class: "bsep" }));
-  row.append(B("✓ Accept <kbd>Tab</kbd>", () => aiDecide(h, true), "Accept this change and go to the next (Tab)", "ok", busy || !h));
-  row.append(B("✕ Reject <kbd>Esc</kbd>", () => aiDecide(h, false), "Reject this change: keep the original words (Esc)", "", busy || !h));
-  row.append(B("✎ Revise…", () => openAgain("part"), "Send just this change back to the AI, optionally saying what is wrong", "", busy || !h));
-  row.append(EL("span", { class: "bsep" }));
-  const more = B("More ▾", () => menu([
-    ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this suggestion`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this suggestion`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
-    { label: "Ask again for the whole passage…", sub: "A new version of everything you selected", fn: () => openAgain("all") },
-    ...(ch.sugg.length > 1 ? [{ label: `Version ${ch.cur + 1} of ${ch.sugg.length}: show the ${ch.cur + 1 < ch.sugg.length ? "next" : "first"}`, sub: "Changes you decided in this suggestion are reset", fn: () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } }] : []),
-    { label: rw ? "Show as word-by-word changes" : "Show as one rewrite", sub: "Changes you decided in this suggestion are reset", fn: () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } },
-    ...(rw ? [{ label: s.classList.contains("showold") ? "Hide the original text" : "Show the original text", fn: () => { s.classList.toggle("showold"); aiBar(); } }] : []),
-    { sep: true }, { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes", sub: "Off: read the text as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
-    { label: "Accept every suggestion in the document", fn: () => aiDecideAll(true) }, { label: "Reject every suggestion in the document", fn: () => aiDecideAll(false) }
-  ], more), "Whole suggestion, versions, view", "", busy);
+  const more = B("⋯", () => menu([
+    ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this passage`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this passage`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
+    { label: "Ask again for the whole passage…", sub: "Get a new version of everything you selected", fn: () => openAgain("all") },
+    ...(ch.sugg.length > 1 ? [{ label: `Version ${ch.cur + 1} of ${ch.sugg.length}: show the ${ch.cur + 1 < ch.sugg.length ? "next" : "first"}`, sub: "Your accept/reject choices in this passage start over", fn: () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } }] : []),
+    { label: rw ? "Show word by word" : "Show as one rewrite", sub: "Your accept/reject choices in this passage start over", fn: () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } },
+    ...(rw ? [{ label: s.classList.contains("showold") ? "Hide my original text" : "Show my original text", fn: () => { s.classList.toggle("showold"); aiBar(); } }] : []),
+    { sep: true }, { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes in colour", sub: "Off: read the text as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
+    { label: "Accept every AI change in the document", fn: () => aiDecideAll(true) }, { label: "Reject every AI change in the document", fn: () => aiDecideAll(false) }
+  ], more), "More: whole passage, versions, view", "", busy);
   row.append(more);
   aiBarEl.append(row);
-  const note = h?.dataset.note || sg?.note; if (note && !busy) aiBarEl.append(EL("div", { class: "bnote", title: note }, note.length > 180 ? note.slice(0, 180) + "…" : note));
-  const inp = EL("input", { type: "text", "aria-label": "Instructions" }); inp.value = againVal;
+  const side = EL("div", { class: "side" });
+  if (note && aiNoteOpen) side.append(EL("div", { class: "bnote" }, note));
+  const inp = EL("input", { type: "text", "aria-label": "Instructions for the AI" }); inp.value = againVal;
   let mode = keepMode || "part";
+  const ph = m => m === "part" ? "What should change? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends";
   const send = () => { const x = inp.value.trim(); againRow.hidden = true; inp.value = ""; mode === "part" ? aiReviseHunk(h, x) : aiAgain(ch.id, x); };
-  const againRow = EL("div", { class: "again" }, inp, B("Send", send, "Send to the AI", "ok")); againRow.hidden = !againOpen;
-  function openAgain(m) { mode = m; aiBarEl.dataset.mode = m; inp.placeholder = m === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends"; againRow.hidden = false; inp.focus(); placeBar(); }
-  if (againOpen) inp.placeholder = mode === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends";
-  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); send(); } if (e.key === "Escape") { againRow.hidden = true; placeBar(); } });
-  aiBarEl.append(againRow); aiBarEl.hidden = false; placeBar();
+  const againRow = EL("div", { class: "again" }, inp, EL("button", { type: "button", onclick: e => { e.preventDefault(); send(); }, onpointerdown: e => e.preventDefault() }, "Send")); againRow.hidden = !againOpen;
+  function openAgain(m) { mode = m; aiBarEl.dataset.mode = m; inp.placeholder = ph(m); againRow.hidden = false; side.hidden = false; inp.focus(); placeBar(); }
+  if (againOpen) inp.placeholder = ph(mode);
+  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); send(); } if (e.key === "Escape") { againRow.hidden = true; side.hidden = !side.querySelector(".bnote"); placeBar(); } });
+  side.append(againRow); side.hidden = !(note && aiNoteOpen) && !againOpen;
+  aiBarEl.append(side); aiBarEl.hidden = false; placeBar();
 }
+/* beside the page, level with the change: the margin right of the page, then left; with no margin (side panels open,
+   page as wide as the window) the page's blank border; never over the text column */
 function placeBar() {
   if (aiBarEl.hidden) return; const s = aiActive && aiSpan(aiActive); if (!s) { aiBarEl.hidden = true; return; }
-  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), last = rs[rs.length - 1] || t.getBoundingClientRect(), first = rs[0] || last, vr = viewer.getBoundingClientRect();
-  const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight; let y = last.bottom + 6;
-  if (y + h > vr.bottom - 4) y = first.top - h - 6;
+  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), first = rs[0] || t.getBoundingClientRect(), last = rs[rs.length - 1] || first, vr = viewer.getBoundingClientRect(), pg = flowEl.getBoundingClientRect();
+  const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight, gap = 12, sideW = 256;
+  let x, left = false;
+  const cs = getComputedStyle(flowEl), padR = parseFloat(cs.paddingRight) || 0, padL = parseFloat(cs.paddingLeft) || 0;
+  if (vr.right - pg.right >= w + gap + 4) x = pg.right + gap;                          // the margin right of the page
+  else if (pg.left - vr.left >= w + gap + 4) { x = pg.left - gap - w; left = true; }   // the margin left of the page
+  else if (padR >= w + 8) x = pg.right - padR + (padR - w) / 2;                        // no margin: the page's blank right border
+  else if (padL >= w + 8) { x = pg.left + (padL - w) / 2; left = true; }
+  else x = vr.right - w - 18;
+  if (!left && x + w + sideW > Math.min(innerWidth, vr.right + 400)) left = true;   // the note and the revise box open to whichever side has room
+  aiBarEl.classList.toggle("left", left);
   aiBarEl.style.visibility = (last.bottom < vr.top || first.top > vr.bottom) ? "hidden" : "visible";
-  aiBarEl.style.left = clamp(Math.min(first.left, last.left), 8, innerWidth - w - 8) + "px"; aiBarEl.style.top = clamp(y, vr.top + 2, innerHeight - h - 4) + "px";
+  aiBarEl.style.left = clamp(x, 4, innerWidth - w - 4) + "px"; aiBarEl.style.top = clamp(first.top - 4, vr.top + 4, Math.max(vr.top + 4, vr.bottom - h - 4)) + "px";
 }
 viewer.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
 addEventListener("resize", debounce(placeBar, 80));
@@ -107568,7 +107596,7 @@ async function docSync(why) {
       dsShow(); return { ok: true, got, sent, gone };
     } catch (e) {
       DSYNC.state = e.off ? "off" : "err:" + (e.message || e); dsShow();
-      if (why === "button") toast(e.off ? "Sign in with Google first: Library → Setup → Sign in with Google." : "Sync failed: " + (e.message || e));
+      if (why === "button") toast(e.off ? "Sign in with Google first: press Google sign-in… on the start page." : "Sync failed: " + (e.message || e));
       return { ok: false, error: String(e.message || e) };
     }
   })();
@@ -107588,9 +107616,10 @@ function dsShow() {
     box = EL("div", { class: "home-card", id: "syncCard" }, EL("h3", {}, "Sync between computers"), EL("p", { class: "ds-line" }), EL("div", {}, EL("button", { class: "btn small", onclick: () => docSync("button") }, "Sync now"), " ", EL("button", { class: "btn small ghost", onclick: () => chrome.runtime.openOptionsPage() }, "Google sign-in…")));
     side.insertBefore(box, $("#extCard")); }
   const st = DSYNC.state, line = box.querySelector(".ds-line");
-  line.textContent = st === "ok" ? `Your documents and page highlights are kept in your Google Drive; last synced ${fmtTime(DSYNC.last)}. Sign in with the same Google account on another computer to see them there.`
-    : st === "off" || !st ? "Sign in with Google once (Library → Setup) and your documents and page highlights follow you to every computer where the extension is signed in to the same account."
+  line.textContent = st === "ok" ? `Your documents and page highlights are saved in your Google Drive (last synced ${fmtTime(DSYNC.last)}). Sign in with the same Google account on another computer to see them there.`
+    : st === "off" || !st ? "Sign in with Google once to see your documents and page highlights on every computer you use."
     : "Last sync failed: " + st.slice(4);
+  gdShow();
 }
 if (IS_EXT) {
   const later = debounce(() => docSync("save"), 8000);
@@ -107598,6 +107627,70 @@ if (IS_EXT) {
   setTimeout(() => { dsShow(); docSync("start"); }, 2500);
   setInterval(() => docSync("timer"), 5 * 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - DSYNC.last > 60000) docSync("focus"); });
+}
+
+/* ---------- v5: save each written document as a Google Doc as well ----------
+   Turned on in the "Sync between computers" card or the Export menu (extension only, needs Google sign-in).
+   The first time, Google asks once more for permission to create files (scope drive.file: the extension can
+   open only the files it made, nothing else in your Drive). Each written document then becomes one Google Doc
+   in a "Lab Potato Doc Reader" folder in My Drive, updated about 15 seconds after you stop typing.
+   The Google Doc gets the text as it reads now: AI suggestions not yet accepted are left out. */
+const GD = { last: 0, err: "", busy: false };
+const gdOn = () => IS_EXT && Prefs.get("gdocs", false);
+const gdMap = () => Prefs.get("gdocMap", {});
+async function gdFolder() {
+  let id = Prefs.get("gdocsFolder", "");
+  if (id) { const r = await dsFetch(`/drive/v3/files/${id}?fields=id,trashed`).catch(() => null); if (r && !(await r.json()).trashed) return id; }
+  const r = await dsFetch("/drive/v3/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8" }, body: JSON.stringify({ name: "Lab Potato Doc Reader", mimeType: "application/vnd.google-apps.folder" }) });
+  id = (await r.json()).id; Prefs.set("gdocsFolder", id); return id;
+}
+async function gdSave(why) {
+  if (!gdOn() || GD.busy || !S.doc || S.doc.kind !== "flow") return;
+  GD.busy = true; const d = S.doc;
+  try {
+    const html = await exportHtmlString({ appendComments: false }), map = gdMap(), have = map[d.id], name = baseName(d.name) || "Untitled";
+    const b = "lpgd" + Date.now(), body = meta => `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n--${b}--`;
+    const hdr = { "Content-Type": "multipart/related; boundary=" + b };
+    let f = null;
+    if (have) f = await dsFetch(`/upload/drive/v3/files/${have.id}?uploadType=multipart&fields=id,webViewLink`, { method: "PATCH", headers: hdr, body: body({ name }) }).then(r => r.json()).catch(e => /40[34]/.test(e.message) ? null : Promise.reject(e));
+    if (!f) f = await (await dsFetch("/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", { method: "POST", headers: hdr, body: body({ name, mimeType: "application/vnd.google-apps.document", parents: [await gdFolder()] }) })).json();
+    map[d.id] = { id: f.id, link: f.webViewLink || `https://docs.google.com/document/d/${f.id}/edit`, at: Date.now() }; Prefs.set("gdocMap", map);
+    if (!have) toast("Saved as a Google Doc, in the Lab Potato Doc Reader folder of your Google Drive.");
+    GD.last = Date.now(); GD.err = "";
+  } catch (e) {
+    GD.err = /403/.test(e.message) ? "Google did not allow it: turn Google Docs saving off and on again to give permission." : (e.off ? "Sign in with Google first." : String(e.message || e));
+    if (why === "button") toast("Google Docs: " + GD.err);
+  } finally { GD.busy = false; gdShow(); }
+}
+async function gdToggle(on) {
+  if (!IS_EXT) return;
+  if (on) {
+    const r = await chrome.runtime.sendMessage({ t: "driveDocs", on: true }).catch(e => ({ ok: false, error: String(e.message || e) }));
+    if (!r || !r.ok) { toast(r?.off ? "Sign in with Google first: press Google sign-in… on the start page." : "Google Docs saving was not turned on: " + (r?.error || "no answer")); gdShow(); return; }
+    Prefs.set("gdocs", true); gdShow(); gdSave("button");
+  } else { await chrome.runtime.sendMessage({ t: "driveDocs", on: false }).catch(() => {}); Prefs.set("gdocs", false); gdShow(); toast("Google Docs saving is off. Google Docs already saved stay in your Drive."); }
+}
+function gdShow() {
+  const box = $("#syncCard"); if (!box) return;
+  let row = box.querySelector(".gd-row");
+  if (!row) { row = EL("div", { class: "gd-row" }, EL("label", { class: "gd-sw" }, EL("input", { type: "checkbox", onchange: e => gdToggle(e.target.checked) }), " Also save each written document as a Google Doc"), EL("p", { class: "gd-line muted" })); box.append(row); }
+  row.querySelector("input").checked = !!gdOn();
+  const n = Object.keys(gdMap()).length;
+  row.querySelector(".gd-line").textContent = !gdOn() ? "They go to a \u201cLab Potato Doc Reader\u201d folder in your Google Drive and update as you write."
+    : GD.err ? "Not saved: " + GD.err : GD.last ? `Last saved ${fmtTime(GD.last)}. ${n} document${n === 1 ? "" : "s"} in the \u201cLab Potato Doc Reader\u201d folder of your Drive.` : "On: each written document is saved to the \u201cLab Potato Doc Reader\u201d folder of your Drive as you write.";
+}
+if (IS_EXT) {
+  const soon = debounce(() => gdSave("save"), 15000);
+  { const sn = saveNow; saveNow = async function () { const r = await sn.apply(this, arguments); if (gdOn() && S.doc?.kind === "flow") soon(); return r; }; }
+  /* Export menu: the switch, and a link to the open document's Google Doc */
+  { const em = exportMenu; exportMenu = function (anchor) {
+      if (S.doc?.kind !== "flow") return em.apply(this, arguments);
+      const g = gdMap()[S.doc.id], m0 = menu;
+      menu = (items, ...rest) => { menu = m0; return m0([...items, { sep: true }, { head: "Google Docs" },
+        { label: (gdOn() ? "✓ " : "") + "Save as a Google Doc as I write", sub: gdOn() ? "On: updates about 15 s after you stop typing" : "Needs Google sign-in (start page)", fn: () => gdToggle(!gdOn()) },
+        ...(g ? [{ label: "Open this document in Google Docs", sub: "Saved " + fmtTime(g.at), fn: () => window.open(g.link, "_blank", "noopener") }] : []),
+        ...(gdOn() ? [{ label: "Save to Google Docs now", fn: () => { if (S.dirty) saveNow(); gdSave("button"); } }] : [])], ...rest); };
+      try { return em.apply(this, arguments); } finally { menu = m0; } }; }
 }
 
 /* a few names on window, for the tests and the console */

@@ -6,10 +6,14 @@ you can save a `.lpdoc` project file to keep or move your work.
 
 - `doc-reader-v5.html`: the tool (v1 to v4 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
-  breaking Doc Reader (below); v5 links extension v4.
+  breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
+  accept/reject strip beside the page, and can save each written document as a Google Doc.
 - `doc-reader-extension-v4.zip`: the Chrome extension (unzip, then `chrome://extensions` →
   Developer mode → Load unpacked; v1 to v3 stay as legacy zips). v4 has Lab Potato's Google
-  OAuth client built in, so Sign in with Google needs no setup. It works on top of any page, like
+  OAuth client built in, so Sign in with Google needs no setup. It stays off Doc Reader's own pages
+  (they carry `<meta name="lab-potato-app" content="doc-reader">`). Update by unzipping over the old
+  folder and pressing reload on `chrome://extensions`: pressing Remove deletes the highlights kept on
+  that computer (Google sign-in or the backup file brings them back). It works on top of any page, like
   Liner: a small potato opens the toolbar; select text to highlight or comment. Marks are kept per
   address and come back when the page is opened again. It also opens any page or PDF link in the
   reader with one click, including pages you are signed in to. Its reader is Doc Reader v4.
@@ -106,3 +110,13 @@ While the consent screen is in **Testing**, only the Google accounts listed unde
 If the extension is later published on the Chrome Web Store, the Store assigns its own ID: put the
 Store's public key in `manifest.json` as `key` and add the new `https://<id>.chromiumapp.org/`
 redirect URI to the same OAuth client.
+
+### Google Docs (extension v4, Doc Reader v5)
+
+With Google sign-in on, Export → **Save as a Google Doc as I write** (or the switch on the start page)
+keeps each written document as one Google Doc in a "Lab Potato Doc Reader" folder of My Drive,
+updated about 15 s after typing stops. Turning it on asks Google once more for the
+`https://www.googleapis.com/auth/drive.file` scope (only files the extension creates); add that
+scope under Google Auth Platform → Data access. AI suggestions not yet accepted are left out of the
+Google Doc.
+

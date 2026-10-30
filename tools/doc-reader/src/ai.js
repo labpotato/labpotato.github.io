@@ -338,49 +338,66 @@ function aiSetHunk(h) {
   aiBar();
 }
 function aiSetActive(id) { const s = id && aiSpan(id); aiSetHunk(s ? (hunksIn(s)[0] || null) : null); if (s && !aiHunk) { aiActive = id; aiBar(); } }
+/* the review remote: a slim column of buttons in the page margin, level with the change being reviewed.
+   The AI's note and the "revise" box open beside it only when asked for, so nothing covers the passage. */
+let aiNoteOpen = false;
 function aiBar() {
   const ch = aiActive && aiChange(aiActive), s = aiActive && aiSpan(aiActive);
   if (!ch || !s || S.doc?.kind !== "flow" || S.webview) { aiBarEl.hidden = true; return; }
   const h = aiHunk && aiHunk.isConnected ? aiHunk : null, busy = s.classList.contains("busy") || !!h?.classList.contains("busy"), sg = ch.sugg[ch.cur], rw = s.classList.contains("rw");
   const all = allHunks(), here = hunksIn(s), keep = aiBarEl.querySelector(".again input"), keepMode = aiBarEl.dataset.mode, againVal = keep?.value || "", againOpen = !!keep && !keep.closest(".again").hidden && aiBarEl.dataset.for === ch.id;
   aiBarEl.innerHTML = ""; aiBarEl.dataset.for = ch.id;
-  const B = (lbl, fn, title, cls = "", dis = false) => { const b = EL("button", { type: "button", class: cls, title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }); b.innerHTML = lbl; b.disabled = dis; return b; };
+  const B = (lbl, fn, title, cls = "", dis = false) => { const b = EL("button", { type: "button", class: cls, title, "aria-label": title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }); b.innerHTML = lbl; b.disabled = dis; return b; };
+  const note = !busy && (h?.dataset.note || sg?.note) || "";
   const row = EL("div", { class: "br" });
-  row.append(EL("span", { class: "tag" }, ICON("i-ai"), busy ? "Thinking…" : rw ? "Rewrite" : "Change"));
-  if (all.length > 1 && h) row.append(B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver" }, `${all.indexOf(h) + 1} of ${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
+  row.append(EL("span", { class: "tag" + (busy ? " busy" : ""), title: busy ? "The AI is working on it…" : rw ? "AI rewrite: the passage was rewritten as a whole" : "AI change" }, ICON("i-ai")));
+  row.append(B("✓", () => aiDecide(h, true), "Accept this change (Tab)", "ok", busy || !h));
+  row.append(B("✕", () => aiDecide(h, false), "Reject this change and keep your words (Esc)", "no", busy || !h));
+  row.append(B("✎", () => openAgain("part"), "Ask the AI to redo this change, optionally saying what is wrong", "", busy || !h));
+  if (note) row.append(B("?", () => { aiNoteOpen = !aiNoteOpen; aiBar(); }, aiNoteOpen ? "Hide the AI's reason" : "Why did the AI change this?", aiNoteOpen ? "on" : ""));
+  if (all.length > 1 && h) row.append(EL("span", { class: "bsep" }), B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver", title: "Change " + (all.indexOf(h) + 1) + " of " + all.length }, `${all.indexOf(h) + 1}/${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
   row.append(EL("span", { class: "bsep" }));
-  row.append(B("✓ Accept <kbd>Tab</kbd>", () => aiDecide(h, true), "Accept this change and go to the next (Tab)", "ok", busy || !h));
-  row.append(B("✕ Reject <kbd>Esc</kbd>", () => aiDecide(h, false), "Reject this change: keep the original words (Esc)", "", busy || !h));
-  row.append(B("✎ Revise…", () => openAgain("part"), "Send just this change back to the AI, optionally saying what is wrong", "", busy || !h));
-  row.append(EL("span", { class: "bsep" }));
-  const more = B("More ▾", () => menu([
-    ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this suggestion`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this suggestion`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
-    { label: "Ask again for the whole passage…", sub: "A new version of everything you selected", fn: () => openAgain("all") },
-    ...(ch.sugg.length > 1 ? [{ label: `Version ${ch.cur + 1} of ${ch.sugg.length}: show the ${ch.cur + 1 < ch.sugg.length ? "next" : "first"}`, sub: "Changes you decided in this suggestion are reset", fn: () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } }] : []),
-    { label: rw ? "Show as word-by-word changes" : "Show as one rewrite", sub: "Changes you decided in this suggestion are reset", fn: () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } },
-    ...(rw ? [{ label: s.classList.contains("showold") ? "Hide the original text" : "Show the original text", fn: () => { s.classList.toggle("showold"); aiBar(); } }] : []),
-    { sep: true }, { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes", sub: "Off: read the text as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
-    { label: "Accept every suggestion in the document", fn: () => aiDecideAll(true) }, { label: "Reject every suggestion in the document", fn: () => aiDecideAll(false) }
-  ], more), "Whole suggestion, versions, view", "", busy);
+  const more = B("⋯", () => menu([
+    ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this passage`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this passage`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
+    { label: "Ask again for the whole passage…", sub: "Get a new version of everything you selected", fn: () => openAgain("all") },
+    ...(ch.sugg.length > 1 ? [{ label: `Version ${ch.cur + 1} of ${ch.sugg.length}: show the ${ch.cur + 1 < ch.sugg.length ? "next" : "first"}`, sub: "Your accept/reject choices in this passage start over", fn: () => { ch.cur = (ch.cur + 1) % ch.sugg.length; ch.view = null; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } }] : []),
+    { label: rw ? "Show word by word" : "Show as one rewrite", sub: "Your accept/reject choices in this passage start over", fn: () => { ch.view = rw ? "edits" : "rw"; aiPaint(ch); aiCommit(); aiSetActive(ch.id); } },
+    ...(rw ? [{ label: s.classList.contains("showold") ? "Hide my original text" : "Show my original text", fn: () => { s.classList.toggle("showold"); aiBar(); } }] : []),
+    { sep: true }, { label: (Prefs.get("aiMarkup", true) ? "✓ " : "") + "Show changes in colour", sub: "Off: read the text as if every change were accepted", fn: () => aiMarkup(!Prefs.get("aiMarkup", true)) },
+    { label: "Accept every AI change in the document", fn: () => aiDecideAll(true) }, { label: "Reject every AI change in the document", fn: () => aiDecideAll(false) }
+  ], more), "More: whole passage, versions, view", "", busy);
   row.append(more);
   aiBarEl.append(row);
-  const note = h?.dataset.note || sg?.note; if (note && !busy) aiBarEl.append(EL("div", { class: "bnote", title: note }, note.length > 180 ? note.slice(0, 180) + "…" : note));
-  const inp = EL("input", { type: "text", "aria-label": "Instructions" }); inp.value = againVal;
+  const side = EL("div", { class: "side" });
+  if (note && aiNoteOpen) side.append(EL("div", { class: "bnote" }, note));
+  const inp = EL("input", { type: "text", "aria-label": "Instructions for the AI" }); inp.value = againVal;
   let mode = keepMode || "part";
+  const ph = m => m === "part" ? "What should change? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends";
   const send = () => { const x = inp.value.trim(); againRow.hidden = true; inp.value = ""; mode === "part" ? aiReviseHunk(h, x) : aiAgain(ch.id, x); };
-  const againRow = EL("div", { class: "again" }, inp, B("Send", send, "Send to the AI", "ok")); againRow.hidden = !againOpen;
-  function openAgain(m) { mode = m; aiBarEl.dataset.mode = m; inp.placeholder = m === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends"; againRow.hidden = false; inp.focus(); placeBar(); }
-  if (againOpen) inp.placeholder = mode === "part" ? "What is wrong with this part? (optional) Enter sends" : "Extra instructions for the whole passage (optional) Enter sends";
-  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); send(); } if (e.key === "Escape") { againRow.hidden = true; placeBar(); } });
-  aiBarEl.append(againRow); aiBarEl.hidden = false; placeBar();
+  const againRow = EL("div", { class: "again" }, inp, EL("button", { type: "button", onclick: e => { e.preventDefault(); send(); }, onpointerdown: e => e.preventDefault() }, "Send")); againRow.hidden = !againOpen;
+  function openAgain(m) { mode = m; aiBarEl.dataset.mode = m; inp.placeholder = ph(m); againRow.hidden = false; side.hidden = false; inp.focus(); placeBar(); }
+  if (againOpen) inp.placeholder = ph(mode);
+  inp.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); send(); } if (e.key === "Escape") { againRow.hidden = true; side.hidden = !side.querySelector(".bnote"); placeBar(); } });
+  side.append(againRow); side.hidden = !(note && aiNoteOpen) && !againOpen;
+  aiBarEl.append(side); aiBarEl.hidden = false; placeBar();
 }
+/* beside the page, level with the change: the margin right of the page, then left; with no margin (side panels open,
+   page as wide as the window) the page's blank border; never over the text column */
 function placeBar() {
   if (aiBarEl.hidden) return; const s = aiActive && aiSpan(aiActive); if (!s) { aiBarEl.hidden = true; return; }
-  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), last = rs[rs.length - 1] || t.getBoundingClientRect(), first = rs[0] || last, vr = viewer.getBoundingClientRect();
-  const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight; let y = last.bottom + 6;
-  if (y + h > vr.bottom - 4) y = first.top - h - 6;
+  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), first = rs[0] || t.getBoundingClientRect(), last = rs[rs.length - 1] || first, vr = viewer.getBoundingClientRect(), pg = flowEl.getBoundingClientRect();
+  const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight, gap = 12, sideW = 256;
+  let x, left = false;
+  const cs = getComputedStyle(flowEl), padR = parseFloat(cs.paddingRight) || 0, padL = parseFloat(cs.paddingLeft) || 0;
+  if (vr.right - pg.right >= w + gap + 4) x = pg.right + gap;                          // the margin right of the page
+  else if (pg.left - vr.left >= w + gap + 4) { x = pg.left - gap - w; left = true; }   // the margin left of the page
+  else if (padR >= w + 8) x = pg.right - padR + (padR - w) / 2;                        // no margin: the page's blank right border
+  else if (padL >= w + 8) { x = pg.left + (padL - w) / 2; left = true; }
+  else x = vr.right - w - 18;
+  if (!left && x + w + sideW > Math.min(innerWidth, vr.right + 400)) left = true;   // the note and the revise box open to whichever side has room
+  aiBarEl.classList.toggle("left", left);
   aiBarEl.style.visibility = (last.bottom < vr.top || first.top > vr.bottom) ? "hidden" : "visible";
-  aiBarEl.style.left = clamp(Math.min(first.left, last.left), 8, innerWidth - w - 8) + "px"; aiBarEl.style.top = clamp(y, vr.top + 2, innerHeight - h - 4) + "px";
+  aiBarEl.style.left = clamp(x, 4, innerWidth - w - 4) + "px"; aiBarEl.style.top = clamp(first.top - 4, vr.top + 4, Math.max(vr.top + 4, vr.bottom - h - 4)) + "px";
 }
 viewer.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
 addEventListener("resize", debounce(placeBar, 80));

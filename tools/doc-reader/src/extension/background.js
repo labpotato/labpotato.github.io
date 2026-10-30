@@ -186,6 +186,12 @@ chrome.storage.onChanged.addListener((ch, area) => {
 async function syncEverything() { const local = await chrome.storage.local.get(null); Object.keys(local).filter(k => k.startsWith("lp:http") || k.startsWith("lp:file")).forEach(k => pushQ.add(k)); await pullAll(); await pushNow(); }
 chrome.runtime.onStartup.addListener(() => { pullAll(); });
 chrome.runtime.onInstalled.addListener(() => { setTimeout(syncEverything, 1500); });
+/* v4: a fresh install (for example after removing an older version) starts empty: open the library with a note on
+   getting the highlights back (Google sign-in or the backup file). An update or reload keeps everything. */
+chrome.runtime.onInstalled.addListener(d => {
+  if (d.reason !== "install") return;
+  setTimeout(async () => { const all = await chrome.storage.local.get(null); if (!Object.keys(all).some(k => k.startsWith("lp:http") || k.startsWith("lp:file"))) chrome.tabs.create({ url: chrome.runtime.getURL("library.html?welcome=1") }); }, 5000);
+});
 
 /* ---------- a save file on this computer, in case the browser's storage is cleared ----------
    Once a day after a change (and whenever you press Save now), everything is written to
@@ -218,6 +224,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
 let DRIVE = "https://www.googleapis.com";                 // the Drive API (a test can point this at a mock)
 const DEFAULT_CLIENT_ID = "502625246525-u3vf2hmn6dmgrlmq2p5j5m40eojpks2l.apps.googleusercontent.com";   // Lab Potato's Google Cloud project; a client ID pasted in the library overrides it
 const DFILE = "lab-potato-highlights.json", SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+/* v4: saving documents as Google Docs also needs drive.file (only the files this extension creates). It is asked
+   for only when someone turns Google Docs saving on, so sign-ins made before it keep working unchanged. */
+const FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const dstate = async () => (await chrome.storage.local.get("lp:drive"))["lp:drive"] || {};
 const setDstate = async o => chrome.storage.local.set({ "lp:drive": Object.assign(await dstate(), o) });
 const clientId = async () => (await dstate()).clientId || DEFAULT_CLIENT_ID;
@@ -226,7 +235,7 @@ let getToken = async interactive => {
   if (cache && cache.exp > Date.now() + 60000) return cache.token;
   const cid = await clientId(); if (!cid) throw new Error("not set up: paste the OAuth client ID first");
   const st = await dstate(), redirect = chrome.identity.getRedirectURL();
-  const url = "https://accounts.google.com/o/oauth2/v2/auth?" + new URLSearchParams({ client_id: cid, response_type: "token", redirect_uri: redirect, scope: SCOPE, include_granted_scopes: "true",
+  const url = "https://accounts.google.com/o/oauth2/v2/auth?" + new URLSearchParams({ client_id: cid, response_type: "token", redirect_uri: redirect, scope: st.gdocs ? SCOPE + " " + FILE_SCOPE : SCOPE, include_granted_scopes: "true",
     prompt: interactive ? "select_account" : "none", ...(st.email ? { login_hint: st.email } : {}) });
   const back = await chrome.identity.launchWebAuthFlow({ url, interactive: !!interactive });
   const p = new URLSearchParams(new URL(back).hash.slice(1)); if (!p.get("access_token")) throw new Error(p.get("error") || "sign-in failed");
@@ -309,4 +318,13 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     (async () => { if (!(await dstate()).on) return { ok: false, off: true }; if (msg.fresh) await chrome.storage.session.remove("lp:tok"); return { ok: true, token: await getToken(false), api: DRIVE }; })()
       .then(r => reply(r), e => reply({ ok: false, error: String(e.message || e) })); return true; }
   if (msg.t === "driveRedirect") { reply({ url: chrome.identity.getRedirectURL(), id: chrome.runtime.id }); return false; }
+  if (msg.t === "driveDocs") {   // v4: turn Google Docs saving on (asks Google for the drive.file permission once) or off
+    (async () => {
+      if (!msg.on) { await setDstate({ gdocs: false }); return { ok: true, on: false }; }
+      if (!(await dstate()).on) return { ok: false, off: true, error: "Sign in with Google first" };
+      await setDstate({ gdocs: true }); await chrome.storage.session.remove("lp:tok");
+      try { await getToken(true); } catch (e) { await setDstate({ gdocs: false }); throw e; }
+      return { ok: true, on: true };
+    })().then(r => reply(r), e => reply({ ok: false, error: String(e.message || e) })); return true; }
+  if (msg.t === "driveState") { dstate().then(st => reply({ on: !!st.on, gdocs: !!st.gdocs, email: st.email || "" })); return true; }
 });

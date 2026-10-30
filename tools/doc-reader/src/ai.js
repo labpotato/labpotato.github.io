@@ -357,6 +357,11 @@ function aiBar() {
   if (note) row.append(B("?", () => { aiNoteOpen = !aiNoteOpen; aiBar(); }, aiNoteOpen ? "Hide the AI's reason" : "Why did the AI change this?", aiNoteOpen ? "on" : ""));
   if (all.length > 1 && h) row.append(EL("span", { class: "bsep" }), B("↑", () => aiStep(-1), "Previous change (Alt+↑)", "", busy), EL("span", { class: "ver", title: "Change " + (all.indexOf(h) + 1) + " of " + all.length }, `${all.indexOf(h) + 1}/${all.length}`), B("↓", () => aiStep(1), "Next change (Alt+↓)", "", busy));
   row.append(EL("span", { class: "bsep" }));
+  /* v7: one click between the marked-up text and the text as it would read with the changes */
+  const mk = Prefs.get("aiMarkup", true);
+  row.append(B(mk ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+    : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3 3.9M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+    () => { aiMarkup(!Prefs.get("aiMarkup", true)); aiBar(); }, mk ? "Showing the changes in colour. Click to read the changed version only (Alt+M)" : "Showing the changed version only. Click to show the changes in colour (Alt+M)", mk ? "" : "on"));
   const more = B("⋯", () => menu([
     ...(here.length > 1 ? [{ label: `Accept all ${here.length} changes in this passage`, fn: () => aiAccept(ch.id) }, { label: `Reject all ${here.length} changes in this passage`, fn: () => aiReject(ch.id) }, { sep: true }] : []),
     { label: "Ask again for the whole passage…", sub: "Get a new version of everything you selected", fn: () => openAgain("all") },
@@ -410,6 +415,7 @@ document.addEventListener("keydown", e => {
   const inField = e.target.closest("input,textarea,select") || (e.target.closest("[contenteditable=true]") && !e.target.closest("#flow"));
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyA" && !inField) { e.preventDefault(); e.stopPropagation(); aiAskOpen(); return; }
   if (inField || aiAskEl || !$("#modalBack").hidden || !$("#menu").hidden || !$("#pop").hidden) return;
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === "KeyM" && $(".ai-chg", flowEl)) { e.preventDefault(); e.stopPropagation(); aiMarkup(!Prefs.get("aiMarkup", true)); aiBar(); toast(Prefs.get("aiMarkup", true) ? "Showing the changes in colour." : "Showing the changed version only."); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === "ArrowDown" || e.key === "ArrowUp") && allHunks().length) { e.preventDefault(); e.stopPropagation(); aiStep(e.key === "ArrowDown" ? 1 : -1); return; }
   if (!aiHunk || !aiHunk.isConnected) return;
   if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); e.stopPropagation(); aiDecide(aiHunk, true); }

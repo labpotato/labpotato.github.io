@@ -1860,3 +1860,7 @@ body { font-size: 17.5px; }
 .tool-card .versions-detail { margin-bottom: 0; }
 .quote-card, .feedback-card { height: 100%; display: flex; flex-direction: column; }
 .quote-card figcaption, .quote-card .quote-who { margin-top: auto; }
+
+/* headline: one phrase per line, each line kept whole */
+.hero h1 .h1-line { display: block; white-space: nowrap; }
+@media (max-width: 420px) { .hero h1 { font-size: clamp(30px, 9vw, 40px); } }

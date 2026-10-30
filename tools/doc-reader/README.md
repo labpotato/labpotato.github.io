@@ -4,13 +4,13 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v6.html`: the tool (v1 to v5 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v7.html`: the tool (v1 to v6 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
   the safety nets below (Recently removed, Earlier versions) and links extension v5.
-- `doc-reader-extension-v5.zip`: the Chrome extension (unzip, then `chrome://extensions` →
-  Developer mode → Load unpacked; v1 to v4 stay as legacy zips). v4 has Lab Potato's Google
+- `doc-reader-extension-v6.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+  Developer mode → Load unpacked; v1 to v5 stay as legacy zips; v6 is v5 repackaged). v4 has Lab Potato's Google
   OAuth client built in, so Sign in with Google needs no setup. v5 stays off on writing and
   chat sites by default (claude.ai, chatgpt.com, docs.google.com, notion.so, overleaf.com and
   the like; the list is in `content.js` as `OFF_DEFAULT`); the extension icon turns it on for a

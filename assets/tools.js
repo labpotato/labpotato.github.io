@@ -270,11 +270,11 @@ const TOOLS = [
       { v: "v3", file: "doc-reader-v3.html", date: "2026-10-29" },
       { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29" },
       { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29" },
-      { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30",
+      { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30" },
+      { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30",
         new: [
-          "Safety nets: removed documents wait 30 days under Recently removed, and earlier versions of what you write are kept while you type",
-          "Chrome extension v5: stays off on writing and chat sites (Claude, ChatGPT, Google Docs…) with a per-site switch; the highlight bubble has a close button and a light or dark look with your accent colour",
-          "Extension safety: Undo after removing a highlight, Recently removed in the library, a safety check, and a backup copy per weekday"
+          "The AI review strip has an eye button (Alt+M): one click between the changes in colour and the changed version as it would read",
+          "Chrome extension v6: the same extension as v5, repackaged for this release"
         ] }
     ]
   }

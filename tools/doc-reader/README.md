@@ -167,3 +167,14 @@ the stage's header brings them back. A `.rv-src` outline left in a saved documen
 the marks (`.rv`) stay until removed (click a mark). Demo mode honours the marks, so the stage can be
 tried without a key.
 
+**Taking the AI's version in parts.** A rewrite is split into sentences, each paired by shared words with
+the sentence of yours it replaces (`aiSentenceHunks` in `src/ai.js`): Tab takes one sentence and moves
+on, Esc rolls it back to yours; a sentence the AI dropped shows struck through, one it added stands
+alone. Accepted words become an editable `.ai-ok` span at once, while the rest is still under review.
+Selecting words inside the AI's version on the stage brings up **Accept & edit** (Tab: just those words
+are taken and the caret lands in them), **Roll back** (Esc: the changes the selection touches go back to
+your words) and **Redo with AI** (Alt+A, optional note; several touched changes are joined into one).
+Once part of a sentence is taken, rolling back the rest drops only the AI's leftover words; your original
+sentence stays on hover. The passage on the stage (`.st-focus`) is editable throughout, and Send back
+carries those edits, without the review markup.
+

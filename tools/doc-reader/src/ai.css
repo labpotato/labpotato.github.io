@@ -199,3 +199,15 @@
 .st-body .st-p{border-left:3px solid var(--ai);padding-left:12px;margin-left:-15px;border-radius:2px}
 .st-body .st-focus{box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--ai) 35%,transparent)}
 #stageBtn.waiting{position:relative}#stageBtn.waiting::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--ai)}
+
+/* v8: parts of the AI's version taken on the stage stay editable while the rest is reviewed */
+.flow .ai-chg .ai-ok{-webkit-user-modify:read-write;cursor:text;color:inherit;border-radius:3px;box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--ins) 45%,transparent);outline:none}
+.flow .ai-chg .ai-ok:focus{background:color-mix(in srgb,var(--ins) 8%,transparent)}
+.st-body .st-focus{outline:none;cursor:text}
+.st-body .st-focus:focus-within{box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--ai) 55%,transparent)}
+.flow .ai-chg.rw .ai-h + .ai-h{margin-left:0}
+.flow .ai-chg.rw .ai-h:hover ins.ai-new{background:color-mix(in srgb,var(--ai) 18%,transparent)}
+.imgtools.selpro button.ok{color:var(--ins)}.imgtools.selpro button.ok:hover{background:var(--ins-l);color:var(--ins)}
+.imgtools.selpro.st-pop input{width:min(320px,52vw);height:30px;border:1px solid var(--line-2);border-radius:8px;padding:0 9px;margin:0 4px;font:inherit;font-size:12.5px;background:var(--paper);color:var(--ink)}
+.imgtools.selpro.st-pop > svg{width:15px;height:15px;color:var(--ai);margin-left:6px}
+.flow.markup-off .ai-chg .ai-ok{box-shadow:none}

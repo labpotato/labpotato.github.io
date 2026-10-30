@@ -16,7 +16,10 @@ you can save a `.lpdoc` project file to keep or move your work.
   (`deproxy()` in `content.js`: EZproxy and OpenAthens hostname form, `www-cell-com.libproxy1.nus.edu.sg`
   → `www.cell.com`, and the `/login?url=` form). Notes kept before v7 under another address of the same
   paper are merged on the next visit. The library shows the DOI and opens the paper where it was last read.
-  New icon: the potato on its own, and the floating button is the potato without a circle. v4 has Lab Potato's Google
+  Also in v7: only one potato per page (a copy left behind after an update or reload, or a second
+  installed copy, is cleared away with its highlights, newest version wins); the full toolbar opens only
+  from the potato, while dragging shows the small highlight bubble; a highlight with a comment ends in a
+  small speech-bubble badge; clicking a comment's mark on the scroll bar scrolls there and opens it. v4 has Lab Potato's Google
   OAuth client built in, so Sign in with Google needs no setup. v5 stays off on writing and
   chat sites by default (claude.ai, chatgpt.com, docs.google.com, notion.so, overleaf.com and
   the like; the list is in `content.js` as `OFF_DEFAULT`); the extension icon turns it on for a

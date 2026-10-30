@@ -271,10 +271,12 @@ const TOOLS = [
       { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29" },
       { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29" },
       { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30" },
-      { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30",
+      { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
+      { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30",
         new: [
-          "The AI review strip has an eye button (Alt+M): one click between the changes in colour and the changed version as it would read",
-          "Chrome extension v6: the same extension as v5, repackaged for this release"
+          "Revision marks on your text: cross out (Alt+X), cross out for better wording (Alt+W), a note to the AI (Alt+C)",
+          "The AI stage (Alt+S): the AI's version opens beside your text with the review strip; Send back replaces the passage once every change is decided, and never over your own hand edits",
+          "While a stage is open the other panels fold away (⇔ brings them back), so only your text and the AI's are on screen"
         ] }
     ]
   }

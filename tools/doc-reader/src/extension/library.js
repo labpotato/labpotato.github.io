@@ -52,11 +52,11 @@ document.getElementById("offAddBtn").addEventListener("click", async () => { con
 document.getElementById("look").addEventListener("click", async e => { const b = e.target.closest("[data-rm]"); if (!b) return; const s = (await chrome.storage.local.get("lp:settings"))["lp:settings"] || {}; s[b.dataset.key] = (s[b.dataset.key] || []).filter(h => h !== b.dataset.rm); await chrome.storage.local.set({ "lp:settings": s }); });
 function draw() {
   const q = document.getElementById("q").value.toLowerCase().trim(), box = document.getElementById("list");
-  const list = PAGES.filter(p => !q || (p.title + " " + p.url + " " + p.marks.map(m => m.quote.exact + " " + m.note).join(" ")).toLowerCase().includes(q));
-  box.innerHTML = list.length ? list.map(p => `<div class="page" data-k="${esc(p.key)}"><h2><a href="${esc(p.url)}" target="_blank">${esc(p.title || p.url)}</a></h2><div class="url">${esc(p.url)}</div>
+  const list = PAGES.filter(p => !q || (p.title + " " + p.url + " " + (p.paper || "") + " " + p.marks.map(m => m.quote.exact + " " + m.note).join(" ")).toLowerCase().includes(q));
+  box.innerHTML = list.length ? list.map(p => `<div class="page" data-k="${esc(p.key)}"><h2><a href="${esc(p.lastUrl || p.url)}" target="_blank">${esc(p.title || p.url)}</a></h2><div class="url">${p.paper ? `<b>${esc(p.paper.replace(/^doi:/, "DOI ").replace(/^pmid:/, "PMID ").replace(/^arxiv:/, "arXiv "))}</b> · ` : ""}${esc(p.url)}</div>
     <div class="meta">${p.marks.length} highlight${p.marks.length === 1 ? "" : "s"}${p.edits.length ? ` · ${p.edits.length} edit${p.edits.length === 1 ? "" : "s"}` : ""} · ${new Date(p.updated || p.created).toLocaleString()}</div>
     ${(p.pageNote || "").trim() ? `<div class="pn">📝 ${esc(p.pageNote.trim().slice(0, 300))}</div>` : ""}${p.marks.slice(0, 4).map(m => `<div class="q" style="--c:${esc(m.color)}">${esc(m.quote.exact.slice(0, 200))}${m.note ? `<div class="n">💬 ${esc(m.note)}</div>` : ""}</div>`).join("")}${p.marks.length > 4 ? `<div class="meta">and ${p.marks.length - 4} more</div>` : ""}
-    <div class="row"><a class="btn" href="${esc(p.url)}" target="_blank">Open the page</a><button data-a="md">Export Markdown</button><button data-a="del" class="danger">Remove</button></div></div>`).join("")
+    <div class="row"><a class="btn" href="${esc(p.lastUrl || p.url)}" target="_blank" title="${esc(p.lastUrl && p.lastUrl !== p.url ? "Where you last read it: " + p.lastUrl : p.url)}">Open the page</a><button data-a="md">Export Markdown</button><button data-a="del" class="danger">Remove</button></div></div>`).join("")
     : `<p class="empty">${PAGES.length ? "Nothing matches." : "Nothing yet. On any page, select text and press Highlight."}</p>`;
 }
 document.getElementById("list").addEventListener("click", async e => {

@@ -180,3 +180,15 @@
 .st-foot{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
 .work.has-stage .viewer{min-width:320px}
 @media (max-width:900px){.ai-stage{max-width:none;min-width:0}}
+
+/* v8: the selection bar for written documents */
+.imgtools.selpro{display:flex;align-items:center;gap:1px;padding:4px;border-radius:12px;background:color-mix(in srgb,var(--card) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line-2);box-shadow:0 12px 32px -12px rgba(16,24,40,.35),0 1px 2px rgba(16,24,40,.08);animation:popIn .1s ease-out}
+.imgtools.selpro button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 9px;border-radius:8px;font-size:12.5px;font-weight:550;color:var(--ink-2);white-space:nowrap}
+.imgtools.selpro button svg{width:15px;height:15px;flex:none}
+.imgtools.selpro button:hover{background:var(--line);color:var(--ink)}
+.imgtools.selpro button.rvx:hover{background:var(--del-l);color:var(--del)}
+.imgtools.selpro button.rvw:hover{background:color-mix(in srgb,#f5b700 18%,transparent);color:#8a5a00}
+.imgtools.selpro button.ai{color:var(--ai)}.imgtools.selpro button.ai:hover{background:var(--ai-l);color:var(--ai-d)}
+.imgtools.selpro button.stage{background:var(--ai);color:#fff;font-weight:600}.imgtools.selpro button.stage:hover{background:var(--ai-d);color:#fff}
+.imgtools.selpro .sp-sep{width:1px;height:18px;background:var(--line);margin:0 3px}
+@media (max-width:640px){.imgtools.selpro button .lbl{display:none}.imgtools.selpro button{padding:0 7px}}

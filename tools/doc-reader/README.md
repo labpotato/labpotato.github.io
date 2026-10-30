@@ -146,8 +146,11 @@ changes while the original stays untouched:
 |---|---|---|
 | Alt+X | cross out (red) | `Remove: «…»` |
 | Alt+W | cross out for better wording (amber) | `Replace «…» with better wording` |
-| Alt+C | note to the AI (yellow) | `About «…»: <note>` |
-| Alt+S | send the selection (one paragraph) to the stage | the marks above, plus anything typed in the Ask box |
+| Alt+C | an ordinary comment (the Comment button) | `About «…»: <comment text>` |
+| Alt+S | send the selection (one paragraph) to the stage | the marks above, plain strikethrough too, plus anything typed in the Ask box |
+
+The bar that appears on a selection has the same three (Cross out, Better wording, AI stage →), and the
+toolbar is one line (controls drop their words below 1700 px and a few move into menus below 1500 px).
 | Alt+Enter | Send back | |
 
 On the stage the usual review strip applies (Tab accepts, Esc rejects, ✎ asks for more, Alt+M shows

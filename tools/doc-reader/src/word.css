@@ -103,3 +103,18 @@
 .link-card .lc-url,.paste-chip .lc-url{font-size:12px;color:var(--ink-3);padding:0 8px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .paste-chip button.on{background:var(--blue-l);color:var(--blue)}
 .tsel.w-page{width:112px}
+
+/* v8: the toolbar is one line; buttons keep their icons and drop their words when the window is narrow */
+.tbar{flex-wrap:nowrap;height:44px;min-height:44px;padding-top:0;padding-bottom:0;row-gap:0;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tbar::-webkit-scrollbar{display:none}
+.tbar .tgroup{gap:1px;flex:none}.tbar .tsep{margin:0 2px}
+@media (max-width:1700px){.tbar .tb .lbl{display:none}.tbar .tb{padding:0 6px;min-width:30px}}
+@media (max-width:1400px){.tbar .tsel.w-font{width:96px}.tbar .tsel{font-size:12px}}
+/* v8: everything fits on the one line down to 1280 px; beyond that the bar scrolls sideways */
+.tbar{gap:1px;padding:0 6px}
+.tbar .tb{padding:0 5px;min-width:30px}
+.tbar .tsep{margin:0 1px}
+.tbar .tsel.w-page{width:86px}.tbar #blockSel{width:98px}.tbar .tsel.w-font{width:100px}.tbar .tsel.w-size{width:52px}
+@media (max-width:1600px){.tbar #swatches > *:not(.on){display:none}}
+@media (max-width:1500px){.tbar [data-act="wGrow"],.tbar [data-act="wShrink"],.tbar [data-act="speak"],.tbar .tsel.w-page{display:none}}   /* page width is in the Page menu; A+/A− in the size box */
+@media (max-width:1300px){.tbar [data-act="webView"],.tbar [data-act="themeMenu"],.tbar .tsep{display:none}}

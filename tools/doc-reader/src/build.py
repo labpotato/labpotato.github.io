@@ -82,7 +82,7 @@ rep('''<div class="work" id="work" hidden>
   <div class="tbar" id="tbar">''', '''<div class="work" id="work" hidden>
   <div class="menubar" role="menubar" aria-label="Menus">
     <button data-act="wEdit">Edit</button><button data-act="wInsert">Insert</button><button data-act="wFormat">Format</button><button data-act="wReview">Review</button><button data-act="wTools">Tools</button><button data-act="wPage">Page</button><button data-act="wHelp">Help</button>
-    <span class="mb-sp"></span><span class="mb-hint">Ctrl+/ shortcuts · F7 spelling · Alt+A ask AI · Tab / Esc accept or reject a change</span>
+    <span class="mb-sp"></span><span class="mb-hint">Ctrl+/ shortcuts · Alt+A ask AI · Alt+X / W / C mark · Alt+S AI stage · Tab / Esc accept or reject</span>
   </div>
   <div class="tbar" id="tbar">''')
 

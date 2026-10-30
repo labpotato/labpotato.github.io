@@ -6,6 +6,7 @@
    If the passage on the left was edited by hand in the meantime, both versions are shown and the author
    chooses; the AI's version never overwrites hand edits on its own. */
 const RV = { X: ["rv-x", "Remove"], W: ["rv-w", "Replace with better wording"], C: ["rv-c", "Note to the AI"] };
+/* a note to the AI is an ordinary comment (Alt+C, the Comment button): the stage reads the comments in the passage */
 let stage = null;   // the open stage: { id, srcLight, instr }
 const stageEl = $("#aiStage"), stageBody = EL("div", { class: "flow st-body", id: "stBody" });
 aiExtraRoot = stageBody;
@@ -19,7 +20,8 @@ async function rvMark(kind) {
   if (!sb || sb !== eb) return toast("Mark inside one paragraph at a time.");
   if (elOf(r.commonAncestorContainer).closest(".ai-chg,.rv") || r.cloneContents().querySelector?.(".ai-chg,.rv")) return toast("That text is already marked.");
   let note = "";
-  if (kind === "C") { const v = await modal(`<h3>Note to the AI</h3><p class="muted">About: <i>${esc(r.toString().trim().slice(0, 160))}</i></p><textarea name="note" rows="3" placeholder="What should change here? e.g. make this the topic sentence, cite the control experiment, too strong a claim"></textarea><div class="mrow"><button class="btn" data-cancel>Cancel</button><button class="btn ai" data-ok>Add note</button></div>`); if (!v || !v.note?.trim()) return; note = v.note.trim(); }
+  if (kind === "C") return flowComment();
+  if (kind === "C_") { const v = await modal(`<h3>Note to the AI</h3><p class="muted">About: <i>${esc(r.toString().trim().slice(0, 160))}</i></p><textarea name="note" rows="3" placeholder="What should change here? e.g. make this the topic sentence, cite the control experiment, too strong a claim"></textarea><div class="mrow"><button class="btn" data-cancel>Cancel</button><button class="btn ai" data-ok>Add note</button></div>`); if (!v || !v.note?.trim()) return; note = v.note.trim(); }
   const id = uid(), span = EL("span", { class: "rv " + RV[kind][0], "data-rv": id, title: RV[kind][1] + (note ? ": " + note : "") + " · click to change" });
   if (note) span.dataset.note = note;
   try { span.append(r.extractContents()); r.insertNode(span); } catch (e) { return toast("Could not mark that: select whole words."); }
@@ -38,9 +40,22 @@ flowEl.addEventListener("click", e => {
 }, true);
 /* the marks as instructions for the AI */
 function rvInstructions(root) {
-  return $$(".rv", root).map(m => { const t = m.textContent.replace(/\s+/g, " ").trim(); if (!t) return "";
-    return m.classList.contains("rv-x") ? `Remove: «${t}»` : m.classList.contains("rv-w") ? `Replace «${t}» with better wording` : `About «${t}»: ${m.dataset.note || "see the note"}`; }).filter(Boolean);
+  const out = [], T = m => m.textContent.replace(/\s+/g, " ").trim();
+  for (const m of $$(".rv, .cmt[data-id], s, strike, del:not(.ai-d):not(.ai-old)", root)) { const t = T(m); if (!t) continue;
+    if (m.classList.contains("rv-w")) out.push(`Replace «${t}» with better wording`);
+    else if (m.classList.contains("rv-x") || /^(S|STRIKE|DEL)$/.test(m.tagName)) out.push(`Remove: «${t}»`);
+    else if (m.classList.contains("cmt")) { const c = S.doc.comments?.[m.dataset.id], note = (c && (c.text || c.note)) || m.dataset.note || ""; if (note.trim()) out.push(`About «${t}»: ${note.trim()}`); }
+    else if (m.classList.contains("rv-c")) out.push(`About «${t}»: ${m.dataset.note || "see the note"}`); }
+  return [...new Set(out)];
 }
+/* the bar that appears on a selection gets the marks and the stage */
+{ const sp = showSelPop; showSelPop = function () { const r = sp.apply(this, arguments); const p = $(".selpop"); if (!p || !S.doc || S.doc.kind !== "flow" || S.webview) return r;
+    const mk = (lbl, fn, title) => p.append(EL("button", { onclick: e => { e.preventDefault(); closeSelPop(); fn(); }, onpointerdown: e => e.preventDefault(), title }, lbl));
+    mk("Cross out", () => rvMark("X"), "Cross out: tell the AI to remove these words (Alt+X)");
+    mk("Better wording", () => rvMark("W"), "Cross out for better wording: tell the AI to replace these words (Alt+W)");
+    mk("AI stage →", () => stageSend(""), "Send the passage, with its marks and comments, to the AI stage beside the text (Alt+S)");
+    return r; }; }
+if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]]);
 
 /* --- the stage --- */
 function stageDraw() {
@@ -137,7 +152,7 @@ function stageClose(keepMarks) {
     { head: "Revision marks → AI stage" },
     { label: "Cross out", k: "Alt+X", sub: "Tell the AI to remove these words", fn: () => rvMark("X") },
     { label: "Cross out for better wording", k: "Alt+W", sub: "Tell the AI to replace these words", fn: () => rvMark("W") },
-    { label: "Note to the AI…", k: "Alt+C", sub: "An instruction about these words", fn: () => rvMark("C") },
+    { label: "Comment, as a note to the AI", k: "Alt+C", sub: "The AI reads the comments in the passage you send", fn: () => flowComment() },
     { label: "Send the selection to the AI stage", k: "Alt+S", sub: "The AI's version beside the text; Send back when decided", fn: () => stageSend("") },
     { sep: true }, ...items], ...rest); }; try { return am.apply(this, arguments); } finally { menu = m0; } }; }
 
@@ -148,8 +163,8 @@ document.addEventListener("keydown", e => {
   const k = e.code;
   if (k === "KeyX") { e.preventDefault(); e.stopPropagation(); rvMark("X"); }
   else if (k === "KeyW") { e.preventDefault(); e.stopPropagation(); rvMark("W"); }
-  else if (k === "KeyC") { e.preventDefault(); e.stopPropagation(); rvMark("C"); }
+  else if (k === "KeyC") { e.preventDefault(); e.stopPropagation(); flowComment(); }
   else if (k === "KeyS") { e.preventDefault(); e.stopPropagation(); stageSend(""); }
   else if (e.key === "Enter" && stage) { e.preventDefault(); e.stopPropagation(); stageBack(); }
 }, true);
-Object.assign(window, { rvMark, stageSend, stageBack, stageClose, get stage() { return stage; } });   // for the tests and the console
+Object.assign(window, { rvMark, stageSend, stageBack, stageClose, showSelPop, closeSelPop, get stage() { return stage; } });   // for the tests and the console

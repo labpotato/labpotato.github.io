@@ -177,7 +177,7 @@
 .st-head{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}.st-head svg{width:16px;height:16px;color:var(--ai)}
 .st-instr{padding:8px 14px;font-size:12.5px;color:var(--ink-3);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;max-height:120px;overflow:auto}
 .st-body{flex:1;overflow:auto;padding:22px 64px 22px 26px;margin:0;width:auto;max-width:none;min-height:0;box-shadow:none;border:0;background:var(--paper)}
-.st-foot{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
+.st-foot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
 .work.has-stage .viewer{flex:1 1 0;min-width:300px}
 @media (max-width:900px){.ai-stage{max-width:none;min-width:0}}
 
@@ -211,3 +211,12 @@
 .imgtools.selpro.st-pop input{width:min(320px,52vw);height:30px;border:1px solid var(--line-2);border-radius:8px;padding:0 9px;margin:0 4px;font:inherit;font-size:12.5px;background:var(--paper);color:var(--ink)}
 .imgtools.selpro.st-pop > svg{width:15px;height:15px;color:var(--ai);margin-left:6px}
 .flow.markup-off .ai-chg .ai-ok{box-shadow:none}
+
+/* v8: one editing area on the stage; Send back in the middle of the footer */
+.st-body .st-focus .ai-chg,.st-body .st-focus .ai-ok{-webkit-user-modify:read-write}
+.st-body .st-focus .ai-chg .ai-h{cursor:pointer}
+.st-body .st-focus .ai-ok,.st-body .st-focus .ai-chg:not(.busy){cursor:text}
+.st-foot .st-status{min-width:0;line-height:1.35}
+.st-foot .st-back{justify-self:center;height:34px;padding:0 18px;font-weight:650;border-radius:10px}
+.st-foot .st-back:not(:disabled){box-shadow:0 6px 16px -8px color-mix(in srgb,var(--ai) 70%,transparent)}
+.st-foot .st-foot-r{justify-self:end}

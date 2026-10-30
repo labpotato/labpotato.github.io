@@ -93,9 +93,11 @@ function stageContext(id, srcLight) {
   const block = src.closest(AI_BLOCK) || src.parentElement; block.classList.add("st-p");
   const focus = EL("span", { class: "st-focus", contenteditable: "true", spellcheck: "true" }); focus.append(lightFrag(srcLight)); src.replaceWith(focus);
   stageBody.className = "flow st-body " + [...flowEl.classList].filter(x => x !== "flow").join(" "); stageBody.id = "stBody";
-  stageBody.style.cssText = flowEl.style.cssText; stageBody.style.font = getComputedStyle(flowEl).font; stageBody.style.padding = "";
+  stageBody.style.cssText = flowEl.style.cssText; stageBody.style.padding = "";
+  [...stageBody.attributes].filter(a => a.name.startsWith("data-")).forEach(a => stageBody.removeAttribute(a.name));
+  [...flowEl.attributes].filter(a => a.name.startsWith("data-")).forEach(a => stageBody.setAttribute(a.name, a.value));
   stageBody.innerHTML = ""; stageBody.append(...c.childNodes);
-  return focus;
+  stageMatch(); return focus;
 }
 function stageSend(extra) {
   if (!S.doc || S.doc.kind !== "flow" || S.webview) return toast("The AI stage works in the Editor view of a written document.");
@@ -125,12 +127,22 @@ aiRequest = async function (range, instr) {
   if (range && flowEl.contains(range.commonAncestorContainer) && !stageBody.contains(range.commonAncestorContainer)) return stageSendRange(range, instr);
   return aiRequestRaw.apply(this, arguments);
 };
-function stageShow() { stageEl.classList.remove("closed"); $(".work")?.classList.add("has-stage"); stageBtn(); if (stage && stage.folded) stageFold(true); placeBar(); stageAlign("viewer", true); }
+function stageShow() { stageEl.classList.remove("closed"); $(".work")?.classList.add("has-stage"); stageBtn(); if (stage && stage.folded) stageFold(true); stageMatch(); placeBar(); stageAlign("viewer", true); }
 function stageHide() { stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); if (stage) { const f = stage.folded; stageFold(false); stage.folded = f; } stageBtn(); placeBar(); }
 /* the toolbar button: open or hide the stage, with a dot while one is waiting */
 function stageBtn() {
   let b = $("#stageBtn"); const anchor = $("#aiPanelBtn"); if (!b && anchor) { b = EL("button", { class: "tb flow-only ai-btn", id: "stageBtn", title: "AI stage (Alt+S on a selection)", onclick: () => { if (!stage) return toast("Select text and press AI stage on the bar, or Alt+S."); stageEl.classList.contains("closed") ? stageShow() : stageHide(); } }, ICON("i-next"), EL("span", { class: "lbl" }, "Stage")); anchor.after(b); }
   if (!b) return; b.classList.toggle("on", !!stage && !stageEl.classList.contains("closed")); b.classList.toggle("waiting", !!stage && stageEl.classList.contains("closed"));
+}
+/* the stage's text is set exactly like the original: the same font, size, spacing and the same width of
+   text column, so every line breaks at the same word and the two can be read across */
+function stageMatch() {
+  if (!stage || stageEl.classList.contains("closed")) return;
+  const cs = getComputedStyle(flowEl), col = flowEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  for (const k of ["fontFamily", "fontSize", "lineHeight", "letterSpacing", "wordSpacing", "fontWeight", "fontStyle", "textAlign", "hyphens", "fontFeatureSettings", "fontKerning", "fontVariantLigatures", "textRendering", "color"]) stageBody.style[k] = cs[k];
+  stageBody.style.setProperty("--z", cs.getPropertyValue("--z") || "1");
+  const side = Math.max(14, (stageBody.clientWidth - col) / 2) + "px";
+  if (stageBody.style.paddingLeft !== side) { stageBody.style.paddingLeft = side; stageBody.style.paddingRight = side; }
 }
 /* the two panes scroll together: the passage's block on the stage stays level with the original on the left */
 let stageSyncing = false;
@@ -153,9 +165,7 @@ viewer.addEventListener("scroll", () => stageAlign("viewer"), { passive: true })
 stageBody.addEventListener("scroll", () => stageAlign("stage"), { passive: true });
 addEventListener("resize", debounce(() => stageAlign("viewer"), 80));
 /* either pane reflowing (panels folding, fonts arriving, the AI's answer) nudges the stage back level */
-new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(flowEl);
-new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(stageBody);
-new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(viewer);
+{ const ro = new ResizeObserver(debounce(() => { stageMatch(); stageAlign("viewer", true); }, 40)); [flowEl, stageBody, viewer].forEach(x => ro.observe(x)); }
 /* fold: the Pages, Notes and chat panels go away so only the text and the stage are on screen; unfold brings
    back the ones that were open. The button in the stage's header switches between the two. */
 function stageFold(on) {
@@ -345,6 +355,35 @@ addEventListener("keydown", e => {
   aiDecide(aiHunk, e.key === "Tab");
 }, true);
 
+/* --- Web layout: the document as a web page. It is the editor itself, so every tool, the AI and the stage
+   work as in the page view; only the paper sheet goes: the text runs the whole width of the window.
+   A page saved with its own styles can still be seen exactly as the site drew it ("Original page look",
+   the older web view with its floating bar). --- */
+const webOn = () => document.body.classList.contains("weblayout");
+function webLayout(on, save = true) {
+  on = on == null ? !webOn() : !!on;
+  if (S.webview) exitWebView();
+  document.body.classList.toggle("weblayout", on); if (save) Prefs.set("webLayout", on);
+  const b = $('.tbar [data-act="webView"]');
+  if (b) { b.classList.toggle("on", on); b.title = on ? "Web layout is on: click for the page view (paper sheet, print layout)" : "Web layout: the document as a web page across the whole window, with every tool"; }
+  try { layoutMargin(); } catch (e) { /* no margin yet */ }
+  placeBar(); stageMatch(); stageAlign("viewer", true);
+}
+const enterWebViewExact = enterWebView; let wvExact = false;
+enterWebView = function () { if (S.doc?.kind === "flow" && !wvExact) return webLayout(true, false); wvExact = false; return enterWebViewExact.apply(this, arguments); };
+function originalLook() { wvExact = true; return enterWebView(); }
+document.addEventListener("click", e => {
+  const b = e.target.closest?.('.tbar [data-act="webView"]'); if (!b) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (S.doc?.meta?.head && !webOn()) return menu([
+    { label: "Web layout", sub: "The whole width of the window, with every tool", fn: () => webLayout(true) },
+    { label: "Original page look", sub: "Exactly as the site drew it, with a small floating toolbar", fn: originalLook }], b);
+  webLayout();
+}, true);
+{ const b = $('.tbar [data-act="webView"]'); if (b) b.title = "Web layout: the document as a web page across the whole window, with every tool"; }
+/* the choice is remembered: each document opens in the layout used last (the settings are loaded by then) */
+{ const od = openDoc; openDoc = async function () { const r = await od.apply(this, arguments); if (S.doc?.kind === "flow" && !S.webview) webLayout(Prefs.get("webLayout", false), false); return r; }; }
+
 /* keys (before the Word layer): Alt+X / W / C mark, Alt+S sends, Alt+Enter sends back */
 document.addEventListener("keydown", e => {
   if (!S.doc || S.doc.kind !== "flow" || S.webview || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -356,5 +395,5 @@ document.addEventListener("keydown", e => {
   else if (k === "KeyS") { e.preventDefault(); e.stopPropagation(); stageSend(""); }
   else if (e.key === "Enter" && stage) { e.preventDefault(); e.stopPropagation(); stageBack(); }
 }, true);
-Object.assign(window, { aiChange, aiPaint, aiSetActive, stagePartAccept, stagePartReject, stagePartRedo, stageSelPop, aiSentenceHunks, rvMark, stageSend, stageBack, stageClose, stageHide, stageShow, stageAlign, showSelPop, closeSelPop, get stage() { return stage; } });
+Object.assign(window, { webLayout, originalLook, stageMatch, aiChange, aiPaint, aiSetActive, stagePartAccept, stagePartReject, stagePartRedo, stageSelPop, aiSentenceHunks, rvMark, stageSend, stageBack, stageClose, stageHide, stageShow, stageAlign, showSelPop, closeSelPop, get stage() { return stage; } });
 setTimeout(stageBtn, 0);   // for the tests and the console

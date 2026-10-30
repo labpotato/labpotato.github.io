@@ -180,3 +180,14 @@ stage the changes carry no `contenteditable="false"` (a drag starting on such an
 once the passage has focus); a `beforeinput` guard instead stops typing into, or deleting across, a change
 still under review. Send back, in the middle of the stage's footer, carries the edits without the review markup.
 
+The stage's text is set exactly like the original (`stageMatch`): the same font, size, line height and
+spacing, and the same width of text column (the stage's side padding is computed from the text's column),
+so each line breaks at the same word on both sides. A rewrite is shown by a colour highlight only.
+
+### Web layout (v8)
+
+The **Web view** button now turns on a web layout of the editor itself (`webLayout()` in `src/stage.js`,
+`body.weblayout`): no paper sheet, the text across the whole window, and every tool, the AI and the stage
+working as usual. The choice is remembered. A page saved with its own styles (`meta.head`) offers
+**Original page look** as well: the older frame view that shows the page exactly as the site drew it.
+

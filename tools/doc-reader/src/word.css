@@ -117,4 +117,4 @@
 .tbar .tsel.w-page{width:86px}.tbar #blockSel{width:98px}.tbar .tsel.w-font{width:100px}.tbar .tsel.w-size{width:52px}
 @media (max-width:1600px){.tbar #swatches > *:not(.on){display:none}}
 @media (max-width:1500px){.tbar [data-act="wGrow"],.tbar [data-act="wShrink"],.tbar [data-act="speak"],.tbar .tsel.w-page{display:none}}   /* page width is in the Page menu; A+/A− in the size box */
-@media (max-width:1300px){.tbar [data-act="webView"],.tbar [data-act="themeMenu"],.tbar .tsep{display:none}}
+@media (max-width:1300px){.tbar [data-act="webView"],.tbar [data-act="themeMenu"],.tbar #aiMarkupBtn,.tbar .tsep{display:none}}

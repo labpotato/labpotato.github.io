@@ -153,7 +153,11 @@ The bar that appears on a selection has the same three (Cross out, Better wordin
 toolbar is one line (controls drop their words below 1700 px and a few move into menus below 1500 px).
 | Alt+Enter | Send back | |
 
-On the stage the usual review strip applies (Tab accepts, Esc rejects, ✎ asks for more, Alt+M shows
+Every AI request from the text (the Ask box, its chips, the bar) opens on the stage, with the passage's
+marks and comments added to the instruction. The stage is the right half of the window: the whole
+document greyed, the passage's block in focus, kept level with the original on the left as either pane
+scrolls. ✕ only hides the stage (the Stage button in the toolbar, with a dot, brings it back); Discard
+throws the AI's version away. On the stage the usual review strip applies (Tab accepts, Esc rejects, ✎ asks for more, Alt+M shows
 the changed version only). **Send back** is enabled once every change is decided and puts the result
 where the passage was. The passage on the left is outlined while it is on the stage and stays editable;
 if its text differs from what was sent, Send back shows both versions and the author chooses (Keep mine,

@@ -115,7 +115,13 @@
     return els;
   }
   function paint(w, m) { w.style.setProperty("background-color", m.color, "important"); w.style.setProperty("color", "inherit", "important"); w.style.setProperty("border-radius", "2px", "important");
-    w.style.setProperty("cursor", "pointer", "important"); w.style.setProperty("box-shadow", m.note ? `0 2px 0 ${shade(m.color)}` : "none", "important"); w.title = m.note ? "Comment: " + m.note : "Lab Potato highlight"; }
+    w.style.setProperty("cursor", "pointer", "important"); w.style.setProperty("box-shadow", m.note ? `0 2px 0 ${shade(m.color)}` : "none", "important"); w.title = m.note ? "Comment: " + m.note : "Lab Potato highlight";
+    if (!flagQ.has(m)) { flagQ.add(m); queueMicrotask(() => { flagQ.delete(m); flagNote(m); }); } }
+  /* v7: a highlight with a comment ends in a small speech bubble, so comments stand out on the page */
+  const flagQ = new Set();
+  function flagNote(m) { const ws = marksOf(m.id); ws.forEach((w, i) => { if (m.note && i === ws.length - 1) { w.setAttribute("data-lp-c", ""); w.style.setProperty("--lp-cc", shade(m.color)); } else w.removeAttribute("data-lp-c"); }); }
+  const pageCss = document.createElement("style"); pageCss.id = "lp-dr-css";
+  pageCss.textContent = `lp-hl[data-lp-c]::after{content:""!important;display:inline-block!important;width:16px!important;height:13px!important;margin:0 1px 0 3px!important;vertical-align:.42em!important;border-radius:5px 5px 5px 1px!important;background:var(--lp-cc,#0a5fd0) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10'%3E%3Cpath d='M2.5 3.5h7M2.5 6.5h4.5' stroke='white' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") center/11px no-repeat!important;box-shadow:0 1px 2px rgba(0,0,0,.3)!important;cursor:pointer!important}`;
   const shade = c => { const n = parseInt(c.slice(1), 16), f = v => Math.max(0, Math.round(v * .62)); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
   const marksOf = id => [...document.querySelectorAll(`lp-hl[data-id="${id}"]`)];
   function unwrap(id) { marksOf(id).forEach(w => { const p = w.parentNode; while (w.firstChild) p.insertBefore(w.firstChild, w); w.remove(); p.normalize(); }); }
@@ -164,8 +170,8 @@
   root.innerHTML = `<style>
   :host{all:initial;--acc:var(--acc);--acc-soft:#e6efff}
   *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .fab{position:fixed;right:16px;bottom:14px;width:52px;height:52px;border:0;padding:0;background:none;display:grid;place-items:center;cursor:pointer;opacity:.92;filter:drop-shadow(0 4px 8px rgba(60,35,10,.28));transition:opacity .15s,transform .2s cubic-bezier(.3,1.6,.5,1)}
-  .fab:hover{opacity:1;transform:translateY(-2px) rotate(-6deg) scale(1.08)} .fab svg{width:52px;height:52px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
+  .fab{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,0,0,.12);background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer;opacity:.82;transition:opacity .15s,transform .15s}
+  .fab:hover{opacity:1;transform:scale(1.06)} .fab svg{width:30px;height:30px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
   .bar{position:fixed;display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:14px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border:1px solid rgba(0,0,0,.12);box-shadow:0 10px 30px rgba(15,23,42,.22);color:#18202c;font-size:12.5px;max-width:calc(100vw - 16px);flex-wrap:wrap}
   .bar.dock{left:0!important;right:0!important;top:0!important;border-radius:0;max-width:none;justify-content:center;border-width:0 0 1px}
   .bar button,.pop button,.sel button,.panel button{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;min-width:30px;padding:0 7px;border-radius:8px;font-size:12.5px;color:#18202c;white-space:nowrap}
@@ -210,13 +216,13 @@
   .ol{display:block;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;line-height:1.35}.ol:hover{background:#eef2f7}.ol.h2{padding-left:18px}.ol.h3{padding-left:30px;font-size:12px}.ol.h4{padding-left:42px;font-size:12px;color:#5b6472}
   .pnote{min-height:180px}
   [hidden]{display:none!important}
-  :host(.lp-dark) .bar,:host(.lp-dark) .pop,:host(.lp-dark) .panel,:host(.lp-dark) .menu{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .bar button,:host(.lp-dark) .pop button,:host(.lp-dark) .panel button,:host(.lp-dark) .menu button{color:#e8edf3} :host(.lp-dark) .bar button:hover,:host(.lp-dark) .pop button:hover,:host(.lp-dark) .panel button:hover,:host(.lp-dark) .menu button:hover{background:#2b3440} :host(.lp-dark) textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} :host(.lp-dark) .item{border-color:#333d48} :host(.lp-dark) .item:hover{background:#252d37} :host(.lp-dark) .item .nt{color:#9cc3ff} :host(.lp-dark) .sep{background:#3a4450} :host(.lp-dark) .bar button.on{background:rgba(255,255,255,.1)}
+  :host(.lp-dark) .bar,:host(.lp-dark) .pop,:host(.lp-dark) .panel,:host(.lp-dark) .menu,:host(.lp-dark) .fab{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .bar button,:host(.lp-dark) .pop button,:host(.lp-dark) .panel button,:host(.lp-dark) .menu button{color:#e8edf3} :host(.lp-dark) .bar button:hover,:host(.lp-dark) .pop button:hover,:host(.lp-dark) .panel button:hover,:host(.lp-dark) .menu button:hover{background:#2b3440} :host(.lp-dark) textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} :host(.lp-dark) .item{border-color:#333d48} :host(.lp-dark) .item:hover{background:#252d37} :host(.lp-dark) .item .nt{color:#9cc3ff} :host(.lp-dark) .sep{background:#3a4450} :host(.lp-dark) .bar button.on{background:rgba(255,255,255,.1)}
   </style>
   <button class="fab" title="Lab Potato: highlight, comment and edit this page" aria-label="Open Lab Potato tools"></button>
   <div class="bar" role="toolbar" aria-label="Lab Potato" hidden></div>
   <div class="prog" hidden></div><div class="rail" hidden><button class="st" data-r="-1" title="Previous mark (Alt+Up)">▲</button><div class="track"><div class="view"></div></div><button class="st" data-r="1" title="Next mark (Alt+Down)">▼</button></div><div class="sel" hidden></div><div class="pop" hidden></div><div class="panel" hidden></div><div class="menu" hidden></div><div class="toast" hidden></div>`;
   const $ = s => root.querySelector(s), railEl = $(".rail"), track = $(".track"), viewBox = $(".view"), prog = $(".prog"), fab = $(".fab"), bar = $(".bar"), selPop = $(".sel"), pop = $(".pop"), panel = $(".panel"), menuEl = $(".menu"), toastEl = $(".toast");
-  const POTATO = `<svg aria-hidden="true" viewBox="0 0 128 128"><defs><radialGradient id="lpfb" cx="36%" cy="30%" r="80%"><stop offset="0" stop-color="#f6cf96"/><stop offset=".55" stop-color="#dba264"/><stop offset="1" stop-color="#b37840"/></radialGradient><radialGradient id="lpfs" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#5a3a1c" stop-opacity=".32"/><stop offset="1" stop-color="#5a3a1c" stop-opacity="0"/></radialGradient><linearGradient id="lpfl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fe08a"/><stop offset="1" stop-color="#3fae5a"/></linearGradient></defs><ellipse cx="66" cy="117" rx="44" ry="7" fill="url(#lpfs)"/><g transform="rotate(-6 66 68)"><path d="M18 70C15 46 34 27 60 23C86 19 108 27 116 47C123 64 119 86 106 99C92 112 70 116 50 112C30 108 20 92 18 70Z" fill="url(#lpfb)"/><path d="M18 70C15 46 34 27 60 23C86 19 108 27 116 47C123 64 119 86 106 99C92 112 70 116 50 112C30 108 20 92 18 70Z" fill="none" stroke="#8a5528" stroke-opacity=".25" stroke-width="2"/><ellipse cx="44" cy="40" rx="16" ry="8" transform="rotate(-24 44 40)" fill="#fff" opacity=".42"/><circle cx="99" cy="50" r="2.4" fill="#9a6232" opacity=".55"/><circle cx="31" cy="86" r="2" fill="#9a6232" opacity=".5"/><circle cx="88" cy="97" r="2.2" fill="#9a6232" opacity=".5"/><ellipse cx="48" cy="79" rx="8" ry="5" fill="#f08c7c" opacity=".55"/><ellipse cx="95" cy="76" rx="8" ry="5" fill="#f08c7c" opacity=".55"/><ellipse cx="55" cy="66" rx="5.4" ry="6.6" fill="#2a1d12"/><ellipse cx="86" cy="64" rx="5.4" ry="6.6" fill="#2a1d12"/><circle cx="56.8" cy="63.4" r="1.9" fill="#fff"/><circle cx="87.8" cy="61.4" r="1.9" fill="#fff"/><path d="M63 79Q71 86 79 78" stroke="#2a1d12" stroke-width="4" fill="none" stroke-linecap="round"/></g><path d="M72 25C72 18 74 12 78 8" stroke="#3fae5a" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M77 10C82 2 94 2 98 6C93 14 84 15 77 10Z" fill="url(#lpfl)"/><path d="M75 13C69 6 59 7 56 11C61 17 70 18 75 13Z" fill="url(#lpfl)"/></svg>`;
+  const POTATO = `<svg viewBox="22 46 208 144" aria-hidden="true"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"/><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"/><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"/><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`;
   let toastT; function toast(m) { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3200); }
   /* a toast with an Undo button: the last removal can be taken back for a few seconds */
   function toastUndo(m, fn) { toastEl.innerHTML = `${esc(m)} <button class="lnk" style="color:#9cc3ff;margin-left:8px">Undo</button>`; toastEl.querySelector("button").onclick = () => { toastEl.hidden = true; fn(); }; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 7000); }
@@ -329,14 +335,14 @@
   selPop.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; selPop.hidden = true;
     if (b.dataset.s === "x") { selMute = Date.now() + 60000; return; }
     if (b.dataset.s === "c") { SET.color = b.dataset.c; saveSet(); }
-    if (b.dataset.s === "cmt") { comment(); setOpen(true); return; }
-    if (highlight()) setOpen(true);   // pressing Highlight opens the full tools
+    if (b.dataset.s === "cmt") { comment(); return; }
+    highlight();   // v7: the full toolbar stays folded; it opens only from the potato
   });
   document.addEventListener("mouseup", e => { if (e.composedPath().includes(host)) return; setTimeout(showSelPop, 10); });
   document.addEventListener("keyup", e => { if (e.shiftKey && /Arrow|Home|End/.test(e.key)) showSelPop(); });
   document.addEventListener("selectionchange", () => { const s = getSelection(); if (!s || s.isCollapsed) selPop.hidden = true; });
   document.addEventListener("keydown", e => {
-    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "h") { const s = getSelection(); if (s && !s.isCollapsed) { e.preventDefault(); if (highlight()) setOpen(true); } }
+    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "h") { const s = getSelection(); if (s && !s.isCollapsed) { e.preventDefault(); highlight(); } }
     if (e.key === "Escape") { pop.hidden = true; menuEl.hidden = true; selPop.hidden = true; }
     if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "ArrowDown" || e.key === "ArrowUp") && railMarks().length && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") ) { e.preventDefault(); e.stopPropagation(); stepMark(e.key === "ArrowDown" ? 1 : -1); }
   }, true);
@@ -410,15 +416,15 @@
   function afterScroll(fn) { let last = -1, n = 0; const t = setInterval(() => { if (scrollY === last || ++n > 12) { clearInterval(t); fn(); } last = scrollY; }, 100); }
   /* the emphasis when you arrive: an orange ring that pulses twice */
   function flash(el) { try { el.animate([{ outline: "3px solid rgba(255,159,28,0)", outlineOffset: "2px" }, { outline: "3px solid #ff9f1c", outlineOffset: "2px", boxShadow: "0 0 0 6px rgba(255,159,28,.35)" }, { outline: "3px solid rgba(255,159,28,0)", outlineOffset: "2px" }, { outline: "3px solid #ff9f1c", outlineOffset: "2px", boxShadow: "0 0 0 6px rgba(255,159,28,.35)" }, { outline: "3px solid rgba(255,159,28,0)", outlineOffset: "2px" }], { duration: 1800, easing: "ease-in-out" }); } catch (e) { /* old browser */ } }
-  function goMark(k) { const ms = railEl._ms || railMarks(), x = ms[k]; if (!x) return; railIdx = k;
+  function goMark(k, open) { const ms = railEl._ms || railMarks(), x = ms[k]; if (!x) return; railIdx = k;
     x.el.scrollIntoView({ behavior: "smooth", block: "center" });
-    afterScroll(() => { (x.m ? marksOf(x.m.id) : [x.el]).forEach(flash); });
+    afterScroll(() => { (x.m ? marksOf(x.m.id) : [x.el]).forEach(flash); if (open && x.m && x.m.note) openPop(x.m); });   // v7: a comment on the scroll bar opens
     track.querySelectorAll(".tick").forEach(t => t.classList.toggle("on", +t.dataset.k === k)); }
   function stepMark(dir) { const ms = railMarks(); railEl._ms = ms; if (!ms.length) return toast("Nothing marked on this page yet.");
     const mid = (scrollY + innerHeight / 2) / docH();
     if (railIdx < 0 || railIdx >= ms.length) { let k = dir > 0 ? ms.findIndex(x => x.f > mid + 0.001) : ms.map(x => x.f < mid - 0.001).lastIndexOf(true); if (k < 0) k = dir > 0 ? 0 : ms.length - 1; return goMark(k); }
     goMark((railIdx + dir + ms.length) % ms.length); }
-  track.addEventListener("click", e => { const t = e.target.closest(".tick"); if (t) goMark(+t.dataset.k); });
+  track.addEventListener("click", e => { const t = e.target.closest(".tick"); if (t) goMark(+t.dataset.k, true); });
   railEl.addEventListener("click", e => { const b = e.target.closest("[data-r]"); if (b) stepMark(+b.dataset.r); });
   addEventListener("scroll", () => requestAnimationFrame(() => { drawView(); drawProgress(); }), { passive: true });
   addEventListener("resize", () => { drawRail(); drawProgress(); });
@@ -428,7 +434,7 @@
   const fileName = () => (document.title || location.hostname).replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60).replace(/\s+/g, "_");
   function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.documentElement.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
   function notesMd() { return `# ${document.title}\n\n<${DATA.url}>\n\n` + ((DATA.pageNote || "").trim() ? `**Page note:** ${DATA.pageNote.trim()}\n\n` : "") + DATA.marks.slice().sort((a, b) => (a.quote.pos || 0) - (b.quote.pos || 0)).map(m => `> ${m.quote.exact}\n${m.note ? `\n${m.note}\n` : ""}`).join("\n") + `\n_Saved with Lab Potato Doc Reader, ${new Date().toLocaleString()}_\n`; }
-  function pageHtml() { const d = document.documentElement.cloneNode(true); d.querySelectorAll("script,noscript,#lp-dr-host").forEach(e => e.remove()); d.querySelector("body")?.removeAttribute("contenteditable");
+  function pageHtml() { const d = document.documentElement.cloneNode(true); d.querySelectorAll("script,noscript,#lp-dr-host,#lp-dr-css").forEach(e => e.remove()); d.querySelector("body")?.removeAttribute("contenteditable");
     const b = d.querySelector("head"); if (b && !d.querySelector("base")) { const base = document.createElement("base"); base.href = location.href; b.prepend(base); }
     return "<!doctype html>\n" + d.outerHTML; }
 
@@ -441,7 +447,7 @@
       return; }
     if (msg.t === "offSite") { SET.off = [...new Set([...(SET.off || []), HOST])]; SET.on = (SET.on || []).filter(h => h !== HOST); saveSet(); shutDown(); reply({ ok: true }); }
     else if (msg.t === "toggle") { setOpen(!SET.open); reply({ ok: true }); }
-    else if (msg.t === "highlight") { if (highlight()) setOpen(true); reply({ ok: true }); }
+    else if (msg.t === "highlight") { highlight(); reply({ ok: true }); }
     else if (msg.t === "ping") reply({ ok: true });
   });
   chrome.storage.onChanged.addListener((ch, area) => { if (area === "local" && ch[SKEY] && ch[SKEY].newValue) { const o = SET.open; SET = Object.assign(SET, ch[SKEY].newValue); SET.open = o; if (booted && siteOff()) return shutDown(); if (!booted && !siteOff()) return boot(false); if (booted) { applyLook(); drawBar(); } }
@@ -449,9 +455,21 @@
     if (area === "local" && ch[KEY]) { const nv = ch[KEY].newValue;
       if (nv && (nv.updated || 0) > (DATA.updated || 0)) { DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits.filter(ed => !(nv.edits || []).some(x => x.id === ed.id))); DATA = Object.assign({ marks: [], edits: [], pageNote: "" }, nv); DATA.edits.forEach(ed => ed.done = false); applyAll(); drawPanel(); toast("Lab Potato: highlights updated from your other computer."); }
       else if (!nv && (DATA.marks.length || DATA.edits.length) && !pendingSave) { DATA.marks.forEach(m => unwrap(m.id)); undoEdits(DATA.edits); DATA.marks = []; DATA.edits = []; DATA.pageNote = ""; drawBar(); drawPanel(); } } });
-  function shutDown() { booted = false; SET.open = false; panelOpen = false; DATA.marks.forEach(m => unwrap(m.id)); host.remove(); document.documentElement.style.removeProperty("margin-top"); }
+  function shutDown() { pageCss.remove(); booted = false; SET.open = false; panelOpen = false; DATA.marks.forEach(m => unwrap(m.id)); host.remove(); document.documentElement.style.removeProperty("margin-top"); }
+  /* v7: one potato per page. When the extension is updated or reloaded, Chrome runs the new copy in tabs that
+     were already open while the old copy's potato and highlights stay behind; a second installed copy does
+     the same. The newest copy clears the others away. */
+  const LP_V = (chrome.runtime.getManifest && chrome.runtime.getManifest().version) || "0";
+  const vNum = v => String(v || "0").split(".").reduce((a, x) => a * 1000 + (+x || 0), 0);
+  function clearOthers() {
+    document.querySelectorAll("#lp-dr-host").forEach(h => { if (h !== host && vNum(h.dataset.v) <= vNum(LP_V)) h.remove(); });
+    document.querySelectorAll("lp-hl").forEach(w => { const p = w.parentNode; if (!p) return; while (w.firstChild) p.insertBefore(w.firstChild, w); w.remove(); p.normalize(); });
+  }
+  host.dataset.v = LP_V;
+  new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.id === "lp-dr-host" && n !== host && vNum(n.dataset.v) < vNum(LP_V)) n.remove(); }).observe(document.documentElement, { childList: true });
   function boot(openNow) {
-    booted = true; document.documentElement.append(host); applyLook();
+    clearOthers();
+    booted = true; document.documentElement.append(host); (document.head || document.documentElement).append(pageCss); applyLook();
     DATA.edits.forEach(ed => ed.done = false);
     SET.open = !!openNow;   // every page starts with just the potato; it opens when you click it or highlight
     applyAll();

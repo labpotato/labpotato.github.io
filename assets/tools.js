@@ -260,7 +260,7 @@ const TOOLS = [
     accent: "cyan",
     folder: "tools/doc-reader",
     features: [
-      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; web pages as they look; a Chrome extension that syncs",
+      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; a Chrome extension that keeps one set of notes per paper, through library proxies too",
       "Write like in Word: fonts, footnotes, offline spell check, any page width, Word's shortcuts",
       "Ask AI on a selection with your own Claude key and review its changes one by one, as tracked changes"
     ],

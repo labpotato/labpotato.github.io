@@ -135,7 +135,7 @@ rep("""<p>Works on top of any web page, like Liner: select text and press <b>Hig
         <a class="btn small" id="extLink" href="doc-reader-extension-v2.zip" download>""",
     """<p>Highlight and comment on any web page, like Liner: select text and press <b>Highlight</b>. Your marks come back whenever you open that page again. One click opens the page here, to edit a copy with the Word tools and the AI editor. (The extension stays hidden on Doc Reader's own pages.)</p>
         <p>Sign in with Google in the extension to see your highlights and documents on every computer you use; they are stored in your own Google Drive. You can also save each document as a Google Doc.</p>
-        <a class="btn small" id="extLink" href="doc-reader-extension-v6.zip" download>""")   # v7: extension v6
+        <a class="btn small" id="extLink" href="doc-reader-extension-v7.zip" download>""")   # v8: extension v7
 # v4: lookups by id skip a web page's elements of the same name (a page's #menu, #toast, #right)
 rep('const $ = (s, r = document) => r.querySelector(s);',
     'const $ = (s, r = document) => { const e = r.querySelector(s); return e && r === document && s[0] === "#" && e.closest("#flow") ? [...document.querySelectorAll(s)].find(x => !x.closest("#flow")) || e : e; };')

@@ -15,9 +15,36 @@
   if (document.querySelector('meta[name="lab-potato-app"][content="doc-reader"]') || /\/tools\/doc-reader\/(doc-reader-v\d+\.html)?$|\/doc-reader-v\d+\.html$/.test(location.pathname)) return;
 
   const COLORS = [["#ffe066", "Yellow"], ["#a5f3a1", "Green"], ["#9bd4ff", "Blue"], ["#ffb3d1", "Pink"], ["#ffc68a", "Orange"], ["#d4b8ff", "Purple"]];
-  const KEY = "lp:" + location.href.replace(/#.*$/, "");
+  /* v7: one paper, one set of notes, however you reach it. A library proxy (NUS libproxy, any EZproxy or
+     OpenAthens proxy) changes the address: www-cell-com.libproxy1.nus.edu.sg is www.cell.com. The proxy is
+     undone, and a page that names its DOI (publisher pages do, proxied or not; doi.org links lead to them)
+     shares its notes with every other copy of the same DOI. */
+  const PROXY_LABEL = /^(ezproxy\d*|libproxy\d*|proxy\d*|ezp\d*|ezpprod\d*|eproxy\d*|ezaccess|remotexs|idm|elib|elibrary|lib-proxy|libezproxy)$/i;
+  function deproxy(u) {
+    try {
+      const x = new URL(u), inner = x.searchParams.get("url") || x.searchParams.get("qurl");
+      if (/\/login\b/i.test(x.pathname) && inner && /^https?:/i.test(inner)) return deproxy(inner);   // https://proxy.lib.x.edu/login?url=https://…
+      const L = x.hostname.split(".");
+      if (L.length > 2 && L.slice(1).some(l => PROXY_LABEL.test(l)) && L[0].includes("-")) {   // hostname form: dots became hyphens, hyphens became "--"
+        const host = L[0].replace(/--/g, "\u0000").replace(/-/g, ".").replace(/\u0000/g, "-");
+        if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) { x.hostname = host; x.port = ""; x.protocol = "https:"; }
+      }
+      if (x.protocol === "http:" && !x.port) x.protocol = "https:";   // the same page over http or https
+      x.hash = ""; return x.href;
+    } catch (e) { return String(u).replace(/#.*$/, ""); }
+  }
+  const cleanDoi = d => { let r = String(d || "").trim().replace(/^(https?:\/\/)?(dx\.)?doi\.org\//i, "").replace(/^doi:\s*/i, ""); try { r = decodeURIComponent(r); } catch (e) { /* as is */ } r = r.replace(/[.,;]+$/, ""); return /^10\.\d{4,9}\/\S+$/.test(r) ? "doi:" + r.toLowerCase() : null; };
+  function paperId() {
+    for (const m of document.querySelectorAll('meta[name="citation_doi" i],meta[name="dc.identifier" i],meta[name="prism.doi" i],meta[name="bepress_citation_doi" i],meta[property="citation_doi" i],meta[scheme="doi" i],meta[name="doi" i]')) { const d = cleanDoi(m.getAttribute("content")); if (d) return d; }
+    const u = deproxy(location.href), d2 = u.match(/(?:doi\.org|\/doi(?:\/(?:abs|full|pdf|epdf|epub|reader))?)\/(10\.\d{4,9}\/[^?#\s]+)/i); if (d2) { const d = cleanDoi(d2[1]); if (d) return d; }
+    const pm = document.querySelector('meta[name="citation_pmid" i]')?.getAttribute("content")?.trim(); if (pm && /^\d+$/.test(pm)) return "pmid:" + pm;
+    const ax = u.match(/arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})/i); if (ax) return "arxiv:" + ax[1];
+    return null;
+  }
+  const HERE = location.href.replace(/#.*$/, ""), CANON = deproxy(HERE);
+  let KEY = "lp:" + CANON, PID = null;
   const SKEY = "lp:settings";
-  let DATA = { url: location.href.replace(/#.*$/, ""), title: document.title, created: Date.now(), updated: 0, marks: [], edits: [], pageNote: "" };
+  let DATA = { url: CANON, title: document.title, created: Date.now(), updated: 0, marks: [], edits: [], pageNote: "" };
   let SET = { open: false, pos: null, color: COLORS[0][0], button: true, dock: false, rail: true, progress: true, look: "auto", accent: "#0a5fd0", off: [], on: [], offDefaults: true };
   /* v5: sites where the tools stay off unless you turn them on there: places where you write or chat, not read */
   const OFF_DEFAULT = ["claude.ai", "chatgpt.com", "chat.openai.com", "gemini.google.com", "copilot.microsoft.com", "perplexity.ai", "docs.google.com", "slides.google.com", "sheets.google.com", "drive.google.com", "mail.google.com", "calendar.google.com", "notion.so", "overleaf.com", "outlook.live.com", "outlook.office.com", "teams.microsoft.com", "app.slack.com", "discord.com", "figma.com", "canva.com", "onedrive.live.com", "word.office.com", "office.com", "app.grammarly.com", "github.dev", "colab.research.google.com", "benchling.com"];
@@ -137,8 +164,8 @@
   root.innerHTML = `<style>
   :host{all:initial;--acc:var(--acc);--acc-soft:#e6efff}
   *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .fab{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,0,0,.12);background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer;opacity:.82;transition:opacity .15s,transform .15s}
-  .fab:hover{opacity:1;transform:scale(1.06)} .fab svg{width:30px;height:30px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
+  .fab{position:fixed;right:16px;bottom:14px;width:52px;height:52px;border:0;padding:0;background:none;display:grid;place-items:center;cursor:pointer;opacity:.92;filter:drop-shadow(0 4px 8px rgba(60,35,10,.28));transition:opacity .15s,transform .2s cubic-bezier(.3,1.6,.5,1)}
+  .fab:hover{opacity:1;transform:translateY(-2px) rotate(-6deg) scale(1.08)} .fab svg{width:52px;height:52px} .fab .n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font:700 10.5px/18px sans-serif;text-align:center}
   .bar{position:fixed;display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:14px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border:1px solid rgba(0,0,0,.12);box-shadow:0 10px 30px rgba(15,23,42,.22);color:#18202c;font-size:12.5px;max-width:calc(100vw - 16px);flex-wrap:wrap}
   .bar.dock{left:0!important;right:0!important;top:0!important;border-radius:0;max-width:none;justify-content:center;border-width:0 0 1px}
   .bar button,.pop button,.sel button,.panel button{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;min-width:30px;padding:0 7px;border-radius:8px;font-size:12.5px;color:#18202c;white-space:nowrap}
@@ -183,13 +210,13 @@
   .ol{display:block;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.5px;line-height:1.35}.ol:hover{background:#eef2f7}.ol.h2{padding-left:18px}.ol.h3{padding-left:30px;font-size:12px}.ol.h4{padding-left:42px;font-size:12px;color:#5b6472}
   .pnote{min-height:180px}
   [hidden]{display:none!important}
-  :host(.lp-dark) .bar,:host(.lp-dark) .pop,:host(.lp-dark) .panel,:host(.lp-dark) .menu,:host(.lp-dark) .fab{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .bar button,:host(.lp-dark) .pop button,:host(.lp-dark) .panel button,:host(.lp-dark) .menu button{color:#e8edf3} :host(.lp-dark) .bar button:hover,:host(.lp-dark) .pop button:hover,:host(.lp-dark) .panel button:hover,:host(.lp-dark) .menu button:hover{background:#2b3440} :host(.lp-dark) textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} :host(.lp-dark) .item{border-color:#333d48} :host(.lp-dark) .item:hover{background:#252d37} :host(.lp-dark) .item .nt{color:#9cc3ff} :host(.lp-dark) .sep{background:#3a4450} :host(.lp-dark) .bar button.on{background:rgba(255,255,255,.1)}
+  :host(.lp-dark) .bar,:host(.lp-dark) .pop,:host(.lp-dark) .panel,:host(.lp-dark) .menu{background:#1f2630;color:#e8edf3;border-color:rgba(255,255,255,.14)} :host(.lp-dark) .bar button,:host(.lp-dark) .pop button,:host(.lp-dark) .panel button,:host(.lp-dark) .menu button{color:#e8edf3} :host(.lp-dark) .bar button:hover,:host(.lp-dark) .pop button:hover,:host(.lp-dark) .panel button:hover,:host(.lp-dark) .menu button:hover{background:#2b3440} :host(.lp-dark) textarea{background:#161b22;color:#e8edf3;border-color:#3a4450} :host(.lp-dark) .item{border-color:#333d48} :host(.lp-dark) .item:hover{background:#252d37} :host(.lp-dark) .item .nt{color:#9cc3ff} :host(.lp-dark) .sep{background:#3a4450} :host(.lp-dark) .bar button.on{background:rgba(255,255,255,.1)}
   </style>
   <button class="fab" title="Lab Potato: highlight, comment and edit this page" aria-label="Open Lab Potato tools"></button>
   <div class="bar" role="toolbar" aria-label="Lab Potato" hidden></div>
   <div class="prog" hidden></div><div class="rail" hidden><button class="st" data-r="-1" title="Previous mark (Alt+Up)">▲</button><div class="track"><div class="view"></div></div><button class="st" data-r="1" title="Next mark (Alt+Down)">▼</button></div><div class="sel" hidden></div><div class="pop" hidden></div><div class="panel" hidden></div><div class="menu" hidden></div><div class="toast" hidden></div>`;
   const $ = s => root.querySelector(s), railEl = $(".rail"), track = $(".track"), viewBox = $(".view"), prog = $(".prog"), fab = $(".fab"), bar = $(".bar"), selPop = $(".sel"), pop = $(".pop"), panel = $(".panel"), menuEl = $(".menu"), toastEl = $(".toast");
-  const POTATO = `<svg viewBox="22 46 208 144" aria-hidden="true"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"/><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"/><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"/><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`;
+  const POTATO = `<svg aria-hidden="true" viewBox="0 0 128 128"><defs><radialGradient id="lpfb" cx="36%" cy="30%" r="80%"><stop offset="0" stop-color="#f6cf96"/><stop offset=".55" stop-color="#dba264"/><stop offset="1" stop-color="#b37840"/></radialGradient><radialGradient id="lpfs" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#5a3a1c" stop-opacity=".32"/><stop offset="1" stop-color="#5a3a1c" stop-opacity="0"/></radialGradient><linearGradient id="lpfl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fe08a"/><stop offset="1" stop-color="#3fae5a"/></linearGradient></defs><ellipse cx="66" cy="117" rx="44" ry="7" fill="url(#lpfs)"/><g transform="rotate(-6 66 68)"><path d="M18 70C15 46 34 27 60 23C86 19 108 27 116 47C123 64 119 86 106 99C92 112 70 116 50 112C30 108 20 92 18 70Z" fill="url(#lpfb)"/><path d="M18 70C15 46 34 27 60 23C86 19 108 27 116 47C123 64 119 86 106 99C92 112 70 116 50 112C30 108 20 92 18 70Z" fill="none" stroke="#8a5528" stroke-opacity=".25" stroke-width="2"/><ellipse cx="44" cy="40" rx="16" ry="8" transform="rotate(-24 44 40)" fill="#fff" opacity=".42"/><circle cx="99" cy="50" r="2.4" fill="#9a6232" opacity=".55"/><circle cx="31" cy="86" r="2" fill="#9a6232" opacity=".5"/><circle cx="88" cy="97" r="2.2" fill="#9a6232" opacity=".5"/><ellipse cx="48" cy="79" rx="8" ry="5" fill="#f08c7c" opacity=".55"/><ellipse cx="95" cy="76" rx="8" ry="5" fill="#f08c7c" opacity=".55"/><ellipse cx="55" cy="66" rx="5.4" ry="6.6" fill="#2a1d12"/><ellipse cx="86" cy="64" rx="5.4" ry="6.6" fill="#2a1d12"/><circle cx="56.8" cy="63.4" r="1.9" fill="#fff"/><circle cx="87.8" cy="61.4" r="1.9" fill="#fff"/><path d="M63 79Q71 86 79 78" stroke="#2a1d12" stroke-width="4" fill="none" stroke-linecap="round"/></g><path d="M72 25C72 18 74 12 78 8" stroke="#3fae5a" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M77 10C82 2 94 2 98 6C93 14 84 15 77 10Z" fill="url(#lpfl)"/><path d="M75 13C69 6 59 7 56 11C61 17 70 18 75 13Z" fill="url(#lpfl)"/></svg>`;
   let toastT; function toast(m) { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3200); }
   /* a toast with an Undo button: the last removal can be taken back for a few seconds */
   function toastUndo(m, fn) { toastEl.innerHTML = `${esc(m)} <button class="lnk" style="color:#9cc3ff;margin-left:8px">Undo</button>`; toastEl.querySelector("button").onclick = () => { toastEl.hidden = true; fn(); }; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 7000); }
@@ -436,8 +463,31 @@
     if (openNow) { drawBar(); toast(`Lab Potato is on for ${HOST} again.`); }
   }
   (async () => {
-    try { const st = await store.get([KEY, SKEY]); if (st[SKEY]) SET = Object.assign(SET, st[SKEY]); if (st[KEY]) DATA = Object.assign(DATA, st[KEY]); } catch (e) { /* storage unavailable */ }
+    try {
+      PID = paperId();
+      const isPage = k => k.startsWith("lp:http") || k.startsWith("lp:file");
+      const st = await store.get(null);
+      if (st[SKEY]) SET = Object.assign(SET, st[SKEY]);
+      // every record that is this paper: the same DOI, or the same address once any proxy is undone (this also
+      // finds notes saved before v7 under a proxy address)
+      const same = Object.keys(st).filter(k => isPage(k) && st[k] && ((PID && st[k].paper === PID) || k === "lp:" + HERE || deproxy(k.slice(3)) === CANON));
+      same.sort((a, b) => (st[b].updated || 0) - (st[a].updated || 0));
+      if (same.length) { KEY = same[0]; DATA = Object.assign(DATA, st[KEY]); }
+      DATA.url = KEY.slice(3);   // the sync and the library find a record by its address
+      if (PID) DATA.paper = PID;
+      const moved = same.length && st[KEY].lastUrl !== HERE;
+      DATA.lastUrl = HERE;   // the library opens the paper where you last read it (through the proxy, if that is how you get in)
+      // notes kept under another address for the same paper join this one
+      const rest = same.slice(1);
+      if (rest.length) {
+        for (const k of rest) { const o = st[k];
+          for (const m of o.marks || []) if (!DATA.marks.some(x => x.id === m.id || (x.quote?.exact === m.quote?.exact && x.quote?.prefix === m.quote?.prefix))) DATA.marks.push(m);
+          for (const ed of o.edits || []) if (!DATA.edits.some(x => x.id === ed.id)) DATA.edits.push(ed);
+          if ((o.pageNote || "").trim() && !(DATA.pageNote || "").includes(o.pageNote.trim())) DATA.pageNote = [DATA.pageNote, o.pageNote].filter(x => (x || "").trim()).join("\n\n"); }
+        DATA.updated = Date.now(); await store.set({ [KEY]: DATA }); await store.remove(rest);
+      } else if (same.length && (moved || (PID && st[KEY].paper !== PID))) await store.set({ [KEY]: DATA });   // where you read it now; the DOI on notes saved before v7
+    } catch (e) { /* storage unavailable */ }
     if (!siteOff()) boot(false);
-    window.__lpDR = { get data() { return DATA; }, highlight, setOpen, revertEdits, undoEdits, applyAll, stepMark, drawRail };   // for tests
+    window.__lpDR = { get data() { return DATA; }, get key() { return KEY; }, deproxy, paperId, highlight, setOpen, revertEdits, undoEdits, applyAll, stepMark, drawRail };   // for tests
   })();
 })();

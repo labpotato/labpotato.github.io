@@ -9,8 +9,14 @@ you can save a `.lpdoc` project file to keep or move your work.
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
   the safety nets below (Recently removed, Earlier versions) and links extension v5.
-- `doc-reader-extension-v6.zip`: the Chrome extension (unzip, then `chrome://extensions` →
-  Developer mode → Load unpacked; v1 to v5 stay as legacy zips; v6 is v5 repackaged). v4 has Lab Potato's Google
+- `doc-reader-extension-v7.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+  Developer mode → Load unpacked; v1 to v6 stay as legacy zips; v6 is v5 repackaged). v7: one set
+  of notes per paper. A page is filed under its DOI when it names one (`citation_doi`, `dc.identifier`,
+  `prism.doi` meta tags, or a `/doi/10.…` address), and under its address with any library proxy undone
+  (`deproxy()` in `content.js`: EZproxy and OpenAthens hostname form, `www-cell-com.libproxy1.nus.edu.sg`
+  → `www.cell.com`, and the `/login?url=` form). Notes kept before v7 under another address of the same
+  paper are merged on the next visit. The library shows the DOI and opens the paper where it was last read.
+  New icon: the potato on its own, and the floating button is the potato without a circle. v4 has Lab Potato's Google
   OAuth client built in, so Sign in with Google needs no setup. v5 stays off on writing and
   chat sites by default (claude.ai, chatgpt.com, docs.google.com, notion.so, overleaf.com and
   the like; the list is in `content.js` as `OFF_DEFAULT`); the extension icon turns it on for a

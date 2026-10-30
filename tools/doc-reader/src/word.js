@@ -86,6 +86,29 @@ function selBlocks() {
 }
 function blockStyle(prop, val) { const bs = selBlocks(); if (!bs.length) return toast("Put the cursor in a paragraph first."); bs.forEach(b => { b.style[prop] = typeof val === "function" ? val(b) : val; if (!b.getAttribute("style")) b.removeAttribute("style"); }); done(); }
 const lineSpacing = v => blockStyle("lineHeight", v);
+/* v8: indent like Word. Tab (or Ctrl+M) at the very start of a paragraph gives it a first-line indent; again,
+   or anywhere else, moves the whole paragraph in by a step; Shift+Tab (Ctrl+Shift+M) takes a step back.
+   Lists still nest as before. (Older versions wrapped the paragraph in a quote block.) */
+/* the paragraphs under the cursor now (not a selection saved earlier by a toolbar menu) */
+function liveBlocks() {
+  const s = getSelection(); if (!s.rangeCount || !flowEl.contains(s.anchorNode)) return selBlocks(); const r = s.getRangeAt(0);
+  let bs = $$(PBLOCK, flowEl).filter(b => r.intersectsNode(b) && !b.querySelector(PBLOCK) && !b.closest("nav.toc"));
+  if (!bs.length) { let n = elOf(r.startContainer); while (n && n.parentElement !== flowEl) n = n.parentElement; if (n && n !== flowEl) bs = [n]; }
+  return bs;
+}
+function indentBlocks(d) {
+  const sel = getSelection(), bs = liveBlocks().filter(b => !b.closest("li,td,th,pre")); if (!bs.length) return false;
+  const r = sel.rangeCount ? sel.getRangeAt(0) : null;
+  const atStart = b => { if (!r || !r.collapsed) return false; const x = document.createRange(); x.setStart(b, 0); x.setEnd(r.startContainer, r.startOffset); return !x.toString().length; };
+  const em = b => { const m = b.style.marginLeft || ""; return m.endsWith("em") ? parseFloat(m) : m.endsWith("px") ? parseFloat(m) / 16 : 0; };
+  for (const b of bs) {
+    if (d > 0) { if (bs.length === 1 && atStart(b) && !b.style.textIndent) b.style.textIndent = "2em"; else b.style.marginLeft = (em(b) + 2) + "em"; }
+    else { const m = em(b); if (m > 0) b.style.marginLeft = m - 2 > 0 ? (m - 2) + "em" : ""; else b.style.textIndent = ""; }
+    if (!b.getAttribute("style")) b.removeAttribute("style");
+  }
+  flowChanged(); return true;
+}
+{ const c0 = cmd; cmd = function (name) { if ((name === "indent" || name === "outdent") && flowOn() && !liveBlocks().some(b => b.closest("li")) && indentBlocks(name === "indent" ? 1 : -1)) return; return c0.apply(this, arguments); }; }
 function clearParagraph() { const bs = selBlocks(); bs.forEach(b => { b.removeAttribute("style"); b.removeAttribute("align"); }); done(); }
 function moveBlock(d) {
   const sel = getSelection(); if (!sel.rangeCount) return; let b = elOf(sel.anchorNode).closest("li") || elOf(sel.anchorNode);
@@ -503,6 +526,7 @@ function pasteConvert(html, mode) {
       else if (tag === "IMG") { const src2 = n.getAttribute("src"); if (src2 && !/^(file|cid):/i.test(src2)) dst.append(EL("img", { src: src2, alt: n.getAttribute("alt") || "" })); continue; }
       else if (tag === "BR" || tag === "HR") { dst.append(EL(tag.toLowerCase())); continue; }
       else if (/^(TD|TH)$/.test(tag)) { el = EL(tag.toLowerCase()); for (const at of ["colspan", "rowspan"]) if (n.getAttribute(at)) el.setAttribute(at, n.getAttribute(at)); }
+      else if (mode === "match" && /^H[1-6]$/.test(tag)) el = EL("p");   // v8: pasted headings become ordinary text in the document's size
       else if (KEEP_TAGS.has(tag) && !/^(B|STRONG|I|EM|U|S|SUP|SUB)$/.test(tag)) el = EL(tag.toLowerCase());
       else if (tag === "DIV" && [...n.childNodes].some(c => c.nodeType === 3 && c.data.trim())) el = EL("p");
       else if (BLOCKS.has(tag) || /^(DIV|SECTION|ARTICLE|MAIN|HEADER|FOOTER|ASIDE|NAV|CENTER)$/.test(tag)) { walk(n, cs, dst); continue; }
@@ -530,7 +554,10 @@ function closePasteChip() { pasteChip?.remove(); pasteChip = null; }
 function doPaste(data, mode) {
   if (mode === "text") { const paras = data.text.replace(/\r/g, "").split(/\n{2,}|\n/).map(x => x.trim()); if (paras.length > 1) insertHtml(paras.map(x => `<p>${esc(x) || "<br>"}</p>`).join("")); else document.execCommand("insertText", false, data.text); flowChanged(); return; }
   if (!data.html) { if (/^(#|\*|-|\d+\.|>|\|)/m.test(data.text) && data.text.includes("\n")) insertHtml(mdToHtml(data.text)); else doPaste(data, "text"); return; }
-  insertHtml(pasteConvert(data.html, mode));
+  let h = pasteConvert(data.html, mode);
+  // one pasted paragraph joins the paragraph it lands in, instead of starting a new one
+  const t = EL("div", { html: h }); if (t.children.length === 1 && t.firstElementChild.tagName === "P" && ![...t.childNodes].some(n => n.nodeType === 3 && n.data.trim())) h = t.firstElementChild.innerHTML;
+  insertHtml(h);
 }
 document.addEventListener("paste", e => {
   if (!flowOn() || !e.target.closest?.("#flow") || e.target.closest(".ai-chg")) return;
@@ -539,7 +566,7 @@ document.addEventListener("paste", e => {
   if (!data.html && !data.text) return;
   e.preventDefault(); e.stopPropagation(); closePasteChip();
   const sel = getSelection(), r = sel.getRangeAt(0), before = flowEl.innerHTML, a = textOffset(r.startContainer, r.startOffset), b = textOffset(r.endContainer, r.endOffset);
-  const mode = W.plainPaste ? "text" : (Prefs.get("pasteMode", "keep")); W.plainPaste = false;
+  const mode = W.plainPaste ? "text" : (Prefs.get("pasteMode2", "match"));   // v8: by default pasted text takes the document's own font and size W.plainPaste = false;
   doPaste(data, data.html ? mode : "text");
   if (!data.html) return;
   const rr = getSelection().rangeCount ? getSelection().getRangeAt(0).getBoundingClientRect() : null;
@@ -548,7 +575,7 @@ document.addEventListener("paste", e => {
   for (const [m, l, t] of [["keep", "Keep source formatting", "Fonts, sizes, bold and colours as in the source"], ["match", "Match this document", "Headings, lists, bold and italic; the document's own font and size"], ["text", "Plain text", "Ctrl+Shift+V"]]) {
     pasteChip.append(EL("button", { class: m === mode ? "on" : "", title: t, onpointerdown: ev => ev.preventDefault(), onclick: ev => {
       ev.preventDefault(); flowEl.innerHTML = before; const [n1, o1] = pointAt(a), [n2, o2] = pointAt(b), rg = document.createRange(); rg.setStart(n1, o1); rg.setEnd(n2, o2);
-      flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(rg); doPaste(data, m); if (m !== "text") Prefs.set("pasteMode", m); $$("button", pasteChip).forEach(x => x.classList.toggle("on", x === ev.currentTarget)); } }, l));
+      flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(rg); doPaste(data, m); if (m !== "text") Prefs.set("pasteMode2", m); $$("button", pasteChip).forEach(x => x.classList.toggle("on", x === ev.currentTarget)); } }, l));
   }
   document.body.append(pasteChip); const chip = pasteChip; setTimeout(() => document.addEventListener("keydown", closePasteChip, { once: true }), 0); setTimeout(() => { if (pasteChip === chip) closePasteChip(); }, 15000);
 }, true);

@@ -235,3 +235,7 @@ body.weblayout .flow-wrap{padding:0!important;min-height:100%}
 body.weblayout .flow-paper,body.weblayout .flow-paper[data-w],body.weblayout .flow-paper[data-w].nomargin{width:100%!important;max-width:none!important}
 body.weblayout .flow-paper .flow{max-width:none!important;width:100%;box-shadow:none!important;border-radius:0;padding:calc(36px * var(--z,1)) clamp(20px,5vw,72px) calc(80px * var(--z,1));min-height:100%}
 body.weblayout #pageWSel,body.weblayout .page-grip{display:none!important}
+
+/* v8: no home buttons while a document is open */
+body.doc-open #homeBtn,body.doc-open .all-tools,body.doc-open [data-wv="home"],body.doc-open [data-act="home"]{display:none!important}
+body.doc-open a.brand{pointer-events:none;cursor:default}

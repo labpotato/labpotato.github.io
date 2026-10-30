@@ -107,12 +107,13 @@ function stageSend(extra) {
 }
 async function stageSendRange(range, extra) {
   if (stage && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`)) { stageShow(); return toast("Finish the open stage first: Send back or Discard."); }
+  const y0 = (() => { const e = elOf(range.startContainer); return (e.closest(AI_BLOCK) || e).getBoundingClientRect().top; })();   // where you were working, on screen
   $$(".rv-src", flowEl).forEach(rvUnwrap);
   const id = uid(), src = EL("span", { class: "rv-src", "data-stage": id, title: "On the AI stage. Edit it here if you like: your edits win over the AI's version." });
   src.append(range.extractContents()); range.insertNode(src); getSelection().removeAllRanges(); flowEl.normalize();
   const srcLight = toLight(src), marks = rvInstructions(src);
   const instr = [extra && extra.trim(), ...marks].filter(Boolean).join("\n") || "Improve the wording and the logical flow; keep the meaning, the facts and the citations.";
-  stage = { id, srcLight, instr };
+  stage = { id, srcLight, instr, y0 };
   stageDraw(); $(".st-n", stageEl).textContent = marks.length ? `${marks.length} mark${marks.length === 1 ? "" : "s"}` : "";
   $("#stInstr").innerHTML = instr.split("\n").map(l => `<div>${esc(l)}</div>`).join("");
   const focus = stageContext(id, srcLight); if (!focus) { stage = null; return toast("Could not open the stage for that passage."); }
@@ -203,11 +204,19 @@ async function stageBack() {
     if (!v) { stageClose(false); return toast("Kept your version. The AI's version is gone with the stage."); }
     if (v.both) { src.after(document.createTextNode(" "), lightOrHtml(html)); } else { src.innerHTML = ""; src.append(lightOrHtml(html)); }
   } else { src.innerHTML = ""; src.append(lightOrHtml(html)); }
-  const kids = [...src.childNodes]; src.replaceWith(...kids); flowEl.normalize(); aiCommit();
-  kids.filter(n => n.nodeType === 1).forEach(flashEl); stageClose(false); toast("Sent back: the passage now reads as the AI's version.");
+  const kids = [...src.childNodes], y0 = stage.y0, anchor = src.closest(AI_BLOCK) || src.parentElement; src.replaceWith(...kids); flowEl.normalize(); aiCommit();
+  kids.filter(n => n.nodeType === 1).forEach(flashEl); stageClose(false); stageReturn(anchor, y0); toast("Sent back: the passage now reads as the AI's version.");
+}
+/* after Send back or Discard the text comes back to where you were working: the passage at the same height on
+   screen as when you sent it, whatever the stage and the folded panels did to the layout meanwhile */
+function stageReturn(el, y0) {
+  if (!el || y0 == null) return;
+  const go = () => { if (!el.isConnected) return; const d = el.getBoundingClientRect().top - y0; if (Math.abs(d) > 1) viewer.scrollTop += d; };
+  requestAnimationFrame(() => { go(); setTimeout(go, 120); setTimeout(go, 400); });
 }
 function stageClose(keepMarks) {
-  const src = stage && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`); if (src) rvUnwrap(src);
+  const src = stage && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`), back = src && (src.closest(AI_BLOCK) || src.parentElement), y0 = stage?.y0; if (src) rvUnwrap(src);
+  setTimeout(() => stageReturn(back, y0), 0);
   $$(".ai-chg[data-ai]", stageBody).forEach(x => { const ch = aiChange(x.dataset.ai); if (ch && ch.status === "pending") ch.status = "discarded"; });
   if (stage) stageFold(false);
   stageBody.innerHTML = ""; stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); stage = null; stageBtn();
@@ -381,6 +390,13 @@ document.addEventListener("click", e => {
   webLayout();
 }, true);
 { const b = $('.tbar [data-act="webView"]'); if (b) b.title = "Web layout: the document as a web page across the whole window, with every tool"; }
+/* v8: no way home by mistake while a document is open: the Documents button, the All tools link, the web view's
+   home button and the Lab Potato link are hidden or inert. Save → Close document… goes back, after asking. */
+{ const od = openDoc; openDoc = async function () { const r = await od.apply(this, arguments); document.body.classList.toggle("doc-open", !!S.doc); return r; }; }
+{ const gh = goHome; goHome = function () { document.body.classList.remove("doc-open"); return gh.apply(this, arguments); }; }
+{ const sm = saveMenu; saveMenu = function (anchor) {
+    const m0 = menu; menu = (items, ...rest) => { menu = m0; return m0([...items, { sep: true }, { label: "Close document…", sub: "Back to your documents; it stays saved", fn: () => { if (confirm("Close this document and go back to your documents? It stays saved.")) goHome(); } }], ...rest); };
+    try { return sm.apply(this, arguments); } finally { menu = m0; } }; }
 /* the choice is remembered: each document opens in the layout used last (the settings are loaded by then) */
 { const od = openDoc; openDoc = async function () { const r = await od.apply(this, arguments); if (S.doc?.kind === "flow" && !S.webview) webLayout(Prefs.get("webLayout", false), false); return r; }; }
 

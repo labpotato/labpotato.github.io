@@ -48,13 +48,27 @@ function rvInstructions(root) {
     else if (m.classList.contains("rv-c")) out.push(`About «${t}»: ${m.dataset.note || "see the note"}`); }
   return [...new Set(out)];
 }
-/* the bar that appears on a selection gets the marks and the stage */
-{ const sp = showSelPop; showSelPop = function () { const r = sp.apply(this, arguments); const p = $(".selpop"); if (!p || !S.doc || S.doc.kind !== "flow" || S.webview) return r;
-    const mk = (lbl, fn, title) => p.append(EL("button", { onclick: e => { e.preventDefault(); closeSelPop(); fn(); }, onpointerdown: e => e.preventDefault(), title }, lbl));
-    mk("Cross out", () => rvMark("X"), "Cross out: tell the AI to remove these words (Alt+X)");
-    mk("Better wording", () => rvMark("W"), "Cross out for better wording: tell the AI to replace these words (Alt+W)");
-    mk("AI stage →", () => stageSend(""), "Send the passage, with its marks and comments, to the AI stage beside the text (Alt+S)");
-    return r; }; }
+/* the bar that appears on a selection, for written documents: highlight and comment, the two marks, the AI.
+   Each button is an icon with a short word; the key is in the tooltip. PDFs keep their own bar. */
+{ const sp = showSelPop; showSelPop = function () {
+    if (!S.doc || S.doc.kind !== "flow" || S.webview) return sp.apply(this, arguments);
+    closeSelPop(); const sel = getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0).getBoundingClientRect(); if (!r.width) return;
+    const p = EL("div", { class: "imgtools selpop selpro", role: "toolbar", "aria-label": "Selection" });
+    const B = (icon, lbl, fn, title, cls = "") => p.append(EL("button", { type: "button", class: cls, title, "aria-label": title, onclick: e => { e.preventDefault(); closeSelPop(); fn(); }, onpointerdown: e => e.preventDefault() }, ICON(icon), EL("span", { class: "lbl" }, lbl)));
+    const sep = () => p.append(EL("span", { class: "sp-sep", "aria-hidden": "true" }));
+    B("i-hl", "Highlight", () => flowHighlight(), "Highlight in the current colour");
+    B("i-comment", "Comment", () => flowComment(), "Comment: a note on these words, which the AI reads too (Alt+C)");
+    sep();
+    B("i-strike", "Cross out", () => rvMark("X"), "Cross out: tell the AI to remove these words (Alt+X)", "rvx");
+    B("i-rotate", "Reword", () => rvMark("W"), "Cross out for better wording: tell the AI to replace these words (Alt+W)", "rvw");
+    sep();
+    B("i-ai", "Ask AI", () => aiAskOpen(), "Ask the AI about these words, in place (Alt+A)", "ai");
+    B("i-next", "AI stage", () => stageSend(""), "Send the passage, with its marks and comments, to the AI stage beside the text (Alt+S)", "ai stage");
+    document.body.append(p);
+    const w = p.offsetWidth, h = p.offsetHeight, x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), y = r.top - h - 10 > 56 ? r.top - h - 10 : r.bottom + 10;
+    p.style.cssText = `position:fixed;left:${x}px;top:${y}px`;
+  }; }
 if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]]);
 
 /* --- the stage --- */

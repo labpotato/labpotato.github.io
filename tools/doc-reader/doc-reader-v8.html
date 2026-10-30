@@ -704,6 +704,18 @@ g.mark-flash{animation:none;filter:drop-shadow(0 0 4px #ff9f1c) drop-shadow(0 0 
 .work.has-stage .viewer{min-width:320px}
 @media (max-width:900px){.ai-stage{max-width:none;min-width:0}}
 
+/* v8: the selection bar for written documents */
+.imgtools.selpro{display:flex;align-items:center;gap:1px;padding:4px;border-radius:12px;background:color-mix(in srgb,var(--card) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line-2);box-shadow:0 12px 32px -12px rgba(16,24,40,.35),0 1px 2px rgba(16,24,40,.08);animation:popIn .1s ease-out}
+.imgtools.selpro button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 9px;border-radius:8px;font-size:12.5px;font-weight:550;color:var(--ink-2);white-space:nowrap}
+.imgtools.selpro button svg{width:15px;height:15px;flex:none}
+.imgtools.selpro button:hover{background:var(--line);color:var(--ink)}
+.imgtools.selpro button.rvx:hover{background:var(--del-l);color:var(--del)}
+.imgtools.selpro button.rvw:hover{background:color-mix(in srgb,#f5b700 18%,transparent);color:#8a5a00}
+.imgtools.selpro button.ai{color:var(--ai)}.imgtools.selpro button.ai:hover{background:var(--ai-l);color:var(--ai-d)}
+.imgtools.selpro button.stage{background:var(--ai);color:#fff;font-weight:600}.imgtools.selpro button.stage:hover{background:var(--ai-d);color:#fff}
+.imgtools.selpro .sp-sep{width:1px;height:18px;background:var(--line);margin:0 3px}
+@media (max-width:640px){.imgtools.selpro button .lbl{display:none}.imgtools.selpro button{padding:0 7px}}
+
 /* ---------- Doc Reader: Word-style editing ---------- */
 /* menu bar above the toolbar */
 .menubar{display:flex;align-items:center;gap:2px;height:30px;padding:0 10px;background:var(--card);border-bottom:1px solid var(--line);flex:0 0 auto;overflow-x:auto;scrollbar-width:none}
@@ -107875,13 +107887,27 @@ function rvInstructions(root) {
     else if (m.classList.contains("rv-c")) out.push(`About «${t}»: ${m.dataset.note || "see the note"}`); }
   return [...new Set(out)];
 }
-/* the bar that appears on a selection gets the marks and the stage */
-{ const sp = showSelPop; showSelPop = function () { const r = sp.apply(this, arguments); const p = $(".selpop"); if (!p || !S.doc || S.doc.kind !== "flow" || S.webview) return r;
-    const mk = (lbl, fn, title) => p.append(EL("button", { onclick: e => { e.preventDefault(); closeSelPop(); fn(); }, onpointerdown: e => e.preventDefault(), title }, lbl));
-    mk("Cross out", () => rvMark("X"), "Cross out: tell the AI to remove these words (Alt+X)");
-    mk("Better wording", () => rvMark("W"), "Cross out for better wording: tell the AI to replace these words (Alt+W)");
-    mk("AI stage →", () => stageSend(""), "Send the passage, with its marks and comments, to the AI stage beside the text (Alt+S)");
-    return r; }; }
+/* the bar that appears on a selection, for written documents: highlight and comment, the two marks, the AI.
+   Each button is an icon with a short word; the key is in the tooltip. PDFs keep their own bar. */
+{ const sp = showSelPop; showSelPop = function () {
+    if (!S.doc || S.doc.kind !== "flow" || S.webview) return sp.apply(this, arguments);
+    closeSelPop(); const sel = getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0).getBoundingClientRect(); if (!r.width) return;
+    const p = EL("div", { class: "imgtools selpop selpro", role: "toolbar", "aria-label": "Selection" });
+    const B = (icon, lbl, fn, title, cls = "") => p.append(EL("button", { type: "button", class: cls, title, "aria-label": title, onclick: e => { e.preventDefault(); closeSelPop(); fn(); }, onpointerdown: e => e.preventDefault() }, ICON(icon), EL("span", { class: "lbl" }, lbl)));
+    const sep = () => p.append(EL("span", { class: "sp-sep", "aria-hidden": "true" }));
+    B("i-hl", "Highlight", () => flowHighlight(), "Highlight in the current colour");
+    B("i-comment", "Comment", () => flowComment(), "Comment: a note on these words, which the AI reads too (Alt+C)");
+    sep();
+    B("i-strike", "Cross out", () => rvMark("X"), "Cross out: tell the AI to remove these words (Alt+X)", "rvx");
+    B("i-rotate", "Reword", () => rvMark("W"), "Cross out for better wording: tell the AI to replace these words (Alt+W)", "rvw");
+    sep();
+    B("i-ai", "Ask AI", () => aiAskOpen(), "Ask the AI about these words, in place (Alt+A)", "ai");
+    B("i-next", "AI stage", () => stageSend(""), "Send the passage, with its marks and comments, to the AI stage beside the text (Alt+S)", "ai stage");
+    document.body.append(p);
+    const w = p.offsetWidth, h = p.offsetHeight, x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), y = r.top - h - 10 > 56 ? r.top - h - 10 : r.bottom + 10;
+    p.style.cssText = `position:fixed;left:${x}px;top:${y}px`;
+  }; }
 if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]]);
 
 /* --- the stage --- */

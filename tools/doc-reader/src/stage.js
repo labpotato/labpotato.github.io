@@ -80,9 +80,9 @@ function stageDraw() {
     EL("button", { class: "tb", title: "Hide the stage; the AI stage button in the toolbar brings it back", onclick: () => stageHide() }, ICON("i-x"))));
   stageEl.append(EL("div", { class: "st-instr", id: "stInstr" }));
   stageEl.append(stageBody);
-  stageEl.append(EL("div", { class: "st-foot" }, EL("span", { class: "st-status", id: "stStatus" }), EL("span", { style: "flex:1" }),
-    EL("button", { class: "btn small", onclick: () => stageClose(true), title: "Throw the AI's version away and keep the original" }, "Discard"),
-    EL("button", { class: "btn small ai", id: "stBack", disabled: "", onclick: stageBack, title: "Put the result where the passage was (Alt+Enter)" }, "← Send back")));
+  stageEl.append(EL("div", { class: "st-foot" }, EL("span", { class: "st-status", id: "stStatus" }),
+    EL("button", { class: "btn ai st-back", id: "stBack", disabled: "", onclick: stageBack, title: "Put the result where the passage was (Alt+Enter)" }, "← Send back"),
+    EL("span", { class: "st-foot-r" }, EL("button", { class: "btn small", onclick: () => stageClose(true), title: "Throw the AI's version away and keep the original" }, "Discard"))));
 }
 /* the stage shows the whole document, greyed, with the passage's block in focus: lines can be compared side by side */
 function stageContext(id, srcLight) {
@@ -308,6 +308,24 @@ stageBody.addEventListener("mouseup", () => setTimeout(stageSelPop, 10));
 stageBody.addEventListener("keyup", e => { if (e.shiftKey && /^(Arrow|Home|End)/.test(e.key)) stageSelPop(); });
 stageBody.addEventListener("mousedown", () => { closeSelPop(); $$(".st-pop").forEach(x => x.remove()); });
 stageBody.addEventListener("input", () => { closeSelPop(); stageStatus(); });
+/* the passage on the stage is one editing area: no locked islands inside it (a drag that starts on a locked
+   island selects nothing once the passage has the focus). Changes still under review are guarded instead:
+   typing into one, or deleting across one, is stopped with a hint. Everything else, the accepted words
+   included, edits freely. */
+const stUnlock = () => $$(".st-focus [contenteditable]", stageBody).forEach(e => e.removeAttribute("contenteditable"));
+new MutationObserver(stUnlock).observe(stageBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["contenteditable"] });
+let stHintAt = 0;
+stageBody.addEventListener("beforeinput", e => {
+  const f = stageBody.querySelector(".st-focus"); if (!f || !f.contains(e.target === f ? f : e.target)) return;
+  const pend = $$(".ai-h, .ai-chg.busy", f); if (!pend.length) return;
+  const rs = e.getTargetRanges ? e.getTargetRanges() : []; const ranges = rs.length ? rs : (getSelection().rangeCount ? [getSelection().getRangeAt(0)] : []);
+  const hit = ranges.some(sr => { const r = document.createRange(); try { r.setStart(sr.startContainer, sr.startOffset); r.setEnd(sr.endContainer, sr.endOffset); } catch (x) { return false; }
+    if (r.collapsed) return !!elOf(r.startContainer)?.closest(".ai-h, .ai-chg.busy");
+    return pend.some(h => r.intersectsNode(h)); });
+  if (!hit) return;
+  e.preventDefault();
+  if (Date.now() - stHintAt > 2500) { stHintAt = Date.now(); toast("That part is still a suggestion: Tab or Accept & edit takes it, then you can change it."); }
+});
 /* keys on the stage, before the in-place review keys: with the bar up, Tab takes the selection, Esc rolls it
    back, Alt+A redoes it. While you type in accepted words, Tab moves on to the next change and Esc stops editing. */
 addEventListener("keydown", e => {

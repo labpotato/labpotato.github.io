@@ -175,6 +175,8 @@ Selecting words inside the AI's version on the stage brings up **Accept & edit**
 are taken and the caret lands in them), **Roll back** (Esc: the changes the selection touches go back to
 your words) and **Redo with AI** (Alt+A, optional note; several touched changes are joined into one).
 Once part of a sentence is taken, rolling back the rest drops only the AI's leftover words; your original
-sentence stays on hover. The passage on the stage (`.st-focus`) is editable throughout, and Send back
-carries those edits, without the review markup.
+sentence stays on hover. The passage on the stage (`.st-focus`) is one editing area throughout: on the
+stage the changes carry no `contenteditable="false"` (a drag starting on such an island selects nothing
+once the passage has focus); a `beforeinput` guard instead stops typing into, or deleting across, a change
+still under review. Send back, in the middle of the stage's footer, carries the edits without the review markup.
 

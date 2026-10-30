@@ -1624,3 +1624,239 @@ details.tool-new>ul{margin-top:8px}
 .le-steps b{color:var(--text)}
 @media (max-width:980px){.le-hub{grid-template-columns:1fr}.le-steps{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.le-steps{grid-template-columns:1fr}.le-row{grid-template-columns:38px minmax(0,1fr)}.le-how{display:none}}
+
+/* ============================================================
+   POLISH LAYER: same layout, more finish. Depth, light and motion
+   on top of everything above; every colour comes from the theme
+   variables, so light and dark both follow.
+   ============================================================ */
+:root { --glow: color-mix(in srgb, var(--accent) 22%, transparent); --hair: color-mix(in srgb, var(--text) 9%, transparent); }
+
+/* page: a faint graph-paper grid behind the top of the page, fading out */
+body { position: relative; background:
+  radial-gradient(color-mix(in srgb, var(--text) 9%, transparent) 1px, transparent 1.2px) 0 0 / 22px 22px,
+  var(--bg); }
+body::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  background: linear-gradient(180deg, transparent 0, transparent 240px, var(--bg) 900px); }
+.section-tint { background: color-mix(in srgb, var(--bg-tint) 82%, transparent); backdrop-filter: blur(2px); }
+
+/* header: frosted glass with a hairline glow */
+.site-header { background: color-mix(in srgb, var(--surface) 70%, transparent); border-bottom-color: var(--hair);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 60%, transparent) inset, 0 8px 24px -18px rgba(16, 24, 40, .25); }
+.main-nav a { position: relative; transition: color .2s var(--ease); }
+.main-nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left; transition: transform .25s var(--ease); }
+.main-nav a:hover::after { transform: scaleX(1); }
+
+/* hero: livelier colour fields that drift slowly, and a gradient on the last line */
+.hero-mesh { filter: blur(28px) saturate(130%); animation: lp-drift 22s ease-in-out infinite alternate; }
+@keyframes lp-drift { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-2%, 2%, 0) scale(1.04); } 100% { transform: translate3d(2%, -1%, 0) scale(1.02); } }
+.hero h1 { font-weight: 750; letter-spacing: -0.035em; }
+.h1-accent { background: linear-gradient(100deg, var(--potato-deep) 0%, var(--potato) 30%, var(--accent) 75%, color-mix(in srgb, var(--accent) 70%, #8b5cf6) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 200% 100%; animation: lp-sheen 9s ease-in-out infinite alternate; }
+@keyframes lp-sheen { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 75%, transparent); border: 1px solid color-mix(in srgb, var(--potato) 35%, var(--border));
+  box-shadow: 0 4px 14px -8px color-mix(in srgb, var(--potato) 60%, transparent); }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--potato); box-shadow: 0 0 0 3px color-mix(in srgb, var(--potato) 25%, transparent); }
+.mascot svg { filter: drop-shadow(0 18px 24px rgba(120, 80, 30, .18)); }
+.mascot-caption { display: inline-block; padding: 5px 12px; border-radius: 999px; background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--hair); }
+
+/* buttons: depth, a light edge and a sheen that sweeps across on hover */
+.btn { position: relative; overflow: hidden; }
+.btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, #fff) 0%, var(--accent) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 1px 2px rgba(16, 24, 40, .2), 0 10px 24px -10px color-mix(in srgb, var(--accent) 85%, transparent); }
+.btn-primary::after, .tool-open::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .35) 50%, transparent 65%);
+  transform: translateX(-120%); transition: transform .7s var(--ease); pointer-events: none; }
+.btn-primary:hover::after, .tool-card:hover .tool-open::after { transform: translateX(120%); }
+.btn-primary:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 2px 4px rgba(16, 24, 40, .2), 0 16px 32px -12px color-mix(in srgb, var(--accent) 90%, transparent); }
+.btn-ghost { background: color-mix(in srgb, var(--surface) 80%, transparent); backdrop-filter: blur(8px); box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
+
+/* quick launch: the icons sit on a frosted shelf */
+.quick .wrap > .quick-grid, .quick .quick-grid { max-width: 1160px; margin: 0 auto; padding: 26px 22px 22px; border-radius: 26px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent); backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--hair); box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), 0 24px 50px -30px rgba(16, 24, 40, .35); }
+.app-icon { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s var(--ease); }
+.app:hover .app-icon { transform: translateY(-5px) scale(1.06); }
+
+/* section headings: the small label becomes a soft pill */
+.section-tag { padding: 5px 12px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); }
+.section-head h2 { font-weight: 750; letter-spacing: -0.032em; }
+
+/* tool cards: no side bar; a lit top edge, a gradient border and a coloured glow on hover */
+.tool-card { border-radius: 20px; border: 1px solid transparent;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              linear-gradient(160deg, color-mix(in srgb, var(--card) 30%, var(--border)), var(--border) 45%, var(--border)) border-box;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 60%, transparent), 0 1px 2px rgba(16, 24, 40, .05), 0 12px 28px -22px rgba(16, 24, 40, .3);
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease), background .35s var(--ease); }
+.tool-card::before { inset: 0 0 auto 0; width: auto; height: 3px; opacity: 1; border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, transparent, var(--card) 30%, color-mix(in srgb, var(--card) 60%, #fff) 70%, transparent); }
+.tool-card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(420px 160px at 20% 0%, color-mix(in srgb, var(--card) 14%, transparent), transparent 70%); transition: opacity .35s var(--ease); }
+.tool-card:hover { transform: translateY(-5px);
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              linear-gradient(160deg, var(--card), color-mix(in srgb, var(--card) 35%, var(--border)) 50%, var(--border)) border-box;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 60%, transparent), 0 2px 4px rgba(16, 24, 40, .06), 0 28px 50px -28px color-mix(in srgb, var(--card) 70%, rgba(16, 24, 40, .5)); }
+.tool-card:hover::after { opacity: 1; }
+.tool-card > * { position: relative; z-index: 1; }
+.tool-card .tool-icon.app-icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 8px 16px -8px color-mix(in srgb, var(--card) 80%, transparent); }
+.tool-open { position: relative; overflow: hidden; background: linear-gradient(180deg, color-mix(in srgb, var(--card) 85%, #fff), var(--card)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 8px 18px -10px color-mix(in srgb, var(--card) 90%, transparent); }
+.tool-new { border-left-width: 1px; border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--card) 9%, var(--surface)), var(--surface)); }
+.version-pill { border: 1px solid color-mix(in srgb, var(--card) 22%, transparent); }
+
+/* the other cards (integrations, reviews, support, usage) share the same finish */
+.quote-card, .feedback-card, .use-panel, .use-row, .integ-card, .flow-node, .le-row {
+  border-radius: 18px; box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), 0 1px 2px rgba(16, 24, 40, .05), 0 12px 28px -24px rgba(16, 24, 40, .35);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease); }
+.quote-card:hover, .feedback-card:hover, .le-row:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), 0 22px 40px -26px rgba(16, 24, 40, .45); }
+.quote-card { position: relative; overflow: hidden; }
+.quote-card::before { content: "\201C"; position: absolute; right: 18px; top: -18px; font: 700 120px/1 Georgia, serif; color: color-mix(in srgb, var(--potato) 16%, transparent); pointer-events: none; }
+.use-seg { box-shadow: 0 8px 20px -14px rgba(16, 24, 40, .35); }
+
+/* usage: when the numbers were read, and when they are read next */
+.use-fresh { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; width: fit-content; max-width: 100%;
+  margin: -12px auto 18px; padding: 8px 16px; border-radius: 999px; font-size: 13.5px; color: var(--text-muted);
+  background: color-mix(in srgb, var(--surface) 85%, transparent); border: 1px solid var(--border); box-shadow: 0 6px 16px -12px rgba(16, 24, 40, .35); }
+.use-fresh b { color: var(--text); font-weight: 650; }
+.use-fresh-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a36b; box-shadow: 0 0 0 0 rgba(22, 163, 107, .45); animation: lp-pulse 2.2s ease-out infinite; }
+.use-fresh-dot.late { background: #d29b1f; animation: none; }
+.use-fresh-sep { width: 1px; height: 14px; background: var(--border); }
+@keyframes lp-pulse { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 107, .45); } 80%, 100% { box-shadow: 0 0 0 8px rgba(22, 163, 107, 0); } }
+@media (max-width: 640px) { .use-fresh { border-radius: 14px; } .use-fresh-sep { display: none; } }
+
+/* footer: a soft glow line on top */
+.site-footer { position: relative; }
+.site-footer::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--potato) 70%, transparent), color-mix(in srgb, var(--accent) 70%, transparent), transparent); }
+
+/* dark: fewer white highlights, deeper shadows */
+:root[data-theme="dark"] .tool-card, :root[data-theme="dark"] .quote-card, :root[data-theme="dark"] .feedback-card, :root[data-theme="dark"] .use-panel, :root[data-theme="dark"] .use-row, :root[data-theme="dark"] .le-row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 16px 32px -22px rgba(0, 0, 0, .8); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tool-card, :root:not([data-theme="light"]) .quote-card, :root:not([data-theme="light"]) .feedback-card, :root:not([data-theme="light"]) .use-panel, :root:not([data-theme="light"]) .use-row, :root:not([data-theme="light"]) .le-row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 16px 32px -22px rgba(0, 0, 0, .8); } }
+:root[data-theme="dark"] .quick .quick-grid { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 24px 50px -30px rgba(0, 0, 0, .9); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .quick .quick-grid { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 24px 50px -30px rgba(0, 0, 0, .9); } }
+
+@media (prefers-reduced-motion: reduce) { .hero-mesh, .h1-accent, .use-fresh-dot { animation: none; } .btn-primary::after, .tool-open::after { display: none; } }
+
+/* ============================================================
+   PREMIUM PASS: larger type, tighter spacing, more motion, and
+   lab-glassware illustrations. Sits on top of the polish layer.
+   ============================================================ */
+/* type: a step up everywhere */
+body { font-size: 17.5px; }
+.hero h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.04; margin-bottom: 16px; }
+.hero-lede { font-size: clamp(17px, 2.2vw, 20px); line-height: 1.5; max-width: 56ch; margin-bottom: 26px; }
+.eyebrow { font-size: 12px; }
+.btn { font-size: 15.5px; padding: 12px 22px; }
+.section-head h2 { font-size: clamp(28px, 4.4vw, 42px); margin-bottom: 12px; }
+.section-head p { font-size: 17px; }
+.tool-card h3 { font-size: 20.5px; }
+.tool-tagline { font-size: 13.5px; }
+.tool-desc { font-size: 15px; line-height: 1.5; }
+.tool-features li { font-size: 14.5px; }
+.tool-new li { font-size: 14px; }
+.tool-open { font-size: 15px; padding: 10px 18px; }
+.app-name { font-size: 13.5px; }
+.app-cap { font-size: 11.5px; }
+.quote-card blockquote, .quote-card p { font-size: 16.5px; line-height: 1.5; }
+.use-fresh { font-size: 14px; }
+.footer-blurb, .footer-about p { font-size: 15px; }
+
+/* spacing: no dead air between blocks */
+.hero { padding: 28px 0 44px; }
+.mascot-figure { margin-bottom: 8px; }
+.section { padding: 60px 0; }
+.quick { padding: 4px 0 24px; }
+.quick + .section { padding-top: 20px; }
+.section-head { margin-bottom: 26px; }
+.tools-grid { gap: 16px; }
+.tool-card { gap: 12px; padding: 20px 20px 18px; }
+.tc-foot { margin-top: 0; padding-top: 2px; }
+.versions-detail { margin-bottom: auto; }
+.tool-features { padding-top: 10px; gap: 6px; }
+.use-tools { margin-bottom: 14px; }
+.site-footer { padding: 44px 0 20px; }
+.footer-base { margin-top: 32px; padding-top: 16px; }
+
+/* hero: everything rises in, one after the other, when the page opens */
+@keyframes lp-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.mascot-figure, .hero .eyebrow, .hero h1, .hero-lede, .hero-actions, .hero-foot { animation: lp-rise .8s var(--ease) both; }
+.mascot-figure { animation-delay: .05s; }
+.hero .eyebrow { animation-delay: .2s; }
+.hero h1 { animation-delay: .3s; }
+.hero-lede { animation-delay: .42s; }
+.hero-actions { animation-delay: .54s; }
+.hero-foot { animation-delay: .66s; }
+
+/* hero: glassware drifting around the mascot (decoration only; off on phones) */
+.hero-float { position: absolute; inset: 0; pointer-events: none; }
+.hf { position: absolute; width: 64px; height: 64px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  color: var(--accent); opacity: .3; filter: drop-shadow(0 10px 14px rgba(16, 24, 40, .12)); animation: lp-floaty 9s ease-in-out infinite both; }
+.hf-flask { left: 8%; top: 12%; color: var(--potato-deep); animation-duration: 10s; }
+.hf-dna { right: 8%; top: 10%; width: 84px; height: 84px; animation-duration: 12s; animation-delay: -4s; }
+.hf-petri { left: 6%; top: 54%; width: 80px; height: 80px; color: #139171; animation-duration: 11s; animation-delay: -2s; }
+.hf-pipette { right: 8%; top: 56%; color: #6a55d6; animation-duration: 9.5s; animation-delay: -6s; }
+.hf-tube { left: 20%; top: 34%; width: 44px; height: 44px; color: #c94b6d; animation-duration: 8s; animation-delay: -3s; }
+@keyframes lp-floaty { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-4deg); } 50% { transform: translate3d(6px, -16px, 0) rotate(5deg); } }
+@media (max-width: 1100px) { .hero-float { display: none; } }
+
+/* section corner illustrations */
+.section .wrap { position: relative; }
+.sec-art { position: absolute; right: 8px; top: -34px; width: 150px; height: 150px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  color: var(--accent); opacity: .18; pointer-events: none; animation: lp-floaty 14s ease-in-out infinite both; }
+#integrations .sec-art { color: var(--potato-deep); }
+#reviews .sec-art { color: #c94b6d; }
+#usage .sec-art { color: #139171; }
+@media (max-width: 900px) { .sec-art { display: none; } }
+
+/* cards come in one after another as you scroll to them */
+.tools-grid .tool-card:nth-child(2), .quote-grid .quote-card:nth-child(2), .feedback-grid .feedback-card:nth-child(2) { transition-delay: .08s; }
+.tools-grid .tool-card:nth-child(3), .quote-grid .quote-card:nth-child(3), .feedback-grid .feedback-card:nth-child(3) { transition-delay: .16s; }
+.tools-grid .tool-card:nth-child(4), .quote-grid .quote-card:nth-child(4), .feedback-grid .feedback-card:nth-child(4) { transition-delay: .24s; }
+.tools-grid .tool-card:nth-child(5), .quote-grid .quote-card:nth-child(5), .feedback-grid .feedback-card:nth-child(5) { transition-delay: .32s; }
+.tools-grid .tool-card:nth-child(6), .quote-grid .quote-card:nth-child(6), .feedback-grid .feedback-card:nth-child(6) { transition-delay: .4s; }
+.tools-grid .tool-card:nth-child(7), .feedback-grid .feedback-card:nth-child(7) { transition-delay: .48s; }
+.tools-grid .tool-card:nth-child(8), .feedback-grid .feedback-card:nth-child(8) { transition-delay: .56s; }
+.quick-grid .app { opacity: 0; transform: translateY(10px); animation: lp-rise .6s var(--ease) both; }
+.quick-grid .app:nth-child(1) { animation-delay: .5s; } .quick-grid .app:nth-child(2) { animation-delay: .56s; } .quick-grid .app:nth-child(3) { animation-delay: .62s; } .quick-grid .app:nth-child(4) { animation-delay: .68s; }
+.quick-grid .app:nth-child(5) { animation-delay: .74s; } .quick-grid .app:nth-child(6) { animation-delay: .8s; } .quick-grid .app:nth-child(7) { animation-delay: .86s; } .quick-grid .app:nth-child(8) { animation-delay: .92s; }
+
+/* tool cards: a light that travels around the border while you hover */
+@property --lp-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes lp-spin { to { --lp-a: 360deg; } }
+.tool-card:hover {
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+              conic-gradient(from var(--lp-a), var(--card) 0deg, color-mix(in srgb, var(--card) 25%, var(--border)) 70deg, var(--border) 180deg, color-mix(in srgb, var(--card) 25%, var(--border)) 290deg, var(--card) 360deg) border-box;
+  animation: lp-spin 3.2s linear infinite; }
+.tool-card:hover .tool-icon.app-icon { transform: translateY(-2px) rotate(-4deg); }
+
+/* usage: lines draw themselves, bars grow, the live dot breathes */
+@keyframes lp-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.use-hi { stroke-dasharray: 1; stroke-dashoffset: 0; animation: lp-draw 1.6s var(--ease) both; }
+@keyframes lp-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.use-bar i { transform-origin: left; animation: lp-grow 1.2s var(--ease) both; }
+.use-row { transition: transform .25s var(--ease), box-shadow .25s var(--ease); }
+.use-row:hover { transform: translateX(4px); }
+
+/* reviews: the stars twinkle in, the quote mark settles after them */
+@keyframes lp-twinkle { from { opacity: 0; transform: scale(.6) rotate(-8deg); letter-spacing: .3em; } to { opacity: 1; transform: none; letter-spacing: .04em; } }
+.reveal.in .quote-stars { display: inline-block; transform-origin: left center; animation: lp-twinkle .7s var(--ease) both; }
+
+/* theme switch and the header potato: a small nod */
+.theme-switch button { transition: transform .2s var(--ease), background .2s var(--ease); }
+.theme-switch button:hover { transform: scale(1.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-figure, .hero .eyebrow, .hero h1, .hero-lede, .hero-actions, .hero-foot, .quick-grid .app, .hf, .sec-art, .use-hi, .use-bar i, .quote-stars { animation: none; opacity: 1; transform: none; }
+  .tool-card:hover { animation: none; }
+}
+
+/* uniform panels: tool cards match the others in their row, reviews and support cards all match; the launch row and the reviewer line sit on the bottom edge */
+.tools-grid { grid-auto-rows: auto; align-items: stretch; }
+.quote-grid, .feedback-grid { grid-auto-rows: 1fr; align-items: stretch; }
+.tool-card { height: 100%; }
+.tool-card .tc-foot { margin-top: auto; }
+.tool-card .versions-detail { margin-bottom: 0; }
+.quote-card, .feedback-card { height: 100%; display: flex; flex-direction: column; }
+.quote-card figcaption, .quote-card .quote-who { margin-top: auto; }

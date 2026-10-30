@@ -162,7 +162,7 @@ function lineChart(el, data, focus) {
     ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${grid}" stroke-width="1"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" class="use-ax">${nf(v)}</text>`).join("")}
     ${xl.map(k => `<text x="${x(k)}" y="${H - 8}" text-anchor="${n > 1 && k === 0 ? "start" : n > 1 && k === n - 1 ? "end" : "middle"}" class="use-ax">${esc2(data.labels[k].replace(/^wk of /, ""))}</text>`).join("")}
     ${others}
-    <path d="${pathOf(hi.per)}" fill="none" stroke="${hi.color}" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${pathOf(hi.per)}" pathLength="1" class="use-hi" fill="none" stroke="${hi.color}" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${x(n - 1)}" cy="${y(last)}" r="4" fill="${hi.color}" stroke="${css("--surface", "#fff")}" stroke-width="2"/>
     <text x="${x(n - 1) + 10}" y="${y(last) + 4}" class="use-dl">${esc2(hi.name)} · ${nf(last)}</text>
     <g class="use-hover" visibility="hidden"><line class="use-xh" y1="${T}" y2="${H - B}" stroke="${mute}" stroke-width="1" stroke-dasharray="3 3"/><circle class="use-hd" r="4.5" fill="${hi.color}" stroke="${css("--surface", "#fff")}" stroke-width="2"/></g>
@@ -192,7 +192,7 @@ function spark(per, color, labels) {
     <line x1="3" x2="${W - 3}" y1="${BASE + .5}" y2="${BASE + .5}" stroke="${axis}" stroke-width="1"/>
     ${labels && n > 1 ? `<line x1="${x(0)}" x2="${x(0)}" y1="${BASE}" y2="${BASE + 3}" stroke="${axis}"/><line x1="${x(n - 1)}" x2="${x(n - 1)}" y1="${BASE}" y2="${BASE + 3}" stroke="${axis}"/>
     <text x="${x(0)}" y="${H - 2}" class="use-sx">${lab(labels[0])}</text><text x="${x(n - 1)}" y="${H - 2}" text-anchor="end" class="use-sx">${lab(labels[n - 1])}</text>` : ""}
-    <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(n - 1)}" cy="${y(per[n - 1])}" r="3" fill="${color}"/></svg>`;
+    <path d="${d}" pathLength="1" class="use-hi" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(n - 1)}" cy="${y(per[n - 1])}" r="3" fill="${color}"/></svg>`;
 }
 
 /* the world map: countries shaded by visitors, one blue, light (few) to dark (many) */
@@ -303,6 +303,22 @@ function usageDebug() {
   d.innerHTML = `<summary>Requests (${usageLog.filter(x => x.ok).length} answered, ${usageLog.filter(x => !x.ok).length} failed)</summary><ol>${usageLog.map(x => `<li class="${x.ok ? "ok" : "bad"}"><code>${esc2(x.url.replace(USAGE_SITE, ""))}</code> ${esc2(x.why)}</li>`).join("")}</ol>`;
 }
 
+/* when the numbers were read from GoatCounter, and when the hourly job (minute 17 of every hour, UTC) reads them next */
+let freshTimer = null;
+function showFresh(f) {
+  const el = document.getElementById("usage-fresh"); if (!el) return;
+  const at = f && Date.parse(f.generated); if (!at || (typeof window !== "undefined" && window.USAGE_SAMPLE)) { el.hidden = true; return; }
+  const draw = () => {
+    const now = new Date(), next = new Date(now); next.setUTCMinutes(17, 0, 0); if (next <= now) next.setUTCHours(next.getUTCHours() + 1);
+    const hm = d => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), day = d => d.toLocaleDateString([], { day: "numeric", month: "short" });
+    const last = new Date(at), mins = Math.max(1, Math.round((next - now) / 60000)), late = now - at > 2 * 3600e3;
+    el.innerHTML = `<span class="use-fresh-dot${late ? " late" : ""}" aria-hidden="true"></span><span>Updated <b>${day(last)}, ${hm(last)}</b></span><span class="use-fresh-sep" aria-hidden="true"></span><span>Next refresh <b>about ${hm(next)}</b> (in ${mins} min)</span>`;
+    el.title = "Read from the page counter every hour. GitHub sometimes starts the job late; today's openings are also counted live.";
+    el.hidden = false;
+  };
+  draw(); clearInterval(freshTimer); freshTimer = setInterval(draw, 60000);
+}
+
 function initUsage() {
   const sec = document.getElementById("usage"); if (!sec) return;
   sec.hidden = false;
@@ -314,6 +330,7 @@ function initUsage() {
     seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.range === range)));
     sec.classList.add("loading");
     const f = await loadFile();
+    showFresh(f);
     current = f ? fromFile(f, range) : await fromCounter(range, fresh);
     // the daily file is more than a day and a half old (the job failed or has not run): count live from the
     // public counter for the graphs, and keep the map and sources from the file, saying how old they are

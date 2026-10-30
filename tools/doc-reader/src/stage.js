@@ -69,7 +69,7 @@ function rvInstructions(root) {
     const w = p.offsetWidth, h = p.offsetHeight, x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), y = r.top - h - 10 > 56 ? r.top - h - 10 : r.bottom + 10;
     p.style.cssText = `position:fixed;left:${x}px;top:${y}px`;
   }; }
-if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]]);
+if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]], ["On the AI stage", [["Tab / Esc", "Accept / roll back the change at hand (a rewrite goes sentence by sentence)"], ["Select + Tab", "Accept just the selected words, then edit them"], ["Select + Esc", "Roll back the changes the selection touches"], ["Select + Alt+A", "Redo the selection with the AI"]]]);
 
 /* --- the stage --- */
 const aiRequestRaw = aiRequest;   // the in-place request, used only inside the stage
@@ -91,7 +91,7 @@ function stageContext(id, srcLight) {
   $$(".ai-chg", c).forEach(x => x.replaceWith(aiOrigFrag(x)));
   const src = c.querySelector(`.rv-src[data-stage="${id}"]`); if (!src) return null;
   const block = src.closest(AI_BLOCK) || src.parentElement; block.classList.add("st-p");
-  const focus = EL("span", { class: "st-focus" }); focus.append(lightFrag(srcLight)); src.replaceWith(focus);
+  const focus = EL("span", { class: "st-focus", contenteditable: "true", spellcheck: "true" }); focus.append(lightFrag(srcLight)); src.replaceWith(focus);
   stageBody.className = "flow st-body " + [...flowEl.classList].filter(x => x !== "flow").join(" "); stageBody.id = "stBody";
   stageBody.style.cssText = flowEl.style.cssText; stageBody.style.font = getComputedStyle(flowEl).font; stageBody.style.padding = "";
   stageBody.innerHTML = ""; stageBody.append(...c.childNodes);
@@ -173,14 +173,14 @@ function stageStatus() {
   if (!stage) return; const busy = !!stageBody.querySelector(".busy"), open = $$(".ai-h", stageBody).length, back = $("#stBack"), st = $("#stStatus");
   if (!back) return;
   back.disabled = busy || open > 0;
-  st.textContent = busy ? "The AI is working…" : open ? `${open} change${open === 1 ? "" : "s"} to review · Tab accepts, Esc rejects, ✎ asks for more` : stageBody.querySelector(".ai-chg") ? "" : "All decided. Send back puts this where the passage was.";
+  st.textContent = busy ? "The AI is working…" : open ? `${open} change${open === 1 ? "" : "s"} to review · Tab accepts, Esc rolls back · select part of a change to take just that and edit it` : stageBody.querySelector(".ai-chg") ? "" : "All decided. Send back puts this where the passage was.";
   stageBtn();
 }
 new MutationObserver(debounce(() => { stageStatus(); stageAlign("viewer"); }, 60)).observe(stageBody, { childList: true, subtree: true, attributes: true });
 stageBody.addEventListener("click", e => { const c = e.target.closest(".ai-chg"); if (c && c.dataset.ai) { const h = e.target.closest(".ai-h"); if (h) aiSetHunk(h); else aiSetActive(c.dataset.ai); aiRenderChat(); } });
 stageBody.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
 /* the result, as clean html for the document: only the passage, not the greyed context */
-function stageResultHtml() { const f = stageBody.querySelector(".st-focus"); if (!f) return ""; const c = f.cloneNode(true); $$(".ai-chg", c).forEach(x => x.replaceWith(...x.childNodes)); return c.innerHTML; }
+function stageResultHtml() { const f = stageBody.querySelector(".st-focus"); if (!f) return ""; const c = f.cloneNode(true); $$(".ai-chg", c).forEach(x => x.replaceWith(...x.childNodes)); aiUnwrapOk(c); c.querySelectorAll("[contenteditable]").forEach(e => e.removeAttribute("contenteditable")); return c.innerHTML; }
 async function stageBack() {
   if (!stage) return; stageShow(); if (stageBody.querySelector(".busy, .ai-h")) return toast("Decide every change first (Tab accepts, Esc rejects).");
   const src = flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`), html = stageResultHtml();
@@ -226,6 +226,107 @@ function stageClose(keepMarks) {
     { label: "Send the selection to the AI stage", k: "Alt+S", sub: "The AI's version beside the text; Send back when decided", fn: () => stageSend("") },
     { sep: true }, ...items], ...rest); }; try { return am.apply(this, arguments); } finally { menu = m0; } }; }
 
+/* --- take part of the AI's version: select inside it on the stage, then
+   Accept & edit: the selected words are yours now (editable at once), the rest of that change stays to review;
+   Roll back: the changes the selection touches go back to your words;
+   Redo with AI: those changes (joined into one) are written again, with an optional note. On text already
+   decided, Redo asks the AI for a new version of just that selection. */
+const stHunks = range => $$(".ai-h", stageBody).filter(h => !h.classList.contains("busy") && range.intersectsNode(h));
+const stHasText = f => /\S/.test(f.textContent);
+function stCaretAfter(node) {
+  if (!node || !node.isConnected) return; const host = node.parentElement?.closest("[contenteditable=true]"); host?.focus({ preventScroll: true });
+  const r = document.createRange(); r.setStartAfter(node); r.collapse(true); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+}
+function stagePartAccept(range) {
+  const hs = stHunks(range); if (!hs.length) return false;
+  const spans = new Set(); let last = null;
+  for (const h of hs) {
+    const s = h.closest(".ai-chg"), ins = h.querySelector("ins"), del = h.querySelector("del"); spans.add(s);
+    if (!ins) { h.remove(); s.dataset.acc = "1"; continue; }   // a sentence the AI dropped: taking the selection over it takes the removal
+    const r = document.createRange(); r.selectNodeContents(ins);
+    if (range.compareBoundaryPoints(Range.START_TO_START, r) > 0) r.setStart(range.startContainer, range.startOffset);
+    if (range.compareBoundaryPoints(Range.END_TO_END, r) < 0) r.setEnd(range.endContainer, range.endOffset);
+    if (r.collapsed || !stHasText(r.cloneContents())) continue;
+    const piece = (a, b) => { const x = document.createRange(); x.setStart(...a); x.setEnd(...b); return x.cloneContents(); };
+    const bef = piece([ins, 0], [r.startContainer, r.startOffset]), aft = piece([r.endContainer, r.endOffset], [ins, ins.childNodes.length]), mid = r.cloneContents();
+    // once part of a sentence is taken, your sentence is replaced: rolling back the rest drops the AI's leftover
+    // words instead of putting your whole sentence back beside the part you kept. It stays readable on hover.
+    const was = (del ? del.textContent.trim() : "") || (h.title || "").replace(/^Your sentence: /, "");
+    const keepB = stHasText(bef), keepA = stHasText(aft), mk = f => { const n = EL("span", { class: "ai-h part", title: was ? "Your sentence was: " + was : "Added by the AI" }); const i2 = EL("ins", { class: ins.className }); i2.append(f); n.append(i2); return n; };
+    const ok = EL("span", { class: "ai-ok", contenteditable: "true", spellcheck: "true" });
+    if (!keepB) ok.append(bef); ok.append(mid); if (!keepA) ok.append(aft);
+    const nodes = []; if (keepB) nodes.push(mk(bef)); nodes.push(ok); if (keepA) nodes.push(mk(aft));
+    h.replaceWith(...nodes); s.dataset.acc = "1"; last = ok.lastChild;
+  }
+  for (const s of spans) if (s.isConnected && !hunksIn(s).length) aiFinish(s, aiChange(s.dataset.ai));
+  stageBody.querySelector(".st-focus")?.normalize(); aiCommit();
+  const rest = allHunks().filter(h => stageBody.contains(h)); aiSetHunk(rest.find(h => last && last.isConnected && (last.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING)) || rest[0] || null); aiRenderChat();
+  stCaretAfter(last); return true;
+}
+function stagePartReject(range) { const hs = stHunks(range); hs.forEach(h => h.isConnected && aiDecide(h, false)); return hs.length > 0; }
+/* the changes a selection touches, with the unchanged words between them, joined into one change */
+function stJoin(hs) {
+  const s = hs[0].closest(".ai-chg"); hs = hs.filter(h => h.closest(".ai-chg") === s); if (hs.length === 1) return hs[0];
+  const n = EL("span", { class: "ai-h" }), d = EL("del", { class: "ai-d ai-old" }), i = EL("ins", { class: "ai-i ai-new" }), first = hs[0], lastH = hs[hs.length - 1];
+  let x = first; const gone = [];
+  while (x) { gone.push(x);
+    if (x.nodeType === 1 && x.classList.contains("ai-h")) { const xd = x.querySelector("del"), xi = x.querySelector("ins"); if (xd) d.append(...xd.cloneNode(true).childNodes); if (xi) i.append(...xi.cloneNode(true).childNodes); }
+    else if (x.nodeType === 1 && x.classList.contains("ai-ok")) { d.append(...x.cloneNode(true).childNodes); i.append(...x.cloneNode(true).childNodes); }
+    else { d.append(x.cloneNode(true)); i.append(x.cloneNode(true)); }
+    if (x === lastH) break; x = x.nextSibling; }
+  if (d.textContent) n.append(d); if (i.textContent) n.append(i);
+  first.before(n); gone.forEach(g => g.remove()); return n;
+}
+function stagePartRedo(range, extra) {
+  const hs = stHunks(range);
+  if (hs.length) { const h = stJoin(hs); aiSetHunk(h); return aiReviseHunk(h, extra); }
+  return aiRequestRaw(range, extra || "Write this part differently; keep the meaning, the facts and the citations.");
+}
+function stageSelPop() {
+  closeSelPop(); $$(".st-pop").forEach(x => x.remove()); if (!stage) return; const sel = getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0), focus = stageBody.querySelector(".st-focus"); if (!focus || !focus.contains(range.commonAncestorContainer) && !range.intersectsNode(focus)) return;
+  const r = range.getBoundingClientRect(); if (!r.width) return;
+  const keep = range.cloneRange(), hs = stHunks(keep), p = EL("div", { class: "imgtools selpop selpro st-pop", role: "toolbar", "aria-label": "Part of the AI's version" });
+  const B = (icon, lbl, fn, title, cls = "") => p.append(EL("button", { type: "button", class: cls, title, "aria-label": title, onclick: e => { e.preventDefault(); fn(); }, onpointerdown: e => e.preventDefault() }, icon === "tick" ? lightOrHtml('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>') : ICON(icon), EL("span", { class: "lbl" }, lbl)));
+  // the note box survives the selection going away (focus moves into it); it closes itself
+  const redoBox = () => { p.classList.remove("selpop"); p.innerHTML = ""; const inp = EL("input", { type: "text", placeholder: "What should change? (optional) Enter sends", "aria-label": "Instructions for the AI" });
+    const shut = () => p.remove(), go = () => { const x = inp.value.trim(); shut(); stagePartRedo(keep, x); };
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } else if (e.key === "Escape") { e.preventDefault(); shut(); } e.stopPropagation(); });
+    p.addEventListener("focusout", () => setTimeout(() => { if (!p.contains(document.activeElement)) shut(); }, 150));
+    p.append(ICON("i-ai"), inp, EL("button", { type: "button", class: "ai stage", onclick: e => { e.preventDefault(); go(); } }, EL("span", { class: "lbl" }, "Redo"))); inp.focus(); };
+  if (hs.length) {
+    B("tick", "Accept & edit", () => { closeSelPop(); stagePartAccept(keep); }, "Take the selected words; you can edit them straight away. The rest of the change stays to review (Tab)", "ok");
+    B("i-undo", "Roll back", () => { closeSelPop(); stagePartReject(keep); }, "Put your own words back for the changes the selection touches (Esc)", "rvx");
+    p.append(EL("span", { class: "sp-sep", "aria-hidden": "true" }));
+  }
+  B("i-ai", "Redo with AI", redoBox, hs.length ? "Ask the AI to write the selected change(s) again, optionally saying what is wrong (Alt+A)" : "Ask the AI for a new version of just these words (Alt+A)", "ai");
+  document.body.append(p);
+  const w = p.offsetWidth, h = p.offsetHeight, x = clamp(r.left + r.width / 2 - w / 2, 8, innerWidth - w - 8), y = r.top - h - 10 > 56 ? r.top - h - 10 : r.bottom + 10;
+  p.style.cssText = `position:fixed;left:${x}px;top:${y}px`; p._range = keep; p._redo = redoBox; p._hunks = hs.length;
+}
+stageBody.addEventListener("mouseup", () => setTimeout(stageSelPop, 10));
+stageBody.addEventListener("keyup", e => { if (e.shiftKey && /^(Arrow|Home|End)/.test(e.key)) stageSelPop(); });
+stageBody.addEventListener("mousedown", () => { closeSelPop(); $$(".st-pop").forEach(x => x.remove()); });
+stageBody.addEventListener("input", () => { closeSelPop(); stageStatus(); });
+/* keys on the stage, before the in-place review keys: with the bar up, Tab takes the selection, Esc rolls it
+   back, Alt+A redoes it. While you type in accepted words, Tab moves on to the next change and Esc stops editing. */
+addEventListener("keydown", e => {
+  if (!stage || !$("#modalBack").hidden || e.ctrlKey || e.metaKey) return;
+  const p = $(".st-pop"); if (p && e.target.closest?.(".st-pop")) return;
+  if (p && p._range) {
+    if (e.key === "Tab" && !e.altKey && !e.shiftKey && p._hunks) { e.preventDefault(); e.stopPropagation(); closeSelPop(); stagePartAccept(p._range); return; }
+    if (e.key === "Escape" && !e.altKey && p._hunks) { e.preventDefault(); e.stopPropagation(); closeSelPop(); stagePartReject(p._range); return; }
+    if (e.altKey && !e.shiftKey && e.code === "KeyA") { e.preventDefault(); e.stopPropagation(); p._redo(); return; }
+  }
+  if (!stageBody.contains(e.target) || e.altKey || e.shiftKey) return;
+  if (e.key !== "Tab" && e.key !== "Escape") return;
+  const editing = getSelection().anchorNode && elOf(getSelection().anchorNode)?.closest?.(".ai-ok");
+  const next = () => { const rest = allHunks().filter(h => stageBody.contains(h)); return rest.find(h => !aiHunk || h === aiHunk) || rest[0] || null; };
+  e.preventDefault(); e.stopPropagation();
+  if (editing || !aiHunk || !aiHunk.isConnected) { e.target.blur?.(); getSelection().removeAllRanges(); if (e.key === "Tab") { const h = next(); if (h) { aiSetHunk(h); h.scrollIntoView({ block: "nearest" }); } } return; }
+  aiDecide(aiHunk, e.key === "Tab");
+}, true);
+
 /* keys (before the Word layer): Alt+X / W / C mark, Alt+S sends, Alt+Enter sends back */
 document.addEventListener("keydown", e => {
   if (!S.doc || S.doc.kind !== "flow" || S.webview || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -237,5 +338,5 @@ document.addEventListener("keydown", e => {
   else if (k === "KeyS") { e.preventDefault(); e.stopPropagation(); stageSend(""); }
   else if (e.key === "Enter" && stage) { e.preventDefault(); e.stopPropagation(); stageBack(); }
 }, true);
-Object.assign(window, { rvMark, stageSend, stageBack, stageClose, stageHide, stageShow, stageAlign, showSelPop, closeSelPop, get stage() { return stage; } });
+Object.assign(window, { aiChange, aiPaint, aiSetActive, stagePartAccept, stagePartReject, stagePartRedo, stageSelPop, aiSentenceHunks, rvMark, stageSend, stageBack, stageClose, stageHide, stageShow, stageAlign, showSelPop, closeSelPop, get stage() { return stage; } });
 setTimeout(stageBtn, 0);   // for the tests and the console

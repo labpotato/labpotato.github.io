@@ -263,9 +263,41 @@ function aiPaint(ch) {
   const s = aiSpan(ch.id), sg = ch.sugg[ch.cur]; if (!s || !sg) return;
   const d = aiDiff(ch.oldLight, sg.light), rw = ch.view ? ch.view === "rw" : d.big;
   s.className = "ai-chg" + (rw ? " rw" : ""); delete s.dataset.acc; delete s.dataset.rej;
-  s.innerHTML = rw ? `<span class="ai-h"><del class="ai-d ai-old">${d.oldHtml}</del><ins class="ai-i ai-new">${d.newHtml}</ins></span>` : d.html;
+  s.innerHTML = rw ? aiSentenceHunks(ch.oldLight, sg.light) : d.html;
   s.title = (rw ? "AI rewrite" : "AI suggestion") + (sg.note ? ": " + sg.note : "");
 }
+/* v8: a rewrite is offered sentence by sentence. Each sentence of the AI's version is paired with the sentence(s)
+   of yours it replaces (by shared words, in order), so each can be accepted or rolled back on its own. A sentence
+   the AI dropped shows struck through; one it added stands alone. */
+function aiSentences(toks) {
+  const out = []; let cur = [];
+  for (let i = 0; i < toks.length; i++) {
+    cur.push(toks[i]);
+    const t = toks[i].t, prev = toks[i - 1]?.t || "", next = toks[i + 1], after = toks[i + 2];
+    if (/^[.!?…]$/.test(t) && next && isWs(next) && (!after || /^[\p{Lu}\p{N}"'“‘(\[]/u.test(after.t)) && !(prev.length === 1 && /\p{L}/u.test(prev)) && !/^(al|vs|etc|Fig|Figs|Eq|cf|approx|ca|Dr|No|resp)$/.test(prev)) { cur.push(next); i++; out.push(cur); cur = []; }
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+function aiSentenceHunks(oldL, newL) {
+  const A = aiSentences(lightTokens(oldL)), B = aiSentences(lightTokens(newL));
+  const words = ss => new Set(ss.map(t => t.t.toLowerCase()).filter(w => /[\p{L}\p{N}]/u.test(w)));
+  const WA = A.map(words), WB = B.map(words), key = ss => ss.map(t => t.t + "\u0001" + t.s).join("").trim();
+  const sim = (i, j) => { let c = 0; for (const w of WA[i]) if (WB[j].has(w)) c++; return c / Math.max(1, WA[i].size, WB[j].size); };
+  const n = A.length, m = B.length, F = [...Array(n + 1)].map(() => new Float64Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) { const s = sim(i, j); F[i][j] = Math.max(F[i + 1][j], F[i][j + 1], s >= 0.2 ? F[i + 1][j + 1] + s : -1); }
+  const out = []; let i = 0, j = 0;
+  const hunk = (o, nw, title) => `<span class="ai-h"${title ? ` title="${esc(title)}"` : ""}>${o ? `<del class="ai-d${nw ? " ai-old" : ""}">${renderTokens(o)}</del>` : ""}${nw ? `<ins class="ai-i ai-new">${renderTokens(nw)}</ins>` : ""}</span>`;
+  while (i < n || j < m) {
+    if (i < n && j < m && sim(i, j) >= 0.2 && F[i][j] === F[i + 1][j + 1] + sim(i, j)) { out.push(key(A[i]) === key(B[j]) ? renderTokens(B[j]) : hunk(A[i], B[j], "Your sentence: " + A[i].map(t => t.t).join("").trim())); i++; j++; }
+    else if (i < n && (j >= m || F[i][j] === F[i + 1][j])) out.push(hunk(A[i++], null));
+    else out.push(hunk(null, B[j++]));
+  }
+  return out.join("");
+}
+/* accepted text stays editable inside a change that is still being reviewed */
+function aiOkWrap(frag) { if (!frag.textContent) return frag; const o = EL("span", { class: "ai-ok", contenteditable: "true", spellcheck: "true" }); o.append(frag); return o; }
+const aiUnwrapOk = root => $$(".ai-ok", root).forEach(x => x.replaceWith(...x.childNodes));
 function aiCommit() { S.doc.html = flowEl.innerHTML; changed({ quiet: true }); layoutMarginSoon(); refreshNotesSoon(); }
 
 /* ---- accept, reject: one edit at a time, or the whole suggestion ---- */
@@ -276,18 +308,20 @@ const partOf = (h, sel) => { const f = document.createDocumentFragment(); const 
 function aiOrigFrag(s) {
   const ch = aiChange(s.dataset.ai);
   if (ch && !s.dataset.acc && !s.dataset.rej) return lightOrHtml(ch.oldHtml);
-  const c = s.cloneNode(true); hunksIn(c).forEach(h => h.replaceWith(partOf(h, "del"))); const f = document.createDocumentFragment(); f.append(...c.childNodes); return f;
+  const c = s.cloneNode(true); hunksIn(c).forEach(h => h.replaceWith(partOf(h, "del"))); aiUnwrapOk(c); const f = document.createDocumentFragment(); f.append(...c.childNodes); return f;
 }
 function aiDecide(h, accept) {
   const s = h?.closest(".ai-chg"); if (!s || s.classList.contains("busy") || h.classList.contains("busy")) return;
   const ch = aiChange(s.dataset.ai), all = allHunks(), i = all.indexOf(h);
-  h.replaceWith(partOf(h, accept ? "ins" : "del")); s.dataset[accept ? "acc" : "rej"] = "1";
+  // the leftover of a partly taken sentence has no words of yours behind it: rolling it back keeps one space so words do not run together
+  const gap = !accept && h.classList.contains("part") && /^\s|\s$/.test(h.textContent) ? document.createTextNode(" ") : null;
+  h.replaceWith(accept ? aiOkWrap(partOf(h, "ins")) : gap || partOf(h, "del")); s.dataset[accept ? "acc" : "rej"] = "1";
   if (!hunksIn(s).length) aiFinish(s, ch);
   aiCommit(); const rest = allHunks(); aiSetHunk(rest[Math.min(i, rest.length - 1)] || null); aiRenderChat();
 }
 /* every edit decided: the suggestion becomes plain text again */
 function aiFinish(s, ch) {
-  const acc = !!s.dataset.acc, rej = !!s.dataset.rej;
+  const acc = !!s.dataset.acc, rej = !!s.dataset.rej; aiUnwrapOk(s);
   if (!acc) s.replaceWith(lightOrHtml(ch.oldHtml)); else { const last = s.lastChild; s.replaceWith(...s.childNodes); if (last && aiActive === ch.id && flowEl.contains(last)) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); flowEl.focus({ preventScroll: true }); getSelection().removeAllRanges(); getSelection().addRange(r); } }
   flowEl.normalize(); ch.status = acc && rej ? "partly" : acc ? "accepted" : "rejected";
   if (ch.via !== "demo") aiState().feedback.push(`${ch.status === "partly" ? "accepted part of" : ch.status} your version for request ${ch.n}`);
@@ -323,7 +357,7 @@ async function aiReviseHunk(h, extra) {
     else res = await aiTurn(`Request ${ch.n}, one part again\nInstruction for the passage: ${ch.instr}\n\nYour current version of the passage, with the part to redo between ⟦ and ⟧:\n${passage}\n\nThe author's original text for that part: «${orig || "(nothing: you added this part)"}»\n${extra ? "What the author wants: " + extra : "The author is not happy with this part: write it differently."}\n\nReply with the new text for the marked part only, in <revision>, so it fits between the text before and after it.`);
     if (!h.isConnected) return;
     const sp = (part || orig).match(/^\s*/)[0], tr = (part || orig).match(/\s*$/)[0], body = cleanLight(res.revision ?? res.text).replace(/^\s+|\s+$/g, "");
-    const html = body ? renderTokens(lightTokens(sp + body + tr)) : "";
+    const html = body ? renderTokens(lightTokens(sp + body + tr)) : (sp || tr) ? " " : "";
     if (html) { let i2 = h.querySelector("ins"); if (!i2) { i2 = EL("ins", { class: "ai-i" }); h.append(i2); } i2.innerHTML = html; } else h.querySelector("ins")?.remove();
     if (res.note) h.dataset.note = res.note.replace(/^Demo: /, ch.via === "demo" ? "Demo: " : "");
     h.classList.remove("busy"); aiCommit(); aiSetHunk(h); flashEl(h); aiRenderChat();

@@ -276,7 +276,7 @@ const TOOLS = [
         new: [
           "Revision marks on your text: cross out (Alt+X), cross out for better wording (Alt+W), a note to the AI (Alt+C)",
           "Every AI request opens on the AI stage: your text left, the AI's version right in equal halves, the rest of the document greyed around it, the two scrolling together; Send back replaces the passage once every change is decided, never over your own hand edits",
-          "The other panels fold away while a stage is open (⇔ brings them back); ✕ hides the stage and the Stage button in the toolbar brings it back"
+          "Take the AI's version in parts: a rewrite goes sentence by sentence (Tab / Esc), or select any words in it to accept and edit them at once, roll them back, or have the AI redo just that part"
         ] }
     ]
   }

@@ -171,14 +171,14 @@
 .flow .rv-c{background:color-mix(in srgb,#f5d400 28%,transparent);border-bottom:2px dotted #b79400}
 .flow .rv-src{outline:1.5px dashed color-mix(in srgb,var(--ai) 60%,transparent);outline-offset:3px;border-radius:3px;background:color-mix(in srgb,var(--ai) 5%,transparent)}
 @media print{.flow .rv{all:unset}.flow .rv-src{outline:0;background:none}}
-.ai-stage{flex:1 1 0;max-width:min(50vw,680px);min-width:300px;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.ai-stage{flex:1 1 0;max-width:none;min-width:300px;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
 .ai-stage.closed{display:none}
 .work.mode-pdf .ai-stage{display:none}
 .st-head{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}.st-head svg{width:16px;height:16px;color:var(--ai)}
 .st-instr{padding:8px 14px;font-size:12.5px;color:var(--ink-3);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;max-height:120px;overflow:auto}
 .st-body{flex:1;overflow:auto;padding:22px 64px 22px 26px;margin:0;width:auto;max-width:none;min-height:0;box-shadow:none;border:0;background:var(--paper)}
 .st-foot{display:flex;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
-.work.has-stage .viewer{min-width:320px}
+.work.has-stage .viewer{flex:1 1 0;min-width:300px}
 @media (max-width:900px){.ai-stage{max-width:none;min-width:0}}
 
 /* v8: the selection bar for written documents */
@@ -192,3 +192,10 @@
 .imgtools.selpro button.stage{background:var(--ai);color:#fff;font-weight:600}.imgtools.selpro button.stage:hover{background:var(--ai-d);color:#fff}
 .imgtools.selpro .sp-sep{width:1px;height:18px;background:var(--line);margin:0 3px}
 @media (max-width:640px){.imgtools.selpro button .lbl{display:none}.imgtools.selpro button{padding:0 7px}}
+
+/* v8: the stage shows the whole document greyed, the passage's block in focus, the passage itself lit */
+.st-body{width:auto!important;max-width:none!important;min-height:0!important;margin:0!important;padding:22px 64px 40vh 26px;box-shadow:none!important;border:0!important}
+.st-body>*:not(.st-p){color:var(--ink-3);opacity:.62;pointer-events:none}
+.st-body .st-p{border-left:3px solid var(--ai);padding-left:12px;margin-left:-15px;border-radius:2px}
+.st-body .st-focus{box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--ai) 35%,transparent)}
+#stageBtn.waiting{position:relative}#stageBtn.waiting::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--ai)}

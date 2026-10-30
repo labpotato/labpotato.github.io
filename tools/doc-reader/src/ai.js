@@ -419,7 +419,7 @@ document.addEventListener("keydown", e => {
   const inField = e.target.closest("input,textarea,select") || (e.target.closest("[contenteditable=true]") && !e.target.closest("#flow"));
   if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyA" && !inField) { e.preventDefault(); e.stopPropagation(); aiAskOpen(); return; }
   if (inField || aiAskEl || !$("#modalBack").hidden || !$("#menu").hidden || !$("#pop").hidden) return;
-  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === "KeyM" && $(".ai-chg", flowEl)) { e.preventDefault(); e.stopPropagation(); aiMarkup(!Prefs.get("aiMarkup", true)); aiBar(); toast(Prefs.get("aiMarkup", true) ? "Showing the changes in colour." : "Showing the changed version only."); return; }
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === "KeyM" && aiRoots().some(r => $(".ai-chg", r))) { e.preventDefault(); e.stopPropagation(); aiMarkup(!Prefs.get("aiMarkup", true)); aiBar(); toast(Prefs.get("aiMarkup", true) ? "Showing the changes in colour." : "Showing the changed version only."); return; }
   if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && (e.key === "ArrowDown" || e.key === "ArrowUp") && allHunks().length) { e.preventDefault(); e.stopPropagation(); aiStep(e.key === "ArrowDown" ? 1 : -1); return; }
   if (!aiHunk || !aiHunk.isConnected) return;
   if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) { e.preventDefault(); e.stopPropagation(); aiDecide(aiHunk, true); }

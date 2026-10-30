@@ -275,8 +275,8 @@ const TOOLS = [
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30",
         new: [
           "Revision marks on your text: cross out (Alt+X), cross out for better wording (Alt+W), a note to the AI (Alt+C)",
-          "The AI stage (Alt+S): the AI's version opens beside your text with the review strip; Send back replaces the passage once every change is decided, and never over your own hand edits",
-          "While a stage is open the other panels fold away (⇔ brings them back), so only your text and the AI's are on screen"
+          "Every AI request opens on the AI stage: your text left, the AI's version right in equal halves, the rest of the document greyed around it, the two scrolling together; Send back replaces the passage once every change is decided, never over your own hand edits",
+          "The other panels fold away while a stage is open (⇔ brings them back); ✕ hides the stage and the Stage button in the toolbar brings it back"
         ] }
     ]
   }

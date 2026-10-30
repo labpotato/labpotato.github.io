@@ -72,61 +72,117 @@ function rvInstructions(root) {
 if (typeof SHORTCUTS !== "undefined") SHORTCUTS.push(["Revision marks and the AI stage", [["Alt+X", "Cross out (remove)"], ["Alt+W", "Cross out for better wording (replace)"], ["Alt+C", "Comment, which the AI reads as a note"], ["Alt+S", "Send the selection to the AI stage"], ["Alt+Enter", "Send back"], ["Alt+M", "Changes in colour / the changed version"], ["Alt+A", "Ask AI in place"]]]);
 
 /* --- the stage --- */
+const aiRequestRaw = aiRequest;   // the in-place request, used only inside the stage
 function stageDraw() {
   stageEl.innerHTML = "";
   stageEl.append(EL("div", { class: "st-head" }, ICON("i-ai"), EL("b", {}, "AI stage"), EL("span", { class: "muted st-n" }), EL("span", { style: "flex:1" }),
     EL("button", { class: "tb", id: "stFold", title: "Fold the other panels away", onclick: () => stageFold(!stage?.folded) }, "⇔"),
-    EL("button", { class: "tb", title: "Close the stage (the original on the left stays as it is)", onclick: () => stageClose(true) }, ICON("i-x"))));
+    EL("button", { class: "tb", title: "Hide the stage; the AI stage button in the toolbar brings it back", onclick: () => stageHide() }, ICON("i-x"))));
   stageEl.append(EL("div", { class: "st-instr", id: "stInstr" }));
   stageEl.append(stageBody);
   stageEl.append(EL("div", { class: "st-foot" }, EL("span", { class: "st-status", id: "stStatus" }), EL("span", { style: "flex:1" }),
-    EL("button", { class: "btn small", onclick: () => stageClose(true), title: "Close the stage and keep the original" }, "Discard"),
+    EL("button", { class: "btn small", onclick: () => stageClose(true), title: "Throw the AI's version away and keep the original" }, "Discard"),
     EL("button", { class: "btn small ai", id: "stBack", disabled: "", onclick: stageBack, title: "Put the result where the passage was (Alt+Enter)" }, "← Send back")));
 }
-async function stageSend(extra) {
+/* the stage shows the whole document, greyed, with the passage's block in focus: lines can be compared side by side */
+function stageContext(id, srcLight) {
+  const c = flowEl.cloneNode(true);
+  $$("[id]", c).forEach(e => e.removeAttribute("id")); $$("[contenteditable]", c).forEach(e => e.removeAttribute("contenteditable"));
+  $$(".ai-chg", c).forEach(x => x.replaceWith(aiOrigFrag(x)));
+  const src = c.querySelector(`.rv-src[data-stage="${id}"]`); if (!src) return null;
+  const block = src.closest(AI_BLOCK) || src.parentElement; block.classList.add("st-p");
+  const focus = EL("span", { class: "st-focus" }); focus.append(lightFrag(srcLight)); src.replaceWith(focus);
+  stageBody.className = "flow st-body " + [...flowEl.classList].filter(x => x !== "flow").join(" "); stageBody.id = "stBody";
+  stageBody.style.cssText = flowEl.style.cssText; stageBody.style.font = getComputedStyle(flowEl).font; stageBody.style.padding = "";
+  stageBody.innerHTML = ""; stageBody.append(...c.childNodes);
+  return focus;
+}
+function stageSend(extra) {
   if (!S.doc || S.doc.kind !== "flow" || S.webview) return toast("The AI stage works in the Editor view of a written document.");
-  if (stage && stageBody.isConnected && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`)) return toast("Finish the open stage first: Send back or Discard.");
   const t = aiTarget(); if (t.err) return toast(t.err);
   closeSelPop(); aiAskClose();
+  return stageSendRange(t.range, extra);
+}
+async function stageSendRange(range, extra) {
+  if (stage && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`)) { stageShow(); return toast("Finish the open stage first: Send back or Discard."); }
   $$(".rv-src", flowEl).forEach(rvUnwrap);
-  const id = uid(), range = t.range, src = EL("span", { class: "rv-src", "data-stage": id, title: "On the AI stage. Edit it here if you like: your edits win over the AI's version." });
+  const id = uid(), src = EL("span", { class: "rv-src", "data-stage": id, title: "On the AI stage. Edit it here if you like: your edits win over the AI's version." });
   src.append(range.extractContents()); range.insertNode(src); getSelection().removeAllRanges(); flowEl.normalize();
   const srcLight = toLight(src), marks = rvInstructions(src);
   const instr = [extra && extra.trim(), ...marks].filter(Boolean).join("\n") || "Improve the wording and the logical flow; keep the meaning, the facts and the citations.";
-  stage = { id, srcLight, instr, block: (src.closest(AI_BLOCK) || src.parentElement).tagName.toLowerCase() };
+  stage = { id, srcLight, instr };
   stageDraw(); $(".st-n", stageEl).textContent = marks.length ? `${marks.length} mark${marks.length === 1 ? "" : "s"}` : "";
   $("#stInstr").innerHTML = instr.split("\n").map(l => `<div>${esc(l)}</div>`).join("");
-  const tag = /^(p|li|h[1-6]|blockquote|td|th|figcaption|pre|dd|dt|caption)$/.test(stage.block) ? stage.block : "p";
-  stageBody.innerHTML = `<${tag} class="st-p"></${tag}>`; const p = stageBody.firstElementChild; p.append(lightFrag(srcLight));
-  stageEl.classList.remove("closed"); $(".work")?.classList.add("has-stage"); aiCommit();
-  Prefs.set("aiPanelSeen", 1); stageFold(true);   // only the text and the stage: the other panels fold away until the stage closes
-  const r = document.createRange(); r.selectNodeContents(p);
-  await aiRequest(r, instr);
-  stageStatus();
+  const focus = stageContext(id, srcLight); if (!focus) { stage = null; return toast("Could not open the stage for that passage."); }
+  stageShow(); Prefs.set("aiPanelSeen", 1); stageFold(true); aiCommit();
+  const r = document.createRange(); r.selectNodeContents(focus);
+  stageAlign("viewer");
+  await aiRequestRaw(r, instr);
+  stageStatus(); stageAlign("viewer", true); setTimeout(() => stageAlign("viewer", true), 150); setTimeout(() => stageAlign("viewer", true), 600);   // once the fonts and the strip have settled
 }
+/* every AI request from the text opens on the stage; requests made inside the stage (revise a part, ask again) stay there */
+aiRequest = async function (range, instr) {
+  if (range && flowEl.contains(range.commonAncestorContainer) && !stageBody.contains(range.commonAncestorContainer)) return stageSendRange(range, instr);
+  return aiRequestRaw.apply(this, arguments);
+};
+function stageShow() { stageEl.classList.remove("closed"); $(".work")?.classList.add("has-stage"); stageBtn(); if (stage && stage.folded) stageFold(true); placeBar(); stageAlign("viewer", true); }
+function stageHide() { stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); if (stage) { const f = stage.folded; stageFold(false); stage.folded = f; } stageBtn(); placeBar(); }
+/* the toolbar button: open or hide the stage, with a dot while one is waiting */
+function stageBtn() {
+  let b = $("#stageBtn"); const anchor = $("#aiPanelBtn"); if (!b && anchor) { b = EL("button", { class: "tb flow-only ai-btn", id: "stageBtn", title: "AI stage (Alt+S on a selection)", onclick: () => { if (!stage) return toast("Select text and press AI stage on the bar, or Alt+S."); stageEl.classList.contains("closed") ? stageShow() : stageHide(); } }, ICON("i-next"), EL("span", { class: "lbl" }, "Stage")); anchor.after(b); }
+  if (!b) return; b.classList.toggle("on", !!stage && !stageEl.classList.contains("closed")); b.classList.toggle("waiting", !!stage && stageEl.classList.contains("closed"));
+}
+/* the two panes scroll together: the passage's block on the stage stays level with the original on the left */
+let stageSyncing = false;
+function stageAlign(from, force) {
+  if (!stage || stageEl.classList.contains("closed") || stageSyncing) return;
+  const L = flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`), R = stageBody.querySelector(".st-p"); if (!L || !R) return;
+  // the same height on screen, so the eye moves straight across
+  const lb = (L.closest(AI_BLOCK) || L).getBoundingClientRect(), rb = R.getBoundingClientRect();
+  const d = rb.top - lb.top; if (Math.abs(d) < 1) return;
+  stageSyncing = true;
+  if (from === "stage") viewer.scrollTop -= d; else stageBody.scrollTop += d;
+  // the stage could not move that far (it is at its top or bottom): on opening, the text pane gives way instead
+  if (force) { let rem = R.getBoundingClientRect().top - (L.closest(AI_BLOCK) || L).getBoundingClientRect().top; if (Math.abs(rem) > 1) viewer.scrollTop += rem;
+    // both panes already at their top and the stage's block still higher: push the stage's content down instead
+    rem = R.getBoundingClientRect().top - (L.closest(AI_BLOCK) || L).getBoundingClientRect().top;
+    if (rem < -1 && stageBody.scrollTop === 0) stageBody.style.paddingTop = (parseFloat(getComputedStyle(stageBody).paddingTop) - rem) + "px"; }
+  requestAnimationFrame(() => { stageSyncing = false; });
+}
+viewer.addEventListener("scroll", () => stageAlign("viewer"), { passive: true });
+stageBody.addEventListener("scroll", () => stageAlign("stage"), { passive: true });
+addEventListener("resize", debounce(() => stageAlign("viewer"), 80));
+/* either pane reflowing (panels folding, fonts arriving, the AI's answer) nudges the stage back level */
+new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(flowEl);
+new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(stageBody);
+new ResizeObserver(debounce(() => stageAlign("viewer", true), 40)).observe(viewer);
 /* fold: the Pages, Notes and chat panels go away so only the text and the stage are on screen; unfold brings
    back the ones that were open. The button in the stage's header switches between the two. */
 function stageFold(on) {
   if (!stage) return; const L = $("#left"), R = $("#right"), C = $(".ai-panel");
-  if (on) { stage.panels = { left: L && !L.classList.contains("closed"), right: R && !R.classList.contains("closed"), chat: C && !C.classList.contains("closed") };
-    L?.classList.add("closed"); R?.classList.add("closed"); if (stage.panels.chat) aiTogglePanel(false); stage.folded = true; }
-  else { const p = stage.panels || {}; if (p.left) L?.classList.remove("closed"); if (p.right) R?.classList.remove("closed"); if (p.chat) aiTogglePanel(true); stage.folded = false; }
+  if (on && stageEl.classList.contains("closed")) { stage.folded = true; return; }
+  if (on) { if (!stage.panels) stage.panels = { left: L && !L.classList.contains("closed"), right: R && !R.classList.contains("closed"), chat: C && !C.classList.contains("closed") };
+    L?.classList.add("closed"); R?.classList.add("closed"); if (C && !C.classList.contains("closed")) aiTogglePanel(false); stage.folded = true; }
+  else { const p = stage.panels || {}; if (p.left) L?.classList.remove("closed"); if (p.right) R?.classList.remove("closed"); if (p.chat) aiTogglePanel(true); stage.folded = false; stage.panels = null; }
   const b = $("#stFold"); if (b) { b.classList.toggle("on", !!stage.folded); b.title = stage.folded ? "Show the Pages, Notes and chat panels again" : "Fold the other panels away: only the text and the stage"; }
-  placeBar();
+  placeBar(); stageAlign("viewer");
 }
+/* show changes / the changed version: the stage follows the switch too */
+{ const am = aiMarkup; aiMarkup = function (on) { const r = am.apply(this, arguments); stageBody.classList.toggle("markup-off", !Prefs.get("aiMarkup", true)); return r; }; }
 function stageStatus() {
   if (!stage) return; const busy = !!stageBody.querySelector(".busy"), open = $$(".ai-h", stageBody).length, back = $("#stBack"), st = $("#stStatus");
   if (!back) return;
   back.disabled = busy || open > 0;
   st.textContent = busy ? "The AI is working…" : open ? `${open} change${open === 1 ? "" : "s"} to review · Tab accepts, Esc rejects, ✎ asks for more` : stageBody.querySelector(".ai-chg") ? "" : "All decided. Send back puts this where the passage was.";
+  stageBtn();
 }
-new MutationObserver(debounce(stageStatus, 60)).observe(stageBody, { childList: true, subtree: true, attributes: true });
+new MutationObserver(debounce(() => { stageStatus(); stageAlign("viewer"); }, 60)).observe(stageBody, { childList: true, subtree: true, attributes: true });
 stageBody.addEventListener("click", e => { const c = e.target.closest(".ai-chg"); if (c && c.dataset.ai) { const h = e.target.closest(".ai-h"); if (h) aiSetHunk(h); else aiSetActive(c.dataset.ai); aiRenderChat(); } });
 stageBody.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
-/* the result, as clean html for the document */
-function stageResultHtml() { const c = stageBody.firstElementChild.cloneNode(true); $$(".ai-chg", c).forEach(s => s.replaceWith(...s.childNodes)); return c.innerHTML; }
+/* the result, as clean html for the document: only the passage, not the greyed context */
+function stageResultHtml() { const f = stageBody.querySelector(".st-focus"); if (!f) return ""; const c = f.cloneNode(true); $$(".ai-chg", c).forEach(x => x.replaceWith(...x.childNodes)); return c.innerHTML; }
 async function stageBack() {
-  if (!stage) return; if (stageBody.querySelector(".busy, .ai-h")) return toast("Decide every change first (Tab accepts, Esc rejects).");
+  if (!stage) return; stageShow(); if (stageBody.querySelector(".busy, .ai-h")) return toast("Decide every change first (Tab accepts, Esc rejects).");
   const src = flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`), html = stageResultHtml();
   if (!src) { await modal(`<h3>The passage is no longer in the document</h3><p>It was removed or undone while the stage was open. Copy the result below if you still want it.</p><div class="tr-peek">${html}</div><div class="mrow"><button class="btn" data-cancel>Close</button></div>`); return stageClose(false); }
   const now = toLight(src);
@@ -142,14 +198,14 @@ async function stageBack() {
 }
 function stageClose(keepMarks) {
   const src = stage && flowEl.querySelector(`.rv-src[data-stage="${stage.id}"]`); if (src) rvUnwrap(src);
-  $$(".ai-chg[data-ai]", stageBody).forEach(s => { const ch = aiChange(s.dataset.ai); if (ch && ch.status === "pending") ch.status = "discarded"; });
+  $$(".ai-chg[data-ai]", stageBody).forEach(x => { const ch = aiChange(x.dataset.ai); if (ch && ch.status === "pending") ch.status = "discarded"; });
   if (stage) stageFold(false);
-  stageBody.innerHTML = ""; stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); stage = null;
+  stageBody.innerHTML = ""; stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); stage = null; stageBtn();
   if (aiActive && !aiSpan(aiActive)) aiSetHunk(null); aiCommit(); aiRenderChat();
 }
 /* a stage left in a saved document is stale: the source marker goes, the marks stay */
-{ const od = openDoc; openDoc = async function () { const r = await od.apply(this, arguments); $$(".rv-src", flowEl).forEach(rvUnwrap); stageBody.innerHTML = ""; stageEl.classList.add("closed"); stage = null; return r; }; }
-{ const gh = goHome; goHome = function () { stageBody.innerHTML = ""; stageEl.classList.add("closed"); stage = null; return gh.apply(this, arguments); }; }
+{ const od = openDoc; openDoc = async function () { const r = await od.apply(this, arguments); $$(".rv-src", flowEl).forEach(rvUnwrap); stageBody.innerHTML = ""; stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); stage = null; stageBtn(); return r; }; }
+{ const gh = goHome; goHome = function () { stageBody.innerHTML = ""; stageEl.classList.add("closed"); $(".work")?.classList.remove("has-stage"); stage = null; stageBtn(); return gh.apply(this, arguments); }; }
 
 /* --- the ask box gets a "to the stage" button; the AI menu gets the marks --- */
 { const ao = aiAskOpen; aiAskOpen = function () { const r = ao.apply(this, arguments); if (!aiAskEl) return r;
@@ -181,4 +237,5 @@ document.addEventListener("keydown", e => {
   else if (k === "KeyS") { e.preventDefault(); e.stopPropagation(); stageSend(""); }
   else if (e.key === "Enter" && stage) { e.preventDefault(); e.stopPropagation(); stageBack(); }
 }, true);
-Object.assign(window, { rvMark, stageSend, stageBack, stageClose, showSelPop, closeSelPop, get stage() { return stage; } });   // for the tests and the console
+Object.assign(window, { rvMark, stageSend, stageBack, stageClose, stageHide, stageShow, stageAlign, showSelPop, closeSelPop, get stage() { return stage; } });
+setTimeout(stageBtn, 0);   // for the tests and the console

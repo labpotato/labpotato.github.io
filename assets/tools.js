@@ -274,7 +274,7 @@ const TOOLS = [
       { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30",
         new: [
-          "Revision marks on your text: cross out (Alt+X), cross out for better wording (Alt+W), a note to the AI (Alt+C)",
+          "Revision marks on your text (Alt+X cross out, Alt+W better wording, Alt+C note to the AI), and a Web layout: the document as a web page, full width, with every tool",
           "Every AI request opens on the AI stage: your text left, the AI's version right in equal halves, the rest of the document greyed around it, the two scrolling together; Send back replaces the passage once every change is decided, never over your own hand edits",
           "Take the AI's version in parts: a rewrite goes sentence by sentence (Tab / Esc), or select any words in it to accept and edit them at once, roll them back, or have the AI redo just that part"
         ] }

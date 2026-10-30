@@ -220,3 +220,18 @@
 .st-foot .st-back{justify-self:center;height:34px;padding:0 18px;font-weight:650;border-radius:10px}
 .st-foot .st-back:not(:disabled){box-shadow:0 6px 16px -8px color-mix(in srgb,var(--ai) 70%,transparent)}
 .st-foot .st-foot-r{justify-self:end}
+
+/* v8: the stage set like the text; rewrites shown by colour only, no underline */
+.st-body .st-p{border-left:0!important;padding-left:0!important;margin-left:0!important;position:relative}
+.st-body .st-p::before{content:"";position:absolute;left:-14px;top:2px;bottom:2px;width:3px;border-radius:2px;background:var(--ai)}
+.st-body .st-focus,.st-body .st-focus:focus-within{box-shadow:none!important}
+.st-body img{zoom:var(--z,1)}
+.flow .ai-chg.rw ins.ai-new{text-decoration:none!important;background:color-mix(in srgb,var(--ai) 14%,transparent);border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.st-body .ai-chg.rw::before{display:none}
+.st-body .st-focus .ai-ok{box-shadow:none;background:color-mix(in srgb,var(--ins) 9%,transparent);border-radius:2px}
+/* Web layout: no paper sheet, the text across the window */
+body.weblayout .work:not(.mode-pdf) .viewer{background:var(--page-bg)}
+body.weblayout .flow-wrap{padding:0!important;min-height:100%}
+body.weblayout .flow-paper,body.weblayout .flow-paper[data-w],body.weblayout .flow-paper[data-w].nomargin{width:100%!important;max-width:none!important}
+body.weblayout .flow-paper .flow{max-width:none!important;width:100%;box-shadow:none!important;border-radius:0;padding:calc(36px * var(--z,1)) clamp(20px,5vw,72px) calc(80px * var(--z,1));min-height:100%}
+body.weblayout #pageWSel,body.weblayout .page-grip{display:none!important}

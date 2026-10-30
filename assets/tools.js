@@ -271,7 +271,9 @@ const TOOLS = [
       { v: "v4", file: "doc-reader-v4.html", date: "2026-10-29" },
       { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29",
         new: [
-          "Chrome extension v4: Sign in with Google works straight away, with no Google Cloud setup or client ID to paste"
+          "AI edits show deleted words in red and new words in green; a slim button strip beside the page accepts or rejects them",
+          "Save each written document as a Google Doc as you write (Chrome extension v4, signed in with Google)",
+          "Chrome extension v4: Google sign-in works straight away, and it stays out of Doc Reader's own pages"
         ] }
     ]
   }

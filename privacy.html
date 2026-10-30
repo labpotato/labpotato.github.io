@@ -15,7 +15,7 @@ code{overflow-wrap:anywhere;font-size:13px}td,th{overflow-wrap:anywhere}
 <body><main>
 <a class="home" href="/">← Lab Potato</a>
 <h1>Privacy policy</h1>
-<p class="meta">Lab Potato Doc Reader (the Chrome extension and the Doc Reader web app) · Last updated 29 October 2026</p>
+<p class="meta">Lab Potato Doc Reader (the Chrome extension and the Doc Reader web app) · Last updated 30 October 2026</p>
 
 <p>Lab Potato is a set of free lab tools. Doc Reader has no Lab Potato server and no Lab Potato account: your highlights, notes and documents are kept on your own computer and, only if you turn it on, in your own Google account. Lab Potato never receives them.</p>
 
@@ -25,6 +25,7 @@ code{overflow-wrap:anywhere;font-size:13px}td,th{overflow-wrap:anywhere}
 <tr><td>Highlights, comments, notes, edited documents, settings</td><td>Your browser's local extension storage on your computer</td><td>Only you</td></tr>
 <tr><td>The same data, if you turn on Chrome Sync</td><td>Chrome's sync storage in your Google account</td><td>Only you</td></tr>
 <tr><td>The same data, if you sign in with Google</td><td>A hidden app-data folder in your own Google Drive</td><td>Only you</td></tr>
+<tr><td>Written documents, if you turn on Save as a Google Doc</td><td>Google Docs in a "Lab Potato Doc Reader" folder of your own Google Drive</td><td>You, and anyone you share them with in Google Drive</td></tr>
 <tr><td>Backup file, if you turn it on or press Save</td><td>A file in your Downloads folder, or where you choose</td><td>Only you</td></tr>
 <tr><td>Google sign-in token</td><td>The extension's session memory (cleared when the browser closes)</td><td>Only you; removed when you sign out</td></tr>
 <tr><td>The email address of the Google account you signed in with</td><td>Your browser's local extension storage, to show which account is syncing</td><td>Only you; removed when you sign out</td></tr>
@@ -33,6 +34,7 @@ code{overflow-wrap:anywhere;font-size:13px}td,th{overflow-wrap:anywhere}
 
 <h2>Google user data</h2>
 <p>When you choose "Sign in with Google", Doc Reader asks for one permission: <b>See, create, and delete its own configuration data in your Google Drive</b> (scope <code>https://www.googleapis.com/auth/drive.appdata</code>). With it, Doc Reader can read and write only the file it creates in Drive's hidden app-data folder, which holds your Doc Reader highlights, notes and documents so they appear on your other computers. It cannot see, open or change any other file in your Drive. The only other thing it reads is the email address of the signed-in account, which is shown in the library so you know which account is syncing; it reads nothing else in your Google account, such as contacts, mail or other files.</p>
+<p>Only if you turn on <b>Save as a Google Doc</b>, Doc Reader asks for a second permission: <b>See, edit, create, and delete only the specific Google Drive files you use with this app</b> (scope <code>https://www.googleapis.com/auth/drive.file</code>). With it, Doc Reader creates a "Lab Potato Doc Reader" folder in your Drive and keeps each written document there as a Google Doc, updated as you write. It can open only the files it created itself, nothing else in your Drive. Turning the option off stops the updates; the Google Docs already saved stay in your Drive until you delete them.</p>
 <p>This data goes directly between your browser and Google. It is not sent to Lab Potato or to anyone else, it is not sold, it is not used for advertising, and no person reads it. Lab Potato Doc Reader's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
 
 <h2>AI features (optional)</h2>

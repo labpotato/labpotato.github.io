@@ -10,6 +10,9 @@
 (() => {
   if (window.__lpDocReader) return; window.__lpDocReader = true;
   if (!document.documentElement || !/^https?:|^file:/.test(location.protocol)) return;
+  /* v4: stay out of Doc Reader itself (it has its own highlights, comments and AI editor): any page that says
+     <meta name="lab-potato-app" content="doc-reader">, or a Doc Reader file by its address (older versions) */
+  if (document.querySelector('meta[name="lab-potato-app"][content="doc-reader"]') || /\/tools\/doc-reader\/(doc-reader-v\d+\.html)?$|\/doc-reader-v\d+\.html$/.test(location.pathname)) return;
 
   const COLORS = [["#ffe066", "Yellow"], ["#a5f3a1", "Green"], ["#9bd4ff", "Blue"], ["#ffb3d1", "Pink"], ["#ffc68a", "Orange"], ["#d4b8ff", "Purple"]];
   const KEY = "lp:" + location.href.replace(/#.*$/, "");

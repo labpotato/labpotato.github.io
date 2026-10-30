@@ -82,3 +82,6 @@ document.getElementById("allMd").addEventListener("click", () => download(PAGES.
 document.getElementById("btnOn").addEventListener("change", async e => { const s = (await chrome.storage.local.get("lp:settings"))["lp:settings"] || {}; s.button = e.target.checked; await chrome.storage.local.set({ "lp:settings": s }); });
 chrome.storage.onChanged.addListener(() => load());
 load();
+
+/* v4: after a fresh install with nothing kept yet, say how to get highlights back */
+if (new URLSearchParams(location.search).has("welcome")) document.getElementById("welcome").hidden = false;

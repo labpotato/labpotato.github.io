@@ -1,5 +1,5 @@
 /* ---------- v4 (extension 3): documents follow you to every computer through Google Drive ----------
-   The extension's Google sign-in (library page → Setup) already syncs the highlights made on web pages.
+   The extension's Google sign-in (library page) already syncs the highlights made on web pages.
    With it on, each Doc Reader document is also kept as one file, lpdoc-<id>.json, in the hidden app
    folder of your own Google Drive (scope drive.appdata: the extension sees only its own files).
    A sync runs on start, a few seconds after a save, when the tab comes back into view and every 5 minutes:
@@ -60,7 +60,7 @@ async function docSync(why) {
       dsShow(); return { ok: true, got, sent, gone };
     } catch (e) {
       DSYNC.state = e.off ? "off" : "err:" + (e.message || e); dsShow();
-      if (why === "button") toast(e.off ? "Sign in with Google first: Library → Setup → Sign in with Google." : "Sync failed: " + (e.message || e));
+      if (why === "button") toast(e.off ? "Sign in with Google first: press Google sign-in… on the start page." : "Sync failed: " + (e.message || e));
       return { ok: false, error: String(e.message || e) };
     }
   })();
@@ -80,9 +80,10 @@ function dsShow() {
     box = EL("div", { class: "home-card", id: "syncCard" }, EL("h3", {}, "Sync between computers"), EL("p", { class: "ds-line" }), EL("div", {}, EL("button", { class: "btn small", onclick: () => docSync("button") }, "Sync now"), " ", EL("button", { class: "btn small ghost", onclick: () => chrome.runtime.openOptionsPage() }, "Google sign-in…")));
     side.insertBefore(box, $("#extCard")); }
   const st = DSYNC.state, line = box.querySelector(".ds-line");
-  line.textContent = st === "ok" ? `Your documents and page highlights are kept in your Google Drive; last synced ${fmtTime(DSYNC.last)}. Sign in with the same Google account on another computer to see them there.`
-    : st === "off" || !st ? "Sign in with Google once (Library → Setup) and your documents and page highlights follow you to every computer where the extension is signed in to the same account."
+  line.textContent = st === "ok" ? `Your documents and page highlights are saved in your Google Drive (last synced ${fmtTime(DSYNC.last)}). Sign in with the same Google account on another computer to see them there.`
+    : st === "off" || !st ? "Sign in with Google once to see your documents and page highlights on every computer you use."
     : "Last sync failed: " + st.slice(4);
+  gdShow();
 }
 if (IS_EXT) {
   const later = debounce(() => docSync("save"), 8000);
@@ -90,4 +91,68 @@ if (IS_EXT) {
   setTimeout(() => { dsShow(); docSync("start"); }, 2500);
   setInterval(() => docSync("timer"), 5 * 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - DSYNC.last > 60000) docSync("focus"); });
+}
+
+/* ---------- v5: save each written document as a Google Doc as well ----------
+   Turned on in the "Sync between computers" card or the Export menu (extension only, needs Google sign-in).
+   The first time, Google asks once more for permission to create files (scope drive.file: the extension can
+   open only the files it made, nothing else in your Drive). Each written document then becomes one Google Doc
+   in a "Lab Potato Doc Reader" folder in My Drive, updated about 15 seconds after you stop typing.
+   The Google Doc gets the text as it reads now: AI suggestions not yet accepted are left out. */
+const GD = { last: 0, err: "", busy: false };
+const gdOn = () => IS_EXT && Prefs.get("gdocs", false);
+const gdMap = () => Prefs.get("gdocMap", {});
+async function gdFolder() {
+  let id = Prefs.get("gdocsFolder", "");
+  if (id) { const r = await dsFetch(`/drive/v3/files/${id}?fields=id,trashed`).catch(() => null); if (r && !(await r.json()).trashed) return id; }
+  const r = await dsFetch("/drive/v3/files?fields=id", { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8" }, body: JSON.stringify({ name: "Lab Potato Doc Reader", mimeType: "application/vnd.google-apps.folder" }) });
+  id = (await r.json()).id; Prefs.set("gdocsFolder", id); return id;
+}
+async function gdSave(why) {
+  if (!gdOn() || GD.busy || !S.doc || S.doc.kind !== "flow") return;
+  GD.busy = true; const d = S.doc;
+  try {
+    const html = await exportHtmlString({ appendComments: false }), map = gdMap(), have = map[d.id], name = baseName(d.name) || "Untitled";
+    const b = "lpgd" + Date.now(), body = meta => `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n--${b}--`;
+    const hdr = { "Content-Type": "multipart/related; boundary=" + b };
+    let f = null;
+    if (have) f = await dsFetch(`/upload/drive/v3/files/${have.id}?uploadType=multipart&fields=id,webViewLink`, { method: "PATCH", headers: hdr, body: body({ name }) }).then(r => r.json()).catch(e => /40[34]/.test(e.message) ? null : Promise.reject(e));
+    if (!f) f = await (await dsFetch("/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", { method: "POST", headers: hdr, body: body({ name, mimeType: "application/vnd.google-apps.document", parents: [await gdFolder()] }) })).json();
+    map[d.id] = { id: f.id, link: f.webViewLink || `https://docs.google.com/document/d/${f.id}/edit`, at: Date.now() }; Prefs.set("gdocMap", map);
+    if (!have) toast("Saved as a Google Doc, in the Lab Potato Doc Reader folder of your Google Drive.");
+    GD.last = Date.now(); GD.err = "";
+  } catch (e) {
+    GD.err = /403/.test(e.message) ? "Google did not allow it: turn Google Docs saving off and on again to give permission." : (e.off ? "Sign in with Google first." : String(e.message || e));
+    if (why === "button") toast("Google Docs: " + GD.err);
+  } finally { GD.busy = false; gdShow(); }
+}
+async function gdToggle(on) {
+  if (!IS_EXT) return;
+  if (on) {
+    const r = await chrome.runtime.sendMessage({ t: "driveDocs", on: true }).catch(e => ({ ok: false, error: String(e.message || e) }));
+    if (!r || !r.ok) { toast(r?.off ? "Sign in with Google first: press Google sign-in… on the start page." : "Google Docs saving was not turned on: " + (r?.error || "no answer")); gdShow(); return; }
+    Prefs.set("gdocs", true); gdShow(); gdSave("button");
+  } else { await chrome.runtime.sendMessage({ t: "driveDocs", on: false }).catch(() => {}); Prefs.set("gdocs", false); gdShow(); toast("Google Docs saving is off. Google Docs already saved stay in your Drive."); }
+}
+function gdShow() {
+  const box = $("#syncCard"); if (!box) return;
+  let row = box.querySelector(".gd-row");
+  if (!row) { row = EL("div", { class: "gd-row" }, EL("label", { class: "gd-sw" }, EL("input", { type: "checkbox", onchange: e => gdToggle(e.target.checked) }), " Also save each written document as a Google Doc"), EL("p", { class: "gd-line muted" })); box.append(row); }
+  row.querySelector("input").checked = !!gdOn();
+  const n = Object.keys(gdMap()).length;
+  row.querySelector(".gd-line").textContent = !gdOn() ? "They go to a \u201cLab Potato Doc Reader\u201d folder in your Google Drive and update as you write."
+    : GD.err ? "Not saved: " + GD.err : GD.last ? `Last saved ${fmtTime(GD.last)}. ${n} document${n === 1 ? "" : "s"} in the \u201cLab Potato Doc Reader\u201d folder of your Drive.` : "On: each written document is saved to the \u201cLab Potato Doc Reader\u201d folder of your Drive as you write.";
+}
+if (IS_EXT) {
+  const soon = debounce(() => gdSave("save"), 15000);
+  { const sn = saveNow; saveNow = async function () { const r = await sn.apply(this, arguments); if (gdOn() && S.doc?.kind === "flow") soon(); return r; }; }
+  /* Export menu: the switch, and a link to the open document's Google Doc */
+  { const em = exportMenu; exportMenu = function (anchor) {
+      if (S.doc?.kind !== "flow") return em.apply(this, arguments);
+      const g = gdMap()[S.doc.id], m0 = menu;
+      menu = (items, ...rest) => { menu = m0; return m0([...items, { sep: true }, { head: "Google Docs" },
+        { label: (gdOn() ? "✓ " : "") + "Save as a Google Doc as I write", sub: gdOn() ? "On: updates about 15 s after you stop typing" : "Needs Google sign-in (start page)", fn: () => gdToggle(!gdOn()) },
+        ...(g ? [{ label: "Open this document in Google Docs", sub: "Saved " + fmtTime(g.at), fn: () => window.open(g.link, "_blank", "noopener") }] : []),
+        ...(gdOn() ? [{ label: "Save to Google Docs now", fn: () => { if (S.dirty) saveNow(); gdSave("button"); } }] : [])], ...rest); };
+      try { return em.apply(this, arguments); } finally { menu = m0; } }; }
 }

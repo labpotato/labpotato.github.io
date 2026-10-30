@@ -43,6 +43,7 @@ i = s.index("</style>\n</head>")
 s = s[:i] + "\n" + css + s[i:]
 
 # icons, header
+rep('html: "<h1>Untitled</h1><p><br></p>"', 'html: "<p><br></p>"')   # v8: a blank document has no title line
 rep("  </defs>\n</svg>", '''    <symbol id="i-ai" viewBox="0 0 24 24"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></symbol>
     <symbol id="i-spacing" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M5 4v16M3 6.5 5 4l2 2.5M3 17.5 5 20l2-2.5"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>

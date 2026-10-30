@@ -19,7 +19,8 @@ you can save a `.lpdoc` project file to keep or move your work.
   Also in v7: only one potato per page (a copy left behind after an update or reload, or a second
   installed copy, is cleared away with its highlights, newest version wins); the full toolbar opens only
   from the potato, while dragging shows the small highlight bubble; a highlight with a comment ends in a
-  small speech-bubble badge; clicking a comment's mark on the scroll bar scrolls there and opens it. v4 has Lab Potato's Google
+  small speech-bubble badge; clicking a comment's mark on the scroll bar scrolls there and opens it.
+  The toolbar icon is the site's flat potato on a transparent background (no box). v4 has Lab Potato's Google
   OAuth client built in, so Sign in with Google needs no setup. v5 stays off on writing and
   chat sites by default (claude.ai, chatgpt.com, docs.google.com, notion.so, overleaf.com and
   the like; the list is in `content.js` as `OFF_DEFAULT`); the extension icon turns it on for a
@@ -192,6 +193,21 @@ still under review. Send back, in the middle of the stage's footer, carries the 
 The stage's text is set exactly like the original (`stageMatch`): the same font, size, line height and
 spacing, and the same width of text column (the stage's side padding is computed from the text's column),
 so each line breaks at the same word on both sides. A rewrite is shown by a colour highlight only.
+
+### Writing details (v8)
+
+- A blank document starts with an empty paragraph (no "Untitled" title line).
+- Paste takes the document's own font and size by default ("Match this document"); pasted headings
+  come in as ordinary paragraphs, and one pasted line joins the paragraph it lands in. The paste chip
+  still offers Keep source formatting and Plain text.
+- Indent like Word: Tab (or Ctrl+M) at the start of a paragraph gives a first-line indent, again or
+  anywhere else moves the paragraph in a step of 2em; Shift+Tab (Ctrl+Shift+M) steps back. Lists still nest.
+- While a document is open there is no home button (Documents, All tools, the Lab Potato link, the web
+  view's home); Save → Close document… goes back to the start page after asking.
+- The AI review remote sits level with the paragraph of the change, not the change itself, and does not
+  move while the pointer is on it, so ✓ can be pressed again and again in one place.
+- After Send back or Discard on the stage, the text returns to where you were working: the passage at
+  the same height on screen as when you sent it.
 
 ### Web layout (v8)
 

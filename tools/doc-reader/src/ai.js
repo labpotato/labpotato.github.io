@@ -427,8 +427,11 @@ function aiBar() {
    page as wide as the window) the page's blank border; never over the text column */
 function placeBar() {
   if (aiBarEl.hidden) return; const s = aiActive && aiSpan(aiActive); if (!s) { aiBarEl.hidden = true; return; }
+  if (aiBarEl.dataset.placed && aiBarEl.matches(":hover")) return;   // v8: under the pointer it stays put, so ✓ can be pressed again and again
   const onStage = aiExtraRoot && aiExtraRoot.contains(s), box = onStage ? aiExtraRoot : viewer, page = onStage ? aiExtraRoot : flowEl;
-  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), first = rs[0] || t.getBoundingClientRect(), last = rs[rs.length - 1] || first, vr = box.getBoundingClientRect(), pg = page.getBoundingClientRect();
+  const t = aiHunk && aiHunk.isConnected ? aiHunk : s, rs = t.getClientRects(), last = rs[rs.length - 1] || t.getBoundingClientRect(), vr = box.getBoundingClientRect(), pg = page.getBoundingClientRect();
+  // v8: level with the paragraph, not the change: moving to the next change in the same paragraph does not move it
+  const blk = t.closest(AI_BLOCK) || t, first = blk.getBoundingClientRect();
   const w = aiBarEl.offsetWidth, h = aiBarEl.offsetHeight, gap = 12, sideW = 256;
   let x, left = false;
   const cs = getComputedStyle(page), padR = parseFloat(cs.paddingRight) || 0, padL = parseFloat(cs.paddingLeft) || 0;
@@ -441,7 +444,9 @@ function placeBar() {
   aiBarEl.classList.toggle("left", left);
   aiBarEl.style.visibility = (last.bottom < vr.top || first.top > vr.bottom) ? "hidden" : "visible";
   aiBarEl.style.left = clamp(x, 4, innerWidth - w - 4) + "px"; aiBarEl.style.top = clamp(first.top - 4, vr.top + 4, Math.max(vr.top + 4, vr.bottom - h - 4)) + "px";
+  aiBarEl.dataset.placed = "1";
 }
+aiBarEl.addEventListener("mouseleave", () => setTimeout(placeBar, 250));
 viewer.addEventListener("scroll", () => requestAnimationFrame(placeBar), { passive: true });
 addEventListener("resize", debounce(placeBar, 80));
 flowEl.addEventListener("click", e => { const c = e.target.closest(".ai-chg"); if (c && c.dataset.ai) { const h = e.target.closest(".ai-h"); if (h) aiSetHunk(h); else aiSetActive(c.dataset.ai); aiRenderChat(); } });

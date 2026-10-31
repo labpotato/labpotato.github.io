@@ -1908,3 +1908,28 @@ body { font-size: 16px; }
 .use-row.use-home .use-icon{background:color-mix(in srgb,#c58d52 16%,var(--surface))}
 .use-row.use-home .use-icon svg{width:34px;height:24px}
 .use-row.use-home .use-rank{color:#c58d52;font-size:15px}
+
+/* ===== Recently updated: a glowing star until the new version is opened in this browser ===== */
+.tool-card { position: relative; }
+.tool-card .upd-star { display: none; }
+.tool-card.updated .upd-star, .tool-card.just-seen .upd-star {
+  display: grid; place-items: center; position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; z-index: 2; pointer-events: auto; cursor: help;
+}
+.upd-star svg { width: 100%; height: 100%; fill: #ffc21a; stroke: #e39b00; stroke-width: 1; stroke-linejoin: round; }
+.tool-card.updated .upd-star svg { animation: lp-star-glow 2.2s ease-in-out infinite, lp-star-turn 9s linear infinite; }
+.tool-card.updated { border-color: color-mix(in srgb, #ffc21a 55%, var(--border)) !important; animation: lp-card-glow 2.6s ease-in-out infinite; }
+@keyframes lp-star-glow { 0%,100% { filter: drop-shadow(0 0 2px rgba(255,194,26,.55)) drop-shadow(0 0 6px rgba(255,194,26,.35)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 6px rgba(255,194,26,.95)) drop-shadow(0 0 16px rgba(255,170,0,.6)); transform: scale(1.12); } }
+@keyframes lp-star-turn { to { rotate: 360deg; } }
+@keyframes lp-card-glow { 0%,100% { box-shadow: 0 0 0 1px rgba(255,194,26,.25), 0 8px 22px -12px rgba(255,170,0,.35); } 50% { box-shadow: 0 0 0 2px rgba(255,194,26,.45), 0 10px 30px -10px rgba(255,170,0,.55); } }
+/* opened: the star bursts and fades, the card is back to normal */
+.tool-card.just-seen .upd-star svg { animation: lp-star-pop 1.1s ease-out forwards; }
+@keyframes lp-star-pop { 0% { transform: scale(1); opacity: 1; } 35% { transform: scale(1.6); opacity: 1; filter: drop-shadow(0 0 14px rgba(255,194,26,1)); } 100% { transform: scale(.2) rotate(90deg); opacity: 0; } }
+/* quick launch: a small star on the icon */
+.app .app-icon { position: relative; }
+.app .upd-star { display: none; }
+.app.updated .upd-star, .app.just-seen .upd-star { display: block; position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; }
+.app.updated .upd-star svg { animation: lp-star-glow 2.2s ease-in-out infinite; }
+.app.just-seen .upd-star svg { animation: lp-star-pop 1.1s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .tool-card.updated, .tool-card.updated .upd-star svg, .app.updated .upd-star svg { animation: none; filter: drop-shadow(0 0 4px rgba(255,194,26,.8)); } }
+.tool-card.updated .tc-head, .tool-card.just-seen .tc-head { padding-right: 34px; }

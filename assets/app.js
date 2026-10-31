@@ -59,6 +59,20 @@ function isFresh(iso) {
   return age >= 0 && age <= 14;
 }
 
+/* A tool updated in the last 14 days wears a glowing star until this browser opens its new version.
+   What was opened is kept in this browser only (localStorage "lp-seen": tool id → version). */
+const SEEN_KEY = "lp-seen";
+function seenMap() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}") || {}; } catch (e) { return {}; } }
+function isUnseen(tool) { const l = latestOf(tool); return !!(l && isFresh(l.date) && seenMap()[tool.id] !== l.v); }
+function markSeen(tool) {
+  const l = latestOf(tool); if (!l) return; const m = seenMap(); if (m[tool.id] === l.v) return;
+  m[tool.id] = l.v; try { localStorage.setItem(SEEN_KEY, JSON.stringify(m)); } catch (e) { /* storage blocked: the star just stays */ }
+  document.querySelectorAll(`[data-tool="${tool.id}"].updated`).forEach((el) => {   // the star bursts once, then the card is back to normal
+    el.classList.remove("updated"); el.classList.add("just-seen"); setTimeout(() => el.classList.remove("just-seen"), 1200);
+  });
+}
+const starSvg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.7 6.1 6.6.6-5 4.4 1.5 6.5L12 16.8l-5.8 3.3 1.5-6.5-5-4.4 6.6-.6z"/></svg>`;
+
 const checkSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
 
 const sparkSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.3L20.5 10.5l-6.3 2.2L12 19l-2.2-6.3L3.5 10.5l6.3-2.2z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" opacity=".7"/></svg>`;
@@ -94,7 +108,8 @@ function renderTools() {
       : "";
 
     return `
-      <article class="tool-card reveal" style="--card:${accentOf(tool)}">
+      <article class="tool-card reveal${isUnseen(tool) ? " updated" : ""}" data-tool="${tool.id}" style="--card:${accentOf(tool)}">
+        <span class="upd-star" title="Updated to ${latest.v}${latest.date ? " on " + fmtDate(latest.date) : ""}: not opened yet">${starSvg}</span>
         <div class="tc-main">
           <div class="tc-head">
             <div class="tool-icon app-icon">${appGlyph(tool)}</div>
@@ -572,8 +587,8 @@ function renderQuick() {
   if (!row) return;
   row.innerHTML = TOOLS.map((tool) => {
     const latest = latestOf(tool);
-    return `<a class="app" style="--card:${accentOf(tool)}" href="${toolPath(tool, latest)}" target="_blank" rel="noopener" title="Open ${tool.name} ${latest.v}">
-        <span class="app-icon">${appGlyph(tool)}</span>
+    return `<a class="app${isUnseen(tool) ? " updated" : ""}" data-tool="${tool.id}" style="--card:${accentOf(tool)}" href="${toolPath(tool, latest)}" target="_blank" rel="noopener" title="Open ${tool.name} ${latest.v}${isUnseen(tool) ? " (updated)" : ""}">
+        <span class="app-icon">${appGlyph(tool)}<span class="upd-star" aria-hidden="true">${starSvg}</span></span>
         <span class="app-name">${tool.name}</span>
         <span class="app-cap">${tool.short || tool.tagline}</span>
       </a>`;
@@ -585,8 +600,16 @@ document.addEventListener("click", (e) => {
   const card = e.target.closest && e.target.closest(".tool-card");
   if (!card || e.target.closest("a, button, summary, details, input, select, textarea")) return;
   if (window.getSelection && String(window.getSelection()).trim()) return;   // selecting text is not a click to launch
-  const go = card.querySelector(".tool-open"); if (go) window.open(go.href, "_blank", "noopener");
+  const go = card.querySelector(".tool-open"); if (go) { window.open(go.href, "_blank", "noopener"); const t = TOOLS.find((x) => x.id === card.dataset.tool); if (t) markSeen(t); }
 });
+/* opening the latest version from any link on the page (Launch, quick launch, the usage list) counts as seen */
+function seenFromLink(e) {
+  const a = e.target.closest && e.target.closest("a[href]"); if (!a) return;
+  const href = a.getAttribute("href") || "";
+  for (const t of TOOLS) { const l = latestOf(t); if (l && href.endsWith(toolPath(t, l))) { markSeen(t); break; } }
+}
+document.addEventListener("click", seenFromLink, true);
+document.addEventListener("auxclick", (e) => { if (e.button === 1) seenFromLink(e); }, true);   // middle-click opens a new tab too
 
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();

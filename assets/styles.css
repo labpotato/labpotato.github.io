@@ -1902,3 +1902,9 @@ body { font-size: 16px; }
   #tools .wrap-wide, .wrap-wide:has(> .tools-grid), .wrap-wide:has(#tools-grid) { width: min(92vw, 1480px); }
 }
 @media (max-width: 640px) { .app-icon { width: 54px; height: 54px; } .mascot { width: 140px; } }
+
+/* usage: the homepage's own row leads the list */
+.use-row.use-home{background:linear-gradient(90deg,color-mix(in srgb,#c58d52 10%,var(--surface)),var(--surface) 60%);border-color:color-mix(in srgb,#c58d52 35%,var(--border));margin-bottom:6px}
+.use-row.use-home .use-icon{background:color-mix(in srgb,#c58d52 16%,var(--surface))}
+.use-row.use-home .use-icon svg{width:34px;height:24px}
+.use-row.use-home .use-rank{color:#c58d52;font-size:15px}

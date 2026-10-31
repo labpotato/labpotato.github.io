@@ -61,8 +61,9 @@ function fromFile(f, range) {
   const sumOf = (arr, g) => g.ks.reduce((a, k) => a + (arr && arr[k] || 0), 0);
   const rows = liveTools().map(t => { const p = f.paths[toolPathOf(t)]; const per = groups.map(g => sumOf(p, g)); return { id: t.id, per, sum: per.reduce((a, v) => a + v, 0) }; });
   const site = groups.map(g => Object.values(f.paths).reduce((a, p) => a + sumOf(p, g), 0));
+  const hp = groups.map(g => sumOf(f.paths["/"], g)), home = { per: hp, sum: hp.reduce((a, v) => a + v, 0) };   // visits to the homepage itself
   const last = { week: "yesterday", month: "yesterday", year: "last 7 days", all: "this month" }[range];
-  return { range, src: "file", last, at: Date.parse(f.generated), labels: groups.map(g => g.l), rows, site, siteSum: site.reduce((a, v) => a + v, 0), stats: f.stats && f.stats[range], failed: 0, asked: 1 };
+  return { range, src: "file", last, at: Date.parse(f.generated), labels: groups.map(g => g.l), rows, home, site, siteSum: site.reduce((a, v) => a + v, 0), stats: f.stats && f.stats[range], failed: 0, asked: 1 };
 }
 
 /* ---------- the days the file doesn't have yet (today, and yesterday if the job ran early), counted live ----------
@@ -72,31 +73,34 @@ async function liveTopUp(cur, f) {
   const from = utc0(new Date(f.generated)), today = utc0(new Date()), days = [];
   for (let d = +from; d <= +today; d += DAY) days.push(new Date(d));
   if (!days.length || days.length > 3) return cur;
-  const key = "lp-usage-live", tag = days.map(utcDay).join(",");
+  const key = "lp-usage-live2", tag = days.map(utcDay).join(",");
   let got = null;
   try { const c = JSON.parse(localStorage.getItem(key) || "null"); if (c && c.tag === tag && Date.now() - c.at < 6e5) got = c.got; } catch (e) { /* storage blocked */ }
   if (!got) {
     const tools = liveTools(), jobs = [];
-    days.forEach(d => { const a = utcDay(d), b = utcDay(new Date(+d + DAY)); jobs.push(() => usageCount("TOTAL", a, b)); tools.forEach(t => jobs.push(() => usageCount(toolPathOf(t), a, b))); });
+    days.forEach(d => { const a = utcDay(d), b = utcDay(new Date(+d + DAY)); jobs.push(() => usageCount("TOTAL", a, b)); jobs.push(() => usageCount("/", a, b)); tools.forEach(t => jobs.push(() => usageCount(toolPathOf(t), a, b))); });
     const res = await pool(jobs); if (res.some(r => r.err)) return cur;
-    got = days.map((d, i) => { const base = i * (tools.length + 1); return { total: res[base].n || 0, per: Object.fromEntries(tools.map((t, j) => [t.id, res[base + 1 + j].n || 0])) }; });
+    got = days.map((d, i) => { const base = i * (tools.length + 2); return { total: res[base].n || 0, home: res[base + 1].n || 0, per: Object.fromEntries(tools.map((t, j) => [t.id, res[base + 2 + j].n || 0])) }; });
     try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), tag, got })); } catch (e) { /* storage blocked */ }
   }
-  const out = { ...cur, rows: cur.rows.map(r => ({ ...r, per: r.per.slice() })), labels: cur.labels.slice(), site: cur.site ? cur.site.slice() : null, liveAt: Date.now() };
+  const out = { ...cur, rows: cur.rows.map(r => ({ ...r, per: r.per.slice() })), labels: cur.labels.slice(), site: cur.site ? cur.site.slice() : null, home: cur.home ? { per: cur.home.per.slice() } : null, liveAt: Date.now() };
   if (cur.range === "week" || cur.range === "month") {
     days.forEach((d, i) => {   // a new point per day, the oldest one drops off so the range keeps its length
       out.labels.push(+d === +today ? "today" : fmtD(d)); out.labels.shift();
       out.rows.forEach(r => { r.per.push(got[i].per[r.id] || 0); r.per.shift(); });
       if (out.site) { out.site.push(got[i].total); out.site.shift(); }
+      if (out.home) { out.home.per.push(got[i].home || 0); out.home.per.shift(); }
     });
     out.last = "today";
   } else {   // weeks and months: today's visits go into the latest bar
     const k = out.labels.length - 1;
     out.rows.forEach(r => { r.per[k] += got.reduce((a, g) => a + (g.per[r.id] || 0), 0); });
     if (out.site) out.site[k] += got.reduce((a, g) => a + g.total, 0);
+    if (out.home) out.home.per[k] += got.reduce((a, g) => a + (g.home || 0), 0);
   }
   out.rows.forEach(r => { r.sum = r.per.reduce((a, v) => a + v, 0); });
   if (out.site) out.siteSum = out.site.reduce((a, v) => a + v, 0);
+  if (out.home) out.home.sum = out.home.per.reduce((a, v) => a + v, 0);
   return out;
 }
 
@@ -125,15 +129,17 @@ function counterBars(range) {
   return out;
 }
 async function fromCounter(range, fresh) {
-  const key = `lp-usage-v3:${range}`;
+  const key = `lp-usage-v4:${range}`;
   if (!fresh) try { const c = JSON.parse(localStorage.getItem(key) || "null"); if (c && Date.now() - c.at < 3600e3) return c.data; } catch (e) { /* storage blocked */ }
   usageLog.length = 0;
   const bars = counterBars(range), tools = liveTools(), jobs = [];
   jobs.push(() => usageCount("TOTAL", utcDay(bars[0].a), utcDay(bars[bars.length - 1].b)));
+  bars.forEach(b => jobs.push(() => usageCount("/", utcDay(b.a), utcDay(b.b))));
   tools.forEach(t => bars.forEach(b => jobs.push(() => usageCount(toolPathOf(t), utcDay(b.a), utcDay(b.b)))));
   const res = await pool(jobs), failed = res.filter(r => r.err).length; let k = 1;
+  const hp = bars.map(() => res[k++].n || 0), home = { per: hp, sum: hp.reduce((a, v) => a + v, 0) };
   const rows = tools.map(t => { const per = bars.map(() => res[k++].n || 0); return { id: t.id, per, sum: per.reduce((a, v) => a + v, 0) }; });
-  const data = { range, src: "counter", at: Date.now(), labels: bars.map(b => b.l), rows, site: null, siteSum: res[0].n, stats: null, failed, asked: jobs.length };
+  const data = { range, src: "counter", at: Date.now(), labels: bars.map(b => b.l), rows, home, site: null, siteSum: res[0].n, stats: null, failed, asked: jobs.length };
   if (!failed) try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch (e) { /* storage blocked */ }
   return data;
 }
@@ -271,8 +277,16 @@ function renderUsage(data) {
   legend.innerHTML = `<button type="button" data-focus="all" aria-pressed="${focus === "all"}"><i style="background:${css("--accent", "#0a5fd0")}"></i>All tools</button>` +
     rows.map(r => { const t = TOOLS.find(x => x.id === r.id); return `<button type="button" data-focus="${r.id}" aria-pressed="${focus === r.id}"><i style="background:${accentOf(t)}"></i>${esc2(t.name)}</button>`; }).join("");
   lineChart(chart, data, focus);
-  // one row per tool with its own little line
-  box.innerHTML = rows.map((r, ix) => {
+  // v: the homepage first, then one row per tool with its own little line
+  const H = data.home, potato = '<svg viewBox="22 46 208 144" aria-hidden="true"><path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"/><ellipse cx="96" cy="114" rx="11" ry="13" fill="#2a2018"/><ellipse cx="152" cy="111" rx="11" ry="13" fill="#2a2018"/><path d="M110 143Q126 157 142 140" stroke="#2a2018" stroke-width="8" fill="none" stroke-linecap="round"/></svg>';
+  const homeRow = H ? `<a class="use-row use-home" style="--card:#c58d52" href="#top" title="People who opened this homepage">
+      <span class="use-rank">⌂</span><span class="app-icon use-icon">${potato}</span>
+      <span class="use-name"><b>Homepage</b><small>People who opened this page</small></span>
+      <span class="use-bar" aria-hidden="true"><i style="width:100%"></i></span>
+      <span class="use-now" title="Added ${R.last}"><b>+${nf(H.per[H.per.length - 1] || 0)}</b><small>${R.last}</small></span>
+      ${spark(cum(H.per), "#c58d52", data.labels)}
+      <span class="use-all"><b>${nf(H.sum)}</b><small>visits</small></span></a>` : "";
+  box.innerHTML = homeRow + rows.map((r, ix) => {
     const t = TOOLS.find(x => x.id === r.id); if (!t) return "";
     const now = r.per[r.per.length - 1];
     return `<a class="use-row${focus === r.id ? " on" : ""}" data-row="${r.id}" style="--card:${accentOf(t)}" href="${USAGE_LINK_BASE}${toolPath(t, latestOf(t))}" target="_blank" rel="noopener" title="Open ${esc2(t.name)}">
@@ -292,7 +306,7 @@ function renderUsage(data) {
     document.getElementById("usage-geo-sum").textContent = tot ? `${nf(tot)} visits from ${(s.locations || []).length} countr${(s.locations || []).length === 1 ? "y" : "ies"} ${R.noun}` : "";
   } else emptyDemo();
   const sum = rows.reduce((a, r) => a + r.sum, 0), when = new Date(data.at), whenTxt = `${fmtD(when)}, ${when.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}`;
-  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated every 6 hours, last " + whenTxt + (data.liveAt ? " · today counted live" : "") : "counted " + whenTxt}${data.statsAt ? ` · map and sources from ${fmtD(new Date(data.statsAt))}` : ""}`;
+  foot.textContent = `${data.siteSum != null ? nf(data.siteSum) + " visits to the whole site · " : ""}${H ? nf(H.sum) + " to the homepage · " : ""}${nf(sum)} tool openings ${R.noun} · ${data.src === "file" ? "updated every hour, last " + whenTxt + (data.liveAt ? " · today counted live" : "") : "counted " + whenTxt}${data.statsAt ? ` · map and sources from ${fmtD(new Date(data.statsAt))}` : ""}`;
   usageDebug();
 }
 

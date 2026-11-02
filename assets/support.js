@@ -78,7 +78,7 @@
     const main = links[0], alt = links[1];
     home.innerHTML = `<div class="lps-card"><span class="spud-wrap">${SPUD("spud")}</span><div>
       <h3>Running on caffeine and approaching thesis deadlines</h3>
-      <p>${esc(line)} If one of these tools gave you an afternoon back, you could give this potato a coffee.</p>
+      <p>${esc(line)} If one of these tools gave you an afternoon back, it would be great if you could buy this potato a coffee. Your generous support helps motivate me to keep updating these tools and building new ones.</p>
       <div class="lps-row">${links.map((l, i) => `<a class="lps-btn${i ? " alt" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<span class="lps-free">No pressure. The tools stay free either way.</span></div></div></div>`;
     const spud = home.querySelector(".spud");
     const wake = on => () => spud.classList.toggle("awake", on);
@@ -100,7 +100,7 @@
 
   // 1. the line at the end of the page
   const TARGETS = ["footer.site-footer", "footer.wm-footer", ".rail .footer", "#sbwrap", "aside#panel", "main#main", "main#home", "main#app", "footer"];
-  const lineHtml = `Made between experiments by one tired potato. If a tool here saved you some time, <a class="lps-go" href="${esc(links[0].href)}" target="_blank" rel="noopener">${esc(links[0].label.toLowerCase())}</a>${links[1] ? ` or say thanks on <a class="lps-go" href="${esc(links[1].href)}" target="_blank" rel="noopener">${esc(links[1].label)}</a>` : ""}.`;
+  const lineHtml = `Made between experiments by one tired potato. If this tool saved you some time, it would be great if you could <a class="lps-go" href="${esc(links[0].href)}" target="_blank" rel="noopener">${esc(links[0].label.toLowerCase())}</a>${links[1] ? ` or chip in on <a class="lps-go" href="${esc(links[1].href)}" target="_blank" rel="noopener">${esc(links[1].label)}</a>` : ""}. Your generous support helps motivate me to keep updating and building more tools.`;
   const lineCss = document.createElement("style");
   lineCss.textContent = `.lps-line{display:block;margin:14px auto 6px;padding:0 12px;max-width:640px;text-align:center;font-size:12px!important;line-height:1.5;opacity:.72;font-style:normal;letter-spacing:normal}
 .lps-line a{color:inherit!important;text-decoration:underline!important;text-underline-offset:2px;font-weight:600}.lps-line a:hover{opacity:1;color:#b5753a!important}
@@ -138,7 +138,7 @@ a.alt{color:#1d4f86;background:#eaf2fb;border-color:#cfe0f3}a:hover{filter:brigh
       const host = document.createElement("div"); host.id = "lp-support-card"; host.setAttribute("role", "status");
       host.style.cssText = "position:fixed!important;z-index:2147483000!important;right:16px;bottom:16px;width:auto!important;height:auto!important;margin:0!important;padding:0!important";
       const root = host.attachShadow({ mode: "open" });
-      root.innerHTML = `<style>${cardCss}</style><div class="c">${SPUD("spud awake")}<div><b>Saved! Your file is on its way.</b><p>If that just saved you an afternoon, this potato would love a coffee. It keeps the tools free.</p>
+      root.innerHTML = `<style>${cardCss}</style><div class="c">${SPUD("spud awake")}<div><b>Saved! Your file is on its way.</b><p>If that just saved you an afternoon, it would be great if you could buy this potato a coffee. Your generous support helps motivate me to keep updating and building more tools.</p>
         <div class="r">${links.map((l, i) => `<a class="lps-go${i ? " alt" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<button class="later" type="button">Maybe later</button></div></div><button class="x" type="button" aria-label="Close">✕</button></div>`;
       const card = root.querySelector(".c");
       const close = () => { card.classList.remove("in"); setTimeout(() => { host.remove(); cardOpen = false; }, 350); };

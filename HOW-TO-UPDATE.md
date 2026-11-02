@@ -254,3 +254,16 @@ The key never appears on the website: only the Action can read it.
 - **Campaign links.** Add `?utm_source=instagram&utm_campaign=<post-name>` to links you post; GoatCounter
   lists them under Campaigns.
 - **Citation.** `CITATION.cff` gives GitHub's "Cite this repository" button; the footer has the same text.
+
+## Support buttons (Buy Me a Coffee / PayPal, 후원)
+
+Open `assets/support.js` and paste your links at the top:
+
+    coffee: "https://buymeacoffee.com/yourname",
+    paypal: "https://paypal.me/yourname",
+
+Save, commit, and they appear on the homepage (a "Support Lab Potato" card above the footer) and as a small
+"☕ Support" pill in every tool after a minute of use. Leave a link empty to hide that button; both empty
+shows nothing. The latest version of each tool loads this file; when a tool gets a new version, keep the line
+`<script src="../../assets/support.js" defer></script>` just before its GoatCounter snippet (Doc Reader's
+build adds it by itself).

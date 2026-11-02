@@ -34,3 +34,9 @@ are generated from `assets/tools.js` by `assets/app.js`. Full manual:
 7. Check `node --check assets/tools.js assets/app.js`, render the homepage in
    a headless browser, and confirm every card and launch link works.
 8. Commit only the files for this release. Do not commit unrelated leftovers.
+
+## When the owner asks for an image, figure or diagram
+
+Follow `.claude/skills/figures/SKILL.md` (the `figures` skill): pick the right
+medium, render the result and look at it before delivering, and use the lab
+figure conventions. Figures go to the scratchpad, not into this repo.

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use Lab Potato in your research, please cite it as below, and name the tool and version in your Methods."
+title: "Lab Potato: free browser tools for wet-lab research"
+type: software
+authors:
+  - family-names: Byun
+    given-names: Dongmin
+url: "https://labpotato.github.io/"
+repository-code: "https://github.com/labpotato/labpotato.github.io"
+date-released: "2026-11-02"

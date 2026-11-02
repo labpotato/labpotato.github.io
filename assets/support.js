@@ -3,7 +3,7 @@
 
    SET UP: the links below. Leave one empty to hide it; both empty shows nothing anywhere.
      coffee: your Buy Me a Coffee page
-     paypal: your PayPal.Me link (optional)
+     paypal: your PayPal.Me link
 
    The homepage shows a small card above the footer: a sleepy potato that wakes up when you point
    at the button, a line about life at the bench, and "Buy me a coffee" in plain words.
@@ -13,14 +13,19 @@
 (function () {
   const SUPPORT = {
     coffee: "https://buymeacoffee.com/bdongmin",
-    paypal: "",
+    paypal: "https://paypal.me/bdongmin",
   };
   const cfg = Object.assign({}, SUPPORT, window.LP_SUPPORT || {});   // LP_SUPPORT: for testing only
   const links = [
-    cfg.coffee && { href: cfg.coffee, label: "Buy me a coffee" },
-    cfg.paypal && { href: cfg.paypal, label: "PayPal" },
+    cfg.coffee && { href: cfg.coffee, label: "Buy me a coffee", icon: "cup" },
+    cfg.paypal && { href: cfg.paypal, label: "PayPal", icon: "heart" },
   ].filter(Boolean);
   if (!links.length) return;
+  /* small line icons, drawn in the button's own colour */
+  const ICON = {
+    cup: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3.5c-.6.8.6 1.4 0 2.2M12 3.5c-.6.8.6 1.4 0 2.2"/></svg>',
+    heart: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   /* the potato: asleep (eyes shut, a few z's drifting up) until you point at the button, then it wakes and smiles */
@@ -64,7 +69,8 @@
 .lps-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
 .lps-btn{display:inline-flex;align-items:center;padding:10px 16px;border-radius:11px;font-weight:650;font-size:14.5px;line-height:1;font-family:inherit;text-decoration:none!important;color:#7a4a1c!important;background:#fbefe0;border:1px solid #efd3b0;transition:background .15s,transform .15s,box-shadow .15s}
 .lps-btn:hover,.lps-btn:focus-visible{background:#f7e2c8;transform:translateY(-1px);box-shadow:0 8px 18px -10px rgba(160,100,40,.6)}
-.lps-alt{font-size:13px;color:var(--text-muted,#667)!important}
+.lps-btn .ic{width:17px;height:17px;margin-right:7px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lps-btn.alt{color:#1d4f86!important;background:#eaf2fb;border-color:#cfe0f3}.lps-btn.alt:hover,.lps-btn.alt:focus-visible{background:#dde9f8;box-shadow:0 8px 18px -10px rgba(30,80,140,.5)}
 .lps-free{font-size:12.5px;color:var(--text-muted,#7a8190)}
 @media (max-width:560px){.lps-card{flex-direction:column;text-align:center}.lps-row{justify-content:center}.lps-card .spud{width:96px}}
 @media print{.lps-card{display:none!important}}`;
@@ -73,12 +79,13 @@
     home.innerHTML = `<div class="lps-card"><span class="spud-wrap">${SPUD("spud")}</span><div>
       <h3>Running on caffeine and approaching thesis deadlines</h3>
       <p>${esc(line)} If one of these tools gave you an afternoon back, you could give this potato a coffee.</p>
-      <div class="lps-row"><a class="lps-btn" href="${esc(main.href)}" target="_blank" rel="noopener">${esc(main.label)}</a>${alt ? `<a class="lps-alt" href="${esc(alt.href)}" target="_blank" rel="noopener">or ${esc(alt.label)}</a>` : ""}<span class="lps-free">No pressure. The tools stay free either way.</span></div></div></div>`;
-    const spud = home.querySelector(".spud"), b = home.querySelector(".lps-btn");
+      <div class="lps-row">${links.map((l, i) => `<a class="lps-btn${i ? " alt" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<span class="lps-free">No pressure. The tools stay free either way.</span></div></div></div>`;
+    const spud = home.querySelector(".spud");
     const wake = on => () => spud.classList.toggle("awake", on);
-    b.addEventListener("pointerenter", wake(true)); b.addEventListener("pointerleave", wake(false));
-    b.addEventListener("focus", wake(true)); b.addEventListener("blur", wake(false));
-    b.addEventListener("click", wake(true));
+    home.querySelectorAll(".lps-btn").forEach(b => {   // either button wakes the potato
+      b.addEventListener("pointerenter", wake(true)); b.addEventListener("pointerleave", wake(false));
+      b.addEventListener("focus", wake(true)); b.addEventListener("blur", wake(false)); b.addEventListener("click", wake(true));
+    });
     return;
   }
 
@@ -90,6 +97,8 @@
 .p{display:flex;align-items:center;gap:2px;padding:3px 3px 3px 4px;border-radius:999px;background:rgba(255,255,255,.96);border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 18px -8px rgba(0,0,0,.35);font:600 12.5px/1 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;white-space:nowrap}
 .p.in{opacity:.94;transform:none}.p:hover{opacity:1}
 a{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 4px;border-radius:999px;color:#5a3a1a;text-decoration:none}a:hover{background:#fff4e6}
+a.alt{gap:5px;padding:4px 10px;color:#1d4f86}a.alt:hover{background:#eaf2fb}.sep{width:1px;height:16px;background:rgba(0,0,0,.12)}
+.ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .mini{width:30px;height:26px;overflow:visible}.mini .zz{display:none}
 button{all:unset;display:grid;place-items:center;color:#999;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px}button:hover{background:#eee;color:#333}
 @media (prefers-color-scheme:dark){.p{background:rgba(30,36,46,.96);border-color:rgba(255,255,255,.14)}a{color:#f2e3cf}a:hover{background:#3a3226}}`;
@@ -97,9 +106,9 @@ button{all:unset;display:grid;place-items:center;color:#999;width:24px;height:24
     const host = document.createElement("div"); host.id = "lp-support"; host.setAttribute("role", "complementary"); host.setAttribute("aria-label", "Support Lab Potato");
     host.style.cssText = "position:fixed!important;z-index:2147483000!important;left:12px;bottom:12px;width:auto!important;height:auto!important;margin:0!important;padding:0!important;visibility:hidden";
     const root = host.attachShadow({ mode: "open" });
-    root.innerHTML = `<style>${pillCss}</style><div class="p"><a href="${esc(links[0].href)}" target="_blank" rel="noopener" title="${esc(line)} A coffee keeps the tools free.">${SPUD("mini")}${esc(links[0].label)}</a><button type="button" aria-label="Hide for 30 days" title="Hide for 30 days">✕</button></div>`;
-    const pill = root.querySelector(".p"), a = root.querySelector("a"), mini = root.querySelector(".mini");
-    a.addEventListener("pointerenter", () => mini.classList.add("awake")); a.addEventListener("pointerleave", () => mini.classList.remove("awake"));
+    root.innerHTML = `<style>${pillCss}</style><div class="p"><a class="main" href="${esc(links[0].href)}" target="_blank" rel="noopener" title="${esc(line)} A coffee keeps the tools free.">${SPUD("mini")}${esc(links[0].label)}</a>${links.slice(1).map(l => `<span class="sep" aria-hidden="true"></span><a class="alt" href="${esc(l.href)}" target="_blank" rel="noopener" title="${esc(l.label)}">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<button type="button" aria-label="Hide for 30 days" title="Hide for 30 days">✕</button></div>`;
+    const pill = root.querySelector(".p"), mini = root.querySelector(".mini");
+    root.querySelectorAll("a").forEach(a => { a.addEventListener("pointerenter", () => mini.classList.add("awake")); a.addEventListener("pointerleave", () => mini.classList.remove("awake")); });
     let stop = false;
     root.querySelector("button").addEventListener("click", () => { stop = true; host.remove(); try { localStorage.setItem(KEY, String(Date.now())); } catch (e) { /* not remembered */ } });
     document.body.append(host);

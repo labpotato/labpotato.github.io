@@ -7,8 +7,8 @@
 
    The homepage shows a small card above the footer: a sleepy potato that wakes up when you point
    at the button, a line about life at the bench, and "Buy me a coffee" in plain words.
-   Each tool shows a small pill (a tiny potato and "Buy me a coffee") after a minute of use, only in
-   a free corner; its ✕ hides it for 30 days. Loaded by the homepage and every tool's latest version.
+   Each tool shows one line in small print at the end of the page, and, now and then, a friendlier card
+   with the potato right after an export. Loaded by the homepage and every tool's latest version.
    ============================================================ */
 (function () {
   const SUPPORT = {
@@ -89,57 +89,72 @@
     return;
   }
 
-  // a tool: a small pill after a minute of use, in its own shadow root (no tool's styles reach it),
-  // only in a corner where nothing of the tool's own is; no free corner, no pill.
-  const KEY = "lp-support-hidden";
-  try { if (Date.now() - (+localStorage.getItem(KEY) || 0) < 30 * 864e5) return; } catch (e) { /* storage blocked: still show */ }
-  const pillCss = `:host{all:initial}` + SPUD_CSS + `
-.p{display:flex;align-items:center;gap:2px;padding:3px 3px 3px 4px;border-radius:999px;background:rgba(255,255,255,.96);border:1px solid rgba(0,0,0,.12);box-shadow:0 6px 18px -8px rgba(0,0,0,.35);font:600 12.5px/1 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;white-space:nowrap}
-.p.in{opacity:.94;transform:none}.p:hover{opacity:1}
-a{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 4px;border-radius:999px;color:#5a3a1a;text-decoration:none}a:hover{background:#fff4e6}
-a.alt{gap:5px;padding:4px 10px;color:#1d4f86}a.alt:hover{background:#eaf2fb}.sep{width:1px;height:16px;background:rgba(0,0,0,.12)}
-.ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.mini{width:30px;height:26px;overflow:visible}.mini .zz{display:none}
-button{all:unset;display:grid;place-items:center;color:#999;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px}button:hover{background:#eee;color:#333}
-@media (prefers-color-scheme:dark){.p{background:rgba(30,36,46,.96);border-color:rgba(255,255,255,.14)}a{color:#f2e3cf}a:hover{background:#3a3226}}`;
-  const start = () => {
-    const host = document.createElement("div"); host.id = "lp-support"; host.setAttribute("role", "complementary"); host.setAttribute("aria-label", "Support Lab Potato");
-    host.style.cssText = "position:fixed!important;z-index:2147483000!important;left:12px;bottom:12px;width:auto!important;height:auto!important;margin:0!important;padding:0!important;visibility:hidden";
-    const root = host.attachShadow({ mode: "open" });
-    root.innerHTML = `<style>${pillCss}</style><div class="p"><a class="main" href="${esc(links[0].href)}" target="_blank" rel="noopener" title="${esc(line)} A coffee keeps the tools free.">${SPUD("mini")}${esc(links[0].label)}</a>${links.slice(1).map(l => `<span class="sep" aria-hidden="true"></span><a class="alt" href="${esc(l.href)}" target="_blank" rel="noopener" title="${esc(l.label)}">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<button type="button" aria-label="Hide for 30 days" title="Hide for 30 days">✕</button></div>`;
-    const pill = root.querySelector(".p"), mini = root.querySelector(".mini");
-    root.querySelectorAll("a").forEach(a => { a.addEventListener("pointerenter", () => mini.classList.add("awake")); a.addEventListener("pointerleave", () => mini.classList.remove("awake")); });
-    let stop = false;
-    root.querySelector("button").addEventListener("click", () => { stop = true; host.remove(); try { localStorage.setItem(KEY, String(Date.now())); } catch (e) { /* not remembered */ } });
-    document.body.append(host);
-    const m = 12, spots = [{ left: m, bottom: m }, { right: m, bottom: m }, { left: m, bottom: 64 }, { right: m, bottom: 64 }];
-    const busy = (x0, y0, w, h) => {
-      const R = { l: x0 - 4, t: y0 - 4, r: x0 + w + 4, b: y0 + h + 4 }, A = innerWidth * innerHeight * 0.25;
-      for (const t of document.body.querySelectorAll("*")) {
-        if (t === host) continue;
-        const r = t.getBoundingClientRect();
-        if (!r.width || !r.height || r.right <= R.l || r.left >= R.r || r.bottom <= R.t || r.top >= R.b || r.width * r.height > A) continue;
-        const cs = getComputedStyle(t); if (cs.visibility === "hidden" || +cs.opacity === 0 || cs.display === "none") continue;
-        if (t.matches("a,button,input,select,textarea,label,[role=button],[contenteditable=true]")) return true;
-        if (/^(fixed|absolute|sticky)$/.test(cs.position)) return true;
-        const bg = cs.backgroundColor.match(/[\d.]+/g);
-        if ((bg && (bg.length < 4 || +bg[3] > 0.3)) || cs.boxShadow !== "none") return true;
-      }
-      return false;
-    };
-    const place = () => {
-      if (stop || !host.isConnected) return;
-      const w = host.offsetWidth, h = host.offsetHeight, W = innerWidth, H = innerHeight;
-      const spot = spots.find(sp => !busy(sp.left != null ? sp.left : W - sp.right - w, H - sp.bottom - h, w, h));
-      if (!spot) { host.style.visibility = "hidden"; pill.classList.remove("in"); return; }
-      host.style.left = spot.left != null ? spot.left + "px" : "auto"; host.style.right = spot.right != null ? spot.right + "px" : "auto"; host.style.bottom = spot.bottom + "px";
-      host.style.visibility = "visible"; requestAnimationFrame(() => pill.classList.add("in"));
-    };
-    const check = () => { if (stop || !host.isConnected) return; host.style.visibility = "hidden"; place(); };
-    setTimeout(place, 800);   // after the tool's own messages have finished fading in
-    [2500, 6000, 12000, 25000, 45000].forEach(t => setTimeout(check, t));
-    addEventListener("resize", () => { clearTimeout(check.t); check.t = setTimeout(check, 300); });
-    addEventListener("scroll", () => { clearTimeout(check.t); check.t = setTimeout(check, 500); }, { passive: true, capture: true });
+  /* ---------- in a tool ----------
+     1. a short line in small print at the end of the page (the tool's own footer, or the end of its main panel);
+     2. right after an export, a friendlier card with the happy potato, now and then (at most every 3 days, and
+        not for 60 days after someone has followed a support link). */
+  const now = () => Date.now(), get = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } }, put = k => { try { localStorage.setItem(k, String(now())); } catch (e) { /* not remembered */ } };
+  const GAVE = "lp-support-gave", SHOWN = "lp-support-export";
+  const mark = e => { if (e.target.closest && e.target.closest("a.lps-go")) put(GAVE); };
+  document.addEventListener("click", mark, true);
+
+  // 1. the line at the end of the page
+  const TARGETS = ["footer.site-footer", "footer.wm-footer", ".rail .footer", "#sbwrap", "aside#panel", "main#main", "main#home", "main#app", "footer"];
+  const lineHtml = `Made between experiments by one tired potato. If a tool here saved you some time, <a class="lps-go" href="${esc(links[0].href)}" target="_blank" rel="noopener">${esc(links[0].label.toLowerCase())}</a>${links[1] ? ` or say thanks on <a class="lps-go" href="${esc(links[1].href)}" target="_blank" rel="noopener">${esc(links[1].label)}</a>` : ""}.`;
+  const lineCss = document.createElement("style");
+  lineCss.textContent = `.lps-line{display:block;margin:14px auto 6px;padding:0 12px;max-width:640px;text-align:center;font-size:12px!important;line-height:1.5;opacity:.72;font-style:normal;letter-spacing:normal}
+.lps-line a{color:inherit!important;text-decoration:underline!important;text-underline-offset:2px;font-weight:600}.lps-line a:hover{opacity:1;color:#b5753a!important}
+@media print{.lps-line{display:none!important}}`;
+  document.head.append(lineCss);
+  const placeLine = () => {
+    const host = TARGETS.map(sel => document.querySelector(sel)).find(Boolean); if (!host) return;
+    let el = document.querySelector(".lps-line");
+    if (el && el.parentElement === host && el === host.lastElementChild) return;
+    if (!el) { el = document.createElement("p"); el.className = "lps-line"; el.innerHTML = lineHtml; }
+    host.append(el);
   };
-  setTimeout(start, (window.LP_SUPPORT && window.LP_SUPPORT.delay != null) ? window.LP_SUPPORT.delay : 60000);
+  const lineSoon = (() => { let t; return () => { clearTimeout(t); t = setTimeout(placeLine, 400); }; })();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(placeLine, 600)); else setTimeout(placeLine, 600);
+  new MutationObserver(ms => { if (ms.some(m => !(m.target.closest && m.target.closest(".lps-line")))) lineSoon(); }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // 2. after an export: downloads (links with "download", saved files), the save dialog, print / save as PDF
+  const cardCss = `:host{all:initial}` + SPUD_CSS + `
+.c{position:relative;display:flex;gap:14px;align-items:center;width:min(380px,calc(100vw - 24px));box-sizing:border-box;padding:16px 16px 14px 12px;border-radius:18px;background:#fffaf3;border:1px solid #f0dcc2;box-shadow:0 22px 50px -18px rgba(90,55,20,.45);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:#2b2118;opacity:0;transform:translateY(14px) scale(.98);transition:opacity .35s,transform .35s cubic-bezier(.2,.9,.3,1.2)}
+.c.in{opacity:1;transform:none}
+.spud{flex:none;width:86px;height:auto;overflow:visible}
+b{display:block;font-size:15px;margin-bottom:2px}p{margin:0 0 10px;color:#5a4a3a}
+.r{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:13.5px;text-decoration:none;color:#7a4a1c;background:#fbefe0;border:1px solid #efd3b0}
+a.alt{color:#1d4f86;background:#eaf2fb;border-color:#cfe0f3}a:hover{filter:brightness(.97);transform:translateY(-1px)}
+.ic{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.later{all:unset;cursor:pointer;font-size:12.5px;color:#8a7a6a;padding:6px 4px}.later:hover{color:#2b2118}
+.x{all:unset;position:absolute;top:6px;right:8px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;color:#a99;cursor:pointer;font-size:13px}.x:hover{background:#f3e6d6;color:#333}
+@media (prefers-color-scheme:dark){.c{background:#2a241d;border-color:#4a3c2c;color:#f3e8da}p{color:#d8c8b4}.later{color:#b8a894}}`;
+  let cardOpen = false;
+  const exported = () => {
+    if (cardOpen || now() - get(GAVE) < 60 * 864e5 || now() - get(SHOWN) < 3 * 864e5) return;
+    cardOpen = true; put(SHOWN);
+    setTimeout(() => {
+      const host = document.createElement("div"); host.id = "lp-support-card"; host.setAttribute("role", "status");
+      host.style.cssText = "position:fixed!important;z-index:2147483000!important;right:16px;bottom:16px;width:auto!important;height:auto!important;margin:0!important;padding:0!important";
+      const root = host.attachShadow({ mode: "open" });
+      root.innerHTML = `<style>${cardCss}</style><div class="c">${SPUD("spud awake")}<div><b>Saved! Your file is on its way.</b><p>If that just saved you an afternoon, this potato would love a coffee. It keeps the tools free.</p>
+        <div class="r">${links.map((l, i) => `<a class="lps-go${i ? " alt" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}<button class="later" type="button">Maybe later</button></div></div><button class="x" type="button" aria-label="Close">✕</button></div>`;
+      const card = root.querySelector(".c");
+      const close = () => { card.classList.remove("in"); setTimeout(() => { host.remove(); cardOpen = false; }, 350); };
+      root.querySelectorAll(".later,.x").forEach(b => b.addEventListener("click", close));
+      root.querySelectorAll("a").forEach(a => a.addEventListener("click", () => { put(GAVE); setTimeout(close, 300); }));
+      let t = setTimeout(close, 15000);   // leaves by itself, unless the pointer is on it
+      card.addEventListener("pointerenter", () => clearTimeout(t)); card.addEventListener("pointerleave", () => { t = setTimeout(close, 6000); });
+      document.body.append(host); requestAnimationFrame(() => card.classList.add("in"));
+    }, 1100);
+  };
+  const isDl = a => a && a.hasAttribute && a.hasAttribute("download");
+  const ac = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function () { if (isDl(this)) exported(); return ac.apply(this, arguments); };
+  const ad = EventTarget.prototype.dispatchEvent;
+  HTMLAnchorElement.prototype.dispatchEvent = function (ev) { if (ev && ev.type === "click" && isDl(this)) exported(); return ad.apply(this, arguments); };
+  document.addEventListener("click", e => { const a = e.target.closest && e.target.closest("a[download]"); if (a) exported(); }, true);
+  if (window.showSaveFilePicker) { const sp = window.showSaveFilePicker; window.showSaveFilePicker = function () { const r = sp.apply(this, arguments); Promise.resolve(r).then(() => setTimeout(exported, 1500), () => {}); return r; }; }
+  addEventListener("afterprint", exported);
 })();

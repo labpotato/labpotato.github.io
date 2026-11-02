@@ -670,6 +670,26 @@ initSecretPotato();
 
 
 /* Colour theme: Auto follows the system; Light or Dark is remembered on this device. */
+/* ---------- the top bar: a Tools menu (every tool, newest version, opens in a new tab) ---------- */
+(function navTools() {
+  const btn = document.getElementById("nav-tools-btn"), menu = document.getElementById("nav-tools-menu");
+  if (!btn || !menu) return;
+  const draw = () => {
+    menu.innerHTML = `<div class="nt-grid">${TOOLS.map((t) => { const l = latestOf(t); return `<a class="nt-item" role="menuitem" data-tool="${t.id}" style="--card:${accentOf(t)}" href="${toolPath(t, l)}" target="_blank" rel="noopener">
+        <span class="app-icon nt-ic">${appGlyph(t)}</span><span class="nt-t"><b>${t.name}</b><small>${t.short || t.tagline}</small></span>${isUnseen(t) ? '<i class="nt-new">New</i>' : ""}</a>`; }).join("")}</div>
+      <a class="nt-all" href="#tools" role="menuitem">All tools, versions and what's new<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>`;
+  };
+  const open = (on) => { if (on) draw(); menu.hidden = !on; btn.setAttribute("aria-expanded", String(on)); if (on) menu.querySelector("a")?.focus({ preventScroll: true }); };
+  btn.addEventListener("click", () => open(menu.hidden));
+  document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".nav-tools")) open(false); });
+  menu.addEventListener("click", (e) => { if (e.target.closest("a")) setTimeout(() => open(false), 0); });
+  document.addEventListener("keydown", (e) => {
+    if (menu.hidden) return;
+    if (e.key === "Escape") { open(false); btn.focus(); return; }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { const items = [...menu.querySelectorAll("a")], i = items.indexOf(document.activeElement); e.preventDefault(); items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus(); }
+  });
+})();
+
 (function themeSwitch() {
   const root = document.documentElement, btns = document.querySelectorAll("[data-theme-set]");
   const mark = () => { const cur = root.dataset.theme || "auto"; btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeSet === cur))); };
@@ -680,4 +700,11 @@ initSecretPotato();
     mark();
   }));
   mark();
+  /* one button instead of three: it shows the current choice and moves to the next (system, light, dark) */
+  const group = document.querySelector(".theme-switch"); if (!group || !btns.length) return;
+  const order = [...btns], cyc = document.createElement("button"); cyc.type = "button"; cyc.className = "theme-cycle";
+  const NAMES = { auto: "Theme: match my system", light: "Theme: light", dark: "Theme: dark" };
+  const show = () => { const cur = root.dataset.theme || "auto", b = order.find((x) => x.dataset.themeSet === cur) || order[0]; cyc.innerHTML = b.innerHTML; cyc.title = NAMES[cur] + " (click to change)"; cyc.setAttribute("aria-label", cyc.title); };
+  cyc.addEventListener("click", () => { const cur = root.dataset.theme || "auto", i = order.findIndex((x) => x.dataset.themeSet === cur); order[(i + 1) % order.length].click(); show(); });
+  group.classList.add("collapsed"); group.append(cyc); show();
 })();

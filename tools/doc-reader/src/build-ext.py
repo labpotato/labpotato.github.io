@@ -17,6 +17,7 @@ OUTDIR = HERE.parent
 if len(sys.argv) < 3: sys.exit("build-ext.py: give the page version and the extension version, e.g. v4 v3")
 PAGE, EXT = sys.argv[1], sys.argv[2]
 h = (OUTDIR / f"doc-reader-{PAGE}.html").read_text(encoding="utf-8")
+h = h.replace('<script src="../../assets/support.js" defer></script>\n', "")   # the site's Support pill is not part of the extension
 files = {}
 
 

@@ -333,8 +333,12 @@ function showFresh(f) {
   draw(); clearInterval(freshTimer); freshTimer = setInterval(draw, 60000);
 }
 
+/* The numbers are private for now: the section shows only for the owner, at labpotato.github.io/?stats
+   (or with #usage). Set USAGE_PUBLIC to true once they are worth showing to visitors. */
+const USAGE_PUBLIC = false;
 function initUsage() {
   const sec = document.getElementById("usage"); if (!sec) return;
+  if (!USAGE_PUBLIC && !/[?&]stats\b/.test(location.search) && location.hash !== "#usage") return;
   sec.hidden = false;
   let range = "month";   // always opens on the last 30 days
   const seg = document.getElementById("usage-range"), box = document.getElementById("usage-grid");

@@ -611,6 +611,48 @@ function seenFromLink(e) {
 document.addEventListener("click", seenFromLink, true);
 document.addEventListener("auxclick", (e) => { if (e.button === 1) seenFromLink(e); }, true);   // middle-click opens a new tab too
 
+/* ---------- phones: these tools are made for a computer ----------
+   A slim card at the bottom: send yourself the link (share sheet, or copy). Inside Instagram's (or
+   Facebook's, TikTok's) own browser it also says how to open the page in the real browser, where saved
+   work stays put. Closing it hides it for 14 days. */
+(function phoneHint() {
+  const KEY = "lp-phone-hint", inApp = /Instagram|FBAN|FBAV|FB_IAB|TikTok|Line\//i.test(navigator.userAgent || "");
+  const small = window.matchMedia && window.matchMedia("(max-width: 820px), (pointer: coarse) and (max-width: 1024px)").matches;
+  if (!small) return;
+  try { const t = +localStorage.getItem(KEY) || 0; if (Date.now() - t < 14 * 864e5) return; } catch (e) { /* storage blocked: show it */ }
+  const url = "https://labpotato.github.io/";
+  const el = document.createElement("aside"); el.className = "phone-hint"; el.setAttribute("role", "note");
+  el.innerHTML = `<div class="ph-text"><b>Best on a computer.</b> ${inApp ? "You are in Instagram's browser: tap <b>⋯</b> and <b>Open in external browser</b> so your work is kept. " : ""}Send yourself the link for later at the bench.</div>
+    <div class="ph-btns"><button type="button" class="ph-send">${navigator.share ? "Send to myself" : "Copy link"}</button><button type="button" class="ph-x" aria-label="Close">✕</button></div>`;
+  document.body.append(el); requestAnimationFrame(() => el.classList.add("in"));
+  const close = () => { el.classList.remove("in"); setTimeout(() => el.remove(), 300); try { localStorage.setItem(KEY, String(Date.now())); } catch (e) { /* nothing to remember */ } };
+  el.querySelector(".ph-x").addEventListener("click", close);
+  el.querySelector(".ph-send").addEventListener("click", async () => {
+    if (navigator.share) { try { await navigator.share({ title: "Lab Potato", text: "Free browser tools for the wet lab", url }); close(); } catch (e) { /* cancelled */ } return; }
+    try { await navigator.clipboard.writeText(url); toast("Link copied. Paste it into a note or a chat with yourself."); close(); }
+    catch (e) { toast(url); }
+  });
+})();
+
+/* ---------- how to cite: copy buttons ---------- */
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest && e.target.closest(".cite-btn"); if (!b) return;
+  const src = document.getElementById(b.dataset.copy); if (!src) return;
+  try { await navigator.clipboard.writeText(src.textContent.trim()); toast(b.dataset.copy === "cite-bib" ? "BibTeX copied." : "Citation copied."); }
+  catch (err) { src.hidden = false; toast("Select the text and copy it."); }
+});
+
+/* ---------- feedback without a GitHub account ----------
+   Paste a form address here (Google Forms, Tally, Microsoft Forms...) and a "Send feedback, no account needed"
+   link appears under the support cards. Empty: nothing is shown. */
+const FEEDBACK_FORM = "";
+(function feedbackForm() {
+  const p = document.querySelector(".feedback-general"); if (!p || !FEEDBACK_FORM) return;
+  const a = document.createElement("p"); a.className = "feedback-easy reveal in";
+  a.innerHTML = `No GitHub account? <a href="${FEEDBACK_FORM}" target="_blank" rel="noopener">Send feedback with a short form</a>. It takes a minute and needs no account.`;
+  p.after(a);
+})();
+
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 

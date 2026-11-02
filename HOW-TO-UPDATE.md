@@ -241,3 +241,16 @@ The key never appears on the website: only the Action can read it.
   be no spaces.
 - **Changes not showing** → give it a minute, then hard-refresh
   (Ctrl+Shift+R / Cmd+Shift+R).
+
+## Launch settings (homepage)
+
+- **Visit numbers are private.** The usage section shows only at `https://labpotato.github.io/?stats`.
+  To show it to everyone, set `USAGE_PUBLIC = true` at the top of `initUsage` in `assets/usage.js`.
+- **Feedback without a GitHub account.** Paste a form link (Google Forms, Tally, Microsoft Forms) into
+  `FEEDBACK_FORM` in `assets/app.js`; a "No GitHub account? Send feedback with a short form" line then
+  appears under the support cards.
+- **Link previews** use `assets/og-image.png` (1200×630). Replace the file to change the picture shown
+  when the site is shared on Instagram, WhatsApp, Telegram, LinkedIn or X.
+- **Campaign links.** Add `?utm_source=instagram&utm_campaign=<post-name>` to links you post; GoatCounter
+  lists them under Campaigns.
+- **Citation.** `CITATION.cff` gives GitHub's "Cite this repository" button; the footer has the same text.

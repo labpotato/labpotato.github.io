@@ -1865,12 +1865,12 @@ body { font-size: 17.5px; }
 .hero h1 .h1-line { display: block; white-space: nowrap; }
 @media (max-width: 420px) { .hero h1 { font-size: clamp(30px, 9vw, 40px); } }
 
-/* ===== Four tools to a row on desktop screens ===== */
-@media (min-width: 1180px) {
+/* ===== Four tools to a row, but only once a card is wide enough for it ===== */
+@media (min-width: 980px) {
   #tools .wrap-wide, .wrap-wide:has(> .tools-grid), .wrap-wide:has(#tools-grid) { width: min(94vw, 1720px); }
-  .tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px; }
 }
-@media (min-width: 1101px) and (max-width: 1179px) { .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (min-width: 1400px) { .tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
+@media (min-width: 980px) and (max-width: 1399px) { .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 
 /* ===== A step smaller: the premium pass read a little too large ===== */
 body { font-size: 16px; }
@@ -1997,6 +1997,7 @@ body { font-size: 16px; }
    written, Gibson fragments anneal, image panels light up, protein bars rise, a highlight sweeps,
    vials drop into the box. ===== */
 .app-icon svg [class^="g-"] { transform-box: fill-box; }
+.app-icon svg .g-arc, .app-icon svg .g-seal { transform-box: view-box; transform-origin: 24px 24px; }
 .g-pop { transform-origin: center; }
 .g-bar { transform-origin: 50% 100%; }
 .g-hl { transform-origin: 0 50%; }
@@ -2017,5 +2018,30 @@ body { font-size: 16px; }
 @keyframes g-sweep { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 @keyframes g-write { 0% { stroke-dashoffset: 14; } 100% { stroke-dashoffset: 0; } }
 @keyframes g-tab { 0% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
-@keyframes g-join { 0% { transform: translate(6px, 5px); } 100% { transform: translate(0, 0); } }
+/* Gibson: the three fragments swing in, then the joins seal and the plasmid is closed.
+   Both end on transform:none, so the finished icon is exactly the static artwork. */
+@keyframes g-close { 0% { transform: rotate(-46deg); opacity: 0; } 35% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes g-seal { 0% { transform: scale(.45); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .app-icon [class^="g-"] { animation: none !important; } }
+
+/* ===== Tool cards: column steps and even cards =================================
+   Before this the grid went straight from 4 narrow columns (282px at 1280) to 2 very
+   wide ones (473px at 1024), so cards were either cramped or oversized. Now the
+   column count follows the space, and the parts of a card have a settled height so
+   every card in a row ends at the same place instead of leaving a ragged gap. */
+.tools-grid { gap: 20px; }
+@media (max-width: 639px)  { .tools-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 640px)  { .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 980px)  { .tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1400px) { .tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; } }
+
+.tool-card { padding: 20px 20px 16px; gap: 11px; }
+.tc-head { align-items: center; min-height: 52px; }
+.tool-card h3 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tool-tagline { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.tool-desc { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(3 * 1.55em); margin: 0; }
+.tool-features { padding-top: 9px; gap: 7px; }
+.tool-features li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 8px; }
+.tool-features li > span, .tool-features li > p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Quick launch: a two-line name box so every caption sits on the same line. */
+.app .app-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }

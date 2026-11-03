@@ -564,9 +564,13 @@ const APP_GLYPH = {
     <g ${C}><rect x="13" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="21.75" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="30.5" y="13" width="4.5" height="2" rx="1" opacity=".3"/>
     <rect class="g-band" x="13" y="19" width="4.5" height="2.4" rx="1.2"/><rect class="g-band" x="13" y="24" width="4.5" height="2.4" rx="1.2" opacity=".55"/><rect class="g-band" x="13" y="29" width="4.5" height="2.4" rx="1.2" opacity=".35"/><rect class="g-band" x="13" y="33" width="4.5" height="2" rx="1" opacity=".25"/>
     <rect class="g-band" x="21.75" y="22" width="4.5" height="2.6" rx="1.3"/><rect class="g-band" x="30.5" y="22" width="4.5" height="2.6" rx="1.3" opacity=".7"/><rect class="g-band" x="30.5" y="27" width="4.5" height="2.4" rx="1.2"/></g>`,
-  gibson: `<rect x="6" y="14" width="25" height="7" rx="3.5" fill="#fff"/><rect class="g-join" x="17" y="27" width="25" height="7" rx="3.5" fill="#fff" fill-opacity=".72"/>
-    <path class="g-join" d="M19.5 21.5v5M23 21.5v5M26.5 21.5v5M30 21.5v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-    <rect x="6" y="14" width="9" height="7" rx="3.5" ${C} opacity=".28"/><rect class="g-join" x="33" y="27" width="9" height="7" rx="3.5" ${C} opacity=".28"/>`,
+  gibson: `<g class="g-arc" style="--i:0"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="22 59.7" transform="rotate(4 24 24)"/></g>
+    <g class="g-arc" style="--i:1"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="22 59.7" transform="rotate(124 24 24)"/></g>
+    <g class="g-arc" style="--i:2"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="22 59.7" transform="rotate(244 24 24)"/></g>
+    <g class="g-seal" style="--i:3"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="6.2 75.5" stroke-opacity=".62" transform="rotate(100 24 24)"/></g>
+    <g class="g-seal" style="--i:4"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="6.2 75.5" stroke-opacity=".62" transform="rotate(220 24 24)"/></g>
+    <g class="g-seal" style="--i:5"><circle cx="24" cy="24" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="6.2 75.5" stroke-opacity=".62" transform="rotate(340 24 24)"/></g>`,
+
   microscopy: `<rect x="9" y="9" width="14" height="14" rx="3" fill="#fff"/><rect x="25" y="9" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/>
     <rect x="9" y="25" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/><rect x="25" y="25" width="14" height="14" rx="3" fill="#fff"/>
     <circle class="g-pop" cx="15" cy="15" r="3" ${C}/><circle class="g-pop" cx="32" cy="16" r="2.4" ${C} opacity=".7"/><circle class="g-pop" cx="16" cy="32" r="2.6" ${C} opacity=".55"/><circle class="g-pop" cx="31" cy="31" r="3.2" ${C}/><circle class="g-pop" cx="34" cy="34.5" r="1.4" ${C} opacity=".6"/>`,

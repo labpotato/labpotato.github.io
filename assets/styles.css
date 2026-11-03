@@ -1991,3 +1991,31 @@ body { font-size: 16px; }
 /* the menu's items are never caught by the older "hide the 3rd and 4th header link" rules */
 .nav-tools-menu .nt-item { display: flex !important; }
 .nav-tools-menu .nt-all { display: flex !important; }
+
+/* ===== Tool icon micro-animations: each icon does its own small lab action when pointed at
+   (and once as the cards scroll into view). Colonies grow, gel bands run, notebook lines get
+   written, Gibson fragments anneal, image panels light up, protein bars rise, a highlight sweeps,
+   vials drop into the box. ===== */
+.app-icon svg [class^="g-"] { transform-box: fill-box; }
+.g-pop { transform-origin: center; }
+.g-bar { transform-origin: 50% 100%; }
+.g-hl { transform-origin: 0 50%; }
+.g-write { stroke-dasharray: 14; }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon {
+  --d: calc(var(--i, 0) * 70ms);
+}
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-pop { animation: g-pop .55s cubic-bezier(.3,1.6,.5,1) both; animation-delay: calc(var(--i, 0) * 70ms); }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-bar { animation: g-rise .6s cubic-bezier(.3,1.4,.5,1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-band { animation: g-run .7s cubic-bezier(.2,.8,.3,1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-hl { animation: g-sweep .6s ease-out both; }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-write { animation: g-write .8s ease-out both; }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-tab { animation: g-tab .6s cubic-bezier(.3,1.6,.5,1) both; }
+:is(.app:hover, .app:focus-visible, .tool-card:hover, .tool-card.play, .nt-item:hover, .nt-item:focus-visible, .le-row:hover) .app-icon .g-join { animation: g-join .7s cubic-bezier(.3,1.4,.5,1) both; }
+@keyframes g-pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@keyframes g-rise { 0% { transform: scaleY(.1); } 100% { transform: scaleY(1); } }
+@keyframes g-run { 0% { transform: translateY(-9px); opacity: 0; } 100% { transform: translateY(0); } }
+@keyframes g-sweep { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@keyframes g-write { 0% { stroke-dashoffset: 14; } 100% { stroke-dashoffset: 0; } }
+@keyframes g-tab { 0% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
+@keyframes g-join { 0% { transform: translate(6px, 5px); } 100% { transform: translate(0, 0); } }
+@media (prefers-reduced-motion: reduce) { .app-icon [class^="g-"] { animation: none !important; } }

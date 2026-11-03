@@ -372,7 +372,14 @@ function initReveal() {
         // Stagger siblings slightly so grids cascade instead of popping.
         const siblings = [...entry.target.parentElement.children];
         const delay = Math.min(siblings.indexOf(entry.target), 5) * 70;
-        setTimeout(() => entry.target.classList.add("in"), delay);
+        setTimeout(() => {
+          entry.target.classList.add("in");
+          // a tool card's icon plays its little animation once as it arrives
+          if (entry.target.classList.contains("tool-card")) {
+            setTimeout(() => entry.target.classList.add("play"), 250);
+            setTimeout(() => entry.target.classList.remove("play"), 1600);
+          }
+        }, delay);
         observer.unobserve(entry.target);
       });
     },
@@ -549,32 +556,37 @@ function initMascot() {
 const C = 'style="fill:var(--card)"', CS = 'style="stroke:var(--card)"';
 const APP_GLYPH = {
   flask: `<rect x="12" y="8" width="25" height="32" rx="4" fill="#fff"/><rect x="12" y="8" width="6" height="32" rx="3" ${C} opacity=".22"/>
-    <path d="M22.5 17h9M22.5 22h9M22.5 27h6" ${CS} stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M30 8v10l2.75-2.2L35.5 18V8z" fill="#ffcf6b"/>`,
+    <path class="g-write" d="M22.5 17h9M22.5 22h9M22.5 27h6" ${CS} stroke-width="2.4" stroke-linecap="round" fill="none"/><path class="g-tab" d="M30 8v10l2.75-2.2L35.5 18V8z" fill="#ffcf6b"/>`,
   colony: `<circle cx="24" cy="24" r="15.5" fill="#fff"/><circle cx="24" cy="24" r="12" fill="none" ${CS} stroke-opacity=".22" stroke-width="1.6"/>
-    <circle cx="19" cy="20" r="2.6" ${C}/><circle cx="27.5" cy="17.5" r="1.8" ${C} opacity=".8"/><circle cx="29.5" cy="26.5" r="3" ${C}/>
-    <circle cx="20.5" cy="29" r="2" ${C} opacity=".75"/><circle cx="25" cy="23.5" r="1.3" ${C} opacity=".6"/><circle cx="16.5" cy="25.5" r="1.4" ${C} opacity=".55"/>`,
+    <circle class="g-pop" cx="19" cy="20" r="2.6" ${C}/><circle class="g-pop" cx="27.5" cy="17.5" r="1.8" ${C} opacity=".8"/><circle class="g-pop" cx="29.5" cy="26.5" r="3" ${C}/>
+    <circle class="g-pop" cx="20.5" cy="29" r="2" ${C} opacity=".75"/><circle class="g-pop" cx="25" cy="23.5" r="1.3" ${C} opacity=".6"/><circle class="g-pop" cx="16.5" cy="25.5" r="1.4" ${C} opacity=".55"/>`,
   gel: `<rect x="9" y="10" width="30" height="28" rx="4" fill="#fff"/>
     <g ${C}><rect x="13" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="21.75" y="13" width="4.5" height="2" rx="1" opacity=".3"/><rect x="30.5" y="13" width="4.5" height="2" rx="1" opacity=".3"/>
-    <rect x="13" y="19" width="4.5" height="2.4" rx="1.2"/><rect x="13" y="24" width="4.5" height="2.4" rx="1.2" opacity=".55"/><rect x="13" y="29" width="4.5" height="2.4" rx="1.2" opacity=".35"/><rect x="13" y="33" width="4.5" height="2" rx="1" opacity=".25"/>
-    <rect x="21.75" y="22" width="4.5" height="2.6" rx="1.3"/><rect x="30.5" y="22" width="4.5" height="2.6" rx="1.3" opacity=".7"/><rect x="30.5" y="27" width="4.5" height="2.4" rx="1.2"/></g>`,
-  gibson: `<rect x="6" y="14" width="25" height="7" rx="3.5" fill="#fff"/><rect x="17" y="27" width="25" height="7" rx="3.5" fill="#fff" fill-opacity=".72"/>
-    <path d="M19.5 21.5v5M23 21.5v5M26.5 21.5v5M30 21.5v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-    <rect x="6" y="14" width="9" height="7" rx="3.5" ${C} opacity=".28"/><rect x="33" y="27" width="9" height="7" rx="3.5" ${C} opacity=".28"/>`,
+    <rect class="g-band" x="13" y="19" width="4.5" height="2.4" rx="1.2"/><rect class="g-band" x="13" y="24" width="4.5" height="2.4" rx="1.2" opacity=".55"/><rect class="g-band" x="13" y="29" width="4.5" height="2.4" rx="1.2" opacity=".35"/><rect class="g-band" x="13" y="33" width="4.5" height="2" rx="1" opacity=".25"/>
+    <rect class="g-band" x="21.75" y="22" width="4.5" height="2.6" rx="1.3"/><rect class="g-band" x="30.5" y="22" width="4.5" height="2.6" rx="1.3" opacity=".7"/><rect class="g-band" x="30.5" y="27" width="4.5" height="2.4" rx="1.2"/></g>`,
+  gibson: `<rect x="6" y="14" width="25" height="7" rx="3.5" fill="#fff"/><rect class="g-join" x="17" y="27" width="25" height="7" rx="3.5" fill="#fff" fill-opacity=".72"/>
+    <path class="g-join" d="M19.5 21.5v5M23 21.5v5M26.5 21.5v5M30 21.5v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    <rect x="6" y="14" width="9" height="7" rx="3.5" ${C} opacity=".28"/><rect class="g-join" x="33" y="27" width="9" height="7" rx="3.5" ${C} opacity=".28"/>`,
   microscopy: `<rect x="9" y="9" width="14" height="14" rx="3" fill="#fff"/><rect x="25" y="9" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/>
     <rect x="9" y="25" width="14" height="14" rx="3" fill="#fff" fill-opacity=".85"/><rect x="25" y="25" width="14" height="14" rx="3" fill="#fff"/>
-    <circle cx="15" cy="15" r="3" ${C}/><circle cx="32" cy="16" r="2.4" ${C} opacity=".7"/><circle cx="16" cy="32" r="2.6" ${C} opacity=".55"/><circle cx="31" cy="31" r="3.2" ${C}/><circle cx="34" cy="34.5" r="1.4" ${C} opacity=".6"/>`,
-  protein: `<path d="M10 37.5h28" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><rect x="12.5" y="26" width="6" height="9" rx="2" fill="#fff" fill-opacity=".7"/>
-    <rect x="21" y="19" width="6" height="16" rx="2" fill="#fff" fill-opacity=".85"/><rect x="29.5" y="11" width="6" height="24" rx="2" fill="#fff"/>
+    <circle class="g-pop" cx="15" cy="15" r="3" ${C}/><circle class="g-pop" cx="32" cy="16" r="2.4" ${C} opacity=".7"/><circle class="g-pop" cx="16" cy="32" r="2.6" ${C} opacity=".55"/><circle class="g-pop" cx="31" cy="31" r="3.2" ${C}/><circle class="g-pop" cx="34" cy="34.5" r="1.4" ${C} opacity=".6"/>`,
+  protein: `<path d="M10 37.5h28" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><rect class="g-bar" x="12.5" y="26" width="6" height="9" rx="2" fill="#fff" fill-opacity=".7"/>
+    <rect class="g-bar" x="21" y="19" width="6" height="16" rx="2" fill="#fff" fill-opacity=".85"/><rect class="g-bar" x="29.5" y="11" width="6" height="24" rx="2" fill="#fff"/>
     <rect x="31" y="14" width="3" height="5" rx="1.2" ${C} opacity=".55"/>`,
   reader: `<rect x="11" y="7" width="26" height="34" rx="4" fill="#fff"/>
     <rect x="16" y="14" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="20" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="26" width="10" height="2.6" rx="1.3" ${C} opacity=".3"/>
-    <rect x="15" y="19" width="12" height="4.6" rx="1.6" fill="#ffd84d" opacity=".85"/>
+    <rect class="g-hl" x="15" y="19" width="12" height="4.6" rx="1.6" fill="#ffd84d" opacity=".85"/>
     <path d="M30 30.5a4.5 4.5 0 1 1 1.6 3.4L29 35l.6-2.6A4.5 4.5 0 0 1 30 30.5z" ${C}/>`,
   cryobox: `<rect x="9" y="9" width="30" height="30" rx="4.5" fill="#fff"/>
-    <g ${C}><circle cx="17" cy="17" r="3"/><circle cx="24" cy="17" r="3" opacity=".7"/><circle cx="31" cy="17" r="3"/><circle cx="17" cy="24" r="3" opacity=".45"/><circle cx="24" cy="24" r="3"/>
-    <circle cx="31" cy="24" r="3" opacity=".7"/><circle cx="17" cy="31" r="3"/><circle cx="24" cy="31" r="3" opacity=".25"/><circle cx="31" cy="31" r="3" opacity=".25"/></g>`,
+    <g ${C}><circle class="g-pop" cx="17" cy="17" r="3"/><circle class="g-pop" cx="24" cy="17" r="3" opacity=".7"/><circle class="g-pop" cx="31" cy="17" r="3"/><circle class="g-pop" cx="17" cy="24" r="3" opacity=".45"/><circle class="g-pop" cx="24" cy="24" r="3"/>
+    <circle class="g-pop" cx="31" cy="24" r="3" opacity=".7"/><circle class="g-pop" cx="17" cy="31" r="3"/><circle class="g-pop" cx="24" cy="31" r="3" opacity=".25"/><circle class="g-pop" cx="31" cy="31" r="3" opacity=".25"/></g>`,
 };
-function appGlyph(tool) { const g = APP_GLYPH[tool.icon]; return g ? `<svg viewBox="0 0 48 48" aria-hidden="true">${g}</svg>` : iconSvg(tool.icon); }
+function appGlyph(tool) {   // parts tagged g-* get a stagger index (--i) for their little hover animation
+  let i = 0; const raw = APP_GLYPH[tool.icon];
+  const g = raw && raw.replace(/<(\w+) class="(g-\w+)"([^>]*)>/g, (m, el, c, rest) => /style="/.test(rest)
+    ? `<${el} class="${c}"${rest.replace('style="', `style="--i:${i++};`)}>` : `<${el} class="${c}" style="--i:${i++}"${rest}>`);
+  return g ? `<svg viewBox="0 0 48 48" aria-hidden="true">${g}</svg>` : iconSvg(tool.icon);
+}
 
 function renderFlow() {
   document.querySelectorAll("[data-glyph]").forEach(el => {

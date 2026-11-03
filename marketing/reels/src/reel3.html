@@ -1,0 +1,562 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#000}#stage{position:relative;width:1080px;height:1920px;overflow:hidden}
+</style></head><body><div id="stage"></div><script src="common.js"></script><script src="rig3.js"></script>
+<script>
+// REEL 3: "One day in the lab" — wordless, sound-only, loops back to the first frame.
+window.DURATION = 18.2;
+
+// ---------------------------------------------------------------- sound cue sheet
+window.SFX = [
+  // A: alarm
+  ['alarm', 0.0, 0.95], ['snore', 0.05], ['v_gasp', 0.5], ['bubblepop', 0.5], ['v_grumble', 0.66], ['stretch', 0.85], ['slam', 0.95], ['sproing', 1.0],
+  ['v_content', 1.08], ['v_gasp', 1.38], ['whoosh', 1.5], ['thud', 1.7], ['run', 1.7, 2.0], ['whip', 1.86],
+  // B: coffee
+  ['skid', 2.05], ['drip', 2.37], ['drip', 2.72], ['v_sigh', 2.8], ['drip', 3.07], ['v_impatient', 2.95], ['tap', 2.98], ['tap', 3.08], ['tap', 3.18],
+  ['drip', 3.22], ['grab', 3.3], ['gulp', 3.48], ['gulp', 3.65], ['gulp', 3.82], ['zing', 3.98], ['v_wired', 4.02], ['zoomoff', 4.2], ['clink', 4.5], ['whip', 4.46],
+  // C: lab
+  ['skid', 4.65], ['pip', 4.92], ['pip', 5.03], ['pip', 5.14], ['pip', 5.25], ['pip', 5.36], ['pip', 5.47], ['pip', 5.58], ['pip', 5.69], ['v_happy', 5.9],
+  ['bump', 6.25], ['wobble', 6.3, 6.6], ['v_gasp', 6.42], ['slowmo', 6.6], ['catch', 7.1], ['slide', 7.15], ['v_phew', 7.3], ['v_yay_small', 7.5],
+  ['bonk', 7.6], ['shatter', 7.78], ['shatter', 7.92], ['shatter', 8.04], ['shatter', 8.14], ['v_uhoh', 8.22], ['blink', 8.33],
+  // D: results, rage, time-lapse, night, success
+  ['error', 8.45], ['v_shock', 8.9], ['v_grumble', 9.15], ['v_angry', 9.45], ['steam', 9.3, 9.6], ['slam', 9.65], ['rattle', 9.68], ['scribble', 9.8, 10.25],
+  ['crumple', 10.28], ['toss', 10.45], ['rim', 10.8], ['thud', 11.0], ['v_grumble', 10.9], ['timelapse', 11.0, 11.8],
+  ['v_sigh', 11.9], ['button', 12.42], ['hum', 12.5, 13.3], ['snore', 12.8], ['ding', 13.35], ['bubblepop', 13.37], ['v_aww', 13.55], ['v_yay', 14.02], ['sparkle', 14.05],
+  ['punch', 14.45],
+  // F: celebration
+  ['hop', 14.62], ['hop', 14.89], ['hop', 15.16], ['tada', 15.42], ['v_love', 15.95], ['kiss', 16.1], ['boing', 16.15], ['spin', 16.3], ['v_yay', 16.6], ['confetti', 16.7],
+  // G: the alarm, again
+  ['alarm', 17.0, 18.2], ['v_whine', 17.62]
+];
+window.MUSIC = [
+  ['morning', 1.45, 6.55], ['morning', 7.2, 7.6], ['tense', 8.85, 11.0], ['night', 11.8, 13.3], ['triumph', 13.35, 17.0]
+];
+
+// ---------------------------------------------------------------- props
+function alarmClock(x, y, s, t, ring, squash = 0) {
+  const sh = ring ? Math.sin(t * 95) * 9 : 0, hop = ring ? -Math.abs(Math.sin(t * 47)) * 10 : 0;
+  const sq = 1 - .5 * squash, sw = 1 + .3 * squash;
+  const ham = ring ? Math.sin(t * 120) * 24 : 0;
+  let v = '';
+  if (ring) for (let i = 0; i < 3; i++) { const a = -2.4 + i * .5, b = -.7 + i * .5; v += `<path d="M${Math.cos(a) * 130} ${-90 + Math.sin(a) * 130}q-12 -8 -22 -20M${Math.cos(b) * 130} ${-90 + Math.sin(b) * 130}q12 -8 22 -20" stroke="#ffd36b" stroke-width="7" stroke-linecap="round" fill="none" opacity="${.6 + .4 * Math.sin(t * 40 + i)}"/>`; }
+  return `<g transform="translate(${x},${y + hop}) rotate(${sh}) scale(${s * sw},${s * sq})">
+    <ellipse cx="0" cy="4" rx="80" ry="12" fill="#000" opacity=".25"/>
+    <path d="M-55 -10l-20 14M55 -10l20 14" stroke="#33363d" stroke-width="12" stroke-linecap="round"/>
+    <g transform="rotate(${ham * .3} 0 -175)"><path d="M0 -175v-22" stroke="#9aa1ad" stroke-width="7"/></g>
+    <path d="M${-8 + ham} -200 l${16} 0" stroke="#9aa1ad" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="-62" cy="-165" r="38" fill="#d5dae3" stroke="#8a919d" stroke-width="5"/><circle cx="62" cy="-165" r="38" fill="#d5dae3" stroke="#8a919d" stroke-width="5"/>
+    <path d="M-80 -180q10 -14 26 -16M44 -180q10 -14 26 -16" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none" opacity=".8"/>
+    <circle cx="0" cy="-90" r="95" fill="#e5484d"/><circle cx="-10" cy="-100" r="95" fill="#ef6a6e" opacity=".5"/>
+    <circle cx="0" cy="-90" r="76" fill="#fffaf2" stroke="#b9343a" stroke-width="5"/>
+    ${[...Array(12)].map((_, i) => { const a = i / 12 * Math.PI * 2; return `<circle cx="${Math.sin(a) * 62}" cy="${-90 - Math.cos(a) * 62}" r="${i % 3 ? 3 : 5}" fill="#3a3f4b"/>`; }).join('')}
+    <path d="M0 -90v-52M0 -90v38" stroke="#22252c" stroke-width="8" stroke-linecap="round"/><circle cx="0" cy="-90" r="8" fill="#e5484d"/>
+    ${v}
+  </g>`;
+}
+function bedroom(t, p) {
+  // p: {dawn, potato, blanketFly, clockRing, clockSquash}
+  let s = `<rect width="1080" height="1920" fill="url(#bedWall)"/>
+    <path d="M120 360L440 360L700 1480L-100 1480Z" fill="#ffcf9e" opacity=".10"/>
+    <rect x="110" y="350" width="340" height="420" rx="14" fill="#e9dccb"/>
+    <rect x="130" y="370" width="300" height="380" rx="8" fill="url(#dawn)"/>
+    <circle cx="300" cy="700" r="60" fill="#fff1c9" opacity=".9"/>
+    <path d="M280 370V750M130 560H430" stroke="#e9dccb" stroke-width="14"/>
+    <path d="M90 330Q130 560 80 800L150 800Q190 560 140 330Z" fill="#7d5cc7"/><path d="M470 330Q430 560 480 800L410 800Q370 560 420 330Z" fill="#7d5cc7"/>
+    <rect x="650" y="480" width="170" height="210" rx="10" fill="#ffe08a" stroke="#c7a24a" stroke-width="8"/>
+    <path d="M690 620q45 -70 90 0" stroke="#e5484d" stroke-width="10" fill="none" stroke-linecap="round"/><circle cx="735" cy="560" r="26" fill="#c58d52"/>
+    <rect x="0" y="1480" width="1080" height="440" fill="#2b2338"/>
+    ${[...Array(9)].map((_, i) => `<path d="M${i * 130} 1480L${i * 130 - 80} 1920" stroke="#211b2b" stroke-width="5"/>`).join('')}
+    <rect x="60" y="860" width="90" height="620" rx="26" fill="#8a5a3c"/>
+    <rect x="70" y="1290" width="740" height="130" rx="18" fill="#9b6644"/>
+    <rect x="95" y="1170" width="690" height="140" rx="40" fill="#ece8ff"/>
+    <ellipse cx="270" cy="1150" rx="130" ry="50" fill="#f7f4ff" stroke="#d4cdf0" stroke-width="4"/>`;
+  s += potato3(p.potato);
+  const bf = p.blanketFly || 0;
+  s += `<g transform="translate(${-260 * bf},${-900 * bf + 600 * bf * bf}) rotate(${-50 * bf} 450 1200)" opacity="${1 - clamp((bf - .7) * 3)}">
+    <path d="M100 1128Q300 1100 460 1124Q640 1110 800 1140L810 1340Q640 1370 450 1350Q260 1380 95 1345Z" fill="#6c8cff"/>
+    <path d="M100 1128Q300 1100 460 1124Q640 1110 800 1140L800 1170Q640 1145 460 1158Q300 1135 100 1162Z" fill="#fff" opacity=".9"/>
+    ${[0, 1, 2, 3, 4].map(i => `<path d="M${190 + i * 135} 1180L${180 + i * 135} 1350" stroke="#5a78e8" stroke-width="22" opacity=".6"/>`).join('')}
+  </g>
+  <rect x="800" y="1200" width="250" height="280" rx="14" fill="#7a4f35"/><rect x="830" y="1250" width="190" height="90" rx="10" fill="#8f5f40"/><circle cx="925" cy="1295" r="9" fill="#e3c08c"/>`;
+  s += alarmClock(915, 1200, 1.15, t, p.clockRing, p.clockSquash || 0);
+  return s;
+}
+function counterScene() {
+  let s = `<rect width="1080" height="1920" fill="#f6e7cf"/>`;
+  for (let y = 0; y < 1120; y += 90) for (let x = (y / 90) % 2 ? -45 : 0; x < 1080; x += 90) s += `<rect x="${x + 3}" y="${y + 3}" width="84" height="84" rx="8" fill="#fbf1e1"/>`;
+  s += `<rect x="60" y="430" width="380" height="24" rx="6" fill="#b77a4d"/>
+    ${[100, 190, 280, 370].map((x, i) => `<path d="M${x} 430v-70a6 6 0 0 1 6 -6h52a6 6 0 0 1 6 6v70z" fill="${['#e5484d', '#3b82f6', '#18a058', '#f5b301'][i]}"/><path d="M${x + 64} 370q24 0 24 24t-24 24" stroke="${['#e5484d', '#3b82f6', '#18a058', '#f5b301'][i]}" stroke-width="9" fill="none"/>`).join('')}
+    <rect x="0" y="1120" width="1080" height="40" fill="#b77a4d"/><rect x="0" y="1160" width="1080" height="760" fill="#e6d2b5"/>
+    ${[0, 1, 2].map(i => `<rect x="${30 + i * 350}" y="1200" width="320" height="240" rx="16" fill="#efdfc6" stroke="#d6bf9c" stroke-width="5"/><rect x="${160 + i * 350}" y="1230" width="60" height="12" rx="6" fill="#b89a70"/>`).join('')}`;
+  return s;
+}
+function coffeeMachine(t, carafeK, coffee, carafeShow) {
+  let s = `<g transform="translate(780,1120)">
+    <rect x="-140" y="-420" width="280" height="420" rx="30" fill="#2f3640"/>
+    <rect x="-140" y="-420" width="280" height="90" rx="30" fill="#3d4652"/>
+    <rect x="-100" y="-300" width="200" height="26" rx="13" fill="#1d2229"/>
+    <circle cx="95" cy="-375" r="14" fill="${t % .8 < .4 ? '#ff6b5e' : '#7a2b26'}"/>
+    <rect x="-22" y="-276" width="44" height="30" rx="6" fill="#1d2229"/>
+    <rect x="-120" y="-16" width="240" height="16" rx="6" fill="#1d2229"/>`;
+  if (carafeShow) s += `<g transform="translate(0,-18)">${carafe(coffee)}</g>`;
+  return s + '</g>';
+}
+function carafe(level) {
+  const h = 150, top = -h + 20 + (h - 40) * (1 - level);
+  return `<g><path d="M-75 -${h}h150l-12 ${h - 10}a14 14 0 0 1 -14 10h-98a14 14 0 0 1 -14 -10z" fill="#d9eef7" opacity=".55" stroke="#9fb6c4" stroke-width="4"/>
+    ${level > 0.02 ? `<clipPath id="cfc"><path d="M-75 -${h}h150l-12 ${h - 10}a14 14 0 0 1 -14 10h-98a14 14 0 0 1 -14 -10z"/></clipPath><rect x="-80" y="${top}" width="160" height="${h}" fill="#5b3418" clip-path="url(#cfc)"/>` : ''}
+    <path d="M75 -120q45 0 45 45t-45 45" stroke="#1d2229" stroke-width="14" fill="none"/>
+    <rect x="-80" y="-${h + 12}" width="160" height="18" rx="8" fill="#1d2229"/>
+    <path d="M-50 -110v70" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".6"/></g>`;
+}
+function bolt(x, y, s, r) { return `<path transform="translate(${x},${y}) rotate(${r}) scale(${s})" d="M0 -40L-14 4H2L-8 40L18 -10H2L12 -40Z" fill="#ffd23f" stroke="#e09a00" stroke-width="3" stroke-linejoin="round"/>`; }
+function speedLines(t, n, dir, y0, y1, a = 1) {
+  let s = '';
+  for (let i = 0; i < n; i++) { const y = y0 + rnd(i * 3.1) * (y1 - y0), x = ((rnd(i) * 1400 - t * 3200 * dir) % 1400 + 1400) % 1400 - 160, w = 120 + rnd(i + 9) * 260; s += `<path d="M${x} ${y}h${w}" stroke="#fff" stroke-width="${6 + rnd(i + 4) * 8}" stroke-linecap="round" opacity="${.7 * a}"/>`; }
+  return s;
+}
+function dust(x, y, k, n = 6) {
+  if (k <= 0 || k >= 1) return '';
+  let s = '';
+  for (let i = 0; i < n; i++) { const a = Math.PI + (i / (n - 1)) * Math.PI, r = 30 + 90 * easeOut(k); s += `<circle cx="${x + Math.cos(a) * r * 1.4}" cy="${y + Math.sin(a) * r * .5}" r="${(30 - 18 * k) * (1 + rnd(i))}" fill="#fff" opacity="${.8 * (1 - k)}"/>`; }
+  return s;
+}
+
+// lab bench scene
+const SHELF = [[420, 'beaker', '#4aa8ff'], [500, 'round', '#b06cff'], [575, 'cyl', '#2fd39b'], [645, 'beaker', '#ff9f43'], [720, 'erl', '#ff5fa2']];
+function glass(kind, color, s = 1) {
+  if (kind === 'beaker') return `<g transform="scale(${s})"><path d="M-28 -80h56v74a6 6 0 0 1 -6 6h-44a6 6 0 0 1 -6 -6z" fill="#e8f6ff" opacity=".7" stroke="#8fb4c8" stroke-width="4"/><rect x="-24" y="-44" width="48" height="40" rx="4" fill="${color}" opacity=".85"/><path d="M-32 -80h64" stroke="#8fb4c8" stroke-width="5"/></g>`;
+  if (kind === 'round') return `<g transform="scale(${s})"><rect x="-10" y="-96" width="20" height="40" fill="#e8f6ff" stroke="#8fb4c8" stroke-width="4"/><circle cx="0" cy="-34" r="34" fill="#e8f6ff" opacity=".7" stroke="#8fb4c8" stroke-width="4"/><path d="M-30 -26a30 30 0 0 0 60 0z" fill="${color}" opacity=".85"/></g>`;
+  if (kind === 'cyl') return `<g transform="scale(${s})"><rect x="-14" y="-120" width="28" height="116" rx="5" fill="#e8f6ff" opacity=".7" stroke="#8fb4c8" stroke-width="4"/><rect x="-10" y="-70" width="20" height="64" fill="${color}" opacity=".85"/><rect x="-26" y="-6" width="52" height="8" rx="4" fill="#8fb4c8"/></g>`;
+  return `<g transform="scale(${s})"><path d="M-12 -100h24v34l34 60a6 6 0 0 1 -5 9h-82a6 6 0 0 1 -5 -9l34 -60z" fill="#e8f6ff" opacity=".7" stroke="#8fb4c8" stroke-width="4"/><path d="M-27 -38h54l17 30a4 4 0 0 1 -3 5h-82a4 4 0 0 1 -3 -5z" fill="${color}" opacity=".85"/><rect x="-16" y="-110" width="32" height="14" rx="5" fill="#c58d52"/></g>`;
+}
+function shards(x, y, k, color, seed) {
+  if (k <= 0 || k >= 1.2) return '';
+  let s = '';
+  for (let i = 0; i < 9; i++) {
+    const a = -Math.PI * (0.1 + 0.8 * rnd(seed + i)), v = 260 + 300 * rnd(seed + i + 50), kk = Math.min(k, 1);
+    const px = x + Math.cos(a) * v * kk * (i % 2 ? 1 : -1), py = y + Math.sin(a) * v * kk + 900 * kk * kk;
+    s += `<path transform="translate(${px},${Math.min(py, 1452)}) rotate(${kk * 700 * (rnd(seed + i) - .5)})" d="M0 -10L9 6L-8 8Z" fill="${i % 3 ? '#dff2ff' : color}" stroke="#8fb4c8" stroke-width="2" opacity="${1 - clamp(k - .8) * 3}"/>`;
+  }
+  s += `<ellipse cx="${x}" cy="1452" rx="${70 * easeOut(Math.min(k * 2, 1))}" ry="12" fill="${color}" opacity=".55"/>`;
+  return s;
+}
+function labScene(t, u, st) {
+  let s = `<rect width="1080" height="1920" fill="#e3f1ee"/>`;
+  for (let y = 0; y < 1450; y += 100) s += `<path d="M0 ${y}H1080" stroke="#cfe3de" stroke-width="4"/>`;
+  for (let x = 0; x < 1080; x += 100) s += `<path d="M${x} 0V1450" stroke="#cfe3de" stroke-width="4"/>`;
+  // DNA poster
+  s += `<rect x="70" y="420" width="220" height="300" rx="12" fill="#fff" stroke="#b8d3cc" stroke-width="6"/>`;
+  for (let i = 0; i < 10; i++) { const yy = 450 + i * 26, w = Math.sin(i * .8) * 60; s += `<path d="M${180 - w} ${yy}L${180 + w} ${yy}" stroke="${i % 2 ? '#3b82f6' : '#e5484d'}" stroke-width="8" stroke-linecap="round"/><circle cx="${180 - w}" cy="${yy}" r="7" fill="#14161c"/><circle cx="${180 + w}" cy="${yy}" r="7" fill="#14161c"/>`; }
+  // shelf (tilts after the bonk)
+  const tilt = st.shelfTilt || 0;
+  s += `<g transform="rotate(${tilt} 760 850)"><rect x="370" y="850" width="400" height="22" rx="6" fill="#9c6b45"/><path d="M400 872l20 40M740 872l-20 40" stroke="#7a5236" stroke-width="10"/>`;
+  SHELF.forEach(([x, kind, c], i) => { if (!(st.fallen && st.fallen[i] >= 0)) s += `<g transform="translate(${x},850)">${glass(kind, c, .9)}</g>`; });
+  s += `</g>`;
+  // floor
+  s += `<rect x="0" y="1450" width="1080" height="470" fill="#c3cfd3"/><path d="M0 1450H1080" stroke="#a9b8bd" stroke-width="8"/>`;
+  // table
+  const tx = st.tableShake ? Math.sin(t * 80) * 6 * st.tableShake : 0;
+  s += `<g transform="translate(${tx},0)"><rect x="590" y="1180" width="520" height="34" rx="6" fill="#3d4a5a"/><rect x="610" y="1214" width="480" height="236" fill="#d4dde3"/>
+    <rect x="640" y="1250" width="190" height="80" rx="10" fill="#e3eaee" stroke="#b8c4cc" stroke-width="4"/><rect x="860" y="1250" width="190" height="80" rx="10" fill="#e3eaee" stroke="#b8c4cc" stroke-width="4"/>
+    <rect x="715" y="1286" width="40" height="10" rx="5" fill="#9aa8b2"/><rect x="935" y="1286" width="40" height="10" rx="5" fill="#9aa8b2"/>`;
+  // tube rack
+  s += `<rect x="760" y="1150" width="260" height="30" rx="6" fill="#4aa8ff"/>`;
+  for (let i = 0; i < 8; i++) {
+    const x = 775 + i * 30, f = st.fill ? st.fill[i] : 0;
+    s += `<rect x="${x}" y="1090" width="20" height="70" rx="10" fill="#f2fbff" stroke="#8fb4c8" stroke-width="3"/>`;
+    if (f > 0) s += `<rect x="${x + 3}" y="${1155 - 48 * f}" width="14" height="${48 * f}" rx="7" fill="${['#ff5fa2', '#ff9f43', '#f5d33f', '#2fd39b', '#2fb7d3', '#4a7dff', '#9b6cff', '#ff5f5f'][i]}"/>`;
+  }
+  s += `<rect x="1035" y="1130" width="60" height="50" rx="6" fill="#ffd23f"/></g>`;
+  return s;
+}
+
+// desk scene
+function deskScene(t, u, st) {
+  const sky = st.sky; // 0 day, .5 sunset, 1 night
+  const skyTop = sky < .5 ? mix('#8fd0ff', '#ff9a6b', sky * 2) : mix('#ff9a6b', '#101a3d', (sky - .5) * 2);
+  const skyBot = sky < .5 ? mix('#d9f1ff', '#ffd08a', sky * 2) : mix('#ffd08a', '#26305e', (sky - .5) * 2);
+  let s = `<rect width="1080" height="1920" fill="#eef0f6"/>
+    <defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${skyTop}"/><stop offset="1" stop-color="${skyBot}"/></linearGradient></defs>
+    <rect x="70" y="380" width="360" height="440" rx="14" fill="#d9dde6"/><rect x="90" y="400" width="320" height="400" rx="8" fill="url(#skyG)"/>
+    ${sky > .7 ? [...Array(7)].map((_, i) => `<circle cx="${110 + rnd(i) * 280}" cy="${420 + rnd(i + 7) * 200}" r="${2 + rnd(i + 3) * 3}" fill="#fff" opacity="${(sky - .7) * 3}"/>`).join('') : ''}
+    <circle cx="${330 - sky * 160}" cy="${480 + sky * 260}" r="40" fill="${sky > .6 ? '#f2f4ff' : '#fff3b0'}"/>
+    <path d="M250 400V800M90 600H410" stroke="#d9dde6" stroke-width="12"/>`;
+  // wall clock
+  const hr = st.clockSpin * 360 * 1.0 + 60, mn = st.clockSpin * 360 * 12 + 0;
+  s += `<circle cx="880" cy="470" r="78" fill="#fff" stroke="#3a3f4b" stroke-width="10"/>
+    <path d="M880 470L${880 + Math.sin(hr * Math.PI / 180) * 36} ${470 - Math.cos(hr * Math.PI / 180) * 36}" stroke="#3a3f4b" stroke-width="9" stroke-linecap="round"/>
+    <path d="M880 470L${880 + Math.sin(mn * Math.PI / 180) * 58} ${470 - Math.cos(mn * Math.PI / 180) * 58}" stroke="#e5484d" stroke-width="6" stroke-linecap="round"/>`;
+  return s;
+}
+function mix(a, b, k) {
+  const pa = a.match(/\w\w/g).map(h => parseInt(h, 16)), pb = b.match(/\w\w/g).map(h => parseInt(h, 16));
+  return '#' + pa.map((v, i) => Math.round(lerp(v, pb[i], clamp(k))).toString(16).padStart(2, '0')).join('');
+}
+function gelScreen(kind, k = 1) {
+  // 380x260 screen contents
+  let s = `<rect width="380" height="260" fill="#0f1420"/>`;
+  if (kind === 'bad') {
+    s += `<rect x="30" y="25" width="320" height="210" rx="6" fill="#2a3147"/>`;
+    for (let i = 0; i < 8; i++) { const x = 45 + i * 38; s += `<rect x="${x}" y="35" width="26" height="8" fill="#56607d"/><rect x="${x + 2}" y="${50 + rnd(i) * 40}" width="22" height="${120 + rnd(i + 2) * 40}" rx="11" fill="#4b5578" opacity=".7"/>`; }
+    s += `<path d="M150 90l80 80M230 90l-80 80" stroke="#ff4d4d" stroke-width="16" stroke-linecap="round" opacity="${k}"/>`;
+  } else if (kind === 'load') {
+    s += `<rect x="70" y="120" width="240" height="22" rx="11" fill="#2a3147"/><rect x="70" y="120" width="${240 * k}" height="22" rx="11" fill="#4ade80"/>`;
+    s += `<g transform="translate(190,80) rotate(${k * 1080})"><path d="M0 -24a24 24 0 1 1 -24 24" stroke="#9aa6c8" stroke-width="7" fill="none" stroke-linecap="round"/></g>`;
+  } else {
+    s += `<rect x="30" y="25" width="320" height="210" rx="6" fill="#18203a"/>`;
+    for (let i = 0; i < 8; i++) {
+      const x = 45 + i * 38; s += `<rect x="${x}" y="35" width="26" height="8" fill="#56607d"/>`;
+      const bands = i === 0 ? [60, 85, 110, 140, 170, 200] : [[95, 150], [95, 150], [80, 140, 185], [80, 140, 185], [110, 160], [110, 160], [70, 125, 175], [70, 125, 175]][i - 1];
+      bands.forEach((y, j) => s += `<rect x="${x}" y="${y}" width="26" height="${i === 0 ? 5 : 9}" rx="3" fill="#e8f1ff" opacity="${(i === 0 ? .7 : .95) * clamp(k * 3 - j * .3)}"/>`);
+    }
+    s += `<rect x="30" y="25" width="320" height="210" rx="6" fill="none" stroke="#7fd0ff" stroke-width="4" opacity="${.6 * k}"/>`;
+    if (kind === 'heart') s += `<path transform="translate(320,60) scale(${k})" d="M0 10C-20 -8 -10 -24 0 -12C10 -24 20 -8 0 10Z" fill="#ff5fa2"/>`;
+  }
+  return s;
+}
+function monitor(x, y, kind, k, glow, wob = 0) {
+  return `<g transform="translate(${x},${y}) rotate(${wob})">
+    ${glow > 0 ? `<ellipse cx="0" cy="0" rx="${330 + 120 * glow}" ry="${260 + 90 * glow}" fill="url(#glowG)" opacity="${glow}"/>` : ''}
+    <rect x="-30" y="150" width="60" height="120" fill="#3a3f4b"/><rect x="-110" y="262" width="220" height="20" rx="10" fill="#3a3f4b"/>
+    <rect x="-215" y="-160" width="430" height="315" rx="22" fill="#1c1f27"/>
+    <svg x="-190" y="-135" width="380" height="260" viewBox="0 0 380 260">${gelScreen(kind, k)}</svg>
+    <circle cx="0" cy="143" r="5" fill="#4ade80"/>
+  </g>`;
+}
+function paperBall(x, y, r = 1, rot = 0) {
+  return `<g transform="translate(${x},${y}) rotate(${rot}) scale(${r})"><circle r="26" fill="#fbfbf7" stroke="#c9ccd4" stroke-width="3"/><path d="M-14 -8l10 6l8 -10M-6 12l6 -8l12 4M8 -16l2 10" stroke="#c9ccd4" stroke-width="3" fill="none"/></g>`;
+}
+function heart(x, y, s, a = 1) { return `<path transform="translate(${x},${y}) scale(${s})" d="M0 18C-36 -8 -22 -38 0 -18C22 -38 36 -8 0 18Z" fill="#ff5fa2" opacity="${a}"/>`; }
+function sunburst(t) {
+  let s = `<rect width="1080" height="1920" fill="#ffb84d"/>`;
+  for (let i = 0; i < 18; i++) { const a0 = i / 18 * Math.PI * 2 + t * .6, a1 = a0 + Math.PI / 18; s += `<path d="M540 900L${540 + Math.cos(a0) * 2200} ${900 + Math.sin(a0) * 2200}L${540 + Math.cos(a1) * 2200} ${900 + Math.sin(a1) * 2200}Z" fill="#ffd36b"/>`; }
+  return s + `<circle cx="540" cy="900" r="420" fill="url(#burstG)"/>`;
+}
+function confetti(t, t0, n = 40, y0 = 200) {
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const k = ((t - t0) * (.35 + rnd(i) * .3) + rnd(i + 11)) % 1;
+    const x = rnd(i + 5) * 1080 + Math.sin(t * 3 + i) * 30, y = y0 - 200 + k * 1700;
+    s += `<rect x="${x}" y="${y}" width="${16 + rnd(i) * 10}" height="9" rx="3" fill="${['#e5484d', '#3b82f6', '#18a058', '#7c5cff', '#ff5fa2', '#fff'][i % 6]}" transform="rotate(${k * 900 + i * 40} ${x} ${y})"/>`;
+  }
+  return s;
+}
+function bubble(x, y, r) { return r > 0 ? `<circle cx="${x}" cy="${y}" r="${r}" fill="#d7f1ff" opacity=".75" stroke="#9fd6f5" stroke-width="3"/><circle cx="${x - r * .35}" cy="${y - r * .35}" r="${r * .22}" fill="#fff"/>` : ''; }
+function starsBurst(x, y, k, n = 6, r = 120) {
+  if (k <= 0 || k >= 1) return '';
+  let s = '';
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, rr = r * easeOut(k); s += sparkle(x + Math.cos(a) * rr, y + Math.sin(a) * rr * .7, 22 * (1 - k), '#ffd23f', k * 200); }
+  return s;
+}
+
+// ---------------------------------------------------------------- shots
+function shotA(t) { // 0 - 2.0
+  const u = t;
+  const P = { x: 330, y: 1330, s: 2.0, rot: -6, lid: 1, mouth: 'o', mouthOpen: .1, t };
+  let extra = '';
+  const br = .5 + .5 * Math.sin(u * 5);
+  if (u < .5) { P.sy = 1 + .02 * br; extra = bubble(330 + 22, 1100, 10 + 20 * br); }
+  if (u >= .5) { const w = spring(u - .5, 3, 6); P.lid = 0; P.eyeS = 1.5; P.pupil = .4; P.sy = 1 + .12 * w; P.gogY = -10 * w; P.mouth = 'o'; P.mouthOpen = .8; P.rot = -6; }
+  if (u >= .64 && u < 1.05) { P.eyeS = 1; P.pupil = 1; P.lid = .45; P.lidTilt = 1; P.mouth = 'clench'; }
+  let ringing = u < .95, squash = 0;
+  if (u >= .82 && u < 1.3) { // stretchy slap
+    const out = easeOut(prog(u, .82, .95)), back = easeInOut(prog(u, 1.12, 1.3));
+    const k = out * (1 - back); P.frontR = true; P.armR = lerp(10, 108, k); P.lenR = lerp(50, 208, k);
+  }
+  if (u >= .95) { squash = clamp(1 - spring(u - .95, 2.5, 5) * .2) * (1 - .4 * prog(u, 1.2, 1.6)); }
+  if (u >= 1.05 && u < 1.36) { P.lid = .85; P.lidTilt = 0; P.mouth = 'cat'; P.eyeS = 1; P.blush = .6; P.rot = -9; }
+  if (u >= 1.36) { const w = spring(u - 1.36, 3, 6); P.lid = 0; P.eyeS = 1.6; P.pupil = .35; P.mouth = 'o'; P.mouthOpen = 1; P.sweat = 1; P.gogY = -14 * w; }
+  let fly = 0;
+  if (u >= 1.48) { // leap out of bed, land on the floor, sprint left
+    fly = prog(u, 1.48, 1.95);
+    const k = prog(u, 1.48, 1.7), arc = 4 * k * (1 - k);
+    P.x = lerp(330, 300, k); P.y = lerp(1330, 1480, k) - 260 * arc; P.rot = lerp(-6, 8, k); P.sy = 1 + .1 * arc; P.sx = 1 - .06 * arc; P.armL = 150; P.armR = 150; P.frontR = false;
+    if (u >= 1.7) { const r = prog(u, 1.7, 2.0); P.x = lerp(300, -420, easeIn(r)); P.y = 1480; P.walk = u * 7; P.rot = -14; P.armL = 60 + 50 * Math.sin(u * 40); P.armR = 60 - 50 * Math.sin(u * 40); P.sx = 1.06; P.sy = .96; }
+  }
+  let s = bedroom(t, { potato: P, blanketFly: fly, clockRing: ringing, clockSquash: squash });
+  s += bubbleFix(u);
+  if (u >= .95 && u < 1.3) s += starsBurst(915, 1080, prog(u, .95, 1.3), 7, 170);
+  if (u >= 1.72) s += dust(300, 1480, prog(u, 1.72, 2.1));
+  if (u < .5) s += `<circle cx="352" cy="1100" r="0"/>`;
+  // camera: hook close-up on the ringing clock, then pull back
+  const k = easeInOut(prog(u, .3, .85));
+  return { svg: s, cam: { x: lerp(796, 560, k), y: lerp(1080, 1090, k), z: lerp(1.9, 1.22, k) }, shake: u > .95 && u < 1.15 ? 10 * (1 - prog(u, .95, 1.15)) : 0 };
+}
+function bubbleFix(u) { return u >= .5 && u < .62 ? starsBurst(352, 1100, prog(u, .5, .62), 5, 40) : ''; }
+
+function shotB(t) { // 2.0 - 4.6
+  const u = t - 2.0;
+  const P = { x: 420, y: 1450, s: 2.1, t, lid: .55, lookX: .8, mouth: 'flat', armL: 10, armR: 10 };
+  let coffee = clamp(.12 + .12 * Math.floor(Math.max(0, u - .37) / .35 + 1) * (u > .37 ? 1 : 0), 0, .5), carShow = true, held = false;
+  if (u < .32) { const k = easeOut(prog(u, 0, .32)); P.x = lerp(1300, 420, k); P.walk = u * 8; P.rot = -12 * (1 - k); P.sx = 1 + .1 * (1 - k); P.lid = 0; P.eyeS = 1.2; }
+  if (u >= .32 && u < 1.3) { P.walk = Math.sin(u * 22) > .6 ? .25 : 0; P.armL = 12; }
+  if (u >= .8 && u < 1.25) { P.mouth = 'frown'; P.lid = .5; P.lidTilt = .6; }
+  if (u >= .95 && u < 1.25) { P.frontR = true; P.armR = 100; P.lenR = 60 + 18 * Math.max(0, Math.sin((u - .95) * 31)); }
+  if (u >= 1.3 && u < 2.0) { // chug from the carafe
+    held = true; carShow = false;
+    const k = easeOut(prog(u, 1.3, 1.45));
+    P.frontR = true; P.armR = lerp(100, 168, k); P.lenR = lerp(60, 36, k); P.rot = -16 * k; P.lid = .3; P.lidTilt = 0; P.mouth = 'gulp';
+    P.mouthOpen = .5 + .5 * Math.abs(Math.sin((u - 1.45) * 18)); P.sy = 1 + .03 * Math.sin(u * 36);
+    coffee = lerp(.5, 0, prog(u, 1.45, 1.95));
+    P.holdR = `<g transform="rotate(-100) scale(-.46,.46) translate(-10,70)">${carafe(coffee)}</g>`; P.holdRRot = 0;
+  }
+  let fx = '';
+  if (u >= 1.95 && u < 2.2) { // caffeine hits
+    const w = (u - 1.95);
+    P.eyeS = 1.7; P.pupil = .3; P.lid = 0; P.mouth = 'grin'; P.rot = Math.sin(u * 90) * 4; P.x = 420 + Math.sin(u * 110) * 8; P.gogY = Math.sin(u * 70) * 4;
+    P.armL = 120 + 30 * Math.sin(u * 60); P.armR = 120 - 30 * Math.sin(u * 60); P.frontR = false; P.sy = 1.08;
+    for (let i = 0; i < 5; i++) fx += bolt(420 + Math.cos(i * 1.3) * 300, 960 + Math.sin(i * 1.3) * 250, 1.6 * pop(u, 1.97 + i * .03, .2), i * 30 - 60);
+  }
+  let carX = 780, carY = 1102, carR = 0;
+  if (u >= 2.2) { // zoom off to the right, carafe left hanging in the air
+    const k = easeIn(prog(u, 2.2, 2.42)); P.x = lerp(420, 1500, k); P.rot = 18; P.sx = 1.25; P.sy = .85; P.walk = u * 9; P.eyeS = 1.6; P.pupil = .3; P.mouth = 'grin';
+    const f = prog(u, 2.25, 2.5); carX = lerp(470, 780, easeInOut(f)); carY = lerp(800, 1102, easeIn(f)); carR = lerp(-125, 0, f); held = false; carShow = false;
+    fx += `<g transform="translate(${carX},${carY}) rotate(${carR})">${carafe(0)}</g>`;
+    fx += speedLines(t, 14, 1, 760, 1450, 1 - prog(u, 2.4, 2.6));
+  }
+  let s = counterScene() + coffeeMachine(t, 0, coffee, carShow);
+  // drip from the spout
+  if (u > .3 && u < 1.3) { const k = ((u - .02) % .35) / .35; s += `<path transform="translate(780,${850 + k * 110})" d="M0 -12C5 -4 8 0 8 4A8 8 0 0 1 -8 4C-8 0 -5 -4 0 -12Z" fill="#5b3418" opacity="${k < .9 ? 1 : 0}"/>`; }
+  if (held && u >= 1.45 && u < 1.95) s += '';
+  s += potato3(P) + fx;
+  if (u < .5) s += dust(420, 1450, prog(u, .28, .7));
+  const cz = u < 1.3 ? lerp(1.28, 1.36, prog(u, .3, 1.3)) : (u < 1.95 ? 1.55 : 1.3);
+  const cx = u < 1.3 ? 580 : (u < 1.95 ? 470 : 560);
+  return { svg: s, cam: { x: cx, y: u < 1.3 ? 1060 : (u < 1.95 ? 960 : 1030), z: cz }, shake: u >= 1.95 && u < 2.2 ? 9 : 0 };
+}
+
+function shotC(t) { // 4.6 - 8.4
+  const u = t - 4.6;
+  const st = { fill: [], fallen: [], shelfTilt: 0, tableShake: 0 };
+  const P = { x: 430, y: 1450, s: 2.0, t, lookX: .7, mouth: 'smile' };
+  for (let i = 0; i < 8; i++) st.fill[i] = clamp((u - (.32 + i * .11)) * 12);
+  let fx = '';
+  if (u < .32) { const k = easeOut(prog(u, 0, .32)); P.x = lerp(-300, 430, k); P.walk = u * 8; P.rot = 14 * (1 - k); P.eyeS = 1.5; P.pupil = .4; P.mouth = 'grin'; P.x += Math.sin(u * 100) * 5; }
+  if (u >= .3 && u < 1.25) { // hyper-speed pipetting
+    const i = clamp(Math.floor((u - .3) / .11), 0, 7), dip = ((u - .3) % .11) / .11;
+    const tx = 785 + i * 30, ty = 1060 + 30 * Math.sin(dip * Math.PI);
+    const shx = P.x + 88 * 2, shy = 1450 - 84 * 2, dx = (tx - shx) / 2, dy = (ty - shy) / 2;
+    P.frontR = true; P.armR = Math.atan2(dx, dy) * 180 / Math.PI; P.lenR = Math.hypot(dx, dy) - 10;
+    P.holdR = `<g transform="rotate(${-P.armR + 180})"><rect x="-7" y="-60" width="14" height="50" rx="6" fill="#3b82f6"/><path d="M-5 -12h10l-3 34h-4z" fill="#e8eef6" stroke="#8fb4c8" stroke-width="2"/><rect x="-4" y="-74" width="8" height="16" rx="3" fill="#1d4ed8"/></g>`;
+    P.eyeS = 1.3; P.pupil = .5; P.lookX = 1; P.mouth = 'grin'; P.x = 430 + Math.sin(u * 100) * 4; P.sy = 1 + .03 * Math.sin(u * 60);
+  }
+  if (u >= 1.25 && u < 1.65) { const h = hop(u, 1.25, .3, 70); P.y = 1450 + h.dy; P.sx = h.sx; P.sy = h.sy; P.squeeze = 1; P.mouth = 'grin'; P.blush = 1; P.armL = 30; P.armR = 30; P.lenL = 38; P.lenR = 38; }
+  // the bump
+  let flask = { x: 640, y: 1180, r: 0, held: false };
+  if (u >= 1.6) { P.x = lerp(430, 470, easeOut(prog(u, 1.6, 1.68))) ; P.rot = 6 * Math.sin(prog(u, 1.6, 1.8) * Math.PI); }
+  if (u >= 1.62 && u < 2.0) { st.tableShake = 1 - prog(u, 1.62, 1.9); flask.r = -14 * Math.sin((u - 1.62) * 22) * (.5 + prog(u, 1.62, 2.0)); }
+  if (u >= 1.8 && u < 2.0) { P.eyeS = 1.6; P.pupil = .35; P.mouth = 'o'; P.mouthOpen = 1; P.lookX = 1; P.lookY = .5; P.sweat = 1; }
+  // slow motion dive: flask falls, potato flies
+  const SM0 = 2.0, SM1 = 2.5;
+  if (u >= SM0) {
+    const k = prog(u, SM0, SM1 + .1);
+    flask.r = lerp(-30, -200, k); flask.x = lerp(615, 660, k); flask.y = lerp(1180, 1335, k * k);
+  }
+  if (u >= SM0 && u < 2.85) {
+    const k = easeOut(prog(u, SM0, SM1)), arc = 4 * k * (1 - k);
+    P.x = lerp(470, 600, k); P.y = lerp(1450, 1440, k) - 170 * arc; P.rot = lerp(6, 82, easeOut(prog(u, SM0, SM0 + .3)));
+    P.armL = 168; P.armR = 168; P.lenL = 62; P.lenR = 62; P.frontL = P.frontR = true; P.mouth = 'clench'; P.lid = .2; P.lidTilt = 1; P.eyeS = 1.2; P.lookX = 1;
+    P.legs = 1; P.walk = .25;
+    if (u >= SM1) { flask.held = true; P.y = 1440; P.rot = 82; P.x = lerp(600, 640, easeOut(prog(u, SM1, 2.8))); P.lid = .9; P.lidTilt = 0; P.mouth = 'smile'; P.sy = 1 - .08 * spring(u - SM1, 3, 6); }
+    if (u >= 2.7) { P.squeeze = 1; P.mouth = 'grin'; }
+  }
+  if (u >= 2.85) { // pop back up hugging the flask, then the victory jump that bonks the shelf
+    flask.held = true; P.x = 640;
+    const h = hop(u, 2.85, .22, 40);
+    P.y = 1450 + h.dy; P.sx = h.sx; P.sy = h.sy; P.rot = lerp(82, 0, easeOutBack(prog(u, 2.85, 3.05)));
+    P.frontL = P.frontR = true; P.armL = 40; P.armR = 40; P.lenL = 44; P.lenR = 44; P.squeeze = 1; P.mouth = 'grin'; P.blush = .8;
+    if (u >= 2.95) { const j = hop(u, 2.95, .1, 120); P.y = 1450 + j.dy; P.armL = 168; P.armR = 168; P.lenL = 50; P.lenR = 50; P.squeeze = 0; P.eyeS = 1.1; P.mouth = 'grin'; }
+    if (u >= 3.0) { // BONK
+      const w = spring(u - 3.0, 3, 6); P.y = 1450 - 115 * (1 - prog(u, 3.0, 3.12)) ; P.sy = 1 - .2 * w; P.sx = 1 + .15 * w; P.squeeze = 1; P.mouth = 'clench'; st.shelfTilt = 9 * easeOutBack(prog(u, 3.0, 3.15));
+      if (u > 3.12) P.y = 1450;
+    }
+    if (u >= 3.15) { P.armL = lerp(168, 150, prog(u, 3.15, 3.3)); P.armR = P.armL; }
+  }
+  // glassware tumbles one by one
+  const FALL = [3.08, 3.2, 3.32, 3.42, 3.5];
+  SHELF.forEach(([x, kind, c], i) => {
+    if (u < FALL[i]) return;
+    st.fallen[i] = 1;
+    const k = prog(u, FALL[i], FALL[i] + .18);
+    if (k < 1) fx += `<g transform="translate(${x + 30 * k},${lerp(840, 1450, k * k)}) rotate(${k * 160 * (i % 2 ? 1 : -1)})">${glass(kind, c, .9)}</g>`;
+    fx += shards(x + 30, 1430, prog(u, FALL[i] + .18, FALL[i] + .75), c, i * 13);
+  });
+  if (u >= 3.15 && u < 3.55) { P.squeeze = Math.sin(u * 40) > 0 ? 1 : 0; P.mouth = 'clench'; P.sy = 1 - .04 * Math.abs(Math.sin(u * 40)); }
+  if (u >= 3.55) { // freeze, slowly look at the camera
+    P.squeeze = 0; P.eyeS = 1.15; P.pupil = .8; P.lookX = lerp(.4, 0, prog(u, 3.55, 3.7)); P.lookY = 0; P.mouth = 'wobble'; P.sweat = 1;
+    if (u > 3.72 && u < 3.78) P.lid = 1;
+    P.armL = 150; P.armR = 150; st.shelfTilt = 9;
+  }
+  if (flask.held) {
+    P.holdL = `<g transform="rotate(${P.rot > 40 ? -82 : 0}) translate(30,26)">${glass('erl', '#2fd39b', .5)}</g>`; P.holdLRot = 0;
+  }
+  let s = labScene(t, u, st);
+  if (!flask.held) s += `<g transform="translate(${flask.x},${flask.y}) rotate(${flask.r})">${glass('erl', '#2fd39b', .9)}</g>`;
+  s += potato3(P) + fx;
+  if (u < .5) s += dust(430, 1450, prog(u, .28, .7));
+  if (u >= 3.0 && u < 3.4) s += starsBurst(640, 880, prog(u, 3.0, 3.4), 6, 140);
+  // slow-mo grade: cool tint + vignette pulse
+  let grade = '';
+  if (u >= SM0 && u < 2.6) grade = `<rect width="1080" height="1920" fill="#7fb2ff" opacity="${.18 * Math.sin(prog(u, SM0, 2.6) * Math.PI)}"/>`;
+  const z = u >= SM0 && u < 2.7 ? lerp(1.25, 1.6, Math.sin(prog(u, SM0, 2.7) * Math.PI / 2)) : (u >= 3.55 ? lerp(1.25, 1.75, easeOut(prog(u, 3.55, 3.8))) : 1.25);
+  const cx = u >= 3.55 ? 640 : (u >= SM0 && u < 2.7 ? 620 : 570), cy = u >= 3.55 ? 1160 : (u >= SM0 && u < 2.7 ? 1290 : 1090);
+  return { svg: s + grade, cam: { x: cx, y: cy, z }, shake: u >= 3.0 && u < 3.55 ? 7 * (1 - prog(u, 3.0, 3.55)) : 0 };
+}
+
+function shotD(t) { // 8.4 - 14.6 (desk: fail, rage, time-lapse, night, success)
+  const u = t - 8.4;
+  const sky = u < 2.6 ? 0 : clamp((u - 2.6) / .8);
+  const st = { sky, clockSpin: u < 2.6 ? 0 : (u < 3.4 ? easeInOut(prog(u, 2.6, 3.4)) * .9 : .9) };
+  const night = clamp((u - 2.8) / .6) * (u < 4.95 ? 1 : 1 - .55 * prog(u, 4.95, 5.3));
+  const P = { x: 370, y: 1330, s: 2.0, t, lookX: .8, mouth: 'flat', armL: 10, armR: 10, rim: night > .3 ? '#7fb2ff' : null };
+  let kind = 'bad', mk = 1, glow = 0, wob = 0, fx = '', balls = 0;
+  if (u < .45) { P.lookX = .8; }
+  if (u >= .45 && u < .75) { P.eyeS = 1.5; P.pupil = .4; P.mouth = 'o'; P.mouthOpen = 1; P.gogY = -6; }
+  if (u >= .75 && u < 1.3) {
+    const k = prog(u, .75, 1.25); P.lid = .5; P.lidTilt = 1; P.red = k; P.steam = k; P.mouth = 'clench'; P.x = 370 + Math.sin(u * 90) * 5 * k; P.sy = 1 + .04 * k;
+    if (u > 1.15) { P.frontL = P.frontR = true; P.armL = 165; P.armR = 165; P.lenL = 46; P.lenR = 46; }
+  }
+  if (u >= 1.25 && u < 1.42) { // SLAM
+    P.red = 1; P.steam = 1; P.lid = .5; P.lidTilt = 1; P.mouth = 'clench'; P.frontL = P.frontR = true; P.armL = 60; P.armR = 75; P.lenL = 70; P.lenR = 110;
+    const w = spring(u - 1.25, 3, 6); P.sy = 1 - .12 * w; wob = 4 * w;
+  }
+  if (u >= 1.42 && u < 1.88) { // furious scribbling
+    P.red = lerp(1, .6, prog(u, 1.42, 1.88)); P.steam = .8; P.lid = .45; P.lidTilt = 1; P.mouth = 'clench'; P.lookX = .2; P.lookY = 1;
+    P.frontR = true; P.armR = 55 + 22 * Math.sin(u * 70); P.lenR = 70 + 10 * Math.sin(u * 53);
+    P.holdR = `<g transform="rotate(-30)"><rect x="-5" y="-50" width="10" height="56" rx="3" fill="#f5b301"/><path d="M-5 6h10l-5 12z" fill="#2a2018"/></g>`;
+  }
+  if (u >= 1.88 && u < 2.08) { P.red = .6; P.lid = .45; P.lidTilt = 1; P.mouth = 'clench'; P.frontR = P.frontL = true; P.armR = 120; P.armL = 120; P.lenR = 40; P.lenL = 40; P.holdR = paperBall(0, -6, .8); P.sx = 1 + .05 * Math.sin(u * 60); }
+  let ball = null;
+  if (u >= 2.08 && u < 2.65) { // throw, hit the rim, bounce out
+    P.red = .5; P.lid = .4; P.lidTilt = .8; P.lookX = 1; P.lookY = .6; P.mouth = 'clench'; P.frontR = true; P.armR = lerp(160, 60, easeOut(prog(u, 2.08, 2.2))); P.lenR = 50;
+    const k = prog(u, 2.1, 2.4);
+    if (u < 2.4) ball = [lerp(500, 955, k), lerp(1060, 1230, k) - 330 * 4 * k * (1 - k), k * 720];
+    else { const b = prog(u, 2.4, 2.62); ball = [lerp(955, 1060, b), lerp(1230, 1420, b) - 120 * 4 * b * (1 - b), 720 + b * 400]; }
+    if (u > 2.45) { P.lid = .55; P.lidTilt = -.6; P.mouth = 'frown'; P.red = .2; }
+  }
+  if (u >= 2.6 && u < 3.4) { // time-lapse: jump-cut poses, sky shifts, balls pile up
+    const pose = Math.floor((u - 2.6) / .1) % 4; balls = Math.floor(prog(u, 2.6, 3.4) * 14);
+    P.steam = 0; P.red = 0;
+    if (pose === 0) { P.frontR = true; P.armR = 60; P.lenR = 75; P.lookY = 1; P.lid = .3; P.mouth = 'frown'; P.holdR = `<g transform="rotate(-30)"><rect x="-5" y="-50" width="10" height="56" rx="3" fill="#f5b301"/></g>`; }
+    if (pose === 1) { P.frontL = P.frontR = true; P.armL = 150; P.armR = 150; P.lenL = 30; P.lenR = 30; P.lid = .7; P.mouth = 'wobble'; P.rot = -6; }
+    if (pose === 2) { P.lookX = 1; P.lid = .4; P.mouth = 'flat'; P.x = 410; }
+    if (pose === 3) { P.squeeze = 1; P.mouth = 'clench'; P.rot = 6; P.x = 340; }
+  } else if (u >= 3.4) balls = 14;
+  if (u >= 3.4 && u < 4.95) { // exhausted at night
+    P.y = lerp(1330, 1395, easeInOut(prog(u, 3.4, 3.9))); P.lid = lerp(.6, .8, prog(u, 3.4, 4.3)); P.lidTilt = -.7; P.mouth = 'frown'; P.lookX = .7; P.lookY = .2;
+    if (u >= 3.95 && u < 4.25) { P.frontR = true; P.armR = 75; P.lenR = lerp(50, 95, Math.sin(prog(u, 3.95, 4.25) * Math.PI)); }
+    if (u >= 4.05) { kind = 'load'; mk = prog(u, 4.1, 4.9); }
+    if (u >= 4.3) { P.lid = lerp(.8, .97, prog(u, 4.3, 4.6)); P.rot = 4 * easeInOut(prog(u, 4.3, 4.7)); }
+  }
+  if (u >= 4.95) { // DING
+    kind = 'good'; mk = prog(u, 4.95, 5.4); glow = 1 - .5 * prog(u, 5.4, 6.2);
+    P.y = 1395; P.rot = 4; P.lid = .97; P.lidTilt = 0; P.mouth = 'o'; P.mouthOpen = .3; P.lookX = .8;
+    if (u >= 5.05) { P.lid = lerp(.97, 0, easeOut(prog(u, 5.05, 5.15))); }
+    if (u >= 5.15) { P.y = lerp(1395, 1330, easeOutBack(prog(u, 5.15, 5.4))); P.rot = 0; P.sparkle = 1; P.eyeS = lerp(1, 1.75, easeOutBack(prog(u, 5.15, 5.35))); P.mouth = 'wobble'; P.tear = prog(u, 5.3, 5.6); P.blush = 1; P.lookX = .5; P.rim = '#bfe3ff'; }
+    if (u >= 5.6) { const h = hop(u, 5.6, .35, 180); P.y = 1330 + h.dy; P.sx = h.sx; P.sy = h.sy; P.sparkle = 0; P.squeeze = 1; P.eyeS = 1; P.mouth = 'grin'; P.armL = 165; P.armR = 165; P.lenL = 55; P.lenR = 55; P.tear = 0; }
+    if (u >= 6.0) { P.squeeze = 1; P.armL = 165; P.armR = 165; }
+  }
+  let s = deskScene(t, u, st);
+  // paper balls on the floor and desk (behind desk front: draw desk-level ones after desk)
+  s += monitor(735, 880, kind, mk, glow, wob);
+  s += potato3(P);
+  // desk
+  s += `<rect x="0" y="1180" width="1080" height="36" fill="#a86f45"/><rect x="0" y="1216" width="1080" height="704" fill="#8f5c39"/>
+    <rect x="40" y="1250" width="460" height="150" rx="14" fill="#9b6640" stroke="#7a4b2c" stroke-width="5"/><rect x="230" y="1310" width="80" height="14" rx="7" fill="#d8b07a"/>`;
+  // keyboard, notepad, mug on the desk (they hop on the slam)
+  const jump = u >= 1.25 && u < 1.6 ? -40 * Math.sin(prog(u, 1.25, 1.6) * Math.PI) : 0;
+  s += `<g transform="translate(0,${jump})"><rect x="600" y="1150" width="290" height="34" rx="8" fill="#d5d9e3" stroke="#9aa1ad" stroke-width="4"/>
+    ${[...Array(9)].map((_, i) => `<rect x="${611 + i * 30}" y="${1158 + (jump ? Math.sin(i * 2) * 10 : 0)}" width="24" height="16" rx="4" fill="#fff"/>`).join('')}</g>
+    <g transform="translate(0,${jump * .7})"><rect x="430" y="1150" width="150" height="34" rx="4" fill="#fffef7" stroke="#d9d4c3" stroke-width="3"/>
+    ${u >= 1.42 && u < 1.95 ? [...Array(Math.floor(prog(u, 1.42, 1.88) * 8))].map((_, i) => `<path d="M${442 + rnd(i) * 40} ${1158 + rnd(i + 3) * 18}l${40 + rnd(i + 1) * 60} ${(rnd(i + 2) - .5) * 14}" stroke="#2a2018" stroke-width="3"/>`).join('') : ''}</g>
+    <g transform="translate(960,${1180 + jump * 1.3}) rotate(${jump ? 12 * Math.sin(u * 30) : 0})"><path d="M-30 -70h60v62a8 8 0 0 1 -8 8h-44a8 8 0 0 1 -8 -8z" fill="#e5484d"/><path d="M30 -56q24 0 24 22t-24 22" stroke="#e5484d" stroke-width="9" fill="none"/>${u < 3.4 ? `<rect x="-24" y="-66" width="48" height="10" rx="4" fill="#5b3418"/>` : ''}</g>`;
+  // bin and balls (in front of the desk)
+  s += `<path d="M900 1240h120l-14 210h-92z" fill="#9aa1ad" stroke="#6b7280" stroke-width="5"/><rect x="890" y="1232" width="140" height="16" rx="8" fill="#6b7280"/>`;
+  for (let i = 0; i < balls; i++) s += paperBall(80 + rnd(i * 7) * 950, i % 3 === 0 ? 1160 : 1440 + rnd(i) * 30, .9, i * 47);
+  if (ball) s += paperBall(ball[0], ball[1], .8, ball[2]);
+  if (u >= 2.4 && u < 2.6) s += starsBurst(955, 1235, prog(u, 2.4, 2.6), 4, 60);
+  if (u >= 1.25 && u < 1.5) s += starsBurst(600, 1180, prog(u, 1.25, 1.5), 8, 220);
+  if (u >= 5.1 && u < 6.2) for (let i = 0; i < 7; i++) s += sparkle(735 + Math.cos(i + t * 2) * (260 + i * 20), 880 + Math.sin(i * 1.7 + t * 2) * 220, 16 + 10 * Math.sin(t * 9 + i), '#fff3a8', t * 90 + i * 40);
+  // sleep bubble
+  if (u >= 4.4 && u < 4.97) s += bubble(P.x + 20, P.y - 220, 8 + 40 * prog(u, 4.4, 4.95) + 4 * Math.sin(u * 8));
+  // night grade with monitor glow
+  if (night > 0) s += `<rect width="1080" height="1920" fill="#0b1030" opacity="${.62 * night}"/><ellipse cx="735" cy="900" rx="520" ry="560" fill="url(#glowG)" opacity="${.55 * night}"/>`;
+  // camera
+  let cam = { x: 580, y: 1010, z: 1.32 };
+  if (u < .75) { const k = easeInOut(prog(u, .45, .7)); cam = { x: lerp(735, 580, k), y: lerp(880, 1010, k), z: lerp(2.3, 1.32, k) }; }
+  if (u >= .75 && u < 1.25) cam.z = lerp(1.32, 1.7, easeIn(prog(u, .75, 1.25))), cam.x = 450, cam.y = 960;
+  if (u >= 1.25 && u < 1.42) cam = { x: 560, y: 1010, z: 1.3 };
+  if (u >= 3.4 && u < 4.95) cam = { x: lerp(580, 540, prog(u, 3.4, 4.9)), y: lerp(1010, 1040, prog(u, 3.4, 4.9)), z: lerp(1.32, 1.65, easeInOut(prog(u, 3.4, 4.9))) };
+  if (u >= 4.95) cam = { x: 560, y: 1020, z: lerp(1.65, 1.3, easeOut(prog(u, 4.95, 5.3))) };
+  return { svg: s, cam, shake: (u >= 1.25 && u < 1.5 ? 16 * (1 - prog(u, 1.25, 1.5)) : 0) + (u >= 4.95 && u < 5.1 ? 6 : 0) };
+}
+
+function shotF(t) { // 14.6 - 17.0 celebration
+  const u = t - 14.6;
+  const P = { x: 540, y: 1420, s: 2.3, t, squeeze: 1, mouth: 'grin', blush: 1 };
+  const gel = `<g transform="translate(0,-60)"><rect x="-70" y="-50" width="140" height="100" rx="6" fill="#18203a" stroke="#fff" stroke-width="5"/>${[0, 1, 2, 3, 4].map(i => `<rect x="${-58 + i * 25}" y="${-30 + (i % 2) * 14}" width="18" height="6" rx="3" fill="#e8f1ff"/><rect x="${-58 + i * 25}" y="${6 + (i % 3) * 8}" width="18" height="6" rx="3" fill="#e8f1ff"/>`).join('')}</g>`;
+  if (u < .8) { const h = hops(u, [[0, .2, 90], [.27, .2, 90], [.54, .2, 90]]); P.y += h.dy; P.sx = h.sx; P.sy = h.sy; P.x = 540 + 70 * Math.sin(u * Math.PI / .27); P.rot = 10 * Math.sin(u * Math.PI / .27); P.armL = 140 + 30 * Math.sin(u * 23); P.armR = 140 - 30 * Math.sin(u * 23); }
+  if (u >= .8 && u < 1.3) { P.squeeze = 0; P.sparkle = 1; P.eyeS = 1.5; P.armL = 172; P.armR = 172; P.lenL = 60; P.lenR = 60; P.frontL = P.frontR = true; P.holdR = `<g transform="translate(-55,-40)">${gel}</g>`; const w = spring(u - .8, 2, 5); P.sy = 1 + .06 * w; }
+  if (u >= 1.3 && u < 1.75) { P.squeeze = 0; P.lid = 1; P.mouth = u > 1.45 ? 'pucker' : 'cat'; P.frontL = P.frontR = true; P.armL = 50; P.armR = 50; P.lenL = 46; P.lenR = 46; P.holdR = `<g transform="translate(-70,0) scale(1.1)">${gel}</g>`; P.rot = 4 * Math.sin(u * 8); P.blush = 1.2; }
+  if (u >= 1.75 && u < 2.1) { const k = prog(u, 1.75, 2.1); P.flip = Math.cos(k * Math.PI * 2); P.armL = 150; P.armR = 150; const h = hop(u, 1.75, .25, 120); P.y += h.dy; }
+  if (u >= 2.1) { P.armL = 172; P.armR = 172; P.lenL = 58; P.lenR = 58; P.squeeze = 1; const w = spring(u - 2.1, 2.5, 5); P.sy = 1 + .1 * w; P.sx = 1 - .08 * w; }
+  let s = sunburst(t) + `<rect x="0" y="1420" width="1080" height="500" fill="#e58d3a"/><ellipse cx="540" cy="1420" rx="520" ry="40" fill="#ffd36b" opacity=".5"/>`;
+  s += confetti(t, 14.6, 46);
+  s += potato3(P);
+  if (u >= 1.48 && u < 2.2) { const k = prog(u, 1.48, 2.2); s += heart(560 + 40 * Math.sin(k * 9), 760 - 300 * k, 2.2 * pop(u, 1.48, .3), 1 - k * .8); s += heart(420, 820 - 200 * k, 1.2 * pop(u, 1.6, .3), 1 - k); }
+  if (u >= 2.1) s += starsBurst(540, 900, prog(u, 2.1, 2.4), 10, 380);
+  const z = lerp(1.5, 1.28, easeOut(prog(u, 0, .4))) + (u >= 2.1 ? .06 * spring(u - 2.1, 2, 5) : 0);
+  return { svg: s, cam: { x: 540, y: 1090, z }, shake: 0 };
+}
+
+function shotG(t) { // 17.0 - 18.2: the alarm rings again; push back in to the opening frame
+  const u = t - 17.0;
+  const P = { x: 330, y: 1330, s: 2.0, rot: -6, t, lid: .35, mouth: 'flat', lookX: 0 };
+  if (u >= .25 && u < .55) P.lookX = lerp(0, 1, easeOut(prog(u, .25, .35)));
+  if (u >= .55) { P.lookX = 0; P.lid = .55; P.lidTilt = -.8; P.mouth = 'wobble'; P.tear = prog(u, .6, 1.0) * .7; }
+  const s = bedroom(t, { potato: P, blanketFly: 0, clockRing: true, clockSquash: 0 });
+  const k = easeInOut(prog(u, .7, 1.2));
+  return { svg: s, cam: { x: lerp(560, 796, k), y: lerp(1090, 1080, k), z: lerp(1.22, 1.9, k) }, shake: 0 };
+}
+
+// ---------------------------------------------------------------- edit: cuts, whips and a zoom punch
+const CUTS = [[0, shotA], [2.0, shotB], [4.6, shotC], [8.4, shotD], [14.6, shotF], [17.0, shotG]];
+function shotAt(t) { let f = CUTS[0][1]; for (const [t0, fn] of CUTS) if (t >= t0) f = fn; return f(t); }
+function shotFn(t) { let f = CUTS[0][1]; for (const [t0, fn] of CUTS) if (t >= t0) f = fn; return f; }
+const WHIPS = [[2.0, 1], [4.6, -1]]; // +1: camera pans left (frame slides right), -1: pans right
+function place(r, t, zp, dx) {
+  const c = r.cam, z = c.z * zp;
+  c.x = clamp(c.x, 540 / c.z, 1080 - 540 / c.z); c.y = clamp(c.y, 960 / c.z, 1920 - 960 / c.z);
+  const sh = r.shake || 0, sx = sh * Math.sin(t * 97), sy = sh * Math.cos(t * 83);
+  return `<g transform="translate(${540 + dx + sx},${960 + sy}) scale(${z}) translate(${-c.x},${-c.y})">${r.svg}</g>`;
+}
+function frame(t) {
+  let body = null, flash = 0, zp = 1;
+  for (const [T, dir] of WHIPS) {
+    if (t >= T - .17 && t < T + .17) {   // whip pan: outgoing and incoming shots side by side, motion blurred
+      const k = easeInOut(prog(t, T - .17, T + .17)), off = dir * 1080 * k;
+      const blur = 70 * Math.sin(k * Math.PI);
+      const prev = shotFn(T - .001)(t), next = shotFn(T)(t);
+      body = `<g filter="url(#mb${Math.min(9, Math.round(blur / 8))})">${place(prev, t, 1, off)}${place(next, t, 1, off - dir * 1080)}</g>`;
+    }
+  }
+  if (t >= 14.42 && t < 14.6) { const k = easeIn(prog(t, 14.42, 14.6)); zp = 1 + .7 * k; flash = k; }
+  if (t >= 14.6 && t < 14.78) { flash = 1 - prog(t, 14.6, 14.78); }
+  if (t >= 8.4 && t < 8.44) flash = .35; // smash cut pop
+  if (!body) body = place(shotAt(t), t, zp, 0);
+  return `${body}<rect width="1080" height="1920" fill="url(#vig)"/>
+    ${flash > 0 ? `<rect width="1080" height="1920" fill="#fff" opacity="${flash}"/>` : ''}`;
+}
+
+const DEFS3 = `<defs>${RIG_DEFS}
+  <linearGradient id="bedWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3358"/><stop offset="1" stop-color="#3d4a7a"/></linearGradient>
+  <linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6bc2"/><stop offset=".6" stop-color="#ff9f7a"/><stop offset="1" stop-color="#ffd59e"/></linearGradient>
+  <radialGradient id="glowG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#9fd2ff" stop-opacity=".9"/><stop offset="1" stop-color="#9fd2ff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="burstG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6d5" stop-opacity=".95"/><stop offset="1" stop-color="#fff6d5" stop-opacity="0"/></radialGradient>
+  <radialGradient id="vig" cx=".5" cy=".5" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
+  ${[...Array(10)].map((_, i) => `<filter id="mb${i}" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur stdDeviation="${i * 8} 0"/></filter>`).join('')}
+</defs>`;
+const stage = document.getElementById('stage');
+window.render = t => { stage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">${DEFS3}${frame(t)}</svg>`; };
+const m = /t=([\d.]+)/.exec(location.search); render(m ? +m[1] : 0);
+</script></body></html>

@@ -64,32 +64,49 @@
     /* the homepage panel: a desk scene. The potato is burned out (eye bags, droopy eyes, sweat,
        a tall paper stack, an empty mug); pointing at a button brings coffee and it perks up; pressing one is a
        little celebration. */
+    /* The site mascot itself: same body, goggles, lab coat and deadpan face as the hero on the
+       homepage, only sat at a desk. Pointing at a button brings coffee and it looks up; pressing
+       one is a small celebration. */
     const SCENE = `<svg class="scene" viewBox="0 0 260 220" aria-hidden="true">
-      <defs><radialGradient id="lps-skin" cx="38%" cy="30%" r="78%"><stop offset="0%" stop-color="#e0ad6e"/><stop offset="55%" stop-color="#cf9552"/><stop offset="100%" stop-color="#b87d3c"/></radialGradient>
-        <clipPath id="lps-bodyclip"><path d="M54 132C52 104 74 82 104 75C134 68 170 71 194 88C214 102 219 125 210 148C200 172 170 188 136 190C102 192 70 180 59 158C55 150 54 141 54 132Z"/></clipPath></defs>
-      <g class="papers"><rect x="16" y="150" width="66" height="34" rx="3" transform="rotate(-3 49 167)" fill="#fffdf8" stroke="#e3d4c2"/><path class="ink" d="M26 160h40M26 167h46M26 174h34" stroke="#c9b49a" stroke-width="2" stroke-linecap="round"/></g>
+      <defs><linearGradient id="lps-skin" x1="0.2" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#d09760"/><stop offset="100%" stop-color="#bc8148"/></linearGradient>
+        <clipPath id="lps-clip"><path d="M46 128C44 104 64 84 92 78C120 72 150 75 172 89C190 101 195 121 187 141C178 162 149 176 117 178C85 180 59 169 50 151C47 143 46 136 46 128Z"/></clipPath></defs>
+      <g class="papers"><rect x="10" y="166" width="60" height="31" rx="3" transform="rotate(-3 40 181)" fill="#fffdf8" stroke="#e3d4c2"/><path class="ink" d="M19 175h36M19 182h42M19 189h30" stroke="#c9b49a" stroke-width="2" stroke-linecap="round"/></g>
       <g class="pot">
-        <path class="body" d="M54 132C52 104 74 82 104 75C134 68 170 71 194 88C214 102 219 125 210 148C200 172 170 188 136 190C102 192 70 180 59 158C55 150 54 141 54 132Z" fill="url(#lps-skin)" stroke="#a66f34" stroke-width="1.5"/>
-        <g clip-path="url(#lps-bodyclip)" class="skin"><path d="M60 96q46-26 120-8" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
-          <ellipse cx="76" cy="150" rx="3" ry="2" fill="#9c6a30" opacity=".5"/><ellipse cx="104" cy="168" rx="2.4" ry="1.6" fill="#9c6a30" opacity=".45"/><ellipse cx="150" cy="166" rx="3" ry="2" fill="#9c6a30" opacity=".5"/><ellipse cx="186" cy="132" rx="2.6" ry="1.8" fill="#9c6a30" opacity=".45"/><ellipse cx="196" cy="112" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".4"/><ellipse cx="70" cy="120" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".4"/>
-          <path d="M74 149l2 2M102 167l2 1.5M148 165l2 2" stroke="#7a4f22" stroke-opacity=".35" stroke-width="1.2" stroke-linecap="round"/></g>
-        <g class="tired"><path d="M88 118q12 6 24 1" fill="none" stroke="#2a2018" stroke-width="4.5" stroke-linecap="round"/><path d="M144 116q12 5 24 1" fill="none" stroke="#2a2018" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="100" cy="125" r="3.2" fill="#2a2018"/><circle cx="156" cy="123" r="3.2" fill="#2a2018"/>
-          <path d="M92 134q9 4 18 1M146 132q9 4 18 1" stroke="#a9753f" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-          <path d="M120 150q9 3 18 -1" fill="none" stroke="#5a3418" stroke-width="3.4" stroke-linecap="round"/>
-          <path class="sweat" d="M196 100c4 6 7 9 7 12.5a7 7 0 0 1-14 0c0-3.5 3-6.5 7-12.5z" fill="#9fd0ff" stroke="#5aa0e6" stroke-width="1.4"/></g>
-        <g class="happy"><path d="M90 126q11 -13 22 0" fill="none" stroke="#2a2018" stroke-width="5" stroke-linecap="round"/><path d="M146 123q11 -13 22 0" fill="none" stroke="#2a2018" stroke-width="5" stroke-linecap="round"/>
-          <ellipse cx="84" cy="143" rx="11" ry="6.5" fill="#f2937f" opacity=".75"/><ellipse cx="176" cy="140" rx="11" ry="6.5" fill="#f2937f" opacity=".75"/>
-          <path d="M114 144q15 20 32 0z" fill="#5a2418"/><path d="M121 152q10 7 18 0q-9-3-18 0z" fill="#ff9a9a"/></g>
+        <!-- body -->
+        <path class="body" d="M46 128C44 104 64 84 92 78C120 72 150 75 172 89C190 101 195 121 187 141C178 162 149 176 117 178C85 180 59 169 50 151C47 143 46 136 46 128Z" fill="url(#lps-skin)"/>
+        <g clip-path="url(#lps-clip)"><ellipse cx="58" cy="136" rx="6" ry="3.4" transform="rotate(-18 58 136)" fill="#8d5c24" opacity=".28"/><ellipse cx="180" cy="134" rx="5.6" ry="3.1" transform="rotate(18 180 134)" fill="#8d5c24" opacity=".28"/></g>
+        <!-- face -->
+        <g class="tired">
+          <ellipse cx="100" cy="126" rx="7.2" ry="9" fill="#2a2018"/><ellipse cx="144" cy="124" rx="7.2" ry="9" fill="#2a2018"/>
+          <path d="M92 139q8 5 16 -1M136 137q8 5 16 -1" stroke="#2a2018" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".34"/>
+          <path d="M112 152h22" stroke="#2a2018" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path class="sweat" d="M186 98c3.6 5.4 6 8.2 6 11.2a6 6 0 0 1-12 0c0-3 2.4-5.8 6-11.2z" fill="#9fd0ff" stroke="#5aa0e6" stroke-width="1.3"/>
+        </g>
+        <g class="happy">
+          <path d="M92 130q8 -10 16 0M136 128q8 -10 16 0" fill="none" stroke="#2a2018" stroke-width="4.2" stroke-linecap="round"/>
+          <ellipse cx="80" cy="144" rx="8.5" ry="5" fill="#f2937f" opacity=".7"/><ellipse cx="164" cy="142" rx="8.5" ry="5" fill="#f2937f" opacity=".7"/>
+          <path d="M110 148q12 15 26 0z" fill="#5a2418"/><path d="M116 155q8 6 14 0q-7-2.5-14 0z" fill="#ff9a9a"/>
+        </g>
+        <!-- regulation eye protection, as on the homepage -->
+        <g class="goggles"><path d="M70 127L44 132M174 123L200 118" stroke="#39444e" stroke-width="11" stroke-linecap="round" fill="none"/>
+          <rect x="72" y="102" width="100" height="45" rx="22" fill="none" stroke="#39444e" stroke-width="5"/>
+          <rect x="79" y="108" width="86" height="33" rx="16" fill="#cfe6f2" fill-opacity=".3"/>
+          <ellipse cx="76" cy="124" rx="3" ry="5.6" fill="#2b343d"/><ellipse cx="168" cy="124" rx="3" ry="5.6" fill="#2b343d"/></g>
+        <!-- lab coat -->
+        <path class="coat" d="M94 158C76 162 58 166 51 177C43 191 41 203 42 216C80 223 176 223 214 216C215 203 213 191 205 177C198 166 180 162 162 157L126 190Z" fill="#fbfcfe" stroke="#ccd4e0" stroke-width="1.8"/>
+        <path d="M94 158L126 190M162 157L126 190" stroke="#ccd4e0" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="64" y="184" width="28" height="20" rx="3" fill="none" stroke="#ccd4e0" stroke-width="1.8"/>
+        <path d="M74 179v10" stroke="#1f66cc" stroke-width="3.6" stroke-linecap="round"/>
+        <circle cx="126" cy="199" r="2.6" fill="#ccd4e0"/><circle cx="126" cy="210" r="2.6" fill="#ccd4e0"/>
       </g>
-      <g class="arms-down"><g class="pen-arm"><ellipse cx="96" cy="168" rx="13" ry="7" transform="rotate(26 96 168)" fill="#c08243"/><line class="pen" x1="78" y1="178" x2="98" y2="160" stroke="#3a6ea5" stroke-width="4" stroke-linecap="round"/><path d="M76 180l3-5" stroke="#f0c050" stroke-width="4" stroke-linecap="round"/></g><ellipse cx="184" cy="170" rx="14" ry="8" fill="#c08243"/></g>
-      <g class="arms-up"><ellipse cx="46" cy="106" rx="9" ry="16" transform="rotate(-30 46 106)" fill="#c08243"/><ellipse cx="214" cy="100" rx="9" ry="16" transform="rotate(30 214 100)" fill="#c08243"/></g>
-      <rect class="desk" x="0" y="172" width="260" height="48" rx="6" fill="#e2c39d"/><rect x="0" y="172" width="260" height="6" rx="3" fill="#d2ad82"/>
-      <g class="mug"><path d="M198 140h28v24a8 8 0 0 1-8 8h-12a8 8 0 0 1-8-8z" fill="#fff" stroke="#d9c7b2" stroke-width="2"/><path d="M226 147h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#d9c7b2" stroke-width="3"/>
-        <rect class="coffee" x="200" y="144" width="24" height="6" rx="2" fill="#7a4a22"/>
-        <g class="steam"><path d="M206 132c-4-5 4-8 0-13M214 132c-4-5 4-8 0-13M222 132c-4-5 4-8 0-13" stroke="#c9b6a2" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></g>
+      <g class="arms-down"><g class="pen-arm"><ellipse cx="80" cy="180" rx="11" ry="6" transform="rotate(24 80 180)" fill="#c08243"/><line class="pen" x1="64" y1="189" x2="82" y2="173" stroke="#3a6ea5" stroke-width="3.6" stroke-linecap="round"/></g></g>
+      <g class="arms-up"><ellipse cx="46" cy="120" rx="8" ry="14" transform="rotate(-30 46 120)" fill="#c08243"/><ellipse cx="206" cy="114" rx="8" ry="14" transform="rotate(30 206 114)" fill="#c08243"/></g>
+      <rect class="desk" x="0" y="197" width="260" height="23" rx="6" fill="#e2c39d"/><rect x="0" y="197" width="260" height="5" rx="3" fill="#d2ad82"/>
+      <g class="mug"><path d="M200 163h26v22a8 8 0 0 1-8 8h-10a8 8 0 0 1-8-8z" fill="#fff" stroke="#d9c7b2" stroke-width="2"/><path d="M226 169h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#d9c7b2" stroke-width="3"/>
+        <rect class="coffee" x="202" y="167" width="22" height="6" rx="2" fill="#7a4a22"/>
+        <g class="steam"><path d="M207 156c-4-5 4-8 0-13M215 156c-4-5 4-8 0-13M223 156c-4-5 4-8 0-13" stroke="#c9b6a2" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></g>
       <g class="spark"><path d="M30 60l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M228 52l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M60 26l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/></g>
-      <g class="hold-heart"><path d="M46 96c-3-4-9-2-9 3 0 4 9 9 9 9s9-5 9-9c0-5-6-7-9-3z" fill="#ff6b8a"/></g>
+      <g class="hold-heart"><path d="M44 104c-3-4-9-2-9 3 0 4 9 9 9 9s9-5 9-9c0-5-6-7-9-3z" fill="#ff6b8a"/></g>
     </svg>`;
     const st = document.createElement("style");
     st.textContent = `
@@ -115,7 +132,7 @@
 .scene .pen-arm{transform-origin:150px 172px;animation:lps-write 1.5s ease-in-out infinite}
 .scene .papers .ink{stroke-dasharray:46;stroke-dashoffset:46;animation:lps-ink 6s ease-in-out infinite}
 .scene .happy,.scene .arms-up,.scene .steam,.scene .spark,.scene .hold-heart{opacity:0;transition:opacity .25s}
-.scene .coffee{transform-origin:212px 150px;transform:scaleY(0);transition:transform .45s ease}
+.scene .coffee{transform-origin:212px 161px;transform:scaleY(0);transition:transform .45s ease}
 @keyframes lps-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
 @keyframes lps-nod{0%,64%,100%{transform:translateY(0) rotate(0)}74%{transform:translateY(4px) rotate(-2deg)}84%{transform:translateY(0) rotate(0)}}
 @keyframes lps-sweat{0%{transform:translateY(-4px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(13px);opacity:0}}

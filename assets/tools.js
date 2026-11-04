@@ -64,7 +64,7 @@ const TOOLS = [
       { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
       { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04",
         new: [
-          "Research map: each experiment as the hub, with the papers and notes behind it",
+          "Research map: every experiment and how they link, with the papers and notes behind them",
           "A Sources library, and arrows that carry the reason for every link",
           "Save file keeps itself in step, and a lighter save"
         ] }

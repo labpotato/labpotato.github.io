@@ -300,11 +300,12 @@ const TOOLS = [
     ],
     versions: [
       { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04" },
-      { v: "v2", file: "sequence-studio-v2.html", date: "2026-11-04",
+      { v: "v2", file: "sequence-studio-v2.html", date: "2026-11-04" },
+      { v: "v3", file: "sequence-studio-v3.html", date: "2026-11-04",
         new: [
-          "New map and sequence views: one arrow grammar, translation on the map, Benchling-style residue colours, a real ruler with hairlines, fat primers that show their bases",
-          "Annotations grouped with show/hide boxes, multi-select, right-click menu and bulk actions; every sequence edit previews its effect and asks twice",
-          "Digest ends with overhangs and ligation, Find-anything box, figure export for papers, ESMFold and AlphaFold DB in the page"
+          "An inspector on the right and the annotation list on the left, both foldable away; full names in the list, one row per annotation",
+          "Translate one feature with its own aa button, or every coding feature at once, and take them off the same two ways",
+          "Primer pairs: design or link two primers and the product is drawn on the map with its size"
         ] }
     ]
   }

@@ -492,7 +492,10 @@ h1,h2,.brand-tool,.pc-name-big{font-family:var(--lp-serif);letter-spacing:-.015e
    same header, button, input, card and section cue in every tool. */
 :root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
   --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
-  --lp-win:80vw;--lp-cap:1240px}
+  /* One window for the whole site: 90% of the screen, the same measure Lab Entry uses, with a
+     small gutter so nothing ever runs edge to edge. */
+  --lp-win:90vw;--lp-cap:none;--lp-floor:none;
+  --lp-w:min(90vw,calc(100vw - 24px))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--paper:var(--lp-paper);--card:var(--lp-card);--ink:var(--lp-ink);--ink-2:var(--lp-ink2);--ink-3:var(--lp-ink3);--line:var(--lp-line);--line-2:var(--lp-line2);--blue:var(--lp-blue);--blue-d:var(--lp-blued);--blue-l:var(--lp-bluel);--green:var(--lp-green);--green-l:var(--lp-greenl);--green-d:var(--lp-greend);--amber:var(--lp-amber);--amber-l:var(--lp-amberl);--amber-d:var(--lp-amberd);--red:var(--lp-red);--red-l:var(--lp-redl);--red-d:var(--lp-redd);}
@@ -537,6 +540,7 @@ header.site-header .btn:hover,header.site-header .all-tools:hover{background:col
 input[type=text],input[type=number],input:not([type]),select{height:34px;min-height:34px;box-sizing:border-box;border:1px solid var(--lp-line2);border-radius:8px;background:var(--lp-field);
   font-family:var(--lp-sans);font-size:13px;color:var(--lp-ink);padding-top:0;padding-bottom:0}
 input[type=text]:focus,input[type=number]:focus,input:not([type]):focus,select:focus{outline:none;border-color:var(--lp-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp-blue) 18%,transparent)}
+#app{width:var(--lp-w);max-width:none;margin-inline:auto}
 
 /* ---------- protein-quant v7: layout ---------- */
 /* the intro is one compact strip until the first protein has numbers */

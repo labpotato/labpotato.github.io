@@ -1092,7 +1092,10 @@ details.pcard>summary.pc-sum>.pc-frag{white-space:nowrap;overflow:hidden;text-ov
    same header, button, input, card and section cue in every tool. */
 :root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
   --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
-  --lp-win:80vw;--lp-cap:1240px}
+  /* One window for the whole site: 90% of the screen, the same measure Lab Entry uses, with a
+     small gutter so nothing ever runs edge to edge. */
+  --lp-win:90vw;--lp-cap:none;--lp-floor:none;
+  --lp-w:min(90vw,calc(100vw - 24px))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--bg:var(--lp-paper);--bg-tint:var(--lp-paper);--surface:var(--lp-card);--surface-2:var(--lp-paper);--border:var(--lp-line2);--border-soft:var(--lp-line);--text:var(--lp-ink);--text-muted:var(--lp-ink3);--text-faint:var(--lp-ink3);--accent:var(--lp-blue);--accent-hover:var(--lp-blued);--accent-soft:var(--lp-bluel);--ok:var(--lp-green);--ok-soft:var(--lp-greenl);--warn:var(--lp-amber);--warn-soft:var(--lp-amberl);--bad:var(--lp-red);--bad-soft:var(--lp-redl);}
@@ -1140,12 +1143,12 @@ input[type=text],input[type=number],input:not([type]),select{height:34px;min-hei
 input[type=text]:focus,input[type=number]:focus,input:not([type]):focus,select:focus{outline:none;border-color:var(--lp-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp-blue) 18%,transparent)}
 .section-tag{font-family:var(--lp-sans);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lp-ink3)}
 .card,.mode-card{border:1px solid var(--lp-line);border-radius:var(--lp-r-card);background:var(--lp-card);box-shadow:var(--lp-sh)}
+.wrap{width:var(--lp-w);max-width:none;margin-inline:auto}
 
 /* ---------- gibson-assembly v11: layout ---------- */
 /* the title page is gone: the switch sits in the header and the work starts at the top */
 .hero{display:none!important}
-.wrap{width:min(var(--lp-win),var(--lp-cap));max-width:none;padding:0;margin-inline:auto}
-@media (max-width:900px){.wrap{width:92vw}}
+.wrap{padding:0}
 main,.main{padding-top:0}
 .lp-mode{display:inline-flex;gap:2px;padding:3px;margin-left:6px;border-radius:11px;background:color-mix(in srgb,var(--lp-ink) 6%,transparent)}
 .lp-mode button{border:0;background:none;border-radius:8px;padding:5px 10px;font:600 12.5px/1 var(--lp-sans);color:var(--lp-ink2);cursor:pointer;white-space:nowrap}

@@ -2026,7 +2026,10 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
    same header, button, input, card and section cue in every tool. */
 :root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
   --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
-  --lp-win:80vw;--lp-cap:1240px}
+  /* One window for the whole site: 90% of the screen, the same measure Lab Entry uses, with a
+     small gutter so nothing ever runs edge to edge. */
+  --lp-win:90vw;--lp-cap:none;--lp-floor:none;
+  --lp-w:min(90vw,calc(100vw - 24px))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--bg:var(--lp-paper);--surface:var(--lp-card);--surface2:var(--lp-paper);--border:var(--lp-line2);--border-strong:var(--lp-line2);--accent:var(--lp-blue);--accent-hover:var(--lp-blued);--accent-soft:var(--lp-bluel);--accent-ink:var(--lp-blued);--text:var(--lp-ink);--muted:var(--lp-ink3);--faint:var(--lp-ink3);--green:var(--lp-green);--green-soft:var(--lp-greenl);--red:var(--lp-red);--red-soft:var(--lp-redl);--amber:var(--lp-amber);--amber-soft:var(--lp-amberl);--amber-ink:var(--lp-amberd);--stage:var(--lp-stage);}
@@ -2069,6 +2072,7 @@ header.hdr .header-link:hover{background:color-mix(in srgb,var(--lp-ink) 7%,tran
 .panel input[type=text],.panel input[type=number],.panel select,aside input[type=text],aside input[type=number],aside select{height:34px;min-height:34px;box-sizing:border-box;border:1px solid var(--lp-line2);border-radius:8px;background:var(--lp-field);
   font-family:var(--lp-sans);font-size:13px;color:var(--lp-ink);padding-top:0;padding-bottom:0}
 .panel input[type=text]:focus,.panel input[type=number]:focus,.panel select:focus,aside input[type=text]:focus,aside input[type=number]:focus,aside select:focus{outline:none;border-color:var(--lp-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp-blue) 18%,transparent)}
+.wrap{width:var(--lp-w);max-width:none;margin-inline:auto}
 
 /* ---------- microscopy-image-labeler v5: layout ---------- */
 .fig-cell.lp-in{animation:lp-slot .5s cubic-bezier(.25,1.2,.5,1) both;animation-delay:calc(var(--i) * 70ms)}
@@ -2166,7 +2170,7 @@ header.hdr .header-link:hover{background:color-mix(in srgb,var(--lp-ink) 7%,tran
     <div class="mhead">
       <div><b>Trace the scale bar in your image</b><div class="mini">Drag from one end of the printed scale bar to the other. The line snaps horizontal or vertical. Zoom in to hit the ends exactly.</div></div>
       <div class="mtools">
-        <button class="btn sm" onclick="calFind()" title="Look for a solid white or black bar">✨ Find it for me</button>
+        <button class="btn sm" onclick="calFind()" title="Look for a solid white or black bar">Find it for me</button>
         <button class="btn sm" onclick="calZoom(-1)" title="Zoom out">−</button>
         <span id="cal-zoom-label" class="zl">Fit</span>
         <button class="btn sm" onclick="calZoom(+1)" title="Zoom in">+</button>
@@ -2241,12 +2245,12 @@ function toast(m){
 }
 
 const STEPS=[
-  {n:'Upload',i:'📁',t:'Add your images. JPG, PNG and TIFF (TIFF calibration is read automatically).'},
-  {n:'Arrange',i:'🧩',t:'Build the rows and give each image its label. Drag panels to change the order.'},
-  {n:'Crop',i:'✂️',t:'Square-crop each row. Images in a row share the same crop, so channels stay aligned.'},
-  {n:'Scale bar',i:'📏',t:'Trace the scale bar already in your image once, then add a true-length bar to the figure.'},
-  {n:'Text & style',i:'🎨',t:'Title, caption, fonts, colours and publication options.'},
-  {n:'Export',i:'⬇️',t:'PNG at 2× resolution, or PowerPoint with every label editable.'}
+  {n:'Upload',i:'',t:'Add your images. JPG, PNG and TIFF (TIFF calibration is read automatically).'},
+  {n:'Arrange',i:'',t:'Build the rows and give each image its label. Drag panels to change the order.'},
+  {n:'Crop',i:'',t:'Square-crop each row. Images in a row share the same crop, so channels stay aligned.'},
+  {n:'Scale bar',i:'',t:'Trace the scale bar already in your image once, then add a true-length bar to the figure.'},
+  {n:'Text & style',i:'',t:'Title, caption, fonts, colours and publication options.'},
+  {n:'Export',i:'',t:'PNG at 2× resolution, or PowerPoint with every label editable.'}
 ];
 const ST={UPLOAD:0,ARRANGE:1,CROP:2,SCALE:3,STYLE:4,EXPORT:5};
 function renderSteps(){
@@ -2371,11 +2375,11 @@ function pUpload(){ return `
   ${hdr(ST.UPLOAD)}
   <label class="upzone">
     <input type="file" accept=".jpg,.jpeg,.png,.tif,.tiff,image/jpeg,image/png,image/tiff" multiple id="upload-input">
-    <div class="upzone-icon">📂</div>
+    <div class="upzone-icon"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h7A1.5 1.5 0 0 1 19 10v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 17z"/><path d="M12 11.5v4M10 13.5l2-2 2 2"/></svg></div>
     <div style="font-size:14px;color:var(--text);font-weight:600">Click or drag images here</div>
     <div style="font-size:12px;color:var(--muted);margin-top:4px">JPG · PNG · TIFF</div>
   </label>
-  <button class="btn sm pri" style="width:100%;margin-top:8px" onclick="loadExampleFig()">🔬 Try an example figure</button>
+  <button class="btn sm pri" style="width:100%;margin-top:8px" onclick="loadExampleFig()">Try an example figure</button>
   <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:4px">Two HeLa-like cells in three channels (DAPI, GFP, merge), with a known pixel size, so every step works before you add your own images.</div>
   <div id="upload-status" style="font-size:12.5px;color:var(--muted);text-align:center;min-height:16px"></div>
   ${S.images.length?`
@@ -2416,7 +2420,7 @@ function pArrange(){
       </div>
       <label class="upzone upzone-sm" style="margin-top:8px">
         <input type="file" accept=".jpg,.jpeg,.png,.tif,.tiff,image/jpeg,image/png,image/tiff" multiple onchange="uploadForRow('${row.id}',this.files)">
-        <span style="font-size:12.5px;color:var(--muted);font-weight:600">📂 Upload straight into this row</span>
+        <span style="font-size:12.5px;color:var(--muted);font-weight:600">Upload straight into this row</span>
       </label>
       ${row._uploading?`<div class="loading-line">${row._uploading}</div>`:''}
     </div>`).join('')}
@@ -2469,7 +2473,7 @@ function calLine(im){
       <div class="cal-name">${esc(im.label||im.name)}</div>
       ${u?`<span class="cal-badge">${fmtUm(u)} µm/px</span> <span class="mini">${im.umPerPx&&im.calSrc?esc(im.calSrc):im.umPerPx?'':'figure default'}</span>`:`<span class="cal-badge none">no scale yet</span>`}
     </div>
-    <button class="btn sm ${u?'':'pri'}" onclick="openCal('${im.id}')">📏 ${u?'Re-measure':'Measure'}</button>
+    <button class="btn sm ${u?'':'pri'}" onclick="openCal('${im.id}')">${u?'Re-measure':'Measure'}</button>
   </div>`;
 }
 function pfSection(){ const rows=S.rows.filter(r=>r.images.length); if(!rows.length) return '';

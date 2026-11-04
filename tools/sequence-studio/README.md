@@ -1,5 +1,22 @@
 # Sequence Studio
 
+> ## Asked for, not yet built — start v7 here
+>
+> **The plasmid mindmap.** A view that links a plasmid to the other plasmids it
+> is related to and lays them out as a map rather than a list: shared backbone,
+> shared insert, shared parts, with the strength of each link coming from how
+> much sequence two plasmids actually have in common.
+>
+> Deferred from v6 at the owner's request, with "remind me when I run the next
+> version". **This note is that reminder — raise it before starting v7.**
+>
+> Most of the groundwork is already in: `identitySearch` in the search section
+> compares any sequence against every other open one at DNA and protein level
+> and returns percent identity with coverage, which is exactly the edge weight
+> such a graph needs. What is missing is the all-against-all pass over the open
+> documents and the layout.
+
+
 A single-file, offline plasmid editor for the browser, built to stand in for SnapGene on a machine that cannot spare the disk space.
 
 **Files.** Opens SnapGene `.dna` and `.prot`, GenBank (`.gb .gbk .genbank .ape`), EMBL, FASTA (DNA or protein), plain text, Serial Cloner / DNA Strider `.xdna`, and its own `.json`. Saves SnapGene `.dna` (when the sequence came from a `.dna` file every packet of the original is kept and only the sequence, features, primers and notes are replaced, so annotations made here land in the same file SnapGene opens), GenBank with `/label` and colours, FASTA, and the map as SVG or PNG.
@@ -27,5 +44,23 @@ A **parts library** of 44 entries: the Anderson constitutive promoter collection
 **Fixes this release.** Enzyme cut marks used to be placed by arithmetic that assumed a fixed lane height, so as soon as a primer was on screen every tick sat about ten pixels below the bases it cuts, and a stagger that crossed the end of a row was dropped silently; they are now placed from the real position of the rendered strands, the label is centred over its own cut with a leader down to it, and a clipped stagger is drawn dashed to the edge. Primer names are drawn behind the arrow head, and the lane packer reserves the width of the name so two primers never share a line if their labels would meet. Empty primer lanes are no longer emitted on every row, which was costing a blank 25 px band per unused lane. Translations carry residue numbers. Feature bands carry a gradient. The long dropdowns spell out what the chosen option does. And the typing-ghost overlay was styled on a bare `.ghost`, which also matched every `.btn.ghost` in the chrome and pulled the undo, redo and panel-toggle buttons out of the layout; it has been scoped to the sequence view and they are visible again.
 
 **Outside tools.** IDT's codon optimiser, the Salis Lab RBS Calculator, Clustal Omega at EMBL-EBI and CRISPRscan, under Tools → Other outside tools. None takes a sequence in the address, so each copies the right text and opens the page; the paste is the step that transmits anything. BLAST keeps its own entry and still fills the query box.
+
+**v6.** **Ribosome binding strength**, calculated in the page. The thermodynamic model of Salis, Mirsky and Voigt (Nat Biotechnol 2009;27:946-50, doi:10.1038/nbt.1568) reimplemented from the model as published and as released by its authors: dG_total = dG_mRNA:rRNA + dG_spacing + dG_start - dG_mRNA - dG_standby, rate = 2500 exp(-dG/2.222), with their constants throughout - ATG -1.194, GTG -0.0748, TTG -0.0435 kcal/mol, an optimal aligned spacing of 5 nt, the anti-Shine-Dalgarno as the last nine bases of the E. coli 16S rRNA, a 35 nt fold window and a 4 nt standby site. Every term is shown, the Shine-Dalgarno is marked in the leader, and where the spacing is the limit it says how many bases to trim and what that is worth. It will also scan every start codon in the molecule, which is how an unannotated internal start shows itself.
+
+The published implementation gets every folding energy from NUPACK. There is no NUPACK in a browser tab, so the folding is a Zuker minimum-free-energy fold over nearest-neighbour Turner parameters written for this, and the 16S binding sites are enumerated as gapless duplexes rather than by a full co-fold. The model is theirs, the folding is ours, and the result is an estimate on their scale rather than their number. Against the Registry sites, each in the same context, Spearman rho is 0.80 on four points, which is not significant: B0032 and B0031 land almost exactly, B0034 and B0030 swap, and the predicted spread is about 7x against a measured 14x. The methods note in the tool shows that table rather than claiming the model is fine.
+
+**No promoter strength is reported**, on purpose. The tool finds the -35 and -10, measures the spacer and says which element is weak, and stops. The published model here is the 346-parameter Promoter Calculator of LaFleur, Hossain and Salis (Nat Commun 2022;13:5159, doi:10.1038/s41467-022-32829-5), fit to more than seventeen thousand measured promoters, which cannot be rebuilt from a description. A motif score of the kind that can be written by hand reaches Spearman rho 0.70 across the Anderson collection but ranks J23100, the reference of that family, twelfth, so the magnitude is withheld.
+
+**Colours by measurement.** Hue carries the functional group and nothing else; lightness separates the types inside a group. The eight group hues were chosen by simulating deuteranopia, protanopia and tritanopia and measuring the CIE76 distance between every pair: the closest two stay 17.2 apart under red-green deficiency and 16.7 including tritanopia, against 0.9 for Okabe-Ito under tritanopia and 2.7 for a hand-picked saturated set. No ninth hue survives that test, so unclassified features take a recessive near-white instead of pretending to be a ninth category. Ink is chosen by contrast rather than a fixed luminance threshold, so every band clears 5.7:1.
+
+**Interaction.** Both side panels drag to resize and double-click to reset, which is what the clipped names in the annotation list needed. The lane toggles moved out of the toolbar onto an icon rail beside the view with E, R, B, A and O to match, and the parts library, expression panel and figure export sit under them. The inspector renames, recolours and swaps a promoter, ribosome binding site, terminator or origin for another from the library, rewriting the bases in place. Clicking a residue in a translation selects its codon; Alt and a click hides a feature wherever it is drawn.
+
+**A left click that does the work.** Selecting anything raises an action bar over the selection carrying the six things you actually do with a stretch of DNA: make a feature, make a primer, copy, translate, find matches, BLAST. A feature can be dragged by either end to change where it starts or stops, or Ctrl-dragged by the body to move it whole, with the position shown live and nothing committed until release, so one undo reverses the drag. Clicking an enzyme name opens a card with the cut position on both strands, the overhang, and buttons to select the site, digest with it, or show only that enzyme.
+
+**Find matches, offline.** The selection, a feature or the whole sequence is searched against the other open sequences, the features of this one, and both part libraries, on both strands and then again as translated protein, by the seed-and-extend that BLAST itself is built on. Each hit is labelled by identity and by how much of the subject it covers, because an exact 60-base hit inside a 589-base origin is a fragment of that origin and not a match to it. The confident hits (95% or better over most of the part) can be annotated in one pass.
+
+**BLAST, honestly.** NCBI does not send CORS headers on its URL API, so no page can read its results and nothing here pretends to. The search opens with the query filled in, and the results come back by paste: both the hit table (Download -> Hit Table) and the description table copied off the results page are parsed, each hit gets the same verdict wording as the local search, and hits carrying query coordinates become features.
+
+**Fixed.** Swapping a part used to lose its annotation: replacing a feature's own bases deletes its whole span, which drops the feature, and both swap paths carried on editing an object that was no longer in the document. Present in v5 as shipped.
 
 Everything runs in the page; nothing is uploaded except what you send to a folding service on purpose.

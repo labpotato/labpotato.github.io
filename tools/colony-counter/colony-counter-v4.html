@@ -586,6 +586,17 @@ header.site-header .header-link:hover{background:color-mix(in srgb,var(--lp-ink)
 
 /* ---------- colony-counter v4: layout ---------- */
 .lp-exp{font-weight:600}
+
+/* the results table: tighter so more of it fits, with a gentle horizontal scroll when it cannot */
+.tablewrap{overflow:auto;-webkit-overflow-scrolling:touch}
+#tbl{font-size:11.5px}
+#tbl th,#tbl td{padding:4px 6px!important;white-space:nowrap}
+#tbl th{font-size:10.5px;line-height:1.2;white-space:normal;vertical-align:bottom}
+#tbl td input[type=text],#tbl td input[type=number]{min-width:0}
+/* the mascot counts along: a small wobble of the magnifier */
+.cc-lens{transform-origin:78px 66px;animation:cc-peer 4.5s ease-in-out infinite}
+@keyframes cc-peer{0%,100%{transform:translate(0,0)}30%{transform:translate(-5px,-2px)}60%{transform:translate(2px,2px)}}
+@media (prefers-reduced-motion:reduce){.cc-lens{animation:none}}
 @media (prefers-reduced-motion:reduce){.lp-anim,.lp-anim *{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -675,7 +686,7 @@ header.site-header .header-link:hover{background:color-mix(in srgb,var(--lp-ink)
         </button>
         <button class="tool tool-warn" id="btnClearAuto" type="button" title="Remove every colony the counter found and keep only the ones you marked. Undo brings them back; Count finds them again." disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="9" r="3.2"/><circle cx="15.5" cy="15" r="3.2"/><path d="M4 20 20 4"/></svg>
-          <span>Clear found</span>
+          <span>Clear auto marks</span>
         </button>
         <button class="tool tool-warn" id="btnClearStage" type="button" title="Clear the selection and its count (Delete)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
@@ -928,18 +939,20 @@ header.site-header .header-link:hover{background:color-mix(in srgb,var(--lp-ink)
 
     <div class="empty" id="empty">
       <svg class="dishy" viewBox="0 0 100 100" aria-hidden="true">
-        <ellipse cx="50" cy="90" rx="30" ry="4.5" fill="rgba(20,32,51,.12)"/>
-        <circle cx="50" cy="50" r="40" fill="#e9f5ef" stroke="#0072B2" stroke-width="3.5"/>
-        <circle cx="50" cy="50" r="33" fill="#cfeee0" stroke="#56B4E9" stroke-width="2"/>
-        <circle cx="34" cy="60" r="4.5" fill="#E69F00"/>
-        <circle cx="66" cy="58" r="3.5" fill="#CC79A7"/>
-        <circle cx="58" cy="68" r="3" fill="#009E73"/>
-        <circle cx="40" cy="70" r="2.6" fill="#D55E00"/>
-        <g><circle cx="40" cy="44" r="6" fill="#fff"/><circle cx="41" cy="45" r="3.2" fill="#142033"/><circle cx="42.3" cy="43.6" r="1.1" fill="#fff"/></g>
-        <g><circle cx="60" cy="44" r="6" fill="#fff"/><circle cx="61" cy="45" r="3.2" fill="#142033"/><circle cx="62.3" cy="43.6" r="1.1" fill="#fff"/></g>
-        <path d="M42 54 Q50 61 58 54" stroke="#142033" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-        <circle cx="32" cy="52" r="3" fill="#F0A6C0" opacity=".55"/>
-        <circle cx="68" cy="52" r="3" fill="#F0A6C0" opacity=".55"/>
+        <ellipse cx="50" cy="92" rx="31" ry="4.5" fill="rgba(20,32,51,.12)"/>
+        <!-- the potato -->
+        <path d="M22 54C20 38 33 26 51 24C70 22 83 31 84 46C85 60 76 72 58 76C40 80 25 70 22 54Z" fill="#cd9050" stroke="#a66f34" stroke-width="2"/>
+        <ellipse cx="38" cy="40" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".5"/><ellipse cx="66" cy="38" rx="2" ry="1.4" fill="#9c6a30" opacity=".45"/><ellipse cx="72" cy="56" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".45"/>
+        <path class="cc-brow" d="M38 40q6 -4 12 -1M56 38q6 -3 12 1" fill="none" stroke="#2a2018" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="45" cy="46" r="3.2" fill="#2a2018"/><circle cx="63" cy="45" r="3.2" fill="#2a2018"/>
+        <circle cx="46" cy="45" r="1" fill="#fff"/><circle cx="64" cy="44" r="1" fill="#fff"/>
+        <path d="M48 56q6 5 13 1" fill="none" stroke="#2a2018" stroke-width="2.6" stroke-linecap="round"/>
+        <ellipse cx="36" cy="54" rx="3.4" ry="2.2" fill="#f0a6c0" opacity=".6"/><ellipse cx="70" cy="52" rx="3.4" ry="2.2" fill="#f0a6c0" opacity=".6"/>
+        <!-- the petri dish it is counting -->
+        <g class="cc-dish"><ellipse cx="52" cy="80" rx="24" ry="9" fill="#e9f5ef" stroke="#0072B2" stroke-width="2.6"/><ellipse cx="52" cy="78.5" rx="24" ry="9" fill="#cfeee0" stroke="#56B4E9" stroke-width="1.4"/>
+          <circle cx="44" cy="79" r="2.4" fill="#E69F00"/><circle cx="56" cy="76" r="2" fill="#CC79A7"/><circle cx="60" cy="81" r="1.8" fill="#009E73"/><circle cx="48" cy="82" r="1.6" fill="#D55E00"/><circle cx="52" cy="78" r="1.5" fill="#0072B2"/></g>
+        <!-- a little magnifier -->
+        <g class="cc-lens"><circle cx="78" cy="66" r="8" fill="rgba(255,255,255,.35)" stroke="#5d636d" stroke-width="2.4"/><line x1="84" y1="72" x2="90" y2="79" stroke="#5d636d" stroke-width="3" stroke-linecap="round"/></g>
       </svg>
       <h2>No plate loaded yet</h2>
       <p>Drop a photo anywhere, paste one with <kbd class="key">Ctrl</kbd>+<kbd class="key">V</kbd>, or pick a file. Colour or greyscale, phone or scanner — it will work out the rest itself.</p>

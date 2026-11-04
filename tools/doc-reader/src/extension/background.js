@@ -97,6 +97,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({ id: "lp-hl", title: "Highlight (Lab Potato)", contexts: ["selection"] });
     chrome.contextMenus.create({ id: "lp-tools", title: "Lab Potato tools on this page", contexts: ["page"] });
     chrome.contextMenus.create({ id: "lp-page", title: "Open this page in Doc Reader", contexts: ["page"] });
+    chrome.contextMenus.create({ id: "lp-cite", title: "Save citation (RIS · EndNote · BibTeX) or send to Lab Entry", contexts: ["page"] });
     chrome.contextMenus.create({ id: "lp-sel", title: "Open the selection in Doc Reader", contexts: ["selection"] });
     chrome.contextMenus.create({ id: "lp-link", title: "Open this link in Doc Reader", contexts: ["link"] });
     chrome.contextMenus.create({ id: "lp-off", title: "Turn Lab Potato off on this site", contexts: ["page"] });
@@ -112,9 +113,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   else if (id === "lp-page") openPage(tab, false);
   else if (id === "lp-sel") openPage(tab, true);
   else if (id === "lp-link") reader(isPdf(info.linkUrl) ? "?file=" + encodeURIComponent(info.linkUrl) : "?url=" + encodeURIComponent(info.linkUrl));
+  else if (id === "lp-cite") cite(tab);
   else if (id === "lp-lib") library();
   else if (id === "lp-new") reader();
 });
+// open the citation saver, told which tab to read
+const cite = tab => chrome.tabs.create({ url: chrome.runtime.getURL("cite.html?tab=" + (tab && tab.id)) });
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.t === "reader" && sender.tab) openPage(sender.tab, false);
   else if (msg.t === "library") library();

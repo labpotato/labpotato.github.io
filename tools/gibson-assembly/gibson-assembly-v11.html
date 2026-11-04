@@ -1129,8 +1129,8 @@ input[type=text]:focus,input[type=number]:focus,input:not([type]):focus,select:f
 /* ---------- gibson-assembly v11: layout ---------- */
 /* the title page is gone: the switch sits in the header and the work starts at the top */
 .hero{display:none!important}
-:root{--maxw:1320px}
-.wrap{width:min(92vw,var(--maxw));max-width:none;padding:0}
+:root{--maxw:1250px}
+.wrap{width:min(87vw,var(--maxw));max-width:none;padding:0}
 main,.main{padding-top:0}
 .lp-mode{display:inline-flex;gap:2px;padding:3px;margin-left:6px;border-radius:11px;background:color-mix(in srgb,var(--lp-ink) 6%,transparent)}
 .lp-mode button{border:0;background:none;border-radius:8px;padding:5px 10px;font:600 12.5px/1 var(--lp-sans);color:var(--lp-ink2);cursor:pointer;white-space:nowrap}
@@ -1211,6 +1211,49 @@ main,.main{padding-top:0}
 @keyframes gb-run{0%{transform:translateY(calc(var(--d) * -1));opacity:0}10%{opacity:.9}100%{transform:none;opacity:var(--o,1)}}
 @media (prefers-reduced-motion:reduce){#lpGelRail .gb{animation:none}}
 @media (max-width:760px){.pr{grid-template-columns:24px minmax(0,1fr) auto}.pr-num{display:none}.jn{margin:0 10px}}
+
+/* ── step 3: map, gel and score in one row above the PCR cards ── */
+.workspace.lp-s3{grid-template-columns:minmax(0,1fr)}
+.workspace.lp-s3 .rail{position:static;order:-1;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.workspace.lp-s3 .rail>.card{margin:0;min-width:0}
+.workspace.lp-s3 #mapBody{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);column-gap:16px;align-content:start}
+.workspace.lp-s3 .mini-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.workspace.lp-s3 #mapBody>.map-wrap{grid-row:1/span 8;align-self:start}
+.workspace.lp-s3 #mapBody>:not(.map-wrap){grid-column:2}
+.workspace.lp-s3 #scoreCard{max-height:420px;display:flex;flex-direction:column;overflow:hidden}
+.workspace.lp-s3 #scoreCard .score-list{overflow:auto;min-height:0}
+.workspace.lp-s3 .lp-gelc .card-b{display:grid;place-items:center}
+.workspace.lp-s3 #lpGelRail svg{max-width:300px}
+@media (max-width:1180px){.workspace.lp-s3 .rail{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.workspace.lp-s3 .map-card{grid-column:1/-1}}
+@media (max-width:700px){.workspace.lp-s3 .rail{grid-template-columns:minmax(0,1fr)}.workspace.lp-s3 #mapBody{grid-template-columns:minmax(0,1fr)}.workspace.lp-s3 #mapBody>*{grid-column:1!important;grid-row:auto!important}}
+
+/* ── the map once the animation ends: primers and junction dots arrive in order ── */
+#mapBody.asm-hold svg :is(.pg,.jdot,.jmark){opacity:0}
+#mapBody.asm-in svg .pg{animation:lp-pg-in .5s cubic-bezier(.2,.8,.3,1.25) both;animation-delay:calc(.2s + var(--k,0) * .09s);transform-box:fill-box;transform-origin:center}
+#mapBody.asm-in svg .jdot{animation:lp-pg-in .45s cubic-bezier(.2,.8,.3,1.4) both;animation-delay:calc(.15s + var(--k,0) * .12s);transform-box:fill-box;transform-origin:center}
+@keyframes lp-pg-in{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:none}}
+
+/* ── primers that need a look: a filled badge that pulses, and a stronger halo ── */
+.pg-badge .pg-ring{animation:lp-ring 1.7s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes lp-ring{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.3);opacity:0}}
+:is(.pg-w,.pg-b) .halo{animation:lp-halo 1.8s ease-in-out infinite}
+@keyframes lp-halo{0%,100%{stroke-opacity:.3}50%{stroke-opacity:.65}}
+@media (prefers-reduced-motion:reduce){.pg-badge .pg-ring,:is(.pg-w,.pg-b) .halo,#mapBody.asm-in svg :is(.pg,.jdot){animation:none}}
+
+/* ── calmer type: smaller, tighter, one subtitle line instead of an uppercase tag ── */
+.lp-prod .card-h h2{font-size:17px!important;font-weight:650;letter-spacing:-.02em;margin:0}
+.lp-sub{margin:2px 0 0;font-size:12.5px;color:var(--lp-ink3)}
+.frag-t>b{font-size:14px}
+.pill-m{font-size:11.5px;padding:2px 7px}
+.pr{padding:8px 14px;gap:12px}
+.pr-name{font-size:11px}
+.pr-seq{font-size:12px;letter-spacing:.01em}
+.pr-num{font-size:11px}
+.iss{font-size:12.5px;line-height:1.45}
+.frag-more>summary{font-size:12px}
+.jn{font-size:12px}
+.card-h h2{font-size:15px!important}
+.lp-prod>.card-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.lp-anim,.lp-anim *{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -3042,7 +3085,7 @@ function pgWrap(inner,k,sev,label,hit,tail){
   // the overhang is what the shorten tick changes, so it is named in the glyph's own label
   const fl=tail==null?'':tail>0?`, ${tail} nt flap`:', no flap';
   label=/^\d+$/.test(String(label))?'Primer '+label:label;
-  return `<g class="pg${sev?' pg-'+sev:''}" role="button" tabindex="0" aria-label="${label}${fl}${sev==='b'?' has a problem':sev==='w'?' is worth a look':''}. Open its sequence map."
+  return `<g class="pg${sev?' pg-'+sev:''}" style="--k:${k}" role="button" tabindex="0" aria-label="${label}${fl}${sev==='b'?' has a problem':sev==='w'?' is worth a look':''}. Open its sequence map."
     onclick="jumpPrimer(${k},'aln')" onkeydown="if(event.key==='Enter')jumpPrimer(${k},'aln')"><title>${label}${fl}${sev==='b'?': needs fixing':sev==='w'?': worth a look':''}. Click for its sequence map.</title>${hit}${inner}</g>`;
 }
 function arcPath(cx,cy,r,a0,a1){
@@ -3052,7 +3095,7 @@ function arcPath(cx,cy,r,a0,a1){
 /* a round button on the map at a junction: click it to move that overlap or add a spacer there */
 function jdot(x,y,ji){
   const on=MAPJ===ji;
-  return `<g class="jdot${on?' on':''}" role="button" tabindex="0" aria-label="Junction ${ji+1}: move the overlap or add a spacer" onclick="selectJunction(${ji})" onkeydown="if(event.key==='Enter'||event.key===' ')selectJunction(${ji})">
+  return `<g class="jdot${on?' on':''}" style="--k:${ji}" role="button" tabindex="0" aria-label="Junction ${ji+1}: move the overlap or add a spacer" onclick="selectJunction(${ji})" onkeydown="if(event.key==='Enter'||event.key===' ')selectJunction(${ji})">
     <title>Junction ${ji+1}: click to move the overlap or add a spacer</title><circle class="jd-c" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9.5"/>
     <text x="${x.toFixed(1)}" y="${(y+.5).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700">+</text></g>`;
 }
@@ -3063,7 +3106,7 @@ function primerGlyph(cx,cy,r,deg,dir,color,state,label,k,sev,tail){
   const t0=deg-dir*TAIL,b1=deg+dir*BODY,tip=b1+dir*HEAD;
   const sc=sev==='b'?'var(--bad)':sev==='w'?'var(--warn)':'';
   const lo=Math.min(t0,tip)-2,hi=Math.max(t0,tip)+2;
-  const hit=`<path class="halo" d="${arcPath(cx,cy,r,lo,hi)}" fill="none" stroke="${sc||'transparent'}" stroke-opacity="${sc?.3:0}" stroke-width="13" stroke-linecap="round" pointer-events="stroke"/>`;
+  const hit=`<path class="halo" d="${arcPath(cx,cy,r,lo,hi)}" fill="none" stroke="${sc||'transparent'}" stroke-opacity="${sc?.45:0}" stroke-width="13" stroke-linecap="round" pointer-events="stroke"/>`;
   let g=`<g opacity="${dim&&!sc?.38:dim?.65:1}">`;
   if(TAIL)g+=`<path d="${arcPath(cx,cy,r,t0,deg)}" fill="none" stroke="${col}" stroke-width="${(w*.6).toFixed(1)}" stroke-dasharray="2 2"/>`;
   g+=`<path d="${arcPath(cx,cy,r,deg,b1)}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
@@ -3071,7 +3114,8 @@ function primerGlyph(cx,cy,r,deg,dir,color,state,label,k,sev,tail){
   g+=`<polygon points="${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(1)},${B.y.toFixed(1)} ${T.x.toFixed(1)},${T.y.toFixed(1)}" fill="${col}"/></g>`;
   if(label){
     const lp=polar(cx,cy,r+(dir>0?20:-20),deg+dir*BODY/2);
-    const mark=sev==='b'?' ×':sev==='w'?' !':'';
+    const mark='';
+    if(sc){const bx=lp.x+(label.length>1?14:11),by=lp.y-9;g+=`<g class="pg-badge"><circle class="pg-ring" cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7.5" fill="none" stroke="${sc}" stroke-width="2"/><circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7.5" fill="${sc}" stroke="var(--surface)" stroke-width="1.5"/><text x="${bx.toFixed(1)}" y="${(by+.5).toFixed(1)}" font-size="11" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="central">${sev==='b'?'×':'!'}</text></g>`}
     g+=`<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" font-size="${cur?14:12}" font-weight="700" fill="${sc||col}" text-anchor="middle" dominant-baseline="central"
       stroke="var(--surface)" stroke-width="3" paint-order="stroke" opacity="${dim&&!sc?.6:1}">${label}${mark}</text>`;
   }
@@ -4960,14 +5004,14 @@ const prog=(t,a,b)=>ease((t-a)/(b-a));
 function cssv(n,fb){const s=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return s||fb}
 function asmDraw(cx,W,H,M,t,opt){opt=opt||{};const ink=opt.ink||cssv('--text','#1f1e1b'),faint=opt.faint||cssv('--text-faint','#7a766d');
   cx.clearRect(0,0,W,H);if(opt.bg){cx.fillStyle=opt.bg;cx.fillRect(0,0,W,H)}
-  const g=1-prog(t,2.4,3.6),c=prog(t,1.1,2.3),f=prog(t,3.9,4.9),mo=M.circ?prog(t,5.0,6.4):0,fade=prog(t,0,.7);
+  const g=1-prog(t,2.4,3.6),c=prog(t,1.1,2.3),f=prog(t,3.9,4.9),mo=M.circ?prog(t,5.0,6.4):0,fade=prog(t,0,.7),sol=opt.ring&&M.circ?prog(t,5.7,6.5):0;
   const gap=Math.min(34,W*.05),pad=Math.max(21,W*.04),sc=(W-2*pad-(M.m-1)*gap)/(M.uMax-M.uMin),yc=H*.52,dy=Math.max(3,W/220),lw=Math.max(3,W/200);
   const rg=opt.ring,s4=rg?rg.s:0,R=rg?127*s4:Math.min(H*.36,W*.3),ox=rg?200*s4:W/2,oy=rg?200*s4:H*.54,tot=(M.uMax-M.uMin)*sc,x0=(W-tot)/2;
   const bw=rg?22*s4:lw*2.2,dy0=dy,lw0=lw;
   const linX=(u,k)=>x0+(u-M.uMin)*sc+(k-(M.m-1)/2)*gap*g;
   /* closing the plasmid: the line curls up around its middle, keeping its length, until the two ends meet on a circle.
      v11: the angle runs negative so the ring lands exactly on the live map (part 1 at 12 o'clock, clockwise). */
-  const uMid=(M.uMin+M.uMax)/2,th=2*Math.PI*mo,SL=M.L*sc+(2*Math.PI*R-M.L*sc)*mo,rb=th>1e-4?SL/th:0,yb=yc+(oy+R-yc)*mo;
+  const uMid=opt.ring?M.L/2:(M.uMin+M.uMax)/2,th=2*Math.PI*mo,SL=M.L*sc+(2*Math.PI*R-M.L*sc)*mo,rb=th>1e-4?SL/th:0,yb=yc+(oy+R-yc)*mo;
   // the strands thicken into the map's band (two half-bands, touching) while the circle closes
   const dyN=dy0+(bw/4-dy0)*mo,lwN=lw0+(bw/2-lw0)*mo;
   const pt=(u,k,side,ex)=>{const off=side*dyN+(ex||0);if(th<=1e-4) return [linX(u,k),yc+off];const ph=-th*(u-uMid)/M.L,cy0=yb-rb;return [ox+(rb+off)*Math.sin(ph),cy0+(rb+off)*Math.cos(ph)]};
@@ -4983,11 +5027,15 @@ function asmDraw(cx,W,H,M,t,opt){opt=opt||{};const ink=opt.ink||cssv('--text','#
   const glow=Math.min(prog(t,2.2,2.9),1-prog(t,5.0,5.6));
   if(glow>0) M.fr.forEach(F=>{if(!F.prev||!F.ovL) return;cx.strokeStyle='rgba(240,186,40,'+(.38*glow)+')';cx.lineWidth=lw*4.2;cx.lineCap='round';cx.beginPath();const step=Math.max(1,M.L/360);
     for(let u=F.lo;;u=Math.min(F.lo+F.ovL,u+step)){const P=pt(u,F.k,0);u===F.lo?cx.moveTo(P[0],P[1]):cx.lineTo(P[0],P[1]);if(u>=F.lo+F.ovL) break}cx.stroke()});
-  M.fr.forEach(F=>{const al=fade;
+  M.fr.forEach(F=>{const al=fade*(1-Math.pow(sol,4));
     // top strand: 5′ end on the left; bottom strand: 5′ end on the right. Chewing goes a little past the overlap, the polymerase fills that back.
     const chewT=(F.ovL+F.exL)*c-F.exL*f,chewB=(F.ovR+F.exR)*c-F.exR*f;
     strand(F,F.lo+Math.max(0,chewT),F.hi,-1,al);strand(F,F.lo,F.hi-Math.max(0,chewB),1,al);
     if(f>0&&f<1) [F.lo+F.ovL+F.exL*(1-f),F.hi-F.ovR-F.exR*(1-f)].forEach((u,i)=>{if(i===0&&!F.prev||i===1&&!F.next) return;const P=pt(u,F.k,i?1:-1);cx.fillStyle='#fff';cx.globalAlpha=.9*Math.sin(f*Math.PI);cx.beginPath();cx.arc(P[0],P[1],lw*1.1,0,7);cx.fill();cx.globalAlpha=1})});
+  if(rg&&sol>0){const C=200*s4,toR=d=>d*Math.PI/180,GP=M.segs.length>1?1:0;cx.save();cx.globalAlpha=sol;
+    cx.strokeStyle=cssv('--border','#d6d4ce');cx.lineWidth=22*s4;cx.beginPath();cx.arc(C,C,127*s4,0,7);cx.stroke();
+    M.segs.forEach(o=>{const a0=-90+o.a/M.L*360+GP,a1=Math.max(-90+o.b/M.L*360-GP,a0+.35),ro=(o.fold?130:138)*s4,ri=(o.fold?124:116)*s4;
+      cx.globalAlpha=sol*(o.fold?.5:.95);cx.fillStyle=o.color;cx.beginPath();cx.arc(C,C,ro,toR(a0),toR(a1));cx.arc(C,C,ri,toR(a1),toR(a0),true);cx.closePath();cx.fill()});cx.restore()}
   // labels
   cx.textAlign='center';cx.textBaseline='top';const fs=Math.max(11,Math.round(W/52));
   M.fr.forEach(F=>{const mid=(F.s+F.e)/2,ph=-th*(mid-uMid)/M.L,sx=Math.sin(ph)*mo,cy=Math.cos(ph);let P=pt(mid,F.k,1,6+fs*.5*mo);
@@ -5240,6 +5288,13 @@ function lpJuncStrip(d, S, j, i){
     ${what ? `<div class="jn-why">${what} <b>Fix:</b> ${fix} <button class="btn btn-ghost btn-sm" type="button" onclick="openMapOptions()">Junction options</button></div>` : ''}
   </div>`;
 }
+// the template each PCR runs on, with its size, and whether the part was found in it
+function lpTmplPill(r, ts){
+  const L = typeof r.template === 'string' ? r.template.length : 0;
+  if (!r.hasOwnTemplate || !L) return '<span class="pill-m" title="No template attached: the part itself is used as the template">template: the part itself</span>';
+  const st = ts ? ts.s : 'ok', mark = st === 'ok' ? '✓' : st === 'w' ? '!' : '✕';
+  return `<span class="pill-m tm-${st}" title="${esc(ts ? ts.t : '')}">template <b>${L.toLocaleString()} bp</b> ${mark}</span>`;
+}
 function lpFragInner(d, S){
   const rows = primerRows(d, S), out = [];
   d.results.forEach((r, ri) => {
@@ -5263,7 +5318,7 @@ function lpFragInner(d, S){
     out.push(`<article class="frag st-${worst}" id="fr_${r.idx}" style="--pc:${col}">
       <header class="frag-h"><span class="lg-num" style="background:${col}">${r.idx + 1}</span>
         <div class="frag-t"><b>${esc(r.a.name)}</b>
-          <span class="frag-m"><span class="pill-m">PCR product <b>${r.amplicon.toLocaleString()} bp</b></span><span class="pill-m">anneal <b>${r.ta} °C</b></span><span class="pill-m">extend ${esc(extTime(r.amplicon, S.poly))}</span>${ts ? `<span class="pill-m tm-${ts.s}" title="${esc(ts.t)}">${ts.s === 'ok' ? 'found in its template' : ts.s === 'w' ? 'template: several copies' : 'not in its template'}</span>` : ''}</span></div>
+          <span class="frag-m"><span class="pill-m">PCR product <b>${r.amplicon.toLocaleString()} bp</b></span><span class="pill-m">anneal <b>${r.ta} °C</b></span><span class="pill-m">extend ${esc(extTime(r.amplicon, S.poly))}</span>${lpTmplPill(r, ts)}</span></div>
         <span class="frag-st st-${worst}">${worst === 'b' ? '✕ needs a fix' : worst === 'w' ? `! ${issues.length} to look at` : '✓ ready'}</span></header>
       <div class="frag-p">${prim}</div>
       <div class="frag-i">${iss}</div>
@@ -5286,7 +5341,7 @@ function renderResults(d){
   const table = primerTableInner(d, S);   // also fills the Copy table / FASTA buffers
   window.__fasta = '>' + nm.replace(/\s+/g, '_') + ' ' + d.asm.length + 'bp ' + (d.circular ? 'circular' : 'linear') + '\n' + (d.asm.match(/.{1,70}/g) || []).join('\n');
   return `<div class="card lp-prod"><div class="card-h">
-      <div><span class="section-tag">Step 3 · ${esc(nm)} · ${d.circular ? 'circular' : 'linear'} ${d.asm.length.toLocaleString()} bp · anneal ${taLabel}</span><h2>PCR products and their primers</h2></div>
+      <div><h2>PCR products and their primers</h2><p class="lp-sub">${esc(nm)} · ${d.circular ? 'circular' : 'linear'}, ${d.asm.length.toLocaleString()} bp · anneal at ${taLabel}</p></div>
       <div class="btn-row lp-tools">
         <button class="btn btn-ghost btn-sm" onclick="cp(window.__tsv,this)" type="button">Copy table</button>
         <button class="btn btn-ghost btn-sm" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">FASTA</button>
@@ -5344,6 +5399,42 @@ renderRail = function(){
       <button class="btn btn-ghost btn-sm" type="button" onclick="LP_GELSIG='';renderRail()" title="Run the gel again">▶ Run</button></div><div class="card-b lp-anim" id="lpGelRail"></div></div>`);
     box = document.getElementById('lpGelRail'); }
   if (sig !== LP_GELSIG){ LP_GELSIG = sig; box.innerHTML = lpGel(D); box.classList.remove('still'); }
+  return r;
+};
+
+// ── 4. step 3: the live map, gel and score sit above the PCR cards, so the assembly is the first thing seen ──
+const _lpShowPane = showPane;
+showPane = function(n){
+  const r = _lpShowPane.apply(this, arguments);
+  const ws = document.querySelector('.workspace'); if (ws) ws.classList.toggle('lp-s3', n === 3);
+  return r;
+};
+
+// ── 5. the map's primers and junction dots wait under the animation, then arrive one by one ──
+const _lpAsmStart = asmStart, _lpAsmDone = asmDone;
+asmStart = function(skip){
+  const r = _lpAsmStart.apply(this, arguments), mb = $('mapBody');
+  if (mb && !skip && ASM.raf){ mb.classList.remove('asm-in'); mb.classList.add('asm-hold'); }
+  return r;
+};
+asmDone = function(){
+  const mb = $('mapBody');
+  if (mb && mb.classList.contains('asm-hold')){
+    mb.classList.remove('asm-hold'); mb.classList.add('asm-in');
+    clearTimeout(window.__lpAsmIn); window.__lpAsmIn = setTimeout(() => mb.classList.remove('asm-in'), 2400);
+  }
+  return _lpAsmDone.apply(this, arguments);
+};
+// step 3 lands on the map row (the assembly plays there), not on the cards below it
+const _lpGoStep = goStep;
+goStep = function(n){
+  const r = _lpGoStep.apply(this, arguments);
+  if (n === 3) requestAnimationFrame(() => requestAnimationFrame(() => {
+    const rail = document.querySelector('.workspace.lp-s3 .rail'), st = document.querySelector('.stepper');
+    const el = st || rail; if (!el) return;
+    const hh = (document.querySelector('header.site-header') || { offsetHeight: 54 }).offsetHeight;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + scrollY - hh - 8), behavior: 'auto' });
+  }));
   return r;
 };
 

@@ -547,15 +547,30 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
 @media (max-width: 620px) { .hint { display: none !important; } }
 </style>
 <style id="lp-standard">
-/* ===== Lab Potato standard style (taken from Cryobox Labeler) ================
-   One palette, one header, one size of button, input and card across every tool. */
-:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px}
+/* ===== Lab Potato standard style ============================================
+   The homepage's type and palette, one 80% window, one spacing scale, and the
+   same header, button, input, card and section cue in every tool. */
+:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+  --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
+  --lp-win:80vw;--lp-cap:1240px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--bg:var(--lp-paper);--bg-tint:var(--lp-paper);--surface:var(--lp-card);--surface-2:var(--lp-paper);--border:var(--lp-line2);--border-soft:var(--lp-line);--text:var(--lp-ink);--text-muted:var(--lp-ink3);--text-faint:var(--lp-ink3);--accent:var(--lp-blue);--accent-hover:var(--lp-blued);--accent-soft:var(--lp-bluel);}
 [hidden]{display:none!important}
 html,body{font-family:var(--lp-sans)}
-body{font-size:14px;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+body{font-size:14px;line-height:1.5;letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* the homepage's heading rhythm, so a tool's titles sit at the same weight and tracking */
+h1,h2,h3,h4{font-family:var(--lp-sans);letter-spacing:-.015em;font-weight:650}
+h2{font-size:17px;line-height:1.25}h3{font-size:15px;line-height:1.3}h4{font-size:13.5px}
+p{margin:0 0 var(--lp-3)}
+/* numbers line up in tables and read-outs */
+table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
+.lp-sec{margin:var(--lp-6) 0 0}
+.lp-sec:first-child{margin-top:0}
+.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding-bottom:var(--lp-2);border-bottom:1px solid var(--lp-line)}
+.lp-sec-h h3{margin:0;font:650 13.5px/1.2 var(--lp-sans);letter-spacing:-.01em;color:var(--lp-ink)}
+.lp-sec-h .lp-sec-n{font:700 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lp-ink3)}
+.lp-sec-h .lp-sec-sub{margin-left:auto;font:12px/1 var(--lp-sans);color:var(--lp-ink3)}
 header.site-header{height:54px;min-height:54px;max-height:54px;padding-top:0;padding-bottom:0;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
   background:color-mix(in srgb,var(--lp-paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--lp-line);box-shadow:none;font-family:var(--lp-sans)}
@@ -594,9 +609,6 @@ header.site-header .header-link:hover{background:color-mix(in srgb,var(--lp-ink)
 #tbl th{font-size:10.5px;line-height:1.2;white-space:normal;vertical-align:bottom}
 #tbl td input[type=text],#tbl td input[type=number]{min-width:0}
 /* the mascot counts along: a small wobble of the magnifier */
-.cc-lens{transform-origin:78px 66px;animation:cc-peer 4.5s ease-in-out infinite}
-@keyframes cc-peer{0%,100%{transform:translate(0,0)}30%{transform:translate(-5px,-2px)}60%{transform:translate(2px,2px)}}
-@media (prefers-reduced-motion:reduce){.cc-lens{animation:none}}
 @media (prefers-reduced-motion:reduce){.lp-anim,.lp-anim *{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -939,20 +951,23 @@ header.site-header .header-link:hover{background:color-mix(in srgb,var(--lp-ink)
 
     <div class="empty" id="empty">
       <svg class="dishy" viewBox="0 0 100 100" aria-hidden="true">
-        <ellipse cx="50" cy="92" rx="31" ry="4.5" fill="rgba(20,32,51,.12)"/>
-        <!-- the potato -->
-        <path d="M22 54C20 38 33 26 51 24C70 22 83 31 84 46C85 60 76 72 58 76C40 80 25 70 22 54Z" fill="#cd9050" stroke="#a66f34" stroke-width="2"/>
-        <ellipse cx="38" cy="40" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".5"/><ellipse cx="66" cy="38" rx="2" ry="1.4" fill="#9c6a30" opacity=".45"/><ellipse cx="72" cy="56" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".45"/>
-        <path class="cc-brow" d="M38 40q6 -4 12 -1M56 38q6 -3 12 1" fill="none" stroke="#2a2018" stroke-width="2.4" stroke-linecap="round"/>
-        <circle cx="45" cy="46" r="3.2" fill="#2a2018"/><circle cx="63" cy="45" r="3.2" fill="#2a2018"/>
-        <circle cx="46" cy="45" r="1" fill="#fff"/><circle cx="64" cy="44" r="1" fill="#fff"/>
-        <path d="M48 56q6 5 13 1" fill="none" stroke="#2a2018" stroke-width="2.6" stroke-linecap="round"/>
-        <ellipse cx="36" cy="54" rx="3.4" ry="2.2" fill="#f0a6c0" opacity=".6"/><ellipse cx="70" cy="52" rx="3.4" ry="2.2" fill="#f0a6c0" opacity=".6"/>
-        <!-- the petri dish it is counting -->
-        <g class="cc-dish"><ellipse cx="52" cy="80" rx="24" ry="9" fill="#e9f5ef" stroke="#0072B2" stroke-width="2.6"/><ellipse cx="52" cy="78.5" rx="24" ry="9" fill="#cfeee0" stroke="#56B4E9" stroke-width="1.4"/>
-          <circle cx="44" cy="79" r="2.4" fill="#E69F00"/><circle cx="56" cy="76" r="2" fill="#CC79A7"/><circle cx="60" cy="81" r="1.8" fill="#009E73"/><circle cx="48" cy="82" r="1.6" fill="#D55E00"/><circle cx="52" cy="78" r="1.5" fill="#0072B2"/></g>
-        <!-- a little magnifier -->
-        <g class="cc-lens"><circle cx="78" cy="66" r="8" fill="rgba(255,255,255,.35)" stroke="#5d636d" stroke-width="2.4"/><line x1="84" y1="72" x2="90" y2="79" stroke="#5d636d" stroke-width="3" stroke-linecap="round"/></g>
+        <defs><linearGradient id="cc-skin" x1="0.2" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#d09760"/><stop offset="100%" stop-color="#bc8148"/></linearGradient></defs>
+        <ellipse cx="50" cy="94" rx="27" ry="4" fill="#2a2018" opacity=".1"/>
+        <g transform="translate(3,-6) scale(0.375)">
+          <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="url(#cc-skin)"/>
+          <ellipse cx="52" cy="128" rx="6.5" ry="3.8" transform="rotate(-18 52 128)" fill="#8d5c24" opacity=".28"/>
+          <ellipse cx="198" cy="126" rx="6" ry="3.4" transform="rotate(18 198 126)" fill="#8d5c24" opacity=".28"/>
+          <ellipse cx="96" cy="116" rx="8" ry="10" fill="#2a2018"/><ellipse cx="152" cy="113" rx="8" ry="10" fill="#2a2018"/>
+          <path d="M88 131Q96 136 104 130M144 128Q152 133 160 127" stroke="#2a2018" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".34"/>
+          <path d="M113 150h24" stroke="#2a2018" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M60 117L28 123M188 112L220 107" stroke="#39444e" stroke-width="14" stroke-linecap="round" fill="none"/>
+          <rect x="62" y="86" width="124" height="56" rx="27" fill="none" stroke="#3f4b57" stroke-width="10"/>
+          <rect x="71" y="94" width="106" height="40" rx="19" fill="#cfe6f2" fill-opacity=".3"/>
+          <ellipse cx="67" cy="114" rx="3.6" ry="7" fill="#2b343d"/><ellipse cx="181" cy="114" rx="3.6" ry="7" fill="#2b343d"/>
+        </g>
+        <g class="cc-dish"><ellipse cx="50" cy="80" rx="29" ry="9.5" fill="#e9f5ef" stroke="#0072B2" stroke-width="2.4"/>
+          <ellipse cx="50" cy="78.2" rx="29" ry="9.5" fill="#cfeee0" stroke="#56B4E9" stroke-width="1.3"/>
+          <circle cx="40" cy="78" r="2.4" fill="#E69F00"/><circle cx="55" cy="75.5" r="2" fill="#CC79A7"/><circle cx="61" cy="80" r="1.8" fill="#009E73"/><circle cx="45" cy="82" r="1.6" fill="#D55E00"/><circle cx="50" cy="78" r="1.5" fill="#0072B2"/></g>
       </svg>
       <h2>No plate loaded yet</h2>
       <p>Drop a photo anywhere, paste one with <kbd class="key">Ctrl</kbd>+<kbd class="key">V</kbd>, or pick a file. Colour or greyscale, phone or scanner — it will work out the rest itself.</p>

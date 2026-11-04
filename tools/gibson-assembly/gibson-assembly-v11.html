@@ -1087,15 +1087,30 @@ details.pcard>summary.pc-sum>.pc-frag{white-space:nowrap;overflow:hidden;text-ov
 .bench-gel-note p.hint{margin:0 0 8px}.bench-gel-note p.hint+p.hint{color:var(--text-faint)}
 </style>
 <style id="lp-standard">
-/* ===== Lab Potato standard style (taken from Cryobox Labeler) ================
-   One palette, one header, one size of button, input and card across every tool. */
-:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px}
+/* ===== Lab Potato standard style ============================================
+   The homepage's type and palette, one 80% window, one spacing scale, and the
+   same header, button, input, card and section cue in every tool. */
+:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+  --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
+  --lp-win:80vw;--lp-cap:1240px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--bg:var(--lp-paper);--bg-tint:var(--lp-paper);--surface:var(--lp-card);--surface-2:var(--lp-paper);--border:var(--lp-line2);--border-soft:var(--lp-line);--text:var(--lp-ink);--text-muted:var(--lp-ink3);--text-faint:var(--lp-ink3);--accent:var(--lp-blue);--accent-hover:var(--lp-blued);--accent-soft:var(--lp-bluel);--ok:var(--lp-green);--ok-soft:var(--lp-greenl);--warn:var(--lp-amber);--warn-soft:var(--lp-amberl);--bad:var(--lp-red);--bad-soft:var(--lp-redl);}
 [hidden]{display:none!important}
 html,body{font-family:var(--lp-sans)}
-body{font-size:14px;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+body{font-size:14px;line-height:1.5;letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* the homepage's heading rhythm, so a tool's titles sit at the same weight and tracking */
+h1,h2,h3,h4{font-family:var(--lp-sans);letter-spacing:-.015em;font-weight:650}
+h2{font-size:17px;line-height:1.25}h3{font-size:15px;line-height:1.3}h4{font-size:13.5px}
+p{margin:0 0 var(--lp-3)}
+/* numbers line up in tables and read-outs */
+table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
+.lp-sec{margin:var(--lp-6) 0 0}
+.lp-sec:first-child{margin-top:0}
+.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding-bottom:var(--lp-2);border-bottom:1px solid var(--lp-line)}
+.lp-sec-h h3{margin:0;font:650 13.5px/1.2 var(--lp-sans);letter-spacing:-.01em;color:var(--lp-ink)}
+.lp-sec-h .lp-sec-n{font:700 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lp-ink3)}
+.lp-sec-h .lp-sec-sub{margin-left:auto;font:12px/1 var(--lp-sans);color:var(--lp-ink3)}
 header.site-header{height:54px;min-height:54px;max-height:54px;padding-top:0;padding-bottom:0;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
   background:color-mix(in srgb,var(--lp-paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--lp-line);box-shadow:none;font-family:var(--lp-sans)}
@@ -1129,8 +1144,8 @@ input[type=text]:focus,input[type=number]:focus,input:not([type]):focus,select:f
 /* ---------- gibson-assembly v11: layout ---------- */
 /* the title page is gone: the switch sits in the header and the work starts at the top */
 .hero{display:none!important}
-:root{--maxw:1250px}
-.wrap{width:min(87vw,var(--maxw));max-width:none;padding:0}
+.wrap{width:min(var(--lp-win),var(--lp-cap));max-width:none;padding:0;margin-inline:auto}
+@media (max-width:900px){.wrap{width:92vw}}
 main,.main{padding-top:0}
 .lp-mode{display:inline-flex;gap:2px;padding:3px;margin-left:6px;border-radius:11px;background:color-mix(in srgb,var(--lp-ink) 6%,transparent)}
 .lp-mode button{border:0;background:none;border-radius:8px;padding:5px 10px;font:600 12.5px/1 var(--lp-sans);color:var(--lp-ink2);cursor:pointer;white-space:nowrap}
@@ -1212,21 +1227,6 @@ main,.main{padding-top:0}
 @media (prefers-reduced-motion:reduce){#lpGelRail .gb{animation:none}}
 @media (max-width:760px){.pr{grid-template-columns:24px minmax(0,1fr) auto}.pr-num{display:none}.jn{margin:0 10px}}
 
-/* ── step 3: map, gel and score in one row above the PCR cards ── */
-.workspace.lp-s3{grid-template-columns:minmax(0,1fr)}
-.workspace.lp-s3 .rail{position:static;order:-1;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
-.workspace.lp-s3 .rail>.card{margin:0;min-width:0}
-.workspace.lp-s3 #mapBody{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr);column-gap:16px;align-content:start}
-.workspace.lp-s3 .mini-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
-.workspace.lp-s3 #mapBody>.map-wrap{grid-row:1/span 8;align-self:start}
-.workspace.lp-s3 #mapBody>:not(.map-wrap){grid-column:2}
-.workspace.lp-s3 #scoreCard{max-height:420px;display:flex;flex-direction:column;overflow:hidden}
-.workspace.lp-s3 #scoreCard .score-list{overflow:auto;min-height:0}
-.workspace.lp-s3 .lp-gelc .card-b{display:grid;place-items:center}
-.workspace.lp-s3 #lpGelRail svg{max-width:300px}
-@media (max-width:1180px){.workspace.lp-s3 .rail{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.workspace.lp-s3 .map-card{grid-column:1/-1}}
-@media (max-width:700px){.workspace.lp-s3 .rail{grid-template-columns:minmax(0,1fr)}.workspace.lp-s3 #mapBody{grid-template-columns:minmax(0,1fr)}.workspace.lp-s3 #mapBody>*{grid-column:1!important;grid-row:auto!important}}
-
 /* ── the map once the animation ends: primers and junction dots arrive in order ── */
 #mapBody.asm-hold svg :is(.pg,.jdot,.jmark){opacity:0}
 #mapBody.asm-in svg .pg{animation:lp-pg-in .5s cubic-bezier(.2,.8,.3,1.25) both;animation-delay:calc(.2s + var(--k,0) * .09s);transform-box:fill-box;transform-origin:center}
@@ -1254,6 +1254,31 @@ main,.main{padding-top:0}
 .jn{font-size:12px}
 .card-h h2{font-size:15px!important}
 .lp-prod>.card-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+
+/* ── step 3: the live map stays beside the work, stuck to the top of the screen ── */
+.workspace.lp-s3 .rail{position:sticky;top:calc(var(--nav-h) + var(--lp-3));align-self:start;max-height:calc(100vh - var(--nav-h) - var(--lp-5));overflow:auto;scrollbar-width:thin}
+.workspace.lp-s3 #scoreCard{order:2}
+.lp-prod .card-b{padding:var(--lp-4) var(--lp-4) var(--lp-5)!important}
+.lp-sub{margin:3px 0 0;font-size:12.5px;color:var(--lp-ink3)}
+
+/* a problem sits on the primer it belongs to */
+.pr{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:start;gap:var(--lp-3);padding:var(--lp-3) var(--lp-4)}
+.pr-main{min-width:0}
+.pr-dot{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;margin-right:6px;font:700 10px/1 var(--lp-sans);color:#fff;vertical-align:-2px}
+.pr-dot.st-ok{background:var(--lp-green)}.pr-dot.st-w{background:var(--lp-amber)}.pr-dot.st-b{background:var(--lp-red)}
+.pr-iss{display:flex;gap:8px;align-items:flex-start;margin-top:var(--lp-2);padding:8px 10px;border-radius:9px;font:12.5px/1.5 var(--lp-sans);color:var(--lp-ink2)}
+.pr-iss .ic{flex:none;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font:700 10.5px var(--lp-sans);color:#fff;margin-top:1px}
+.pr-iss b{color:var(--lp-ink)}
+.pr-iss .fix{display:block;margin-top:2px}
+.pr-iss.iss-w{background:var(--lp-amberl)}.pr-iss.iss-w .ic{background:var(--lp-amber)}
+.pr-iss.iss-b{background:var(--lp-redl)}.pr-iss.iss-b .ic{background:var(--lp-red)}
+.pr-iss .iss-a{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pr-iss .iss-a:empty{display:none}
+.pr-iss .iss-a .btn{background:var(--lp-card)}
+
+/* the rolled-back per-primer panel reads as its own section */
+#cardsBox{display:grid;gap:var(--lp-2)}
+@media (max-width:760px){.pr{grid-template-columns:24px minmax(0,1fr) auto}.pr-num{display:none}}
 @media (prefers-reduced-motion:reduce){.lp-anim,.lp-anim *{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -5295,36 +5320,38 @@ function lpTmplPill(r, ts){
   const st = ts ? ts.s : 'ok', mark = st === 'ok' ? '✓' : st === 'w' ? '!' : '✕';
   return `<span class="pill-m tm-${st}" title="${esc(ts ? ts.t : '')}">template <b>${L.toLocaleString()} bp</b> ${mark}</span>`;
 }
+/* Each primer carries its own problems on its own row: you read the sequence and the reason it
+   needs attention in the same place, instead of pairing them up from a list underneath. */
+function lpPrimerIssues(p, st){
+  const fl = st.flags.filter(f => !/^junction \d/.test(f.t));
+  if (!fl.length) return '';
+  return fl.map(f => { const x = lpFix(f.t);
+    return `<div class="pr-iss iss-${f.s}"><span class="ic" aria-hidden="true">${f.s === 'b' ? '✕' : '!'}</span><div><b>${esc(f.t)}.</b>
+      ${x.what ? esc(x.what) : ''}${x.fix ? ` <span class="fix"><b>Fix:</b> ${esc(x.fix)}</span>` : ''}<span class="iss-a">${lpActs(x.acts, p.key)}</span></div></div>`; }).join('');
+}
+const LP_DOT = { ok: '✓', w: '!', b: '✕' };
 function lpFragInner(d, S){
   const rows = primerRows(d, S), out = [];
   d.results.forEach((r, ri) => {
     const ks = rows.map((p, k) => p.r === r ? k : -1).filter(k => k >= 0);
     const ps = ks.map(k => ({ p: rows[k], k, st: primerStatus(d, rows[k], S) }));
-    const issues = [];
-    ps.forEach(({ p, st }) => st.flags.filter(f => !/^junction \d/.test(f.t)).forEach(f => issues.push({ p, f })));
-    const worst = issues.some(x => x.f.s === 'b') ? 'b' : issues.length ? 'w' : 'ok';
+    const nIss = ps.reduce((n, x) => n + x.st.flags.filter(f => !/^junction \d/.test(f.t)).length, 0);
+    const worst = ps.some(x => x.st.s === 'b') ? 'b' : nIss ? 'w' : 'ok';
     const ts = tmplStatus(r), col = r.a.color || COLORS[r.idx % COLORS.length];
     const prim = ps.map(({ p, st }) => `<div class="pr st-${st.s}">
         <span class="pr-dir" title="${p.dir === 'F' ? 'forward' : 'reverse'}">${p.dir}</span>
-        <div class="pr-main"><div class="pr-name mono">${esc(p.name)}${p.manual ? ' <span class="flag f-w">edited</span>' : ''}</div>
-          <div class="pr-seq mono"><span class="fl">${casedSeq(p).slice(0, p.tailLen)}</span>${casedSeq(p).slice(p.tailLen)}</div></div>
+        <div class="pr-main"><div class="pr-name mono"><span class="pr-dot st-${st.s}" title="${st.s === 'ok' ? 'passes every check' : st.s === 'w' ? 'worth a look' : 'needs a fix'}">${LP_DOT[st.s]}</span>${esc(p.name)}${p.manual ? ' <span class="flag f-w">edited</span>' : ''}</div>
+          <div class="pr-seq mono"><span class="fl">${casedSeq(p).slice(0, p.tailLen)}</span>${casedSeq(p).slice(p.tailLen)}</div>
+          ${lpPrimerIssues(p, st)}</div>
         <div class="pr-num mono"><span>${p.full.length} nt</span><span>Tm <b>${p.tm.toFixed(1)}</b> °C</span><span>GC ${p.gc.toFixed(0)}%</span></div>
         <button class="btn btn-ghost btn-sm pr-copy" type="button" onclick="cp('${p.full}',this)">Copy</button>
       </div>`).join('');
-    const iss = issues.length ? issues.map(({ p, f }) => { const x = lpFix(f.t);
-        return `<div class="iss iss-${f.s}"><span class="ic">${f.s === 'b' ? '✕' : '!'}</span><div><b>${p.dir === 'F' ? 'Forward' : 'Reverse'}: ${esc(f.t)}.</b>
-          ${x.what ? esc(x.what) : ''} ${x.fix ? `<span class="fix"><b>Fix:</b> ${esc(x.fix)}</span>` : ''}<span class="iss-a">${lpActs(x.acts, p.key)}</span></div></div>`; }).join('')
-      : '<div class="iss iss-ok"><span class="ic">✓</span><div>Both primers pass every check.</div></div>';
     out.push(`<article class="frag st-${worst}" id="fr_${r.idx}" style="--pc:${col}">
       <header class="frag-h"><span class="lg-num" style="background:${col}">${r.idx + 1}</span>
         <div class="frag-t"><b>${esc(r.a.name)}</b>
           <span class="frag-m"><span class="pill-m">PCR product <b>${r.amplicon.toLocaleString()} bp</b></span><span class="pill-m">anneal <b>${r.ta} °C</b></span><span class="pill-m">extend ${esc(extTime(r.amplicon, S.poly))}</span>${lpTmplPill(r, ts)}</span></div>
-        <span class="frag-st st-${worst}">${worst === 'b' ? '✕ needs a fix' : worst === 'w' ? `! ${issues.length} to look at` : '✓ ready'}</span></header>
+        <span class="frag-st st-${worst}">${worst === 'b' ? '✕ needs a fix' : worst === 'w' ? `! ${nIss} to look at` : '✓ ready'}</span></header>
       <div class="frag-p">${prim}</div>
-      <div class="frag-i">${iss}</div>
-      <details class="frag-more" data-i="${r.idx}" ${LP_OPEN[r.idx] ? 'open' : ''} ontoggle="LP_OPEN[this.dataset.i]=this.open">
-        <summary>Alignment, alternatives and binding sites for these two primers</summary>
-        ${ks.map(k => primerCard(d, S, k, rows)).join('')}</details>
     </article>`);
     d.junctions.forEach((j, ji) => { if (j.U === r.a || (j.U && j.U.name === r.a.name)) out.push(lpJuncStrip(d, S, j, ji)); });
   });
@@ -5341,7 +5368,7 @@ function renderResults(d){
   const table = primerTableInner(d, S);   // also fills the Copy table / FASTA buffers
   window.__fasta = '>' + nm.replace(/\s+/g, '_') + ' ' + d.asm.length + 'bp ' + (d.circular ? 'circular' : 'linear') + '\n' + (d.asm.match(/.{1,70}/g) || []).join('\n');
   return `<div class="card lp-prod"><div class="card-h">
-      <div><h2>PCR products and their primers</h2><p class="lp-sub">${esc(nm)} · ${d.circular ? 'circular' : 'linear'}, ${d.asm.length.toLocaleString()} bp · anneal at ${taLabel}</p></div>
+      <div><h2>Your primers</h2><p class="lp-sub">${esc(nm)} · ${d.circular ? 'circular' : 'linear'}, ${d.asm.length.toLocaleString()} bp · anneal at ${taLabel}</p></div>
       <div class="btn-row lp-tools">
         <button class="btn btn-ghost btn-sm" onclick="cp(window.__tsv,this)" type="button">Copy table</button>
         <button class="btn btn-ghost btn-sm" onclick="dl('primers_'+nameStem()+'.fasta',window.__pfasta)" type="button">FASTA</button>
@@ -5349,11 +5376,24 @@ function renderResults(d){
         <button class="btn btn-primary btn-sm" onclick="goStep(4)" type="button">Export &amp; bench →</button></div></div>
     <div class="card-b">
       <div id="ovBox">${overviewInner(d, S)}</div>
-      <div id="fragBox">${lpFragInner(d, S)}</div>
-      <details class="adv" id="lpTbl"><summary>Edit primers in a table: rename, paste your own, re-import from Excel</summary><div class="adv-body">
-        <div class="btn-row" style="margin-bottom:8px"><span id="tblFilter">${filterSeg('setTableFilter', TBLF, 'All primers', 'Needs attention')}</span>
+
+      <section class="lp-sec" id="lpTbl"><div class="lp-sec-h"><span class="lp-sec-n">1</span><h3>Edit the primers</h3>
+          <span class="lp-sec-sub">rename, paste your own, re-import from Excel</span></div>
+        <div class="btn-row" style="margin-bottom:var(--lp-2)"><span id="tblFilter">${filterSeg('setTableFilter', TBLF, 'All primers', 'Needs attention')}</span>
           <label class="btn btn-ghost btn-sm" title="Re-import a table you edited in Excel">Import edited table<input type="file" accept=".csv,text/csv" style="display:none" onchange="importExcel(event)"></label></div>
-        <div class="scroll-x"><table class="lab" id="primerTable">${table}</table></div></div></details>
+        <div class="scroll-x"><table class="lab" id="primerTable">${table}</table></div></section>
+
+      <section class="lp-sec"><div class="lp-sec-h"><span class="lp-sec-n">2</span><h3>PCR products</h3>
+          <span class="lp-sec-sub">each problem sits beside the primer it belongs to</span></div>
+        <div id="fragBox">${lpFragInner(d, S)}</div></section>
+
+      <section class="lp-sec"><div class="lp-sec-h"><span class="lp-sec-n">3</span><h3>Each primer in detail</h3>
+          <span class="lp-sec-sub"><span id="cardFilter">${filterSeg('setCardFilter', CARDF, 'All primers', 'Needs attention')}</span>
+            <button class="btn btn-ghost btn-sm" onclick="setAllCards(true)" type="button">Expand all</button>
+            <button class="btn btn-ghost btn-sm" onclick="setAllCards(false)" type="button">Collapse all</button></span></div>
+        <div id="cardsBox">${cardsInner(d, S)}</div></section>
+
+      <section class="lp-sec"><div class="lp-sec-h"><span class="lp-sec-n">4</span><h3>Reference and checks</h3></div>
       <details class="adv"><summary>Junction overlaps in full</summary><div class="adv-body"><div class="scroll-x"><table class="lab">
         <thead><tr><th>Junction</th><th>Overlap sequence</th><th>Length</th><th>Tm</th><th>GC</th><th>Unique?</th></tr></thead>
         <tbody>${d.junctions.map((j, i) => `<tr><td><b>${i + 1}</b> ${esc(j.U.name)} → ${esc(j.D.name)}</td>
@@ -5365,6 +5405,7 @@ function renderResults(d){
         <div class="btn-row" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="cp(window.__fasta,this)" type="button">Copy FASTA</button>
           <button class="btn btn-ghost btn-sm" onclick="dl('${nm.replace(/[^A-Za-z0-9]/g, '_')}.fasta',window.__fasta)" type="button">Download FASTA</button></div></div></details>
       <details class="adv" ${blocking ? 'open' : ''}><summary>Design notes (${nNotes})</summary><div class="adv-body">${notes}</div></details>
+      </section>
     </div></div>
     <div class="btn-row between" style="margin:14px 0 6px">
       <button class="btn btn-ghost" onclick="goStep(2)" type="button">← Adjust settings</button>
@@ -5372,11 +5413,13 @@ function renderResults(d){
 }
 function refreshResults(){
   if (!D) return;
-  const y = window.scrollY, S = D.S, o = $('ovBox'), t = $('primerTable'), f = $('fragBox');
+  const y = window.scrollY, S = D.S, o = $('ovBox'), t = $('primerTable'), f = $('fragBox'), c = $('cardsBox');
   if (o) o.innerHTML = overviewInner(D, S);
   if (t){ t.innerHTML = primerTableInner(D, S); fitAllSeq(); }
   const tf = $('tblFilter'); if (tf) tf.innerHTML = filterSeg('setTableFilter', TBLF, 'All primers', 'Needs attention');
+  const cf = $('cardFilter'); if (cf) cf.innerHTML = filterSeg('setCardFilter', CARDF, 'All primers', 'Needs attention');
   if (f) f.innerHTML = lpFragInner(D, S);
+  if (c) c.innerHTML = cardsInner(D, S);
   renderRail(); window.scrollTo(0, y);
 }
 
@@ -5402,7 +5445,7 @@ renderRail = function(){
   return r;
 };
 
-// ── 4. step 3: the live map, gel and score sit above the PCR cards, so the assembly is the first thing seen ──
+// ── 4. the live map stays beside the work: the rail sticks to the top of the screen on step 3 ──
 const _lpShowPane = showPane;
 showPane = function(n){
   const r = _lpShowPane.apply(this, arguments);
@@ -5425,15 +5468,14 @@ asmDone = function(){
   }
   return _lpAsmDone.apply(this, arguments);
 };
-// step 3 lands on the map row (the assembly plays there), not on the cards below it
+// step 3 lands on the stepper, so the table and the live map are both in view at once
 const _lpGoStep = goStep;
 goStep = function(n){
   const r = _lpGoStep.apply(this, arguments);
   if (n === 3) requestAnimationFrame(() => requestAnimationFrame(() => {
-    const rail = document.querySelector('.workspace.lp-s3 .rail'), st = document.querySelector('.stepper');
-    const el = st || rail; if (!el) return;
+    const st = document.querySelector('.stepper'); if (!st) return;
     const hh = (document.querySelector('header.site-header') || { offsetHeight: 54 }).offsetHeight;
-    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + scrollY - hh - 8), behavior: 'auto' });
+    window.scrollTo({ top: Math.max(0, st.getBoundingClientRect().top + scrollY - hh - 8), behavior: 'auto' });
   }));
   return r;
 };

@@ -256,15 +256,30 @@ body,button,input,select,textarea{font-family:var(--lp-ui)}
 .fold summary:hover{color:var(--tx)}.fold[open]>summary{margin-bottom:4px}.fold+hr{margin-top:2px}
 </style>
 <style id="lp-standard">
-/* ===== Lab Potato standard style (taken from Cryobox Labeler) ================
-   One palette, one header, one size of button, input and card across every tool. */
-:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px}
+/* ===== Lab Potato standard style ============================================
+   The homepage's type and palette, one 80% window, one spacing scale, and the
+   same header, button, input, card and section cue in every tool. */
+:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+  --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
+  --lp-win:80vw;--lp-cap:1240px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--ac:var(--lp-blue);--acd:var(--lp-blued);--acl:var(--lp-bluel);--bd:var(--lp-line2);--sf:var(--lp-card);--bg:var(--lp-paper);--bg2:var(--lp-paper);--tx:var(--lp-ink);--mu:var(--lp-ink3);--ok:var(--lp-green);--dg:var(--lp-red);--wn:var(--lp-amber);--ok-l:var(--lp-greenl);--ok-ink:var(--lp-greend);--wn-l:var(--lp-amberl);--wn-ink:var(--lp-amberd);--dg-l:var(--lp-redl);--dg-ink:var(--lp-redd);--ac-ink:var(--lp-blued);--stage:var(--lp-stage);}
 [hidden]{display:none!important}
 html,body{font-family:var(--lp-sans)}
-body{font-size:14px;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+body{font-size:14px;line-height:1.5;letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* the homepage's heading rhythm, so a tool's titles sit at the same weight and tracking */
+h1,h2,h3,h4{font-family:var(--lp-sans);letter-spacing:-.015em;font-weight:650}
+h2{font-size:17px;line-height:1.25}h3{font-size:15px;line-height:1.3}h4{font-size:13.5px}
+p{margin:0 0 var(--lp-3)}
+/* numbers line up in tables and read-outs */
+table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
+.lp-sec{margin:var(--lp-6) 0 0}
+.lp-sec:first-child{margin-top:0}
+.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding-bottom:var(--lp-2);border-bottom:1px solid var(--lp-line)}
+.lp-sec-h h3{margin:0;font:650 13.5px/1.2 var(--lp-sans);letter-spacing:-.01em;color:var(--lp-ink)}
+.lp-sec-h .lp-sec-n{font:700 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lp-ink3)}
+.lp-sec-h .lp-sec-sub{margin-left:auto;font:12px/1 var(--lp-sans);color:var(--lp-ink3)}
 header.top{height:54px;min-height:54px;max-height:54px;padding-top:0;padding-bottom:0;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
   background:color-mix(in srgb,var(--lp-paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--lp-line);box-shadow:none;font-family:var(--lp-sans)}
@@ -332,7 +347,7 @@ input[type=text]:focus,input[type=number]:focus,select:focus{outline:none;border
     <button class="hb" id="bUndo" title="Undo (Ctrl+Z)">↶ Undo</button>
     <button class="hb" id="bRedo" title="Redo (Ctrl+Y)">↷ Redo</button>
     <button class="hb" id="help">? Help</button>
-    <button class="hb" id="hSave" title="Save the project (.gelproject) with the images, to open again later">💾 Save file</button>
+    <button class="hb" id="hSave" title="Save the project (.gelproject) with the images, to open again later">Save file</button>
     <button class="hb" id="hToLE" title="Send the lanes, their band sizes and the figure to a Lab Entry experiment">↗ Lab Entry</button>
     <div class="hmenu-wrap"><button class="hb" id="hExport" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
       <div class="hmenu" id="hExportMenu" hidden role="menu">
@@ -2297,18 +2312,18 @@ const LPLadders=(()=>{
 var PROT_L=LPLadders.PROT, DNA_L=LPLadders.DNA;
 
 var STEPS=[
- {n:'Setup',i:'⚙️',t:'Gel type, how many gels, and layout.'},
- {n:'Upload',i:'📁',t:'Load images — select several at once for multiple gels.'},
- {n:'Crop',i:'✂️',t:'Crop down to the full gel, then apply.'},
- {n:'Lanes',i:'📋',t:'Set the lane span, name each lane, and group them.'},
- {n:'Ladder',i:'📏',t:'Pick the ladder lane and preset, then place the bands.'},
- {n:'Snapshots',i:'📸',t:'Optional: cut cropped panels and stack them into a figure.'},
- {n:'Main Title',i:'📝',t:'Title, date, description, and captions.'},
- {n:'Annotate',i:'💬',t:'Custom text anywhere on the figure.'},
- {n:'Band Legend',i:'🏷️',t:'Identify bands with a coloured arrow key and a name/size table.'},
- {n:'Quantify',i:'📊',t:'Densitometry: compare band intensity between lanes, ImageJ Gel Analyzer style.'},
- {n:'Export',i:'⬇️',t:'PNG, JPEG, or fully-editable PowerPoint.'},
- {n:'Session',i:'🗄️',t:'Save the project file, or start over.'}
+ {n:'Setup',i:'',t:'Gel type, how many gels, and layout.'},
+ {n:'Upload',i:'',t:'Load images — select several at once for multiple gels.'},
+ {n:'Crop',i:'',t:'Crop down to the full gel, then apply.'},
+ {n:'Lanes',i:'',t:'Set the lane span, name each lane, and group them.'},
+ {n:'Ladder',i:'',t:'Pick the ladder lane and preset, then place the bands.'},
+ {n:'Snapshots',i:'',t:'Optional: cut cropped panels and stack them into a figure.'},
+ {n:'Main Title',i:'',t:'Title, date, description, and captions.'},
+ {n:'Annotate',i:'',t:'Custom text anywhere on the figure.'},
+ {n:'Band Legend',i:'',t:'Identify bands with a coloured arrow key and a name/size table.'},
+ {n:'Quantify',i:'',t:'Densitometry: compare band intensity between lanes, ImageJ Gel Analyzer style.'},
+ {n:'Export',i:'',t:'PNG, JPEG, or fully-editable PowerPoint.'},
+ {n:'Session',i:'',t:'Save the project file, or start over.'}
 ];
 // Step indices, named so the many step-dependent branches stay readable.
 function isGelEditStep(){return S.step>=STEP.CROP&&S.step<=STEP.LANES;}
@@ -4407,16 +4422,16 @@ function pSetup(){
  var pf=document.createElement('input');pf.type='file';pf.accept='.gelproject,.json';pf.style.display='none';
  pf.onchange=function(){if(pf.files[0])openProjectFile(pf.files[0]);};
  ap(sb(),pf);
- ap(sb(),B_('🧪 Try an example gel',function(){loadExampleGel();},'p full'));
+ ap(sb(),B_('Try an example gel',function(){loadExampleGel();},'p full'));
  nt('A colony-PCR agarose gel with its ladder already placed, to see every step before using your own photo.','i');
- ap(sb(),B_('📂 Open a saved project…',function(){pf.click();},'full'));
+ ap(sb(),B_('Open a saved project…',function(){pf.click();},'full'));
  nt('Reopens a <b>.gelproject</b> file saved from a previous session \u2014 images, lanes, ladder, panels and annotations all come back exactly as you left them.','i');
  ap(sb(),mk('hr'));
 
  sec('1 · Gel type');
  var cg=mk('div','cg');
- [['protein','🧪','Protein','SDS-PAGE / Western<br>units: <b>kDa</b>'],
-  ['dna','🧬','DNA','Agarose / PCR<br>units: <b>bp</b>']].forEach(function(o){
+ [['protein','','Protein','SDS-PAGE / Western<br>units: <b>kDa</b>'],
+  ['dna','','DNA','Agarose / PCR<br>units: <b>bp</b>']].forEach(function(o){
   var c=mk('div','ch'+(o[0]==='dna'?' dna':'')+(S.gelType===o[0]?' on':''));
   c.innerHTML='<div class="ci">'+o[1]+'</div><div class="ct">'+o[2]+'</div><div class="cd">'+o[3]+'</div>';
   c.onclick=function(){S.gelType=o[0];sv_();render();};ap(cg,c);
@@ -4562,7 +4577,7 @@ function pCrop(){
  var ik=document.createElement('input');ik.type='checkbox';ik.checked=S.viewInvert;
  ik.onchange=function(){pushHist();S.viewInvert=ik.checked;render();};
  ap(tr2,ik);ap(tr2,mk('span',null,'Invert'));
- var hold=B_('👁 Hold original',function(){},'sm');
+ var hold=B_('Hold original',function(){},'sm');
  hold.onmousedown=function(){
   S._bak={b:S.viewBrightness,c:S.viewContrast,g:S.viewGamma,gr:S.viewGray,iv:S.viewInvert};
   S.viewBrightness=100;S.viewContrast=100;S.viewGamma=100;S.viewGray=false;S.viewInvert=false;draw();
@@ -5617,7 +5632,7 @@ function pLadder(){
 
  ap(sb(),mk('hr'));
  sec('Measure unknown band');
- ap(sb(),B_(S.calcMode?'● Click a band…':'📐 Measure',function(){
+ ap(sb(),B_(S.calcMode?'● Click a band…':'Measure',function(){
   if(g.ladderBands.length<2){alert('Place at least 2 bands first.');return;}
   S.calcMode=!S.calcMode;cv.style.cursor=S.calcMode?'crosshair':'default';
   if(S.calcMode)showHint('Click the unknown band  •  ESC cancels');else hideHint();render();
@@ -5628,7 +5643,7 @@ function pLadder(){
  sec('Custom ladder');
  var pn=TI('',null,'Name');ap(sb(),pn);
  var pv=TI('',null,S.gelType==='dna'?'100,250,500,1000…':'10,25,50,75…');ap(sb(),pv);
- ap(sb(),B_('💾 Save',function(){
+ ap(sb(),B_('Save',function(){
   var n=pn.value.trim();if(!n)return;
   var v=pv.value.split(',').map(function(x){return parseFloat(x.trim());}).filter(function(x){return !isNaN(x);});
   if(!v.length)return;
@@ -5958,7 +5973,7 @@ function pAnn(){
  var si=NI(12,null,7,48,'flex:0 0 58px');ap(o,si);
  var bx=document.createElement('input');bx.type='checkbox';ap(o,bx);ap(o,mk('span',null,'Bold'));
  var col=CI('#000000',null);ap(o,col);ap(sb(),o);
- ap(sb(),B_(S.pickText?'● Click a gel…':'📍 Pick location',function(){
+ ap(sb(),B_(S.pickText?'● Click a gel…':'Pick location',function(){
   if(!ti.value.trim()){alert('Type your text first.');return;}
   S.pendingText={text:ti.value,gi:S.activeGel,x:-1,y:-1,size:parseInt(si.value)||12,bold:bx.checked,color:col.value};
   S.pickText=true;cv.style.cursor='crosshair';
@@ -6144,7 +6159,7 @@ function pBandLegend(){
    var placedN=S.markerPlacements.filter(function(pp){return pp.markerId===m.id;}).length;
    var bot=mk('div');bot.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mu)';
    ap(bot,mk('span',null, placedN + ' placed on gel'));
-   var pl=B_(S.markerPlacing===m.id?'● Click a gel…':'📍 Place on gel',function(){
+   var pl=B_(S.markerPlacing===m.id?'● Click a gel…':'Place on gel',function(){
     if(S.markerPlacing===m.id){S.markerPlacing=-1;cv.style.cursor='default';hideHint();render();return;}
     S.markerPlacing=m.id;cv.style.cursor='crosshair';
     showHint('Click the band for "'+(m.name||'this marker')+'"  •  ESC cancels');
@@ -6232,11 +6247,11 @@ function pSession(){
  hdr(STEP.SESSION);
  sec('Save an editable project');
  nt('Your work is <b>not</b> kept in the browser \u2014 reopening this file always starts a fresh session. Save a project file to carry on later; it embeds the original images.','i');
- ap(sb(),B_('💾 Save project (.gelproject)',saveProjectFile,'p full'));
+ ap(sb(),B_('Save project (.gelproject)',saveProjectFile,'p full'));
  var pf=document.createElement('input');pf.type='file';pf.accept='.gelproject,.json';pf.style.display='none';
  pf.onchange=function(){if(pf.files[0])openProjectFile(pf.files[0]);};
  ap(sb(),pf);
- ap(sb(),B_('📂 Open project',function(){pf.click();},'full'));
+ ap(sb(),B_('Open project',function(){pf.click();},'full'));
  nt('Shortcut: <b>Ctrl/\u2318 S</b> saves at any time.','i');
 
  var d=mk('div');
@@ -6246,10 +6261,10 @@ function pSession(){
  w.innerHTML='<b>Clear all &amp; start over</b> discards every image, lane, ladder band, panel and annotation in this session. Anything not saved to a project file cannot be recovered.';
  ap(d,w);
  var armed={on:false};
- var btn=B_('🗑 Clear all & start over',function(){
+ var btn=B_('Clear all & start over',function(){
   if(!armed.on){
    armed.on=true;btn.textContent='⚠ Click again to confirm';btn.className='b w full';
-   setTimeout(function(){if(armed.on){armed.on=false;btn.textContent='🗑 Clear all & start over';btn.className='b d full';}},4000);
+   setTimeout(function(){if(armed.on){armed.on=false;btn.textContent='Clear all & start over';btn.className='b d full';}},4000);
    return;
   }
   if(!confirm('Discard the entire session?\n\nAnything not saved to a .gelproject file will be lost.'))return;
@@ -6862,7 +6877,7 @@ function pQuant(){
  var addRow2=BR();
  var bSel=SEL(bands.map(function(w,b){return{v:b,t:w.name||('Band '+(b+1))};}),C.lc>=0&&bands.length>1?(C.lc===0?1:0):0);
  bSel.style.flex='1';ap(addRow2,bSel);
- ap(addRow2,B_('📸 Add band panel',function(){
+ ap(addRow2,B_('Add band panel',function(){
   pushHist();
   var sn={id:snapId(),gi:S.activeGel,sx:0,sy:0,sw:10,sh:10,title:'',caption:'',showLadder:true,laneMode:'inherit',laneLabels:[],
    quant:{band:+bSel.value,metric:(C.lc>=0?'norm':'rel'),pad:0.6,chartH:110,showValues:true,color:QPAL[(+bSel.value)%QPAL.length],yLabel:''}};

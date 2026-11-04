@@ -287,21 +287,22 @@ const TOOLS = [
     name: "Sequence Studio",
     tagline: "SnapGene, minus the download",
     description:
-      "Open your SnapGene, GenBank or FASTA files, see the map and the sequence, annotate, cut, design primers and translate, all in one tab.",
+      "Open your SnapGene, GenBank or FASTA files, see the map and the sequence, annotate, cut, design primers, translate and fold, all in one tab.",
     icon: "dna",
     accent: "violet",
     folder: "tools/sequence-studio",
     features: [
       "Reads and writes SnapGene .dna, keeping the original file's data; GenBank, FASTA, EMBL and Xdna too",
-      "Circular and linear maps, a sequence view with translations, enzymes and primers, and a digest with a virtual gel",
-      "Primer design with nearest-neighbour Tm, protein MW, pI and ε280, and a one-click hand-off to AlphaFold 3"
+      "Clean maps with translation tracks and primers that carry their sequence; figures for papers in colour-blind safe or greyscale themes",
+      "Digests with overhangs and a ligation check, primer design, codon optimisation, protein properties, and folding by ESMFold or AlphaFold"
     ],
     versions: [
-      { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04",
+      { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04" },
+      { v: "v2", file: "sequence-studio-v2.html", date: "2026-11-04",
         new: [
-          "Opens all common sequence formats and saves back to SnapGene .dna with your features and primers",
-          "Map, Sequence and Split views with drag-to-select, Find, Go to, and common-feature detection",
-          "Enzymes, Digest and Protein tabs, primer design, and Send to AlphaFold 3"
+          "New map and sequence views: one arrow grammar, translation on the map, Benchling-style residue colours, a real ruler with hairlines, fat primers that show their bases",
+          "Annotations grouped with show/hide boxes, multi-select, right-click menu and bulk actions; every sequence edit previews its effect and asks twice",
+          "Digest ends with overhangs and ligation, Find-anything box, figure export for papers, ESMFold and AlphaFold DB in the page"
         ] }
     ]
   }

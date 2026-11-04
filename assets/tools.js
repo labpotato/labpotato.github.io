@@ -289,24 +289,25 @@ const TOOLS = [
     name: "Sequence Studio",
     tagline: "SnapGene, minus the download",
     description:
-      "Open your SnapGene, GenBank or FASTA files, see the map and the sequence, annotate, cut, design primers, translate and fold, all in one tab.",
+      "Open your SnapGene, GenBank or FASTA files, see the map, the sequence and the circuit, annotate, cut, design primers, translate and fold, all in one tab.",
     icon: "dna",
     accent: "violet",
     folder: "tools/sequence-studio",
     features: [
       "Reads and writes SnapGene .dna, keeping the original file's data; GenBank, FASTA, EMBL and Xdna too",
-      "Clean maps with translation tracks and primers that carry their sequence; figures for papers in colour-blind safe or greyscale themes",
-      "Digests with overhangs and a ligation check, primer design, codon optimisation, protein properties, and folding by ESMFold or AlphaFold"
+      "A circuit view that draws each transcription unit as SBOL symbols and says what it is missing, with a parts library of promoters, RBSs, terminators, origins and markers sorted by strength",
+      "Digests with overhangs and a ligation check, primer design, codon optimisation, protein properties, figures for papers, and folding by ESMFold or AlphaFold"
     ],
     versions: [
       { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04" },
       { v: "v2", file: "sequence-studio-v2.html", date: "2026-11-04" },
       { v: "v3", file: "sequence-studio-v3.html", date: "2026-11-04" },
-      { v: "v4", file: "sequence-studio-v4.html", date: "2026-11-04",
+      { v: "v4", file: "sequence-studio-v4.html", date: "2026-11-04" },
+      { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04",
         new: [
-          "SBOL Visual symbols on every part, colours grouped by what a feature does, and band thickness that follows",
-          "Copy asks what you want: bases, reverse complement, amino acids, amino acids of the reverse complement, or FASTA",
-          "Send a sequence to BLAST at NCBI; Edit and Tools grouped under headings; primer names at the end of the arrow"
+          "A circuit view: every transcription unit as SBOL symbols, the regulatory links overhead, and a check of what each unit is missing",
+          "A parts library of 44 promoters, ribosome binding sites, terminators, origins and resistance markers, sorted by measured strength",
+          "Enzyme cut marks that line up with the bases, primer names that cannot collide, and residue numbers on every translation"
         ] }
     ]
   }

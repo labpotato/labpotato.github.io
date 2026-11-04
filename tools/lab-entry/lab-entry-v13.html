@@ -1351,17 +1351,20 @@ main{padding:12px 0 32px}
 </style>
 <style id="lp-standard">
 /* ===== Lab Potato standard style ============================================
-   The homepage's type and palette, one 80% window, one spacing scale, and the
+   The homepage's type and palette, one 90% window, one spacing scale, and the
    same header, button, input, card and section cue in every tool. */
-:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-fill:#0a5fd0;--lp-fillh:#0850b1;--lp-onfill:#ffffff;--lp-desk:#eeede9;--lp-c1:#0a5fd0;--lp-c2:#0b8a8f;--lp-c3:#6f4fd0;--lp-c4:#c46a0c;--lp-c5:#c2417a;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+  /* four line weights, each with one job: a hairline divides rows, a border draws a box,
+     an emphasis line marks what is chosen or heads a table, an accent bar marks a section */
+  --lp-hair:1px;--lp-bd:1.5px;--lp-em:2px;--lp-bar:3px;
   --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
   /* One window for the whole site: 90% of the screen, the same measure Lab Entry uses, with a
      small gutter so nothing ever runs edge to edge. */
   --lp-win:90vw;--lp-cap:none;--lp-floor:none;
   --lp-w:min(90vw,calc(100vw - 24px))}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
-:root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
-:root,:root[data-theme],:root.dark,:root.light{--paper:var(--lp-paper);--card:var(--lp-card);--field:var(--lp-field);--ink:var(--lp-ink);--ink2:var(--lp-ink2);--muted:var(--lp-ink3);--rule:var(--lp-line);--rule2:var(--lp-line2);--accent:var(--lp-blue);--accent-ink:var(--lp-blued);--accent-soft:var(--lp-bluel);--danger:var(--lp-red);--ok:var(--lp-green);--warn:var(--lp-amber);--bad:var(--lp-red);--shadow:var(--lp-sh);}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-fill:#2563eb;--lp-fillh:#1d4ed8;--lp-onfill:#ffffff;--lp-desk:#08090c;--lp-c1:#6aa8ff;--lp-c2:#3cc7c9;--lp-c3:#a993ff;--lp-c4:#f0a65a;--lp-c5:#f07fb0;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
+:root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-fill:#2563eb;--lp-fillh:#1d4ed8;--lp-onfill:#ffffff;--lp-desk:#08090c;--lp-c1:#6aa8ff;--lp-c2:#3cc7c9;--lp-c3:#a993ff;--lp-c4:#f0a65a;--lp-c5:#f07fb0;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
+:root,:root[data-theme],:root.dark,:root.light{--paper:var(--lp-paper);--card:var(--lp-card);--field:var(--lp-field);--ink:var(--lp-ink);--ink2:var(--lp-ink2);--muted:var(--lp-ink3);--rule:var(--lp-line);--rule2:var(--lp-line2);--accent:var(--lp-blue);--accent-ink:var(--lp-onfill);--accent-soft:var(--lp-bluel);--danger:var(--lp-red);--ok:var(--lp-green);--warn:var(--lp-amber);--bad:var(--lp-red);--shadow:var(--lp-sh);}
 [hidden]{display:none!important}
 html,body{font-family:var(--lp-sans)}
 body{font-size:14px;line-height:1.5;letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -1371,12 +1374,20 @@ h2{font-size:17px;line-height:1.25}h3{font-size:15px;line-height:1.3}h4{font-siz
 p{margin:0 0 var(--lp-3)}
 /* numbers line up in tables and read-outs */
 table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
-.lp-sec{margin:var(--lp-6) 0 0}
+/* tables: a heavier line under the head, hairlines between rows (zero specificity, so a tool's own table styles win) */
+:where(table) :where(thead th){border-bottom:var(--lp-em) solid var(--lp-line2);font-weight:650;color:var(--lp-ink2)}
+:where(table) :where(tbody td){border-bottom:var(--lp-hair) solid var(--lp-line)}
+:where(hr){border:0;border-top:var(--lp-hair) solid var(--lp-line)}
+:where(input,select,textarea):where(:focus-visible){outline:var(--lp-em) solid var(--lp-blue);outline-offset:1px}
+.lp-sec{margin:var(--lp-6) 0 0;--sc:var(--lp-c1)}
 .lp-sec:first-child{margin-top:0}
-.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding-bottom:var(--lp-2);border-bottom:1px solid var(--lp-line)}
-.lp-sec-h h3{margin:0;font:650 13.5px/1.2 var(--lp-sans);letter-spacing:-.01em;color:var(--lp-ink)}
-.lp-sec-h .lp-sec-n{font:700 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lp-ink3)}
-.lp-sec-h .lp-sec-sub{margin-left:auto;font:12px/1 var(--lp-sans);color:var(--lp-ink3)}
+/* each section of a page carries its own colour, in a fixed order, on its bar and its number */
+.lp-sec:nth-of-type(4n+2){--sc:var(--lp-c2)}.lp-sec:nth-of-type(4n+3){--sc:var(--lp-c3)}.lp-sec:nth-of-type(4n+4){--sc:var(--lp-c4)}
+.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding:2px 0 var(--lp-2) 11px;border-bottom:var(--lp-bd) solid var(--lp-line);
+  box-shadow:inset var(--lp-bar) 0 0 var(--sc)}
+.lp-sec-h h3{margin:0;font:650 14.5px/1.2 var(--lp-sans);letter-spacing:-.012em;color:var(--lp-ink)}
+.lp-sec-h .lp-sec-n{font:750 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--sc)}
+.lp-sec-h .lp-sec-sub{margin-left:auto;font:12.5px/1 var(--lp-sans);color:var(--lp-ink3)}
 .top{height:54px;min-height:54px;max-height:54px;padding-top:0;padding-bottom:0;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
   background:color-mix(in srgb,var(--lp-paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--lp-line);box-shadow:none;font-family:var(--lp-sans)}
@@ -1386,9 +1397,9 @@ table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
 .top .brand-sep{display:inline!important;color:var(--lp-ink3);font-weight:300;font-size:15px;margin:0 -2px}
 .top .brand-tool,.top h1{font-size:15px!important;font-weight:560!important;letter-spacing:-.025em;margin:0;white-space:nowrap;color:var(--lp-ink)}
 .top .ver-chip{font-size:10.5px;font-weight:640;letter-spacing:.02em;padding:2.5px 7px;border-radius:999px;background:var(--lp-bluel);color:var(--lp-blue);border:1px solid color-mix(in srgb,var(--lp-blue) 22%,transparent)}
-.top .btn,.top .all-tools,.top summary.btn{height:32px;min-height:32px;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:var(--lp-r);
+.top .btn:where(:not(.primary,.pri,.btn-primary,.p)),.top .all-tools:where(:not(.primary,.pri,.btn-primary,.p)),.top summary.btn:where(:not(.primary,.pri,.btn-primary,.p)){height:32px;min-height:32px;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:var(--lp-r);
   font:560 12.5px/1 var(--lp-sans);letter-spacing:-.005em;color:var(--lp-ink2);white-space:nowrap;text-decoration:none}
-.top .btn:hover,.top .all-tools:hover,.top summary.btn:hover{background:color-mix(in srgb,var(--lp-ink) 7%,transparent);color:var(--lp-ink)}
+.top .btn:where(:not(.primary,.pri,.btn-primary,.p)):hover,.top .all-tools:where(:not(.primary,.pri,.btn-primary,.p)):hover,.top summary.btn:where(:not(.primary,.pri,.btn-primary,.p)):hover{background:color-mix(in srgb,var(--lp-ink) 7%,transparent);color:var(--lp-ink)}
 
 @media (max-width:1399px){.top :is(#hUndo,#hRedo){font-size:0;gap:0;padding:0 9px}.top :is(#hUndo,#hRedo) svg{width:16px;height:16px}}
 @media (max-width:760px){
@@ -1398,11 +1409,13 @@ table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
   .top .btn:has(svg) svg,.top .all-tools:has(svg) svg,.top summary.btn:has(svg) svg{width:16px;height:16px}
 }
 .btn{min-height:32px;padding:6px 11px;border-radius:var(--lp-r);font-family:var(--lp-sans);font-size:13px;font-weight:560;line-height:1.2;box-sizing:border-box}
-.btn.pri{background:var(--lp-blue);border-color:var(--lp-blue);color:#fff}
-.btn.pri:hover{background:var(--lp-blued);border-color:var(--lp-blued)}
+.btn.pri{background:var(--lp-fill)!important;border-color:var(--lp-fill)!important;color:var(--lp-onfill)!important}
+.btn.pri:hover:not(:disabled){background:var(--lp-fillh)!important;border-color:var(--lp-fillh)!important;color:var(--lp-onfill)!important}
 #app input[type=text],#app input[type=date],#app select{height:34px;min-height:34px;box-sizing:border-box;border:1px solid var(--lp-line2);border-radius:8px;background:var(--lp-field);
   font-family:var(--lp-sans);font-size:13px;color:var(--lp-ink);padding-top:0;padding-bottom:0}
 #app input[type=text]:focus,#app input[type=date]:focus,#app select:focus{outline:none;border-color:var(--lp-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp-blue) 18%,transparent)}
+.bd-mode .btn.on,button.chip.on,.cd.has:hover{background:var(--lp-fill)!important;border-color:var(--lp-fill)!important;color:var(--lp-onfill)!important}
+.bd-mode .btn.on:hover:not(:disabled),button.chip.on:hover:not(:disabled),.cd.has:hover:hover:not(:disabled){background:var(--lp-fillh)!important;border-color:var(--lp-fillh)!important;color:var(--lp-onfill)!important}
 
 /* ---------- lab-entry v13: layout ---------- */
 .lp-fly{box-shadow:0 18px 40px rgba(16,24,40,.28);border-radius:14px;background:var(--lp-card)}
@@ -1414,7 +1427,7 @@ body.lpmap-lock{overflow:hidden}
 .lpmap-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--card)}
 .lpmap-ttl{font-size:15px;font-weight:680;letter-spacing:-.02em}
 .lpmap-pick{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
-.lpmap-pick select{max-width:280px;height:30px;border:1px solid var(--rule2);border-radius:8px;background:var(--field);color:var(--ink);padding:0 8px;font:inherit;font-size:13px}
+.lpmap-pick select{max-width:340px;height:30px;border:1px solid var(--rule2);border-radius:8px;background:var(--field);color:var(--ink);padding:0 8px;font:inherit;font-size:13px}
 .lpmap .grow{flex:1}
 .lpmap-body{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr);min-height:0;position:relative}
 .lpmap-rail{border-right:1px solid var(--rule);background:var(--card);overflow:auto;padding:12px}
@@ -1437,40 +1450,66 @@ body.lpmap-lock{overflow:hidden}
 .lpmap-canvas.panning{cursor:grabbing}
 .lpmap-world{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0}
 .lpmap-edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
-.lpmap-edges path{fill:none;stroke-width:2.4;pointer-events:stroke;cursor:pointer}
-.lpmap-edges path.k-supports{stroke:var(--ok)}
-.lpmap-edges path.k-contradicts{stroke:var(--bad);stroke-dasharray:7 6}
-.lpmap-edges path.k-method{stroke:var(--accent)}
-.lpmap-edges path.k-other{stroke:var(--muted)}
+/* lines: weight says how strong the tie is. A follow-up is the thickest, in the experiment's own colour, with an arrow;
+   a link is a thinner dashed line; a to-do that leads to another experiment is dotted with an arrow; a reason you drew is solid in its kind's colour */
+.lpmap-edges path{fill:none;stroke-width:1.6;pointer-events:stroke;cursor:pointer;transition:opacity .18s}
+.lpmap-edges path.ah{stroke:none;pointer-events:none}
+.lpmap-edges path.j-follow{stroke-width:2.6;stroke-linecap:round}
+.lpmap-edges path.j-link{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:6 5}
+.lpmap-edges path.j-todo{stroke:var(--warn);stroke-width:1.6;stroke-dasharray:1.5 4;stroke-linecap:round}
+.lpmap-edges path.ah.j-todo{fill:var(--warn)}
+.lpmap-edges path.k-supports{stroke:var(--ok);stroke-width:2}
+.lpmap-edges path.k-contradicts{stroke:var(--bad);stroke-width:2;stroke-dasharray:7 5}
+.lpmap-edges path.k-method{stroke:var(--accent);stroke-width:2}
+.lpmap-edges path.k-other{stroke:var(--muted);stroke-width:1.4}
 .lpmap-edges path.temp{stroke:var(--accent);stroke-dasharray:5 5;stroke-width:2}
-.lpmap-node{position:absolute;width:96px;background:var(--card);border:1px solid var(--rule2);border-radius:13px;box-shadow:var(--shadow,0 10px 24px -16px rgba(16,24,40,.5));user-select:none;cursor:grab;outline:2px solid transparent;transition:outline-color .15s,box-shadow .15s}
-.lpmap-node:hover{box-shadow:0 16px 34px -16px rgba(16,24,40,.55)}
+.lpmap-edges path.dim{opacity:.07}
+/* a project's band: a faint tinted row behind its experiments, its name at the left */
+.lpmap-grp{position:absolute;border-radius:14px;border:1px solid color-mix(in srgb,var(--gc) 26%,transparent);border-top:var(--lp-bar,3px) solid var(--gc);background:color-mix(in srgb,var(--gc) 5%,transparent);pointer-events:none;transition:opacity .18s}
+.lpmap-grp span{display:block;margin:8px 12px 0;font:750 10.5px/1.2 var(--lp-sans,var(--ui));letter-spacing:.07em;text-transform:uppercase;color:var(--gc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lpmap-day{border:0;background:none;border-radius:0;width:62px;text-align:right;font:600 10px/1.2 var(--lp-sans,var(--ui));color:var(--muted);font-variant-numeric:tabular-nums}
+.lpmap-grp.dim{opacity:.35}
+.lpmap-node{position:absolute;width:96px;background:var(--card);border:1px solid var(--rule2);border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 6px 16px -10px rgba(16,24,40,.35);user-select:none;cursor:grab;outline:2px solid transparent;outline-offset:1px;transition:outline-color .15s,box-shadow .15s,opacity .18s}
+.lpmap-node:hover{box-shadow:0 1px 2px rgba(16,24,40,.08),0 12px 26px -12px rgba(16,24,40,.45)}
 .lpmap-node.sel{outline-color:var(--accent)}
+.lpmap-node.dim{opacity:.18}
+.lpmap-node.hub{outline:2.5px solid var(--ec,var(--accent));outline-offset:2px}
 .lpmap-node.pop{animation:lpmap-pop .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes lpmap-pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
-.lpmap-node img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:12px 12px 0 0;background:#fff;pointer-events:none}
-.lpmap-nb{padding:7px 9px}
-.lpmap-nt{font-size:12px;font-weight:600;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.lpmap-nt.note{font-weight:400;-webkit-line-clamp:3}
-.lpmap-ns{font-size:10.5px;color:var(--muted);margin-top:2px}
-.lpmap-node.k-exp{width:150px;border:2px solid #b5753a;background:linear-gradient(180deg,color-mix(in srgb,#b5753a 10%,var(--card)),var(--card) 62%)}
-.lpmap-node.k-exp .lpmap-nb{padding:10px 12px}
-.lpmap-node.k-exp .lpmap-nt{font-size:14px;-webkit-line-clamp:3}
-.lpmap-eid{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:#b5753a;margin-bottom:2px}
-.lpmap-node.k-note{width:118px;background:#fffbe6;border-color:#eadf9c}
+.lpmap-nb{padding:5px 8px 6px}
+.lpmap-nt{font-size:11px;font-weight:600;line-height:1.28;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lpmap-ns{font-size:9.5px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.lpmap-ns .st{font-weight:650;color:var(--ink2)}
+/* an experiment: a card with a bar in its own colour down the left edge */
+.lpmap-node.k-exp{border-color:color-mix(in srgb,var(--ec) 45%,var(--rule2));box-shadow:inset 4px 0 0 var(--ec),0 1px 2px rgba(16,24,40,.06),0 6px 16px -10px rgba(16,24,40,.35)}
+.lpmap-node.k-exp .lpmap-nb{padding:6px 9px 6px 12px}
+.lpmap-node.k-exp .lpmap-nt{font-size:11.5px;-webkit-line-clamp:2}
+.lpmap-node.k-source .lpmap-k{margin-bottom:3px}
+.lpmap-node.k-note{background:#fffbe6;border-color:#eadf9c}
+.lpmap-node.k-note .lpmap-nt{font-weight:450;-webkit-line-clamp:3}
 :root[data-theme="dark"] .lpmap-node.k-note{background:#2a2614;border-color:#4d4420}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lpmap-node.k-note{background:#2a2614;border-color:#4d4420}}
-.lpmap-h{position:absolute;right:-9px;top:50%;width:17px;height:17px;margin-top:-9px;border-radius:50%;background:var(--accent);border:3px solid var(--card);box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:crosshair;opacity:0;transition:opacity .15s}
+.lpmap-h{position:absolute;right:-7px;top:50%;width:13px;height:13px;margin-top:-7px;border-radius:50%;background:var(--accent);border:2.5px solid var(--card);box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:crosshair;opacity:0;transition:opacity .15s}
 .lpmap-node:hover .lpmap-h,.lpmap-node.sel .lpmap-h{opacity:1}
-.lpmap-why{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--rule2);border-radius:8px;padding:2px 8px;font-size:10.5px;line-height:1.4;max-width:160px;color:var(--ink2);box-shadow:0 2px 8px rgba(16,24,40,.12);cursor:pointer;pointer-events:auto}
-.lpmap-why b{display:block;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lpmap-why{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--rule2);border-radius:7px;padding:2px 7px;font-size:9.5px;line-height:1.35;max-width:140px;color:var(--ink2);box-shadow:0 2px 6px rgba(16,24,40,.1);cursor:pointer;pointer-events:auto;transition:opacity .18s}
+.lpmap-why.dim{opacity:.1}
+.lpmap-why b{display:block;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lpmap-why.k-supports b{color:var(--ok)}.lpmap-why.k-contradicts b{color:var(--bad)}.lpmap-why.k-method b{color:var(--accent)}
+.lpmap-legend{position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:min(560px,70%);background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--rule);border-radius:9px;padding:6px 10px;font-size:10.5px;color:var(--ink2)}
+.lpmap-legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.lpmap-legend .lg{display:inline-block;width:22px;height:0;border-top:2px solid var(--muted)}
+.lpmap-legend .lg.follow{border-top:3px solid var(--ink2)}
+.lpmap-legend .lg.link{border-top:1.5px dashed var(--muted)}
+.lpmap-legend .lg.todo{border-top:2px dotted var(--warn)}
+.lpmap-legend .lg.k-supports{border-top-color:var(--ok)}.lpmap-legend .lg.k-contradicts{border-top:2px dashed var(--bad)}.lpmap-legend .lg.k-method{border-top-color:var(--accent)}
+.lpmap-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .lpmap-zoom{position:absolute;right:12px;bottom:12px;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:3px 9px;font-size:11px;color:var(--muted);pointer-events:none}
 .lpmap-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:40px;font-size:13.5px;color:var(--muted);max-width:420px;margin:auto}
 /* drawer */
 .lpmap-drawer{position:absolute;top:0;right:0;bottom:0;width:320px;max-width:90%;background:var(--card);border-left:1px solid var(--rule);box-shadow:-24px 0 48px -36px rgba(0,0,0,.5);transform:translateX(104%);transition:transform .22s;z-index:5;overflow:auto;padding:16px}
 .lpmap-drawer.open{transform:none}
 .lpmap-dr-x{position:absolute;top:10px;right:10px;border:0;background:var(--field);border-radius:50%;width:26px;height:26px;cursor:pointer;color:var(--muted)}
+.lpmap-drawer h4[style]{color:var(--ec);box-shadow:inset 3px 0 0 var(--ec);padding-left:8px}
 .lpmap-drawer h4{margin:4px 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lpmap-drawer h5{margin:16px 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lpmap-dr-exp{font-size:15px;font-weight:650;line-height:1.3;color:var(--ink)}
@@ -1481,7 +1520,7 @@ body.lpmap-lock{overflow:hidden}
 .lpmap-dr-btns{display:flex;flex-wrap:wrap;gap:6px}
 .lpmap-conn{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--rule)}
 .lpmap-conn .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:4px;background:var(--muted)}
-.lpmap-conn .dot.k-supports{background:var(--ok)}.lpmap-conn .dot.k-contradicts{background:var(--bad)}.lpmap-conn .dot.k-method{background:var(--accent)}
+.lpmap-conn .dot.j-follow{background:var(--ink2)}.lpmap-conn .dot.j-todo{background:var(--warn)}.lpmap-conn .dot.k-supports{background:var(--ok)}.lpmap-conn .dot.k-contradicts{background:var(--bad)}.lpmap-conn .dot.k-method{background:var(--accent)}
 .lpmap-conn a{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:none}
 .lpmap-conn-k{display:block;font-size:11px;color:var(--muted)}
 .lpmap-dr-none{font-size:12px;color:var(--muted)}
@@ -6603,34 +6642,40 @@ async function pruneImages(){ if (!DB.ok) return;
   window.__lpSync = { sync, checkFile, get state(){ return state; } };
 })();
 
-// ══ Research map: each experiment is the main branch; sources and notes link around it ══
-/* Obsidian-style map held beside the journal. One map per experiment (its block id is the key);
-   the experiment sits in the middle, sources and notes sit around it, and every line carries a
-   named reason. Sources live in one library and can be dropped onto any experiment's map.
-   All of it is additive: it lives under its own setting and its own key in the save file, so the
-   journal entries are never touched. */
+// ══ Research map: every experiment and how the journal links them, with the sources and notes behind them ══
+/* One map of the whole journal. Each experiment is a card in its project's column, placed down the page by its date, and
+   the lines are the journal's own links: a follow-up continues the line it came from, a link or a to-do that
+   leads to another experiment is drawn between them. Sources and notes sit wherever they are put and are
+   tied in with a named reason. "Show" narrows the map to one experiment's branch: its chain of follow-ups
+   and everything tied to it. The map lives under its own key, in IndexedDB and in the save file, so it moves
+   between computers and never touches the journal's entries. */
 (function(){
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const ce = (t, c) => { const e = document.createElement(t); if (c) e.className = c; return e; };
   const esc = window.esc || (s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const KIND = { supports: 'supports', contradicts: 'contradicts', method: 'method for', other: 'related to' };
-  const KINDCOL = { supports: 'ok', contradicts: 'bad', method: 'accent', other: 'muted' };
+  const JKIND = { follow: 'follow-up', link: 'linked', todo: 'a to-do leads here' };
   const SRCK = [['paper', 'Paper'], ['web', 'Web page'], ['book', 'Book'], ['protocol', 'Protocol']];
   const SRCK_TXT = Object.fromEntries(SRCK);
+  const SIZE = { exp: [172, 44], source: [150, 60], note: [138, 44] };
+  const COLW = 194, ROWH = 60, GROUPGAP = 34;
 
-  let MS = { lib: [], maps: {} };     // lib: sources; maps: { <blockId>: {nodes, edges, view} }
-  let curExp = null, V = { x: 0, y: 0, k: 1 }, selected = null, saveT = 0, link = null;
+  let MS = { lib: [], maps: {}, g: null };
+  let V = { x: 0, y: 0, k: 1 }, focus = '', selected = null, saveT = 0, open = false, LAY = null;
+  let root = null, canvas = null, world = null, edgesSvg = null, railWrap = null, picker = null;
 
-  // ── experiments from the journal (read only) ──
-  const exps = () => (typeof ALL !== 'undefined' ? ALL : []).flatMap(e => (e.blocks || []).map(b => ({ b, e })))
-    .filter(x => clean(x.b.title) || (x.b.blocks && x.b.blocks.length))
-    .sort((a, b) => (b.b.date || b.e.date || '').localeCompare(a.b.date || a.e.date || ''));
-  const expById = id => exps().find(x => x.b.id === id);
-  const expTitle = id => { const x = expById(id); return x ? (ttl(x.b) || 'Untitled experiment') : '(experiment removed)'; };
-  const expMeta = id => { const x = expById(id); if (!x) return ''; const st = STATUS_TXT[x.b.status] || ''; return (x.b.date || x.e.date || '') + (st ? ' · ' + st : ''); };
+  // ── the experiments, read from the journal ──
+  const exps = () => (typeof ALL !== 'undefined' ? ALL : []).flatMap(e => (e.blocks || []).map(b => ({ b, e, date: b.date || e.date || '' })))
+    .filter(x => clean(x.b.title)).sort((a, b) => a.date.localeCompare(b.date) || String(a.b.id).localeCompare(String(b.b.id)));
+  const EID = id => 'e:' + id;
+  const expOf = nid => { const id = String(nid).slice(2); return exps().find(x => x.b.id === id); };
+  const tagOf = x => (x.b.tags || [])[0] || 'No project';
+  const colorOf = x => x.b.color || (typeof PALETTE !== 'undefined' ? PALETTE[Math.abs([...tagOf(x)].reduce((h, c) => h * 31 + c.charCodeAt(0), 7)) % PALETTE.length] : '#2f6f9f');
+  const srcById = id => MS.lib.find(s => s.id === id);
+  const G = () => MS.g || (MS.g = { pos: {}, nodes: [], edges: [], view: null });
 
-  // ── persistence: a setting, plus a copy that rides the save file between computers ──
-  async function load(){ try { const s = await setting('researchMap', null); if (s && typeof s === 'object'){ MS.lib = Array.isArray(s.lib) ? s.lib : []; MS.maps = s.maps && typeof s.maps === 'object' ? s.maps : {}; } } catch (e){} }
+  // ── persistence: one setting, plus a copy in the save file ──
+  async function load(){ try { const s = await setting('researchMap', null); if (s && typeof s === 'object'){ MS.lib = Array.isArray(s.lib) ? s.lib : []; MS.maps = s.maps && typeof s.maps === 'object' ? s.maps : {}; MS.g = s.g && typeof s.g === 'object' ? s.g : null; } } catch (e){} migrate(); }
   function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { try { saveSetting('researchMap', MS); } catch (e){} }, 350); }
   window.__mapState = () => MS;
   window.__mapImport = async incoming => {
@@ -6639,35 +6684,92 @@ async function pruneImages(){ if (!DB.ok) return;
     (incoming.lib || []).forEach(s => { const cur = byId.get(s.id); if (!cur || (s.updatedAt || '') > (cur.updatedAt || '')) byId.set(s.id, s); });
     MS.lib = [...byId.values()];
     Object.entries(incoming.maps || {}).forEach(([k, m]) => { if (m && Array.isArray(m.nodes)) MS.maps[k] = m; });
-    try { await saveSetting('researchMap', MS); } catch (e){}
-    if (open) render();
+    if (incoming.g){ const g = G(), ig = incoming.g;
+      (ig.nodes || []).forEach(n => { if (!g.nodes.some(x => x.id === n.id)) g.nodes.push(n); });
+      (ig.edges || []).forEach(e => { if (!g.edges.some(x => x.id === e.id)) g.edges.push(e); });
+      Object.assign(g.pos, ig.pos || {}); }
+    migrate(); try { await saveSetting('researchMap', MS); } catch (e){} if (open) render();
   };
+  // the first version kept one small map per experiment: fold those into the one map, once
+  function migrate(){
+    const g = G(); g.mm = g.mm || {};
+    Object.entries(MS.maps || {}).forEach(([expId, m]) => {
+      if (!m || !Array.isArray(m.nodes) || g.mm[expId]) return; g.mm[expId] = 1;
+      const c = m.nodes.find(n => n.kind === 'exp') || { x: 0, y: 0 }, idmap = { exp: EID(expId) };
+      m.nodes.forEach(n => { if (n.kind === 'exp') return; idmap[n.id] = n.id;
+        if (!g.nodes.some(x => x.id === n.id)) g.nodes.push({ id: n.id, kind: n.kind === 'note' ? 'note' : 'source', ref: n.ref, text: n.text, near: EID(expId), dx: (n.x || 0) - c.x, dy: (n.y || 0) - c.y }); });
+      (m.edges || []).forEach(e => { const a = idmap[e.a], b = idmap[e.b]; if (a && b && !g.edges.some(x => x.id === e.id)) g.edges.push({ id: e.id, a, b, kind: e.kind, why: e.why }); });
+    });
+  }
 
-  const M = () => { if (!curExp) return null; return MS.maps[curExp] || (MS.maps[curExp] = { nodes: [{ id: 'exp', kind: 'exp', x: 0, y: 0 }], edges: [], view: null }); };
-  const srcById = id => MS.lib.find(s => s.id === id);
-  const labelOf = n => n.kind === 'exp' ? expTitle(curExp) : n.kind === 'note' ? (n.text || 'Note') : (srcById(n.ref) ? srcById(n.ref).title : '(removed)');
+  // ── the journal's own links: follow-ups, links and to-dos that lead to another experiment ──
+  function jEdges(){
+    const out = [], ids = new Set(exps().map(x => x.b.id)), seen = new Set();
+    const add = (a, b, kind, directed) => {
+      if (!a || !b || a === b || !ids.has(a) || !ids.has(b)) return;
+      if (seen.has(a + '>' + b) || (!directed || kind !== 'follow') && seen.has(b + '>' + a)) return;
+      seen.add(a + '>' + b); out.push({ id: 'j' + a + '>' + b, a: EID(a), b: EID(b), kind, j: 1 });
+    };
+    exps().forEach(x => { if (x.b.from) add(x.b.from, x.b.id, 'follow', true); });
+    exps().forEach(x => { (x.b.todos || []).forEach(t => add(x.b.id, t.link, 'todo', true)); (x.b.links || []).forEach(l => add(x.b.id, l, 'link', false)); });
+    return out;
+  }
+  const allEdges = () => jEdges().concat(G().edges);
 
-  // ── the overlay shell ──
-  let open = false, root = null, canvas = null, world = null, edgesSvg = null, railWrap = null, picker = null;
+  // ── the layout: a column per line of follow-ups, columns grouped by project, a row per day (time runs down) ──
+  function layout(){
+    const g = G(), xs = exps(), by = new Map(xs.map(x => [x.b.id, x]));
+    const days = [...new Set(xs.map(x => x.date))].sort(), row = d => Math.max(0, days.indexOf(d));
+    const lanes = [], laneOf = {};
+    xs.forEach(x => {
+      const p = x.b.from && by.get(x.b.from); let L = -1;
+      if (p && laneOf[p.b.id] != null){ const l = lanes[laneOf[p.b.id]]; if (l.tail === p.b.id && row(x.date) > l.tailRow) L = laneOf[p.b.id]; }
+      if (L < 0){ L = lanes.length; lanes.push({ tag: tagOf(x), start: x.date, color: colorOf(x) }); }
+      lanes[L].tail = x.b.id; lanes[L].tailRow = row(x.date); laneOf[x.b.id] = L;
+    });
+    const order = lanes.map((l, i) => i).sort((a, b) => lanes[a].tag.localeCompare(lanes[b].tag) || lanes[a].start.localeCompare(lanes[b].start) || a - b);
+    const colX = {}, groups = []; let x = 0, prev = null;
+    order.forEach(li => { const t = lanes[li].tag;
+      if (prev !== null && t !== prev) x += GROUPGAP;
+      if (t !== prev) groups.push({ tag: t, x, color: lanes[li].color });
+      colX[li] = x; x += COLW; prev = t; groups[groups.length - 1].w = x - groups[groups.length - 1].x; });
+    xs.forEach(x => { const id = EID(x.b.id); if (!g.pos[id]) g.pos[id] = { x: colX[laneOf[x.b.id]], y: row(x.date) * ROWH }; });
+    g.nodes.forEach(n => { if (g.pos[n.id]) return; const a = n.near && g.pos[n.near];
+      g.pos[n.id] = a ? { x: a.x + Math.max(-260, Math.min(260, (n.dx || 0) * 0.7)), y: a.y + Math.max(-200, Math.min(200, (n.dy || 0) * 0.7)) } : freeSpot(); });
+    return { groups, days: days.map((d, i) => ({ d, y: i * ROWH })), h: days.length * ROWH };
+  }
+  function freeSpot(){
+    const g = G(), pts = Object.values(g.pos), c = pts.length ? { x: Math.max(...pts.map(p => p.x)) + COLW, y: 0 } : { x: 0, y: 0 };
+    const cx = canvas ? (canvas.clientWidth / 2 - V.x) / V.k : c.x, cy = canvas ? (canvas.clientHeight / 2 - V.y) / V.k : c.y;
+    for (let i = 0; i < 60; i++){ const a = i * 0.9, r = 40 + i * 16, x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      if (!pts.some(p => Math.abs(p.x - x) < 170 && Math.abs(p.y - y) < 70)) return { x, y }; }
+    return { x: cx, y: cy };
+  }
+
+  // ── the overlay ──
   function build(){
     root = ce('div', 'lpmap');
     root.innerHTML = `
       <div class="lpmap-bar">
         <strong class="lpmap-ttl">Research map</strong>
-        <label class="lpmap-pick">Experiment <select id="lpmap-exp"></select></label>
+        <label class="lpmap-pick">Show <select id="lpmap-exp"></select></label>
+        <span class="lpmap-count" id="lpmap-count"></span>
         <span class="grow"></span>
         <button class="btn sm" data-m="addnote">+ Note</button>
         <button class="btn sm pri" data-m="addsrc">+ Source</button>
-        <button class="btn sm" data-m="fit" title="Fit the whole map in view">Fit</button>
+        <button class="btn sm" data-m="fit" title="Fit what is shown into the window">Fit</button>
         <button class="btn sm" data-m="close">Close</button>
       </div>
       <div class="lpmap-body">
         <aside class="lpmap-rail"><div class="lpmap-rail-h">Sources <span class="lpmap-cnt" id="lpmap-cnt">0</span></div>
-          <div class="lpmap-railhelp">Drag a source onto the map to link it to this experiment. Drag the dot on any card to another card to connect them.</div>
+          <div class="lpmap-railhelp">Drag a source onto the map, then drag the dot on its card to an experiment to say why they belong together.</div>
           <div id="lpmap-list"></div></aside>
         <div class="lpmap-canvas" id="lpmap-canvas"><div class="lpmap-world" id="lpmap-world"><svg class="lpmap-edges" id="lpmap-edges"></svg></div>
+          <div class="lpmap-legend" aria-hidden="true">
+            <span><i class="lg follow"></i>follow-up</span><span><i class="lg link"></i>linked</span><span><i class="lg todo"></i>to-do leads here</span>
+            <span><i class="lg k-supports"></i>supports</span><span><i class="lg k-contradicts"></i>contradicts</span><span><i class="lg k-method"></i>method for</span></div>
           <div class="lpmap-zoom" id="lpmap-zoom">100%</div>
-          <div class="lpmap-empty" id="lpmap-empty" hidden>No experiments yet. Add one in the journal, then it appears here as the centre of its own map.</div></div>
+          <div class="lpmap-empty" id="lpmap-empty" hidden>No experiments yet. Each one you add to the journal appears here, in its project's row.</div></div>
         <div class="lpmap-drawer" id="lpmap-drawer"></div>
       </div>`;
     document.body.appendChild(root);
@@ -6675,156 +6777,209 @@ async function pruneImages(){ if (!DB.ok) return;
     railWrap = $('#lpmap-list', root); picker = $('#lpmap-exp', root);
     root.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return;
       const m = b.dataset.m; if (m === 'close') close(); else if (m === 'fit') fit(); else if (m === 'addnote') addNote(); else if (m === 'addsrc') srcForm(); });
-    picker.addEventListener('change', () => { curExp = picker.value; const had = M() && M().view; if (had) V = { ...M().view }; selected = null; closeDrawer(); render(); if (!had) fitSoon(); });
+    picker.addEventListener('change', () => { focus = picker.value; closeDrawer(); applyFocus(); fit(); });
     canvas.addEventListener('pointerdown', panStart);
     canvas.addEventListener('wheel', onWheel, { passive: false });
-    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('keydown', e => { if (!open) return; if (e.key === 'Escape'){ if (selected) closeDrawer(); else if (focus){ focus = ''; picker.value = ''; applyFocus(); fit(); } else close(); } }, true);
+    document.addEventListener('dragover', e => { if (open && e.target.closest && e.target.closest('.lpmap-canvas')){ e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+    document.addEventListener('drop', e => { if (!open || !(e.target.closest && e.target.closest('.lpmap-canvas'))) return; e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain'); if (id && srcById(id)) addSourceNode(id, e.clientX, e.clientY); });
   }
   function openMap(){
     if (!root) build();
     open = true; root.classList.add('on'); document.body.classList.add('lpmap-lock');
-    const xs = exps(); if (!curExp || !expById(curExp)) curExp = xs.length ? xs[0].b.id : null;
-    const had = M() && M().view; if (had) V = { ...M().view }; render(); if (!had) fitSoon();
+    const had = !!G().view; if (had) V = { ...G().view };
+    render(); if (!had) requestAnimationFrame(() => requestAnimationFrame(fit));
   }
   function close(){ open = false; root && root.classList.remove('on'); document.body.classList.remove('lpmap-lock'); if (location.hash === '#map') history.replaceState(null, '', location.pathname + location.search); }
-  function onKey(e){ if (!open) return; if (e.key === 'Escape'){ if (selected){ closeDrawer(); } else close(); } }
 
   // ── render ──
   function render(){
     if (!open) return;
-    const xs = exps();
-    picker.innerHTML = xs.map(x => `<option value="${x.b.id}"${x.b.id === curExp ? ' selected' : ''}>${esc(ttl(x.b) || 'Untitled')}</option>`).join('');
+    const xs = exps(); LAY = layout();
+    const groups = {}; xs.forEach(x => (groups[tagOf(x)] = groups[tagOf(x)] || []).push(x));
+    picker.innerHTML = `<option value="">All experiments (${xs.length})</option>` + Object.keys(groups).sort().map(t =>
+      `<optgroup label="${esc(t)}">${groups[t].map(x => `<option value="${EID(x.b.id)}"${EID(x.b.id) === focus ? ' selected' : ''}>${esc(ttl(x.b) || 'Untitled')}${x.date ? ' · ' + esc(x.date) : ''}</option>`).join('')}</optgroup>`).join('');
+    if (focus && !xs.some(x => EID(x.b.id) === focus)) focus = '';
+    picker.value = focus;
     $('#lpmap-empty', root).hidden = !!xs.length;
-    canvas.style.visibility = xs.length ? '' : 'hidden';
-    renderRail(); renderMap(); applyView();
-    persist();
+    renderRail(); renderMap(); applyFocus(); applyView(); persist();
   }
   function renderRail(){
     $('#lpmap-cnt', root).textContent = MS.lib.length;
-    const on = new Set((M() ? M().nodes : []).map(n => n.ref).filter(Boolean));
+    const on = new Set(G().nodes.map(n => n.ref).filter(Boolean));
     railWrap.innerHTML = MS.lib.length ? MS.lib.map(s => `<div class="lpmap-src${on.has(s.id) ? ' used' : ''}" draggable="true" data-id="${s.id}">
         <span class="lpmap-k k-${s.kind}">${esc(SRCK_TXT[s.kind] || s.kind)}</span>
         <div class="lpmap-src-t">${esc(s.title || 'Untitled source')}</div>
-        ${s.authors ? `<div class="lpmap-src-a">${esc(s.authors)}</div>` : ''}
-        ${on.has(s.id) ? '<span class="lpmap-on">on this map</span>' : ''}</div>`).join('')
-      : '<div class="lpmap-railempty">No sources yet. Add the papers, pages and protocols behind your experiments with <b>+ Source</b>.</div>';
+        ${s.authors ? `<div class="lpmap-src-a">${esc(s.authors)}${s.year ? ', ' + esc(s.year) : ''}</div>` : ''}
+        ${on.has(s.id) ? '<span class="lpmap-on">on the map</span>' : ''}</div>`).join('')
+      : '<div class="lpmap-railempty">No sources yet. Add the papers, pages and protocols behind your experiments with <b>+ Source</b>, or send one from the Doc Reader extension.</div>';
     $$('.lpmap-src', railWrap).forEach(el => {
       el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed = 'copy'; });
-      el.addEventListener('click', () => { const m = M(); if (!m) return; const nd = m.nodes.find(n => n.ref === el.dataset.id); if (nd){ focusNode(nd.id); openDrawer(nd.id); } else srcDrawer(el.dataset.id); });
+      el.addEventListener('click', () => { const n = G().nodes.find(x => x.ref === el.dataset.id); if (n){ focusNode(n.id); openDrawer(n.id); } else srcForm(srcById(el.dataset.id)); });
     });
   }
-  canvasDrop();
-  function canvasDrop(){ /* drop a source from the rail onto the map */
-    document.addEventListener('dragover', e => { if (open && e.target.closest && e.target.closest('.lpmap-canvas')){ e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
-    document.addEventListener('drop', e => { if (!open || !(e.target.closest && e.target.closest('.lpmap-canvas'))) return; e.preventDefault();
-      const id = e.dataTransfer.getData('text/plain'); if (!id || !srcById(id)) return; addSourceNode(id, e.clientX, e.clientY); });
-  }
-  const sizeOf = n => n.kind === 'exp' ? [130, 54] : n.kind === 'note' ? [100, 42] : [96, 80];
+  const sizeOf = n => SIZE[n.kind] || SIZE.source;
+  const fmtDay = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? (d || '') : t.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); };
   function nodeHTML(n){
-    if (n.kind === 'exp') return `<div class="lpmap-nb"><div class="lpmap-eid">EXPERIMENT</div><div class="lpmap-nt">${esc(expTitle(curExp))}</div><div class="lpmap-ns">${esc(expMeta(curExp))}</div></div><span class="lpmap-h" data-h></span>`;
-    if (n.kind === 'note') return `<div class="lpmap-nb"><div class="lpmap-nt note">${esc(n.text || 'Empty note')}</div></div><span class="lpmap-h" data-h></span>`;
+    if (n.kind === 'exp'){ const x = n.x, st = (typeof STATUS_TXT !== 'undefined' && STATUS_TXT[x.b.status]) || '';
+      return `<div class="lpmap-nb"><div class="lpmap-nt">${esc(ttl(x.b) || 'Untitled')}</div>
+        <div class="lpmap-ns">${esc(x.date || '')}${st ? ` · <b class="st st-${esc(x.b.status)}">${esc(st)}</b>` : ''}</div></div><span class="lpmap-h" data-h title="Drag to another card to connect"></span>`; }
+    if (n.kind === 'note') return `<div class="lpmap-nb"><div class="lpmap-nt">${esc(n.text || 'Empty note')}</div></div><span class="lpmap-h" data-h></span>`;
     const s = srcById(n.ref) || { title: '(removed)', kind: 'paper' };
-    return `${s.fig ? `<img src="${s.fig}" alt="">` : ''}<div class="lpmap-nb"><span class="lpmap-k k-${s.kind}">${esc(SRCK_TXT[s.kind] || s.kind)}</span><div class="lpmap-nt">${esc(s.title || 'Untitled')}</div>${s.authors ? `<div class="lpmap-ns">${esc(s.authors)}</div>` : ''}</div><span class="lpmap-h" data-h></span>`;
+    return `<div class="lpmap-nb"><span class="lpmap-k k-${s.kind}">${esc(SRCK_TXT[s.kind] || s.kind)}</span><div class="lpmap-nt">${esc(s.title || 'Untitled')}</div>
+      ${s.authors ? `<div class="lpmap-ns">${esc(s.authors)}${s.year ? ', ' + esc(s.year) : ''}</div>` : ''}</div><span class="lpmap-h" data-h></span>`;
   }
+  function nodes(){ return exps().map(x => ({ id: EID(x.b.id), kind: 'exp', x })).concat(G().nodes); }
   function renderMap(){
-    const m = M(); if (!m){ world.querySelectorAll('.lpmap-node,.lpmap-why').forEach(x => x.remove()); edgesSvg.innerHTML = ''; return; }
-    world.querySelectorAll('.lpmap-node').forEach(x => x.remove());
-    m.nodes.forEach(n => { const [w, h] = sizeOf(n); const el = ce('div', 'lpmap-node k-' + n.kind + (n.fresh ? ' pop' : '')); el.dataset.id = n.id;
-      el.style.left = (n.x - w / 2) + 'px'; el.style.top = (n.y - h / 2) + 'px'; el.innerHTML = nodeHTML(n); world.appendChild(el); bindNode(el); delete n.fresh; });
+    world.querySelectorAll('.lpmap-node,.lpmap-why,.lpmap-grp').forEach(x => x.remove());
+    const g = G();
+    const top = -ROWH / 2 - 34, bot = (LAY.h || 0) - ROWH / 2 + 14;
+    (LAY.groups || []).forEach(gr => { const el = ce('div', 'lpmap-grp'); el.style.left = (gr.x - COLW / 2 + 6) + 'px'; el.style.width = (gr.w - 12) + 'px';
+      el.style.top = top + 'px'; el.style.height = (bot - top) + 'px'; el.style.setProperty('--gc', gr.color);
+      el.innerHTML = `<span>${esc(gr.tag)}</span>`; world.appendChild(el); });
+    const left = Math.min(0, ...(LAY.groups || []).map(gr => gr.x)) - COLW / 2 - 4;
+    (LAY.days || []).forEach(d => { const el = ce('div', 'lpmap-grp lpmap-day'); el.style.top = (d.y - 8) + 'px'; el.style.left = (left - 70) + 'px';
+      el.textContent = fmtDay(d.d); world.appendChild(el); });
+    nodes().forEach(n => { const p = g.pos[n.id] || { x: 0, y: 0 }, [w, h] = sizeOf(n);
+      const el = ce('div', 'lpmap-node k-' + n.kind + (n.fresh ? ' pop' : '')); el.dataset.id = n.id;
+      if (n.kind === 'exp') el.style.setProperty('--ec', colorOf(n.x));
+      el.style.left = (p.x - w / 2) + 'px'; el.style.top = (p.y - h / 2) + 'px'; el.style.width = w + 'px';
+      el.innerHTML = nodeHTML(n); world.appendChild(el); bindNode(el); delete n.fresh; });
+    const kinds = new Set(allEdges().map(e => (e.j ? '' : 'k-') + e.kind));
+    $$('.lpmap-legend .lg', root).forEach(i => { i.parentElement.hidden = !kinds.has(i.classList[1]); });
+    $('#lpmap-count', root).textContent = `${exps().length} experiments · ${allEdges().length} links · ${g.nodes.length} sources and notes`;
     drawEdges();
   }
-  const center = id => { const el = world.querySelector(`.lpmap-node[data-id="${id}"]`); if (!el) return null; return { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }; };
-  function curve(a, b){ const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d, k = Math.min(40, d * .18);
-    return { d: `M${a.x} ${a.y} Q${mx + nx * k} ${my + ny * k} ${b.x} ${b.y}`, mid: { x: mx + nx * k * .5, y: my + ny * k * .5 } }; }
+  const box = id => { const el = world.querySelector(`.lpmap-node[data-id="${CSS.escape(id)}"]`); if (!el) return null;
+    return { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight, cx: el.offsetLeft + el.offsetWidth / 2, cy: el.offsetTop + el.offsetHeight / 2 }; };
+  // a line leaves the right side of the earlier card and enters the left side of the later one
+  function route(a, b){
+    if (b.x > a.x + a.w - 4){ const x1 = a.x + a.w, y1 = a.cy, x2 = b.x, y2 = b.cy, dx = Math.max(30, (x2 - x1) * 0.5);
+      return { d: `M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`, end: [x2, y2], ang: 0, mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } }; }
+    if (a.x > b.x + b.w - 4){ const x1 = a.x, y1 = a.cy, x2 = b.x + b.w, y2 = b.cy, dx = Math.max(30, (x1 - x2) * 0.5);
+      return { d: `M${x1} ${y1} C${x1 - dx} ${y1} ${x2 + dx} ${y2} ${x2} ${y2}`, end: [x2, y2], ang: Math.PI, mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } }; }
+    const down = b.cy > a.cy, x1 = a.cx, y1 = down ? a.y + a.h : a.y, x2 = b.cx, y2 = down ? b.y : b.y + b.h, dy = Math.max(24, Math.abs(y2 - y1) * 0.5) * (down ? 1 : -1);
+    return { d: `M${x1} ${y1} C${x1} ${y1 + dy} ${x2} ${y2 - dy} ${x2} ${y2}`, end: [x2, y2], ang: down ? Math.PI / 2 : -Math.PI / 2, mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } };
+  }
+  const arrow = (end, ang) => { const [x, y] = end, s = 7, a1 = ang + 2.6, a2 = ang - 2.6;
+    return `M${x} ${y} L${x + Math.cos(a1) * s} ${y + Math.sin(a1) * s} L${x + Math.cos(a2) * s} ${y + Math.sin(a2) * s}Z`; };
   function drawEdges(){
-    const m = M(); world.querySelectorAll('.lpmap-why').forEach(x => x.remove());
-    edgesSvg.innerHTML = m.edges.map(e => { const a = center(e.a), b = center(e.b); if (!a || !b) return ''; return `<path class="k-${e.kind}" data-e="${e.id}" d="${curve(a, b).d}"/>`; }).join('');
-    m.edges.forEach(e => { const a = center(e.a), b = center(e.b); if (!a || !b) return; const c = curve(a, b);
-      const w = ce('div', 'lpmap-why k-' + e.kind); w.dataset.e = e.id; w.style.left = c.mid.x + 'px'; w.style.top = c.mid.y + 'px';
-      w.innerHTML = `<b>${KIND[e.kind]}</b>${esc(e.why || '')}`; world.appendChild(w); });
-    edgesSvg.querySelectorAll('path').forEach(p => p.addEventListener('click', ev => { ev.stopPropagation(); edgePop(m.edges.find(x => x.id === p.dataset.e), ev); }));
-    world.querySelectorAll('.lpmap-why').forEach(el => el.addEventListener('click', ev => { ev.stopPropagation(); edgePop(m.edges.find(x => x.id === el.dataset.e), ev); }));
+    world.querySelectorAll('.lpmap-why').forEach(x => x.remove());
+    let svg = '';
+    allEdges().forEach(e => { const a = box(e.a), b = box(e.b); if (!a || !b) return; const r = route(a, b);
+      const col = e.kind === 'follow' ? colorOf(expOf(e.a) || expOf(e.b) || { b: {} }) : '';
+      svg += `<path class="e ${e.j ? 'j-' : 'k-'}${e.kind}" data-e="${esc(e.id)}" data-a="${esc(e.a)}" data-b="${esc(e.b)}" d="${r.d}"${col ? ` style="stroke:${col}"` : ''}/>`;
+      if (e.kind === 'follow' || e.kind === 'todo') svg += `<path class="ah ${e.j ? 'j-' : 'k-'}${e.kind}" data-a="${esc(e.a)}" data-b="${esc(e.b)}" d="${arrow(r.end, r.ang)}"${col ? ` style="fill:${col}"` : ''}/>`;
+      if (!e.j && (e.why || e.kind)){ const w = ce('div', 'lpmap-why k-' + e.kind); w.dataset.e = e.id; w.dataset.a = e.a; w.dataset.b = e.b;
+        w.style.left = r.mid.x + 'px'; w.style.top = r.mid.y + 'px'; w.innerHTML = `<b>${KIND[e.kind] || e.kind}</b>${esc(e.why || '')}`; world.appendChild(w); } });
+    edgesSvg.innerHTML = svg;
+    edgesSvg.querySelectorAll('path.e').forEach(p => p.addEventListener('click', ev => { ev.stopPropagation(); edgePop(p.dataset.e, ev); }));
+    world.querySelectorAll('.lpmap-why').forEach(el => el.addEventListener('click', ev => { ev.stopPropagation(); edgePop(el.dataset.e, ev); }));
+    applyFocus();
   }
 
-  // ── view transform ──
-  function applyView(){ world.style.transform = `translate(${V.x}px,${V.y}px) scale(${V.k})`; $('#lpmap-zoom', root).textContent = Math.round(V.k * 100) + '%'; if (M()) M().view = { ...V }; }
+  // ── "Show": one experiment's branch - its chain of follow-ups, and everything tied to that chain ──
+  function branchOf(id){
+    const E = allEdges(), set = new Set([id]); let grew = true;
+    while (grew){ grew = false; E.forEach(e => { if (e.kind !== 'follow') return;
+      if (set.has(e.a) && !set.has(e.b)){ set.add(e.b); grew = true; } else if (set.has(e.b) && !set.has(e.a)){ set.add(e.a); grew = true; } }); }
+    const chain = new Set(set); E.forEach(e => { if (chain.has(e.a)) set.add(e.b); if (chain.has(e.b)) set.add(e.a); });
+    return set;
+  }
+  function applyFocus(){
+    if (!world) return;
+    const set = focus ? branchOf(focus) : null;
+    world.querySelectorAll('.lpmap-node').forEach(el => { el.classList.toggle('dim', !!set && !set.has(el.dataset.id)); el.classList.toggle('hub', el.dataset.id === focus); });
+    world.querySelectorAll('[data-a]').forEach(el => el.classList.toggle('dim', !!set && !(set.has(el.dataset.a) && set.has(el.dataset.b))));
+    world.querySelectorAll('.lpmap-grp').forEach(el => el.classList.toggle('dim', !!set));
+  }
+
+  // ── view ──
+  function applyView(){ world.style.transform = `translate(${V.x}px,${V.y}px) scale(${V.k})`; $('#lpmap-zoom', root).textContent = Math.round(V.k * 100) + '%'; G().view = { ...V }; }
   const toWorld = (cx, cy) => { const r = canvas.getBoundingClientRect(); return { x: (cx - r.left - V.x) / V.k, y: (cy - r.top - V.y) / V.k }; };
-  function fit(){ const m = M(); if (!m || !m.nodes.length){ V = { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2, k: 1 }; return applyView(); }
-    const xs = m.nodes.map(n => n.x), ys = m.nodes.map(n => n.y), pad = 150;
-    const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad, minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
-    const k = Math.min(1.2, Math.max(.35, Math.min(canvas.clientWidth / (maxX - minX), canvas.clientHeight / (maxY - minY))));
-    V = { k, x: canvas.clientWidth / 2 - (minX + maxX) / 2 * k, y: canvas.clientHeight / 2 - (minY + maxY) / 2 * k }; applyView(); }
-  function fitSoon(){ requestAnimationFrame(() => requestAnimationFrame(fit)); }
-  function focusNode(id){ const c = center(id); if (!c) return; V.x = canvas.clientWidth / 2 - c.x * V.k; V.y = canvas.clientHeight / 2 - c.y * V.k; applyView(); }
-  function panStart(ev){ if (ev.target.closest('.lpmap-node') || ev.target.closest('.lpmap-why') || ev.button === 2) return;
+  function fit(){
+    const set = focus ? branchOf(focus) : null, bs = [];
+    world.querySelectorAll('.lpmap-node').forEach(el => { if (!set || set.has(el.dataset.id)) bs.push({ x: el.offsetLeft, y: el.offsetTop, r: el.offsetLeft + el.offsetWidth, b: el.offsetTop + el.offsetHeight }); });
+    if (!bs.length){ V = { x: 40, y: 40, k: 1 }; return applyView(); }
+    const pad = 40, minX = Math.min(...bs.map(b => b.x)) - pad - 76, maxX = Math.max(...bs.map(b => b.r)) + pad, minY = Math.min(...bs.map(b => b.y)) - pad - (set ? 0 : 30), maxY = Math.max(...bs.map(b => b.b)) + pad;
+    const k = Math.min(1, Math.max(0.25, Math.min(canvas.clientWidth / (maxX - minX), canvas.clientHeight / (maxY - minY))));
+    V = { k, x: (canvas.clientWidth - (maxX - minX) * k) / 2 - minX * k, y: (canvas.clientHeight - (maxY - minY) * k) / 2 - minY * k }; applyView();
+  }
+  function focusNode(id){ const b = box(id); if (!b) return; V.x = canvas.clientWidth / 2 - b.cx * V.k; V.y = canvas.clientHeight / 2 - b.cy * V.k; applyView(); }
+  function panStart(ev){ if (ev.target.closest('.lpmap-node') || ev.target.closest('.lpmap-why') || ev.target.closest('.lpmap-legend') || ev.button === 2) return;
     const s = { x: ev.clientX, y: ev.clientY, vx: V.x, vy: V.y }; canvas.classList.add('panning');
     const mv = e => { V.x = s.vx + (e.clientX - s.x); V.y = s.vy + (e.clientY - s.y); applyView(); };
     const up = () => { canvas.classList.remove('panning'); removeEventListener('pointermove', mv); removeEventListener('pointerup', up); persist(); };
     addEventListener('pointermove', mv); addEventListener('pointerup', up); }
   function onWheel(ev){ if (ev.target.closest('.lpmap-drawer')) return; ev.preventDefault();
-    const r = canvas.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top, k2 = Math.min(2, Math.max(.3, V.k * Math.exp(-ev.deltaY * .0015)));
+    const r = canvas.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top, k2 = Math.min(2, Math.max(0.2, V.k * Math.exp(-ev.deltaY * 0.0015)));
     V.x = px - (px - V.x) * k2 / V.k; V.y = py - (py - V.y) * k2 / V.k; V.k = k2; applyView(); }
 
-  // ── node drag + link handle ──
+  // ── move a card, or drag from its dot to connect it ──
   function bindNode(el){
     el.addEventListener('pointerdown', ev => {
       if (ev.target.closest('[data-h]')){ startLink(ev, el.dataset.id); return; }
-      ev.stopPropagation(); const id = el.dataset.id, n = M().nodes.find(n => n.id === id), [w, h] = sizeOf(n);
-      const s = { x: ev.clientX, y: ev.clientY, nx: n.x, ny: n.y }; let moved = false; el.setPointerCapture(ev.pointerId);
-      el.onpointermove = e2 => { const dx = (e2.clientX - s.x) / V.k, dy = (e2.clientY - s.y) / V.k; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; n.x = s.nx + dx; n.y = s.ny + dy; el.style.left = (n.x - w / 2) + 'px'; el.style.top = (n.y - h / 2) + 'px'; drawEdges(); };
-      el.onpointerup = () => { el.onpointermove = el.onpointerup = null; el.releasePointerCapture(ev.pointerId); if (!moved) openDrawer(id); else persist(); };
+      ev.stopPropagation(); const id = el.dataset.id, g = G(), p = g.pos[id] || (g.pos[id] = { x: 0, y: 0 }), n = nodes().find(x => x.id === id), [w, h] = sizeOf(n || { kind: 'source' });
+      const s = { x: ev.clientX, y: ev.clientY, nx: p.x, ny: p.y }; let moved = false; el.setPointerCapture(ev.pointerId);
+      el.onpointermove = e2 => { const dx = (e2.clientX - s.x) / V.k, dy = (e2.clientY - s.y) / V.k; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+        p.x = s.nx + dx; p.y = s.ny + dy; el.style.left = (p.x - w / 2) + 'px'; el.style.top = (p.y - h / 2) + 'px'; drawEdges(); };
+      el.onpointerup = () => { el.onpointermove = el.onpointerup = null; try { el.releasePointerCapture(ev.pointerId); } catch (e){} if (!moved) openDrawer(id); else persist(); };
     });
   }
   function startLink(ev, fromId){
     ev.stopPropagation(); ev.preventDefault();
-    const a = center(fromId); const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'path'); tmp.setAttribute('class', 'temp'); edgesSvg.append(tmp);
-    const move = e => { const b = toWorld(e.clientX, e.clientY); tmp.setAttribute('d', curve(a, b).d); };
+    const a = box(fromId); const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'path'); tmp.setAttribute('class', 'temp'); edgesSvg.append(tmp);
+    const move = e => { const b = toWorld(e.clientX, e.clientY); tmp.setAttribute('d', `M${a.cx} ${a.cy} L${b.x} ${b.y}`); };
     const up = e => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); tmp.remove();
       const tgt = document.elementFromPoint(e.clientX, e.clientY)?.closest('.lpmap-node'); if (!tgt) return; const toId = tgt.dataset.id; if (toId === fromId) return;
-      const m = M(); if (m.edges.some(x => (x.a === fromId && x.b === toId) || (x.a === toId && x.b === fromId))) return;
+      if (G().edges.some(x => (x.a === fromId && x.b === toId) || (x.a === toId && x.b === fromId))) return;
       linkDialog(fromId, toId); };
     addEventListener('pointermove', move); addEventListener('pointerup', up);
   }
 
-  // ── small popovers / dialogs ──
+  // ── small popovers ──
   let pop = null;
   function closePop(){ pop && pop.remove(); pop = null; }
   function popAt(x, y, html){ closePop(); pop = ce('div', 'lpmap-pop'); pop.innerHTML = html; root.appendChild(pop);
-    const w = pop.offsetWidth, h = pop.offsetHeight; pop.style.left = Math.min(x, innerWidth - w - 12) + 'px'; pop.style.top = Math.min(y, innerHeight - h - 12) + 'px';
+    const w = pop.offsetWidth, h = pop.offsetHeight; pop.style.left = Math.max(12, Math.min(x, innerWidth - w - 12)) + 'px'; pop.style.top = Math.max(12, Math.min(y, innerHeight - h - 12)) + 'px';
     setTimeout(() => document.addEventListener('pointerdown', function off(e){ if (pop && !pop.contains(e.target)){ closePop(); document.removeEventListener('pointerdown', off); } }), 0); return pop; }
   function linkDialog(aId, bId){
-    const r = canvas.getBoundingClientRect(), c = center(bId);
-    const p = popAt(r.left + (c.x * V.k + V.x), r.top + (c.y * V.k + V.y), `<div class="lpmap-pop-h">How are they related?</div>
+    const r = canvas.getBoundingClientRect(), b = box(bId);
+    const p = popAt(r.left + b.cx * V.k + V.x, r.top + b.cy * V.k + V.y, `<div class="lpmap-pop-h">How are they related?</div>
       <div class="lpmap-kinds">${Object.keys(KIND).map(k => `<button class="lpmap-kb k-${k}" data-k="${k}">${KIND[k]}</button>`).join('')}</div>
       <input class="lpmap-in" id="lpmap-why" placeholder="In a few words, why…" autocomplete="off">
       <div class="lpmap-pop-f"><button class="btn sm" data-x>Cancel</button><button class="btn sm pri" data-ok disabled>Connect</button></div>`);
     let kind = null; const why = $('#lpmap-why', p), ok = $('[data-ok]', p);
-    $$('.lpmap-kb', p).forEach(b => b.onclick = () => { kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); ok.disabled = false; why.focus(); });
+    $$('.lpmap-kb', p).forEach(bt => bt.onclick = () => { kind = bt.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === bt)); ok.disabled = false; why.focus(); });
     $('[data-x]', p).onclick = closePop;
-    why.onkeydown = e => { if (e.key === 'Enter' && kind) commit(); };
-    ok.onclick = commit;
-    function commit(){ if (!kind) return; M().edges.push({ id: 'e' + uid(), a: aId, b: bId, kind, why: why.value.trim() }); closePop(); renderMap(); persist(); }
+    const commit = () => { if (!kind) return; G().edges.push({ id: 'e' + uid(), a: aId, b: bId, kind, why: why.value.trim() }); closePop(); renderMap(); persist(); };
+    why.onkeydown = e => { if (e.key === 'Enter' && kind) commit(); }; ok.onclick = commit;
     setTimeout(() => why.focus(), 30);
   }
-  function edgePop(e, ev){ if (!e) return;
+  function edgePop(id, ev){
+    if (String(id).startsWith('j')){ toast('This line comes from the journal: a follow-up, a link or a to-do. Change it in the experiment itself.'); return; }
+    const e = G().edges.find(x => x.id === id); if (!e) return;
     const p = popAt(ev.clientX, ev.clientY, `<div class="lpmap-pop-h">${KIND[e.kind]}</div>
       <input class="lpmap-in" id="lpmap-ew" value="${esc(e.why || '')}" placeholder="Why…">
       <div class="lpmap-kinds sm">${Object.keys(KIND).map(k => `<button class="lpmap-kb k-${k}${k === e.kind ? ' on' : ''}" data-k="${k}">${KIND[k]}</button>`).join('')}</div>
       <div class="lpmap-pop-f"><button class="btn sm danger" data-del>Remove</button><span class="grow"></span><button class="btn sm pri" data-ok>Save</button></div>`);
     $$('.lpmap-kb', p).forEach(b => b.onclick = () => { e.kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); });
     $('[data-ok]', p).onclick = () => { e.why = $('#lpmap-ew', p).value.trim(); closePop(); renderMap(); persist(); };
-    $('[data-del]', p).onclick = () => { M().edges = M().edges.filter(x => x.id !== e.id); closePop(); renderMap(); persist(); };
+    $('[data-del]', p).onclick = () => { G().edges = G().edges.filter(x => x.id !== e.id); closePop(); renderMap(); persist(); };
   }
 
-  // ── add note / source node ──
-  function freeSpot(){ const m = M(), c = m.nodes[0] || { x: 0, y: 0 }; for (let i = 0; i < 40; i++){ const a = i * 0.9, r = 150 + i * 14, x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r; if (!m.nodes.some(n => Math.hypot(n.x - x, n.y - y) < 120)) return { x, y }; } return { x: c.x + 200, y: c.y }; }
-  function addNote(){ const m = M(); if (!m) return; const id = 't' + uid(), p = freeSpot(); m.nodes.push({ id, kind: 'note', text: '', x: p.x, y: p.y, fresh: 1 }); renderMap(); focusNode(id); openDrawer(id); setTimeout(() => $('#lpmap-dr-text', root)?.focus(), 80); }
-  function addSourceNode(srcId, cx, cy){ const m = M(); const have = m.nodes.find(n => n.ref === srcId);
-    if (have){ const el = world.querySelector(`.lpmap-node[data-id="${have.id}"]`); el && (el.classList.remove('pop'), void el.offsetWidth, el.classList.add('pop')); return; }
-    const w = cx != null ? toWorld(cx, cy) : freeSpot(); m.nodes.push({ id: 'n' + uid(), kind: 'source', ref: srcId, x: w.x, y: w.y, fresh: 1 }); renderMap(); renderRail(); persist(); }
+  // ── add a note or a source card ──
+  function addNote(){ const id = 't' + uid(), near = focus || ''; G().nodes.push({ id, kind: 'note', text: '', fresh: 1 });
+    const a = near && G().pos[near]; G().pos[id] = a ? { x: a.x, y: a.y + 90 } : freeSpot(); renderMap(); focusNode(id); openDrawer(id); setTimeout(() => $('#lpmap-dr-text', root)?.focus(), 80); persist(); }
+  function addSourceNode(srcId, cx, cy){
+    const have = G().nodes.find(n => n.ref === srcId);
+    if (have){ const el = world.querySelector(`.lpmap-node[data-id="${CSS.escape(have.id)}"]`); if (el){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } focusNode(have.id); return; }
+    const id = 'n' + uid(); G().nodes.push({ id, kind: 'source', ref: srcId, fresh: 1 }); G().pos[id] = cx != null ? toWorld(cx, cy) : freeSpot();
+    renderMap(); renderRail(); persist(); }
 
-  // ── add / edit a source (the library) ──
-  async function imgFromFile(file){ try { const url = await readDataUrl(file), im = await loadEl(url); const k = Math.min(1, 640 / im.naturalWidth, 640 / im.naturalHeight), c = ce('canvas');
+  // ── the sources library ──
+  async function imgFromFile(file){ try { const url = await readDataUrl(file), im = await loadEl(url), k = Math.min(1, 640 / im.naturalWidth, 640 / im.naturalHeight), c = ce('canvas');
     c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.82); } catch (e){ return ''; } }
   function srcForm(existing){
     const s = existing || { id: '', kind: 'paper', title: '', authors: '', year: '', url: '', cite: '', fig: '' };
@@ -6835,61 +6990,63 @@ async function pruneImages(){ if (!DB.ok) return;
         <input class="lpmap-in" id="sf-a" placeholder="Authors (e.g. Gibson et al.)" value="${esc(s.authors || '')}">
         <div class="lpmap-row2"><input class="lpmap-in" id="sf-y" placeholder="Year" value="${esc(s.year || '')}"><input class="lpmap-in" id="sf-u" placeholder="URL or DOI" value="${esc(s.url || '')}"></div>
         <textarea class="lpmap-in" id="sf-c" rows="2" placeholder="Citation or a note (optional)">${esc(s.cite || '')}</textarea>
-        <label class="lpmap-fig"><span>${s.fig ? 'Change figure' : 'Add a figure / main page image (optional)'}</span><input type="file" accept="image/*" id="sf-f" hidden></label>
-        <div class="lpmap-figprev" id="sf-prev">${s.fig ? `<img src="${s.fig}">` : ''}</div>
+        <label class="lpmap-fig"><span>${s.fig ? 'Change figure' : 'Add a figure or the main page (optional)'}</span><input type="file" accept="image/*" id="sf-f" hidden></label>
+        <div class="lpmap-figprev" id="sf-prev">${s.fig ? `<img src="${s.fig}" alt="">` : ''}</div>
       </div>
       <div class="lpmap-pop-f">${existing ? '<button class="btn sm danger" data-del>Delete</button>' : ''}<span class="grow"></span><button class="btn sm" data-x>Cancel</button><button class="btn sm pri" data-ok>${existing ? 'Save' : 'Add'}</button></div>`);
     let kind = s.kind, fig = s.fig || '';
     $$('.lpmap-kb', p).forEach(b => b.onclick = () => { kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); });
-    $('#sf-f', p).onchange = async e => { const f = e.target.files[0]; if (!f) return; fig = await imgFromFile(f); $('#sf-prev', p).innerHTML = fig ? `<img src="${fig}">` : ''; };
+    $('#sf-f', p).onchange = async e => { const f = e.target.files[0]; if (!f) return; fig = await imgFromFile(f); $('#sf-prev', p).innerHTML = fig ? `<img src="${fig}" alt="">` : ''; };
     $('[data-x]', p).onclick = closePop;
-    const del = $('[data-del]', p); if (del) del.onclick = () => { MS.lib = MS.lib.filter(x => x.id !== s.id); Object.values(MS.maps).forEach(m => { const gone = m.nodes.filter(n => n.ref === s.id).map(n => n.id); m.nodes = m.nodes.filter(n => !gone.includes(n.id)); m.edges = m.edges.filter(e => !gone.includes(e.a) && !gone.includes(e.b)); }); closePop(); render(); };
-    $('[data-ok]', p).onclick = () => {
-      const t = $('#sf-t', p).value.trim(); if (!t){ $('#sf-t', p).focus(); return; }
+    const del = $('[data-del]', p); if (del) del.onclick = () => { MS.lib = MS.lib.filter(x => x.id !== s.id); const g = G(), gone = g.nodes.filter(n => n.ref === s.id).map(n => n.id);
+      g.nodes = g.nodes.filter(n => !gone.includes(n.id)); g.edges = g.edges.filter(e => !gone.includes(e.a) && !gone.includes(e.b)); closePop(); render(); };
+    $('[data-ok]', p).onclick = () => { const t = $('#sf-t', p).value.trim(); if (!t){ $('#sf-t', p).focus(); return; }
       const rec = { id: s.id || 's' + uid(), kind, title: t, authors: $('#sf-a', p).value.trim(), year: $('#sf-y', p).value.trim(), url: $('#sf-u', p).value.trim(), cite: $('#sf-c', p).value.trim(), fig, updatedAt: new Date().toISOString() };
-      if (s.id){ const i = MS.lib.findIndex(x => x.id === s.id); MS.lib[i] = rec; } else MS.lib.unshift(rec);
-      closePop(); render(); };
+      if (s.id){ const i = MS.lib.findIndex(x => x.id === s.id); MS.lib[i] = rec; } else MS.lib.unshift(rec); closePop(); render(); };
     setTimeout(() => $('#sf-t', p).focus(), 30);
   }
-  function srcDrawer(id){ const s = srcById(id); if (s) srcForm(s); }
 
   // ── the details drawer ──
   function openDrawer(id){
-    const m = M(), n = m.nodes.find(x => x.id === id); if (!n) return; selected = id;
+    const n = nodes().find(x => x.id === id); if (!n) return; selected = id;
     world.querySelectorAll('.lpmap-node').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
     const d = $('#lpmap-drawer', root); let body = '';
-    if (n.kind === 'exp'){ const x = expById(curExp); body += `<h4>Experiment</h4><div class="lpmap-dr-exp">${esc(expTitle(curExp))}</div><div class="lpmap-dr-meta">${esc(expMeta(curExp))}</div>
-        <button class="btn sm" data-goexp>Open in the journal →</button>`; }
-    else if (n.kind === 'note'){ body += `<h4>Note</h4><textarea class="lpmap-in" id="lpmap-dr-text" rows="5" placeholder="Write the reason for a connection, a thought, anything…">${esc(n.text || '')}</textarea>
-        <button class="btn sm danger" data-delnode>Remove this note</button>`; }
-    else { const s = srcById(n.ref) || {}; body += `<h4>${esc(SRCK_TXT[s.kind] || 'Source')}</h4><div class="lpmap-dr-exp">${esc(s.title || '')}</div>
+    if (n.kind === 'exp'){ const x = n.x;
+      body += `<h4 style="--ec:${colorOf(x)}">${esc(tagOf(x))}</h4><div class="lpmap-dr-exp">${esc(ttl(x.b) || 'Untitled')}</div><div class="lpmap-dr-meta">${esc(x.date || '')}</div>
+        <div class="lpmap-dr-btns"><button class="btn sm pri" data-goexp>Open in the journal</button><button class="btn sm" data-branch>Show only this branch</button></div>`; }
+    else if (n.kind === 'note') body += `<h4>Note</h4><textarea class="lpmap-in" id="lpmap-dr-text" rows="5" placeholder="Why two things belong together, a thought, anything…">${esc(n.text || '')}</textarea>
+        <div class="lpmap-dr-btns"><button class="btn sm danger" data-delnode>Remove this note</button></div>`;
+    else { const s = srcById(n.ref) || {};
+      body += `<h4>${esc(SRCK_TXT[s.kind] || 'Source')}</h4><div class="lpmap-dr-exp">${esc(s.title || '')}</div>
         ${s.authors ? `<div class="lpmap-dr-meta">${esc(s.authors)}${s.year ? ', ' + esc(s.year) : ''}</div>` : ''}
-        ${s.cite ? `<div class="lpmap-dr-cite">${esc(s.cite)}</div>` : ''}
-        ${s.fig ? `<img class="lpmap-dr-fig" src="${s.fig}">` : ''}
-        <div class="lpmap-dr-btns">${s.url ? `<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}<button class="btn sm" data-editsrc>Edit source</button><button class="btn sm" data-delnode>Take off map</button></div>`; }
-    const conns = m.edges.filter(e => e.a === id || e.b === id);
-    body += `<h5>Connections</h5><div class="lpmap-dr-conn">${conns.length ? conns.map(e => { const o = m.nodes.find(x => x.id === (e.a === id ? e.b : e.a)); return `<div class="lpmap-conn"><span class="dot k-${e.kind}"></span><div><a data-go="${o.id}">${esc(labelOf(o).slice(0, 72))}</a><span class="lpmap-conn-k">${KIND[e.kind]}${e.why ? ': ' + esc(e.why) : ''}</span></div></div>`; }).join('') : '<div class="lpmap-dr-none">None yet. Drag the dot on this card to another card to connect them.</div>'}</div>`;
-    d.innerHTML = `<button class="lpmap-dr-x" data-closedr>✕</button>${body}`; d.classList.add('open');
-    const ta = $('#lpmap-dr-text', d); if (ta) ta.oninput = () => { n.text = ta.value; const el = world.querySelector(`.lpmap-node[data-id="${id}"] .lpmap-nt`); if (el) el.textContent = ta.value || 'Empty note'; drawEdges(); persist(); };
+        ${s.cite ? `<div class="lpmap-dr-cite">${esc(s.cite)}</div>` : ''}${s.fig ? `<img class="lpmap-dr-fig" src="${s.fig}" alt="">` : ''}
+        <div class="lpmap-dr-btns">${s.url ? `<a class="btn sm" href="${esc(/^10\./.test(s.url) ? 'https://doi.org/' + s.url : s.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}<button class="btn sm" data-editsrc>Edit</button><button class="btn sm" data-delnode>Take off the map</button></div>`; }
+    const conns = allEdges().filter(e => e.a === id || e.b === id);
+    const lab = oid => { const o = nodes().find(x => x.id === oid); if (!o) return '?'; if (o.kind === 'exp') return ttl(o.x.b) || 'Untitled'; if (o.kind === 'note') return o.text || 'Note'; return (srcById(o.ref) || {}).title || 'Source'; };
+    body += `<h5>Connections</h5><div class="lpmap-dr-conn">${conns.length ? conns.map(e => { const o = e.a === id ? e.b : e.a;
+      return `<div class="lpmap-conn"><span class="dot ${e.j ? 'j-' : 'k-'}${e.kind}"></span><div><a data-go="${esc(o)}">${esc(lab(o).slice(0, 72))}</a><span class="lpmap-conn-k">${e.j ? JKIND[e.kind] : KIND[e.kind] + (e.why ? ': ' + esc(e.why) : '')}</span></div></div>`; }).join('')
+      : '<div class="lpmap-dr-none">None yet. Drag the dot on this card to another card to connect them.</div>'}</div>`;
+    d.innerHTML = `<button class="lpmap-dr-x" data-closedr aria-label="Close">✕</button>${body}`; d.classList.add('open');
+    const ta = $('#lpmap-dr-text', d); if (ta) ta.oninput = () => { n.text = ta.value; const el = world.querySelector(`.lpmap-node[data-id="${CSS.escape(id)}"] .lpmap-nt`); if (el) el.textContent = ta.value || 'Empty note'; persist(); };
     d.querySelector('[data-closedr]').onclick = closeDrawer;
-    const ge = d.querySelector('[data-goexp]'); if (ge) ge.onclick = () => { close(); go('#exp/' + curExp); };
+    const ge = d.querySelector('[data-goexp]'); if (ge) ge.onclick = () => { close(); go('#exp/' + id.slice(2)); };
+    const br = d.querySelector('[data-branch]'); if (br) br.onclick = () => { focus = id; picker.value = id; applyFocus(); fit(); };
     const es = d.querySelector('[data-editsrc]'); if (es) es.onclick = () => srcForm(srcById(n.ref));
-    const dn = d.querySelector('[data-delnode]'); if (dn) dn.onclick = () => { m.nodes = m.nodes.filter(x => x.id !== id); m.edges = m.edges.filter(e => e.a !== id && e.b !== id); closeDrawer(); renderMap(); renderRail(); persist(); };
-    d.querySelectorAll('[data-go]').forEach(a => a.onclick = () => { const t = a.dataset.go; focusNode(t); openDrawer(t); });
+    const dn = d.querySelector('[data-delnode]'); if (dn) dn.onclick = () => { const g = G(); g.nodes = g.nodes.filter(x => x.id !== id); g.edges = g.edges.filter(e => e.a !== id && e.b !== id); delete g.pos[id]; closeDrawer(); renderMap(); renderRail(); persist(); };
+    d.querySelectorAll('[data-go]').forEach(a => a.onclick = () => { focusNode(a.dataset.go); openDrawer(a.dataset.go); });
   }
-  function closeDrawer(){ selected = null; const d = $('#lpmap-drawer', root); d && d.classList.remove('open'); world.querySelectorAll('.lpmap-node').forEach(el => el.classList.remove('sel')); }
+  function closeDrawer(){ selected = null; const d = root && $('#lpmap-drawer', root); d && d.classList.remove('open'); world && world.querySelectorAll('.lpmap-node').forEach(el => el.classList.remove('sel')); }
 
-  // ── wiring in: a nav button + the hash route ──
+  // ── wiring in: the nav button, the #map route, and sources sent from elsewhere ──
   function mount(){
     const nav = document.querySelector('.top .ib-nav');
     if (nav && !document.getElementById('lpmap-nav')){
       const b = ce('button', 'btn nav'); b.id = 'lpmap-nav'; b.dataset.act = 'mapView'; b.dataset.nav = 'map';
-      b.title = 'Research map: your experiments with the papers and notes behind them'; b.textContent = 'Map';
+      b.title = 'Research map: every experiment, how they link, and the papers and notes behind them'; b.textContent = 'Map';
       nav.after(b); b.addEventListener('click', () => go('#map'));
     }
     window.addEventListener('hashchange', hashCheck); hashCheck();
   }
-  // a source sent from the Doc Reader extension (or any Lab Potato page) lands in the library
   function addExternalSource(rec){ if (!rec || !rec.title) return;
     if (MS.lib.some(s => s.url && rec.url && s.url === rec.url)){ toast('That source is already in your research map.'); return; }
     const s = { id: 's' + uid(), kind: rec.kind || 'paper', title: String(rec.title).slice(0, 300), authors: (rec.authors || '').slice(0, 200), year: (rec.year || '').toString().slice(0, 8), url: (rec.url || '').slice(0, 600), cite: (rec.cite || '').slice(0, 2000), fig: /^data:image\//.test(rec.fig || '') ? rec.fig : '', updatedAt: new Date().toISOString() };
@@ -6902,6 +7059,7 @@ async function pruneImages(){ if (!DB.ok) return;
       const rec = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/-/g, '+').replace(/_/g, '/'))))); addExternalSource(rec); } catch (e){} }
   function hashCheck(){ if (location.hash === '#map'){ if (!open) openMap(); } else if (open) close(); }
   async function waitDB(){ for (let i = 0; i < 80; i++){ if (typeof DB !== 'undefined' && DB.ok) return true; await new Promise(r => setTimeout(r, 100)); } return false; }
+  window.__lpMap = { render: () => render(), focus: id => { focus = id ? (String(id).startsWith('e:') ? id : EID(id)) : ''; if (picker) picker.value = focus; applyFocus(); fit(); }, branchOf, jEdges };
   (async () => { await waitDB(); await load(); if (document.querySelector('.top')) mount(); else document.addEventListener('DOMContentLoaded', mount); if (open) render(); drainLS(); drainURL(); })();
 })();
 

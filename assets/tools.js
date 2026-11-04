@@ -279,6 +279,31 @@ const TOOLS = [
           "Take the AI's version in parts: a rewrite goes sentence by sentence (Tab / Esc), or select any words in it to accept and edit them at once, roll them back, or have the AI redo just that part"
         ] }
     ]
+  },
+
+  {
+    id: "sequence-studio",
+    short: "Plasmid maps & primers",
+    name: "Sequence Studio",
+    tagline: "SnapGene, minus the download",
+    description:
+      "Open your SnapGene, GenBank or FASTA files, see the map and the sequence, annotate, cut, design primers and translate, all in one tab.",
+    icon: "dna",
+    accent: "violet",
+    folder: "tools/sequence-studio",
+    features: [
+      "Reads and writes SnapGene .dna, keeping the original file's data; GenBank, FASTA, EMBL and Xdna too",
+      "Circular and linear maps, a sequence view with translations, enzymes and primers, and a digest with a virtual gel",
+      "Primer design with nearest-neighbour Tm, protein MW, pI and ε280, and a one-click hand-off to AlphaFold 3"
+    ],
+    versions: [
+      { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04",
+        new: [
+          "Opens all common sequence formats and saves back to SnapGene .dna with your features and primers",
+          "Map, Sequence and Split views with drag-to-select, Find, Go to, and common-feature detection",
+          "Enzymes, Digest and Protein tabs, primer design, and Send to AlphaFold 3"
+        ] }
+    ]
   }
 
   /* ---------- TEMPLATE: copy this block for a new tool ----------

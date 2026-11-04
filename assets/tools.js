@@ -295,7 +295,7 @@ const TOOLS = [
     folder: "tools/sequence-studio",
     features: [
       "Reads and writes SnapGene .dna, keeping the original file's data; GenBank, FASTA, EMBL and Xdna too",
-      "A circuit view that draws each transcription unit as SBOL symbols and says what it is missing, with a parts library of promoters, RBSs, terminators, origins and markers sorted by strength",
+      "A circuit view that draws each transcription unit as SBOL symbols and says what it is missing, and predicts ribosome binding strength from the Salis thermodynamic model",
       "Digests with overhangs and a ligation check, primer design, codon optimisation, protein properties, figures for papers, and folding by ESMFold or AlphaFold"
     ],
     versions: [
@@ -303,11 +303,12 @@ const TOOLS = [
       { v: "v2", file: "sequence-studio-v2.html", date: "2026-11-04" },
       { v: "v3", file: "sequence-studio-v3.html", date: "2026-11-04" },
       { v: "v4", file: "sequence-studio-v4.html", date: "2026-11-04" },
-      { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04",
+      { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04" },
+      { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04",
         new: [
-          "A circuit view: every transcription unit as SBOL symbols, the regulatory links overhead, and a check of what each unit is missing",
-          "A parts library of 44 promoters, ribosome binding sites, terminators, origins and resistance markers, sorted by measured strength",
-          "Enzyme cut marks that line up with the bases, primer names that cannot collide, and residue numbers on every translation"
+          "Ribosome binding strength from the Salis thermodynamic model, every term shown, with its validation rather than a claim",
+          "Colours picked by simulating colour blindness and measuring, resizable panels, and an icon rail with keys",
+          "Rename, recolour or swap a promoter or RBS in place, straight from the inspector"
         ] }
     ]
   }

@@ -1350,15 +1350,30 @@ main{padding:12px 0 32px}
 @media (max-width:760px){.locbar{border-radius:12px}.locbar .lb-sep{display:none}.locbar code{max-width:calc(100vw - 90px)}}
 </style>
 <style id="lp-standard">
-/* ===== Lab Potato standard style (taken from Cryobox Labeler) ================
-   One palette, one header, one size of button, input and card across every tool. */
-:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px}
+/* ===== Lab Potato standard style ============================================
+   The homepage's type and palette, one 80% window, one spacing scale, and the
+   same header, button, input, card and section cue in every tool. */
+:root{--lp-paper:#fcfbf9;--lp-card:#ffffff;--lp-field:#ffffff;--lp-ink:#16181d;--lp-ink2:#3d424b;--lp-ink3:#5d636d;--lp-line:#e6e5e1;--lp-line2:#d6d4ce;--lp-blue:#0a5fd0;--lp-blued:#0850b1;--lp-bluel:#e8f0fc;--lp-green:#0f9d76;--lp-greenl:#e5f5f0;--lp-greend:#0b5c45;--lp-amber:#c9800f;--lp-amberl:#fdf3e2;--lp-amberd:#6b4510;--lp-red:#d1495b;--lp-redl:#fbeaec;--lp-redd:#8a1f2e;--lp-stage:#eef0f2;--lp-stage2:#d9dde2;--lp-sh:0 1px 2px rgba(20,24,32,.04),0 6px 18px rgba(20,24,32,.05);--lp-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Inter Variable",system-ui,"Segoe UI",Roboto,sans-serif;--lp-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--lp-r:9px;--lp-r-card:13px;
+  --lp-1:4px;--lp-2:8px;--lp-3:12px;--lp-4:16px;--lp-5:22px;--lp-6:30px;--lp-7:40px;--lp-8:56px;
+  --lp-win:80vw;--lp-cap:1240px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not(.light){--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}}
 :root[data-theme="dark"],:root.dark{--lp-paper:#0f1115;--lp-card:#181b21;--lp-field:#1d2027;--lp-ink:#f1f2f4;--lp-ink2:#c3c7ce;--lp-ink3:#9aa0a9;--lp-line:#2b3038;--lp-line2:#3a404a;--lp-blue:#5b9dff;--lp-blued:#8cbaff;--lp-bluel:#16233a;--lp-green:#3fcf9f;--lp-greenl:#11281f;--lp-greend:#7fe0bd;--lp-amber:#f0b95a;--lp-amberl:#2a2112;--lp-amberd:#f5d9a6;--lp-red:#f07a8a;--lp-redl:#2d161b;--lp-redd:#f7a9b3;--lp-stage:#1b1f26;--lp-stage2:#0b0d11;--lp-sh:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4);}
 :root,:root[data-theme],:root.dark,:root.light{--paper:var(--lp-paper);--card:var(--lp-card);--field:var(--lp-field);--ink:var(--lp-ink);--ink2:var(--lp-ink2);--muted:var(--lp-ink3);--rule:var(--lp-line);--rule2:var(--lp-line2);--accent:var(--lp-blue);--accent-ink:var(--lp-blued);--accent-soft:var(--lp-bluel);--danger:var(--lp-red);--ok:var(--lp-green);--warn:var(--lp-amber);--bad:var(--lp-red);--shadow:var(--lp-sh);}
 [hidden]{display:none!important}
 html,body{font-family:var(--lp-sans)}
-body{font-size:14px;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
+body{font-size:14px;line-height:1.5;letter-spacing:-.006em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* the homepage's heading rhythm, so a tool's titles sit at the same weight and tracking */
+h1,h2,h3,h4{font-family:var(--lp-sans);letter-spacing:-.015em;font-weight:650}
+h2{font-size:17px;line-height:1.25}h3{font-size:15px;line-height:1.3}h4{font-size:13.5px}
+p{margin:0 0 var(--lp-3)}
+/* numbers line up in tables and read-outs */
+table,.mono,[class*="mono"]{font-variant-numeric:tabular-nums}
+.lp-sec{margin:var(--lp-6) 0 0}
+.lp-sec:first-child{margin-top:0}
+.lp-sec-h{display:flex;align-items:baseline;gap:var(--lp-3);margin:0 0 var(--lp-3);padding-bottom:var(--lp-2);border-bottom:1px solid var(--lp-line)}
+.lp-sec-h h3{margin:0;font:650 13.5px/1.2 var(--lp-sans);letter-spacing:-.01em;color:var(--lp-ink)}
+.lp-sec-h .lp-sec-n{font:700 10.5px/1 var(--lp-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lp-ink3)}
+.lp-sec-h .lp-sec-sub{margin-left:auto;font:12px/1 var(--lp-sans);color:var(--lp-ink3)}
 .top{height:54px;min-height:54px;max-height:54px;padding-top:0;padding-bottom:0;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
   background:color-mix(in srgb,var(--lp-paper) 88%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--lp-line);box-shadow:none;font-family:var(--lp-sans)}
@@ -1523,7 +1538,7 @@ textarea.lpmap-in{resize:vertical}
     <button data-act="loadExample">Load an example week (to try things out)</button>
     <button data-act="clearAll">Clear all… start from a clean slate</button>
     <hr>
-    <label class="menu-sel">Page width<select id="pagew"><option value="90">90% of the screen</option><option value="98">Full screen</option><option value="80">80% of the screen</option><option value="65">65% of the screen</option></select></label>
+    <label class="menu-sel">Page width<select id="pagew"><option value="65">65% of the screen</option><option value="80">80% of the screen</option><option value="90">90% of the screen</option><option value="98">Full screen</option></select></label>
     <button data-act="theme" id="themeBtn">Theme: system</button>
   </div></details>
 </div></div>
@@ -6439,7 +6454,7 @@ async function pruneImages(){ if (!DB.ok) return;
     CODES = await setting('codes', null) || uniq(ALL.map(x => x.code));
     NAMES = await setting('names', null);
     if (!NAMES){ NAMES = []; const oldTags = await setting('tags', []); ALL.forEach(x => x.blocks.forEach(b => b.samples.forEach(s => rememberName(s.name, s.desc)))); (oldTags || []).forEach(t => rememberName(t, '')); }
-    FINFO = await setting('fileInfo', null); FH = await setting('fh', null); EXPD = await setting('exported', {}) || {}; PAGEW = await setting('pagew', '90'); ROLL = await setting('roll', {}) || {}; GEN = await setting('general', []) || []; Object.assign(FILT, await setting('filt', {})); AUTHOR = await setting('author', '');
+    FINFO = await setting('fileInfo', null); FH = await setting('fh', null); EXPD = await setting('exported', {}) || {}; PAGEW = await setting('pagew', '80'); ROLL = await setting('roll', {}) || {}; GEN = await setting('general', []) || []; Object.assign(FILT, await setting('filt', {})); AUTHOR = await setting('author', '');
   }
   applyPagew();
   await route();

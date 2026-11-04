@@ -9,7 +9,7 @@ you can save a `.lpdoc` project file to keep or move your work.
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
   the safety nets below (Recently removed, Earlier versions) and links extension v5.
-- `doc-reader-extension-v7.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+- `doc-reader-extension-v8.zip`: the Chrome extension (unzip, then `chrome://extensions` →
   Developer mode → Load unpacked; v1 to v6 stay as legacy zips; v6 is v5 repackaged). v7: one set
   of notes per paper. A page is filed under its DOI when it names one (`citation_doi`, `dc.identifier`,
   `prism.doi` meta tags, or a `/doi/10.…` address), and under its address with any library proxy undone

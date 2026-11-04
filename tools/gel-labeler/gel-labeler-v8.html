@@ -2153,11 +2153,15 @@ var LADDER_IMG={
 var FONT='Arial,Helvetica,sans-serif';
 // Fixed bold-colour palette for band markers — no pastels, no arbitrary
 // picker, so every marker reads clearly against a gel background.
-var MARKER_COLORS=['#000000','#DC2626','#2563EB','#16A34A','#EA580C','#7C3AED','#DB2777','#0891B2','#CA8A04'];
+var MARKER_COLORS=['#FFFFFF','#FACC15','#4ADE80','#38BDF8','#000000','#DC2626','#EA580C','#16A34A','#0891B2','#2563EB','#7C3AED','#DB2777'];
+function gelMedianLum(){try{var g=G();if(!g||!g.img)return 255;var v=lumStats(g);return v?v.med:255;}catch(e){return 255;}}
+function gelIsDark(){return gelMedianLum()<110;}   // light bands on a dark background -> pale markers read best
 function nextMarkerColor(){
+ var order=gelIsDark()?['#FFFFFF','#FACC15','#4ADE80','#38BDF8','#DB2777','#EA580C']
+                      :['#000000','#DC2626','#2563EB','#16A34A','#EA580C','#7C3AED','#DB2777'];
  var used={}; S.bandMarkers.forEach(function(m){used[m.color]=(used[m.color]||0)+1;});
- var best=MARKER_COLORS[0],bc=Infinity;
- MARKER_COLORS.forEach(function(col){var n=used[col]||0;if(n<bc){bc=n;best=col;}});
+ var best=order[0],bc=Infinity;
+ order.forEach(function(col){var n=used[col]||0;if(n<bc){bc=n;best=col;}});
  return best;
 }
 // Draws a sideways arrowhead (▶ or ◀) at (x,y), tip pointing toward the band.
@@ -6081,7 +6085,7 @@ function pBandLegend(){
  var colWrap=mk('div');colWrap.style.cssText='display:flex;gap:5px;flex-wrap:wrap;flex:1';
  MARKER_COLORS.forEach(function(col){
   var sw=mk('button');sw.style.cssText='width:26px;height:26px;border-radius:6px;cursor:pointer;'+
-   'background:'+col+';border:2px solid '+(shapeState.color===col?'#0f172a':'transparent');
+   'background:'+col+';border:2px solid '+(shapeState.color===col?'#0f172a':'rgba(100,116,139,.35)');
   sw.title=col;
   sw.onclick=function(){shapeState.color=col;redrawPreview();
    colWrap.querySelectorAll('button').forEach(function(b2){b2.style.borderColor='transparent';});
@@ -6097,7 +6101,7 @@ function pBandLegend(){
  ap(prevRow,prevCanvas);ap(addRow,prevRow);
  function redrawPreview(){
   var pc=prevCanvas.getContext('2d');
-  pc.clearRect(0,0,70,34);
+  pc.fillStyle=gelIsDark()?'#1b1b1b':'#f4f4f5';pc.fillRect(0,0,70,34);
   var bx=shapeState.shape==='r'?18:52;
   drawArrowhead(pc,bx,17,S.markerArrowSize||16,shapeState.shape,shapeState.color,shapeState.filled);
  }

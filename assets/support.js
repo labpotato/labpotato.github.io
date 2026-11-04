@@ -65,25 +65,31 @@
        a tall paper stack, an empty mug); pointing at a button brings coffee and it perks up; pressing one is a
        little celebration. */
     const SCENE = `<svg class="scene" viewBox="0 0 260 220" aria-hidden="true">
-      <g class="papers"><rect x="18" y="128" width="58" height="10" rx="2" transform="rotate(-4 47 133)" fill="#fff" stroke="#e3d4c2"/><rect x="20" y="138" width="56" height="10" rx="2" transform="rotate(3 48 143)" fill="#fffdf8" stroke="#e3d4c2"/><rect x="16" y="148" width="60" height="10" rx="2" transform="rotate(-2 46 153)" fill="#fff" stroke="#e3d4c2"/><rect x="19" y="158" width="58" height="10" rx="2" fill="#fffdf8" stroke="#e3d4c2"/><path d="M28 162h30M28 152h36" stroke="#d9c7b2" stroke-width="2" stroke-linecap="round"/></g>
+      <defs><radialGradient id="lps-skin" cx="38%" cy="30%" r="78%"><stop offset="0%" stop-color="#e0ad6e"/><stop offset="55%" stop-color="#cf9552"/><stop offset="100%" stop-color="#b87d3c"/></radialGradient>
+        <clipPath id="lps-bodyclip"><path d="M54 132C52 104 74 82 104 75C134 68 170 71 194 88C214 102 219 125 210 148C200 172 170 188 136 190C102 192 70 180 59 158C55 150 54 141 54 132Z"/></clipPath></defs>
+      <g class="papers"><rect x="16" y="150" width="66" height="34" rx="3" transform="rotate(-3 49 167)" fill="#fffdf8" stroke="#e3d4c2"/><path class="ink" d="M26 160h40M26 167h46M26 174h34" stroke="#c9b49a" stroke-width="2" stroke-linecap="round"/></g>
       <g class="pot">
-        <path class="body" d="M54 132C52 104 74 82 104 75C134 68 170 71 194 88C214 102 219 125 210 148C200 172 170 188 136 190C102 192 70 180 59 158C55 150 54 141 54 132Z" fill="#cd9050"/>
-        <g class="tired"><path d="M89 121a12 9 0 0 0 24 0z" fill="#2a2018"/><path d="M145 118a12 9 0 0 0 24 0z" fill="#2a2018"/><circle cx="104" cy="124" r="1.6" fill="#fff" opacity=".8"/><circle cx="160" cy="121" r="1.6" fill="#fff" opacity=".8"/>
-          <path d="M86 121h30M142 118h30" stroke="#2a2018" stroke-width="4" stroke-linecap="round"/>
-          <path d="M90 134q11 7 22 0M146 131q11 7 22 0" stroke="#7a4524" stroke-opacity=".7" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M93 139q8 4 16 0M149 136q8 4 16 0" stroke="#7a4524" stroke-opacity=".4" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-          <ellipse cx="129" cy="157" rx="6" ry="3.5" fill="#2a2018"/>
-          <path class="sweat" d="M200 92c5 7 8 11 8 15a8 8 0 0 1-16 0c0-4 3-8 8-15z" fill="#8fcaff" stroke="#4b9be0" stroke-width="1.5"/></g>
-        <g class="happy"><ellipse cx="101" cy="121" rx="11" ry="13" fill="#2a2018"/><ellipse cx="157" cy="118" rx="11" ry="13" fill="#2a2018"/><circle cx="105" cy="116" r="4" fill="#fff"/><circle cx="161" cy="113" r="4" fill="#fff"/><circle cx="98" cy="126" r="1.8" fill="#fff"/><circle cx="154" cy="123" r="1.8" fill="#fff"/>
-          <ellipse cx="82" cy="142" rx="12" ry="7" fill="#f29a86" opacity=".7"/><ellipse cx="178" cy="139" rx="12" ry="7" fill="#f29a86" opacity=".7"/>
-          <path d="M112 146q18 24 36 0z" fill="#5a2418"/><path d="M121 154q9 8 18 0q-9-4-18 0z" fill="#ff8f8f"/></g>
+        <path class="body" d="M54 132C52 104 74 82 104 75C134 68 170 71 194 88C214 102 219 125 210 148C200 172 170 188 136 190C102 192 70 180 59 158C55 150 54 141 54 132Z" fill="url(#lps-skin)" stroke="#a66f34" stroke-width="1.5"/>
+        <g clip-path="url(#lps-bodyclip)" class="skin"><path d="M60 96q46-26 120-8" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
+          <ellipse cx="76" cy="150" rx="3" ry="2" fill="#9c6a30" opacity=".5"/><ellipse cx="104" cy="168" rx="2.4" ry="1.6" fill="#9c6a30" opacity=".45"/><ellipse cx="150" cy="166" rx="3" ry="2" fill="#9c6a30" opacity=".5"/><ellipse cx="186" cy="132" rx="2.6" ry="1.8" fill="#9c6a30" opacity=".45"/><ellipse cx="196" cy="112" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".4"/><ellipse cx="70" cy="120" rx="2.2" ry="1.5" fill="#9c6a30" opacity=".4"/>
+          <path d="M74 149l2 2M102 167l2 1.5M148 165l2 2" stroke="#7a4f22" stroke-opacity=".35" stroke-width="1.2" stroke-linecap="round"/></g>
+        <g class="tired"><path d="M88 118q12 6 24 1" fill="none" stroke="#2a2018" stroke-width="4.5" stroke-linecap="round"/><path d="M144 116q12 5 24 1" fill="none" stroke="#2a2018" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="100" cy="125" r="3.2" fill="#2a2018"/><circle cx="156" cy="123" r="3.2" fill="#2a2018"/>
+          <path d="M92 134q9 4 18 1M146 132q9 4 18 1" stroke="#a9753f" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+          <path d="M120 150q9 3 18 -1" fill="none" stroke="#5a3418" stroke-width="3.4" stroke-linecap="round"/>
+          <path class="sweat" d="M196 100c4 6 7 9 7 12.5a7 7 0 0 1-14 0c0-3.5 3-6.5 7-12.5z" fill="#9fd0ff" stroke="#5aa0e6" stroke-width="1.4"/></g>
+        <g class="happy"><path d="M90 126q11 -13 22 0" fill="none" stroke="#2a2018" stroke-width="5" stroke-linecap="round"/><path d="M146 123q11 -13 22 0" fill="none" stroke="#2a2018" stroke-width="5" stroke-linecap="round"/>
+          <ellipse cx="84" cy="143" rx="11" ry="6.5" fill="#f2937f" opacity=".75"/><ellipse cx="176" cy="140" rx="11" ry="6.5" fill="#f2937f" opacity=".75"/>
+          <path d="M114 144q15 20 32 0z" fill="#5a2418"/><path d="M121 152q10 7 18 0q-9-3-18 0z" fill="#ff9a9a"/></g>
       </g>
-      <g class="arms-down"><ellipse cx="78" cy="170" rx="15" ry="8" fill="#c08243"/><ellipse cx="182" cy="170" rx="15" ry="8" fill="#c08243"/></g>
-      <g class="arms-up"><ellipse cx="44" cy="104" rx="9" ry="16" transform="rotate(-28 44 104)" fill="#c08243"/><ellipse cx="216" cy="98" rx="9" ry="16" transform="rotate(28 216 98)" fill="#c08243"/></g>
+      <g class="arms-down"><g class="pen-arm"><ellipse cx="96" cy="168" rx="13" ry="7" transform="rotate(26 96 168)" fill="#c08243"/><line class="pen" x1="78" y1="178" x2="98" y2="160" stroke="#3a6ea5" stroke-width="4" stroke-linecap="round"/><path d="M76 180l3-5" stroke="#f0c050" stroke-width="4" stroke-linecap="round"/></g><ellipse cx="184" cy="170" rx="14" ry="8" fill="#c08243"/></g>
+      <g class="arms-up"><ellipse cx="46" cy="106" rx="9" ry="16" transform="rotate(-30 46 106)" fill="#c08243"/><ellipse cx="214" cy="100" rx="9" ry="16" transform="rotate(30 214 100)" fill="#c08243"/></g>
       <rect class="desk" x="0" y="172" width="260" height="48" rx="6" fill="#e2c39d"/><rect x="0" y="172" width="260" height="6" rx="3" fill="#d2ad82"/>
       <g class="mug"><path d="M198 140h28v24a8 8 0 0 1-8 8h-12a8 8 0 0 1-8-8z" fill="#fff" stroke="#d9c7b2" stroke-width="2"/><path d="M226 147h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#d9c7b2" stroke-width="3"/>
         <rect class="coffee" x="200" y="144" width="24" height="6" rx="2" fill="#7a4a22"/>
         <g class="steam"><path d="M206 132c-4-5 4-8 0-13M214 132c-4-5 4-8 0-13M222 132c-4-5 4-8 0-13" stroke="#c9b6a2" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></g>
       <g class="spark"><path d="M30 60l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M228 52l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M60 26l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/></g>
+      <g class="hold-heart"><path d="M46 96c-3-4-9-2-9 3 0 4 9 9 9 9s9-5 9-9c0-5-6-7-9-3z" fill="#ff6b8a"/></g>
     </svg>`;
     const st = document.createElement("style");
     st.textContent = `
@@ -100,33 +106,45 @@
 .lps-btn.alt{color:#174a80!important;background:linear-gradient(180deg,#f0f6fd,#e1edfa);border-color:#c9dcf2;box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 6px 14px -10px rgba(30,80,140,.55)}
 .lps-btn .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .lps-free{display:block;margin-top:12px;font-size:12.5px;color:var(--text-muted,#7a8190)}
-/* the potato: tired by default */
+/* the potato: tired and hard at work by default */
+.scene{--eased:cubic-bezier(.3,1.6,.5,1)}
 .scene .pot{transform-origin:130px 190px;animation:lps-breathe 3.6s ease-in-out infinite}
 .scene .tired{animation:lps-nod 6s ease-in-out infinite;transform-origin:130px 140px}
-.scene .pot{rotate:0deg}.scene:not(.motivated) .body{filter:saturate(.8) brightness(.96)}
-.scene .sweat{animation:lps-sweat 2.8s ease-in infinite}
-.scene .happy,.scene .arms-up,.scene .steam,.scene .spark{opacity:0;transition:opacity .25s}
+.scene:not(.up) .body{filter:saturate(.85) brightness(.97)}
+.scene .sweat{animation:lps-sweat 3.2s ease-in infinite}
+.scene .pen-arm{transform-origin:150px 172px;animation:lps-write 1.5s ease-in-out infinite}
+.scene .papers .ink{stroke-dasharray:46;stroke-dashoffset:46;animation:lps-ink 6s ease-in-out infinite}
+.scene .happy,.scene .arms-up,.scene .steam,.scene .spark,.scene .hold-heart{opacity:0;transition:opacity .25s}
 .scene .coffee{transform-origin:212px 150px;transform:scaleY(0);transition:transform .45s ease}
-.scene .papers{transform-origin:46px 170px;animation:lps-stack 9s ease-in-out infinite}
 @keyframes lps-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
-@keyframes lps-nod{0%,70%,100%{transform:translateY(0)}78%{transform:translateY(5px) rotate(-2deg)}86%{transform:translateY(0)}}
-@keyframes lps-sweat{0%{transform:translateY(-4px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(14px);opacity:0}}
-@keyframes lps-stack{0%,90%,100%{transform:rotate(0)}94%{transform:rotate(-2deg)}}
-/* motivated: coffee arrives, eyes sparkle, arms go up */
-.scene.motivated .tired,.scene.motivated .arms-down{opacity:0}
-.scene.motivated .happy,.scene.motivated .arms-up,.scene.motivated .steam,.scene.motivated .spark{opacity:1}
+@keyframes lps-nod{0%,64%,100%{transform:translateY(0) rotate(0)}74%{transform:translateY(4px) rotate(-2deg)}84%{transform:translateY(0) rotate(0)}}
+@keyframes lps-sweat{0%{transform:translateY(-4px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(13px);opacity:0}}
+@keyframes lps-write{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,1px) rotate(-3deg)}50%{transform:translate(3px,-1px) rotate(2deg)}75%{transform:translate(-1px,1px) rotate(-2deg)}}
+@keyframes lps-ink{0%,70%{stroke-dashoffset:46}90%,100%{stroke-dashoffset:0}}
+/* both buttons wake the potato: happy face, arms up, pen set down */
+.scene.up .tired,.scene.up .arms-down{opacity:0}
+.scene.up .happy,.scene.up .arms-up{opacity:1}
+.scene.up .pot{animation:lps-bounce .9s ease-in-out infinite}
+.scene.up .arms-up{animation:lps-wave .9s ease-in-out infinite;transform-origin:130px 150px}
+@keyframes lps-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes lps-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
+/* coffee button: a fresh mug, steam and sparkles */
+.scene.motivated .steam,.scene.motivated .spark{opacity:1}
 .scene.motivated .coffee{transform:scaleY(1)}
-.scene.motivated .pot{animation:lps-bounce .9s ease-in-out infinite}
-.scene.motivated .arms-up{animation:lps-wave .9s ease-in-out infinite;transform-origin:130px 150px}
 .scene.motivated .steam path{animation:lps-steam 1.6s ease-in-out infinite}.scene.motivated .steam path:nth-child(2){animation-delay:.3s}.scene.motivated .steam path:nth-child(3){animation-delay:.6s}
 .scene.motivated .spark path{fill:#ffc53d;transform-box:fill-box;transform-origin:center;animation:lps-twinkle 1.2s ease-in-out infinite}.scene.motivated .spark path:nth-child(2){animation-delay:.4s}.scene.motivated .spark path:nth-child(3){animation-delay:.8s}
-@keyframes lps-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes lps-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(3deg)}}
 @keyframes lps-steam{0%{opacity:0;transform:translateY(6px)}40%{opacity:.9}100%{opacity:0;transform:translateY(-10px)}}
 @keyframes lps-twinkle{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1.15);opacity:1}}
-/* pressed: a jump and a burst of hearts */
-.scene.cheer .pot{animation:lps-jump .6s cubic-bezier(.3,1.6,.5,1)}
+/* paypal button: the potato lifts a little heart and rocks happily */
+.scene.loved .hold-heart{opacity:1;transform-box:fill-box;transform-origin:center;animation:lps-beat 1s ease-in-out infinite}
+.scene.loved .arms-up{animation:lps-rock 1.2s ease-in-out infinite;transform-origin:130px 150px}
+@keyframes lps-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes lps-rock{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+/* pressed: coffee → a jump; paypal → a happy wiggle */
+.scene.cheer .pot{animation:lps-jump .6s var(--eased)}
+.scene.cheer-love .pot{animation:lps-wiggle .7s ease-in-out}
 @keyframes lps-jump{0%{transform:translateY(0)}40%{transform:translateY(-22px)}100%{transform:translateY(0)}}
+@keyframes lps-wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}80%{transform:rotate(-4deg)}}
 .lps-heart{position:absolute;width:16px;height:16px;pointer-events:none;animation:lps-float 1.4s ease-out forwards}
 .lps-heart svg{width:100%;height:100%;fill:#ff6b8a}
 @keyframes lps-float{0%{opacity:0;transform:translate(0,0) scale(.4)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-120px) scale(1.1) rotate(var(--r))}}
@@ -143,19 +161,26 @@
       <div class="lps-row">${links.map((l, i) => `<a class="lps-btn${i ? " alt" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${ICON[l.icon]}${esc(l.label)}</a>`).join("")}</div>
       <span class="lps-free">No pressure. The tools stay free either way.</span></div></div>`;
     const scene = home.querySelector(".scene"), stage = home.querySelector(".lps-stage");
-    const up = on => () => scene.classList.toggle("motivated", on);
+    // the two buttons wake the potato in their own way: coffee brings a fresh mug and steam,
+    // PayPal has it lift a little heart. Pressing each plays its own celebration.
+    const mood = b => b.classList.contains("alt") ? "loved" : "motivated";
+    const hover = (b, on) => () => { scene.classList.toggle("up", on); scene.classList.toggle(mood(b), on); if (!on) scene.classList.remove("motivated", "loved"); };
+    const burst = (n, emoji) => { for (let k = 0; k < n; k++) {
+        const h = document.createElement("span"); h.className = "lps-heart";
+        h.style.left = (36 + Math.random() * 28) + "%"; h.style.top = (38 + Math.random() * 20) + "%";
+        h.style.setProperty("--dx", (Math.random() * 90 - 45) + "px"); h.style.setProperty("--r", (Math.random() * 60 - 30) + "deg"); h.style.animationDelay = (k * 55) + "ms";
+        h.innerHTML = emoji;
+        stage.append(h); setTimeout(() => h.remove(), 1700);
+      } };
+    const HEART = '<svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>';
+    const COIN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#f6c343"/><text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="800" fill="#9a6c12">$</text></svg>';
     home.querySelectorAll(".lps-btn").forEach(b => {
-      b.addEventListener("pointerenter", up(true)); b.addEventListener("pointerleave", up(false));
-      b.addEventListener("focus", up(true)); b.addEventListener("blur", up(false));
-      b.addEventListener("click", () => {   // a jump and a burst of hearts (the page opens in a new tab)
-        scene.classList.add("motivated"); scene.classList.remove("cheer"); void scene.getBoundingClientRect(); scene.classList.add("cheer");
-        for (let k = 0; k < 9; k++) {
-          const h = document.createElement("span"); h.className = "lps-heart";
-          h.style.left = (38 + Math.random() * 24) + "%"; h.style.top = (40 + Math.random() * 20) + "%";
-          h.style.setProperty("--dx", (Math.random() * 80 - 40) + "px"); h.style.setProperty("--r", (Math.random() * 60 - 30) + "deg"); h.style.animationDelay = (k * 60) + "ms";
-          h.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>';
-          stage.append(h); setTimeout(() => h.remove(), 1600);
-        }
+      b.addEventListener("pointerenter", hover(b, true)); b.addEventListener("pointerleave", hover(b, false));
+      b.addEventListener("focus", hover(b, true)); b.addEventListener("blur", hover(b, false));
+      b.addEventListener("click", () => {   // the link opens in a new tab; the potato celebrates here
+        const love = b.classList.contains("alt"), cls = love ? "cheer-love" : "cheer";
+        scene.classList.add("up", mood(b)); scene.classList.remove(cls); void scene.getBoundingClientRect(); scene.classList.add(cls);
+        burst(love ? 10 : 8, love ? HEART : COIN);
       });
     });
     return;

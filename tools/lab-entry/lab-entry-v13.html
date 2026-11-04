@@ -1388,6 +1388,103 @@ body{font-size:14px;letter-spacing:-.006em;-webkit-font-smoothing:antialiased}
 
 /* ---------- lab-entry v13: layout ---------- */
 .lp-fly{box-shadow:0 18px 40px rgba(16,24,40,.28);border-radius:14px;background:var(--lp-card)}
+
+/* ── Research map overlay ───────────────────────────────────────────────────── */
+body.lpmap-lock{overflow:hidden}
+.lpmap{position:fixed;inset:0;z-index:400;background:var(--paper);display:none;flex-direction:column;font-family:var(--lp-sans,var(--ui))}
+.lpmap.on{display:flex}
+.lpmap-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--card)}
+.lpmap-ttl{font-size:15px;font-weight:680;letter-spacing:-.02em}
+.lpmap-pick{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.lpmap-pick select{max-width:280px;height:30px;border:1px solid var(--rule2);border-radius:8px;background:var(--field);color:var(--ink);padding:0 8px;font:inherit;font-size:13px}
+.lpmap .grow{flex:1}
+.lpmap-body{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr);min-height:0;position:relative}
+.lpmap-rail{border-right:1px solid var(--rule);background:var(--card);overflow:auto;padding:12px}
+.lpmap-rail-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.lpmap-cnt{background:var(--field);border-radius:999px;padding:1px 8px;font-size:11px;color:var(--ink2)}
+.lpmap-railhelp,.lpmap-railempty{font-size:11.5px;line-height:1.5;color:var(--muted);margin-bottom:10px}
+.lpmap-src{border:1px solid var(--rule);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--paper);cursor:grab;display:flex;flex-direction:column;gap:3px}
+.lpmap-src:hover{border-color:var(--rule2)}
+.lpmap-src.used{opacity:.6}
+.lpmap-src-t{font-size:12.5px;font-weight:600;line-height:1.3;color:var(--ink)}
+.lpmap-src-a{font-size:11px;color:var(--muted)}
+.lpmap-on{font-size:10px;color:var(--accent)}
+.lpmap-k{align-self:flex-start;font:600 9.5px/1 var(--lp-sans,var(--ui));letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--field);color:var(--muted)}
+.lpmap-k.k-paper{background:color-mix(in srgb,#2f6f9f 16%,var(--card));color:#2f6f9f}
+.lpmap-k.k-web{background:color-mix(in srgb,#2f7a52 16%,var(--card));color:#2f7a52}
+.lpmap-k.k-book{background:color-mix(in srgb,#8a4fa3 16%,var(--card));color:#8a4fa3}
+.lpmap-k.k-protocol{background:color-mix(in srgb,#a26614 16%,var(--card));color:#a26614}
+.lpmap-canvas{position:relative;overflow:hidden;background:
+  radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--ink) 9%,transparent) 1px,transparent 0) 0 0/22px 22px,var(--paper);cursor:grab;touch-action:none}
+.lpmap-canvas.panning{cursor:grabbing}
+.lpmap-world{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0}
+.lpmap-edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+.lpmap-edges path{fill:none;stroke-width:2.4;pointer-events:stroke;cursor:pointer}
+.lpmap-edges path.k-supports{stroke:var(--ok)}
+.lpmap-edges path.k-contradicts{stroke:var(--bad);stroke-dasharray:7 6}
+.lpmap-edges path.k-method{stroke:var(--accent)}
+.lpmap-edges path.k-other{stroke:var(--muted)}
+.lpmap-edges path.temp{stroke:var(--accent);stroke-dasharray:5 5;stroke-width:2}
+.lpmap-node{position:absolute;width:96px;background:var(--card);border:1px solid var(--rule2);border-radius:13px;box-shadow:var(--shadow,0 10px 24px -16px rgba(16,24,40,.5));user-select:none;cursor:grab;outline:2px solid transparent;transition:outline-color .15s,box-shadow .15s}
+.lpmap-node:hover{box-shadow:0 16px 34px -16px rgba(16,24,40,.55)}
+.lpmap-node.sel{outline-color:var(--accent)}
+.lpmap-node.pop{animation:lpmap-pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes lpmap-pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.lpmap-node img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:12px 12px 0 0;background:#fff;pointer-events:none}
+.lpmap-nb{padding:7px 9px}
+.lpmap-nt{font-size:12px;font-weight:600;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lpmap-nt.note{font-weight:400;-webkit-line-clamp:3}
+.lpmap-ns{font-size:10.5px;color:var(--muted);margin-top:2px}
+.lpmap-node.k-exp{width:150px;border:2px solid #b5753a;background:linear-gradient(180deg,color-mix(in srgb,#b5753a 10%,var(--card)),var(--card) 62%)}
+.lpmap-node.k-exp .lpmap-nb{padding:10px 12px}
+.lpmap-node.k-exp .lpmap-nt{font-size:14px;-webkit-line-clamp:3}
+.lpmap-eid{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:#b5753a;margin-bottom:2px}
+.lpmap-node.k-note{width:118px;background:#fffbe6;border-color:#eadf9c}
+:root[data-theme="dark"] .lpmap-node.k-note{background:#2a2614;border-color:#4d4420}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lpmap-node.k-note{background:#2a2614;border-color:#4d4420}}
+.lpmap-h{position:absolute;right:-9px;top:50%;width:17px;height:17px;margin-top:-9px;border-radius:50%;background:var(--accent);border:3px solid var(--card);box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:crosshair;opacity:0;transition:opacity .15s}
+.lpmap-node:hover .lpmap-h,.lpmap-node.sel .lpmap-h{opacity:1}
+.lpmap-why{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--rule2);border-radius:8px;padding:2px 8px;font-size:10.5px;line-height:1.4;max-width:160px;color:var(--ink2);box-shadow:0 2px 8px rgba(16,24,40,.12);cursor:pointer;pointer-events:auto}
+.lpmap-why b{display:block;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lpmap-why.k-supports b{color:var(--ok)}.lpmap-why.k-contradicts b{color:var(--bad)}.lpmap-why.k-method b{color:var(--accent)}
+.lpmap-zoom{position:absolute;right:12px;bottom:12px;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:3px 9px;font-size:11px;color:var(--muted);pointer-events:none}
+.lpmap-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:40px;font-size:13.5px;color:var(--muted);max-width:420px;margin:auto}
+/* drawer */
+.lpmap-drawer{position:absolute;top:0;right:0;bottom:0;width:320px;max-width:90%;background:var(--card);border-left:1px solid var(--rule);box-shadow:-24px 0 48px -36px rgba(0,0,0,.5);transform:translateX(104%);transition:transform .22s;z-index:5;overflow:auto;padding:16px}
+.lpmap-drawer.open{transform:none}
+.lpmap-dr-x{position:absolute;top:10px;right:10px;border:0;background:var(--field);border-radius:50%;width:26px;height:26px;cursor:pointer;color:var(--muted)}
+.lpmap-drawer h4{margin:4px 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lpmap-drawer h5{margin:16px 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lpmap-dr-exp{font-size:15px;font-weight:650;line-height:1.3;color:var(--ink)}
+.lpmap-dr-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.lpmap-dr-cite{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.5;border-left:2px solid var(--rule2);padding-left:9px}
+.lpmap-dr-fig{width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--rule)}
+.lpmap-dr-btns,.lpmap-dr-conn{margin-top:10px}
+.lpmap-dr-btns{display:flex;flex-wrap:wrap;gap:6px}
+.lpmap-conn{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--rule)}
+.lpmap-conn .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:4px;background:var(--muted)}
+.lpmap-conn .dot.k-supports{background:var(--ok)}.lpmap-conn .dot.k-contradicts{background:var(--bad)}.lpmap-conn .dot.k-method{background:var(--accent)}
+.lpmap-conn a{font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:none}
+.lpmap-conn-k{display:block;font-size:11px;color:var(--muted)}
+.lpmap-dr-none{font-size:12px;color:var(--muted)}
+/* popovers + forms */
+.lpmap-pop{position:fixed;z-index:410;background:var(--card);border:1px solid var(--rule2);border-radius:12px;box-shadow:0 20px 50px -20px rgba(16,24,40,.5);padding:12px;width:380px;max-width:92vw}
+.lpmap-pop-h{font-size:13px;font-weight:650;margin-bottom:8px}
+.lpmap-pop-f{display:flex;align-items:center;gap:8px;margin-top:10px}
+.lpmap-in{width:100%;box-sizing:border-box;border:1px solid var(--rule2);border-radius:8px;background:var(--field);color:var(--ink);font:inherit;font-size:13px;padding:7px 9px;margin-bottom:7px}
+textarea.lpmap-in{resize:vertical}
+.lpmap-kinds{display:flex;gap:6px;margin-bottom:8px}
+.lpmap-kinds.wrap{flex-wrap:wrap}.lpmap-kinds.sm .lpmap-kb{font-size:11px;padding:3px 7px}
+.lpmap-kb{border:1px solid var(--rule2);background:var(--paper);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink2)}
+.lpmap-kb.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.lpmap-kb.k-supports.on{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card))}
+.lpmap-kb.k-contradicts.on{border-color:var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+.lpmap-row2{display:grid;grid-template-columns:1fr 1.4fr;gap:7px}
+.lpmap-fig{display:block;border:1px dashed var(--rule2);border-radius:9px;padding:9px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:7px}
+.lpmap-fig:hover{border-color:var(--accent);color:var(--accent)}
+.lpmap-figprev img{max-width:100%;border-radius:8px}
+@media (max-width:720px){.lpmap-body{grid-template-columns:1fr}.lpmap-rail{display:none}.lpmap-drawer{width:88%}}
+@media (prefers-reduced-motion:reduce){.lpmap-node.pop{animation:none}.lpmap-drawer{transition:none}}
 @media (prefers-reduced-motion:reduce){.lp-anim,.lp-anim *{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -4319,8 +4416,8 @@ function boardHtml(list){
   list.forEach(y => (y.b.links || []).forEach(id => { const x = byId.get(id); if (!vis(x) || !vis(y)) return; const [a, c] = later(y, x) ? [x, y] : later(x, y) ? [y, x] : [];
     if (!a || BD.edges.some(e => e[0] === a.b.id && e[1] === c.b.id)) return; BD.edges.push([a.b.id, c.b.id]);
     if (lines && !BD.nodes.some(nd => nd.a === a.b.id && nd.tgts.includes(c.b.id)) && !BD.direct.some(e => e.a === a.b.id && e.b === c.b.id)) BD.direct.push({ a: a.b.id, b: c.b.id, color: a.b.color, g: fwdGap(S.get(D(a))) }); }));
-  list.forEach(y => { const x = y.b.from && byId.get(y.b.from); if (!vis(x) || !vis(y) || !later(y, x)) return; BD.edges.push([x.b.id, y.b.id]);
-    if (!BD.nodes.some(nd => nd.a === x.b.id && nd.tgts.includes(y.b.id)) && !BD.direct.some(e => e.a === x.b.id && e.b === y.b.id)) BD.direct.push({ a: x.b.id, b: y.b.id, color: x.b.color, g: fwdGap(S.get(D(x))) }); });
+  list.forEach(y => { const x = y.b.from && byId.get(y.b.from); if (!vis(x) || !vis(y) || !later(y, x)) return; const had = BD.edges.some(e => e[0] === x.b.id && e[1] === y.b.id); BD.edges.push([x.b.id, y.b.id]);
+    if (!had && !BD.nodes.some(nd => nd.a === x.b.id && nd.tgts.includes(y.b.id)) && !BD.direct.some(e => e.a === x.b.id && e.b === y.b.id)) BD.direct.push({ a: x.b.id, b: y.b.id, color: x.b.color, g: fwdGap(S.get(D(x))) }); });
   /* tracks along time: day, gap, day, gap … A gap over days with nothing logged gets a thin stripe naming them. */
   const dd = (a, b) => Math.round(Math.abs(Date.parse(b) - Date.parse(a)) / 864e5), wd = d => new Date(d + 'T00:00').toLocaleDateString(undefined, { weekday: 'short' });
   const fEnd = dirI < 0 ? -1 : K - 1, tracks = [], endUsed = BD.nodes.some(nd => nd.g === fEnd) || BD.direct.some(e => e.g === fEnd);
@@ -4443,6 +4540,7 @@ function drawBoardLinks(){
       const straight = Math.abs(f.p[1] - q[1]) < 1.5 && !blocked(q[1], f.p[0], q[0], skip);
       if (straight) return { id, q, straight };
       if (clear(tl, u0, q[0], skip)) return { id, q, kind: 'rung' };
+      if (tl === sl) return { id, q, kind: 'gutter', far: true };   // v13: same column, blocked by its own days: run down the column's edge
       const cn = chan(gapBefore(id)) ?? (q[0] - dir * 14), ls = [sl, ...[...lanes.keys()].filter(l => l !== tl && l !== sl).sort((x, y) => Math.abs(laneC(x) - q[1]) - Math.abs(laneC(y) - q[1]))];
       const X = ls.find(l => clear(l, u0, cn, skip, l === sl));
       if (X != null) return { id, q, kind: 'climb', xv: laneC(X), cn };
@@ -5376,7 +5474,7 @@ async function backupBlob(from){
   const ents = from ? ALL.filter(e => e.date >= from || e.blocks.some(b => dateOf(e, b) >= from)) : ALL;
   const used = new Set(ents.flatMap(e => e.blocks.flatMap(b => b.images.map(i => i.imageId))));
   const images = [...byId.values()].filter(r => !from || used.has(r.id)).map(({ id, entryId, name, dataUrl, w, h }) => ({ id, entryId, name, dataUrl, w, h }));
-  return new Blob([JSON.stringify({ format: 'lab-journal', version: 6, savedAt: new Date().toISOString(), from: from || '', entries: ents, images, lists: { fillers: FILL, codes: CODES, names: NAMES, roll: ROLL } })], { type: 'application/json' });
+  return new Blob([JSON.stringify({ format: 'lab-journal', version: 6, savedAt: new Date().toISOString(), from: from || '', entries: ents.map(e => Object.assign({}, e, { blocks: e.blocks.map(b => b.thumb ? Object.assign({}, b, { thumb: '' }) : b) })), sources: (window.__mapState ? window.__mapState() : undefined), images, lists: { fillers: FILL, codes: CODES, names: NAMES, roll: ROLL } })], { type: 'application/json' });
 }
 A.saveFile = async (fresh, from) => {
   const blob = await backupBlob(from), name = `lab_journal_${from ? 'from_' + from + '_' : ''}${localDate()}.json`, mb = (blob.size / 1e6).toFixed(1) + ' MB';
@@ -5439,6 +5537,7 @@ Anything here that is not in a saved file will be lost. Cancel and use Save file
   if (E) E = ALL.find(y => y.id === E.id) || null;
   if (E) await ensureImgs(E.blocks);
   if (d.lists) await mergeLists(d.lists);
+   if (d.sources && window.__mapImport) await window.__mapImport(d.sources);
   await setFinfo(file.name || 'the file', d.savedAt || new Date(file.lastModified || Date.now()).toISOString(), 'opened');
   toast(`${replace ? 'Replaced everything: ' : ''}Opened ${n} day${n === 1 ? '' : 's'} from ${file.name || 'the file'} (saved ${whenTxt(d.savedAt) || 'at an unknown time'})${kept ? `; kept ${kept} newer day${kept === 1 ? '' : 's'} already here` : ''}.`);
   route(); ensureThumbs(); return true;
@@ -6373,6 +6472,356 @@ async function pruneImages(){ if (!DB.ok) return;
       if (done){ const el = done.closest('.ib-done') || done; el.animate([{ background: 'color-mix(in srgb, var(--lp-green) 25%, transparent)' }, { background: 'transparent' }], { duration: 1200, delay: 620 }); }
     }, 60);
   }, true);
+})();
+
+/* ══ Lab Entry v13: the save file stays in step with the journal ═══════════════
+   Once a file is saved or opened in Chrome or Edge, each change is written to it a few seconds later, so the
+   file is always current. When the file holds newer work (saved on another computer and synced through Drive
+   or OneDrive), the bar offers to load it. After a restart the browser asks once to reconnect to the file. */
+(function(){
+  let tSync = 0, busy = false, state = '', newerAt = '';
+  const perm = async ask => { if (!FH) return false; try { const o = { mode: 'readwrite' }; let p = await FH.queryPermission(o); if (p !== 'granted' && ask) p = await FH.requestPermission(o); return p === 'granted'; } catch (e){ return false; } };
+  function paint(){ const el = document.querySelector('.locbar'); if (!el) return; const t = document.createElement('div'); t.innerHTML = locBar(); if (t.firstElementChild) el.replaceWith(t.firstElementChild); }
+  async function sync(){
+    if (busy || !FH || !FINFO || state === 'newer') return;
+    if (!unsavedToFile()){ if (state !== 'ok'){ state = 'ok'; paint(); } return; }
+    if (!(await perm(false))){ state = 'need'; paint(); return; }
+    busy = true; state = 'saving'; paint();
+    try { const blob = await backupBlob(), w = await FH.createWritable(); await w.write(blob); await w.close(); await setFinfo(FH.name, new Date().toISOString(), 'saved'); state = 'ok'; }
+    catch (e){ state = 'need'; }
+    busy = false; paint();
+  }
+  window.lpSyncSoon = () => { clearTimeout(tSync); tSync = setTimeout(sync, 2500); if ((state === 'ok' || state === '') && FINFO){ state = ''; paint(); } };
+  const _sn = saveNow;
+  saveNow = async function(){ const r = await _sn.apply(this, arguments); if (FH && FINFO && !busy) lpSyncSoon(); return r; };
+  async function checkFile(){
+    if (!FH || !FINFO) return;
+    let f; try { if ((await FH.queryPermission({ mode: 'read' })) !== 'granted'){ state = 'need'; paint(); return; } f = await FH.getFile(); } catch (e){ return; }
+    let saved = ''; try { saved = JSON.parse(await f.text()).savedAt || ''; } catch (e){}
+    if (saved && saved > (FINFO.savedAt || '')){ state = 'newer'; newerAt = saved; window.__lpNewer = f; paint(); return; }
+    state = unsavedToFile() ? '' : 'ok'; paint(); if (unsavedToFile()) lpSyncSoon();
+  }
+  A.lpLoadNewer = async () => { const f = window.__lpNewer || (FH && await FH.getFile()); if (!f) return; state = '';
+    if (await importData(f, false)) toast(`Loaded the newer work from ${f.name}. Days changed in both places keep the newer copy.`); lpSyncSoon(); };
+  A.lpReconnect = async () => { if (await perm(true)){ state = ''; await checkFile(); if (state !== 'newer') lpSyncSoon(); } else toast('The browser did not allow it. Use Save file to pick the file again.'); };
+  locBar = function(){
+    const w = whereFrom(), lc = lastChange(), un = unsavedToFile(), auto = !!FH && !!window.showSaveFilePicker;
+    const here = `<span class="lb-k" title="Loaded from ${esc(w.page)}. Kept in ${esc(w.store)}.">Kept in this browser${lc ? ` · last change ${esc(whenTxt(lc))}` : ''}</span>`;
+    let file;
+    if (!FINFO) file = `<span class="lb-k lb-warn">No save file yet. It is your backup, and how the journal moves to another computer.</span><button class="btn sm pri" data-act="saveFile">Save file…</button>`;
+    else if (state === 'newer') file = `<span class="lb-k lb-warn"><b>${esc(FINFO.name)}</b> has newer work, saved ${esc(whenTxt(newerAt))}</span><button class="btn sm pri" data-act="lpLoadNewer">Load it</button>`;
+    else if (state === 'need') file = `<span class="lb-k ${un ? 'lb-warn' : 'lb-ok'}"><b>${esc(FINFO.name)}</b> ${un ? 'is behind this journal' : 'is up to date'}</span><button class="btn sm${un ? ' pri' : ''}" data-act="lpReconnect" title="The browser asks once after a restart before writing to the file again">Keep it in step</button>`;
+    else if (state === 'saving') file = `<span class="lb-k">Saving to <b>${esc(FINFO.name)}</b>…</span>`;
+    else if (un && !auto) file = `<span class="lb-k lb-warn"><b>${esc(FINFO.name)}</b> is behind this journal</span><button class="btn sm pri" data-act="saveFile">Save file</button>`;
+    else if (un) file = `<span class="lb-k">Saving to <b>${esc(FINFO.name)}</b> in a moment…</span>`;
+    else file = `<span class="lb-k lb-ok">✓ <b>${esc(FINFO.name)}</b> is up to date${auto ? ', kept in step automatically' : ''}</span>`;
+    return `<div class="locbar" role="group" aria-label="Where this journal is kept"><span class="lb-ico" aria-hidden="true">🔒</span>${here}<span class="lb-sep"></span>${file}</div>`;
+  };
+  setTimeout(checkFile, 1200);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkFile(); });
+  window.__lpSync = { sync, checkFile, get state(){ return state; } };
+})();
+
+// ══ Research map: each experiment is the main branch; sources and notes link around it ══
+/* Obsidian-style map held beside the journal. One map per experiment (its block id is the key);
+   the experiment sits in the middle, sources and notes sit around it, and every line carries a
+   named reason. Sources live in one library and can be dropped onto any experiment's map.
+   All of it is additive: it lives under its own setting and its own key in the save file, so the
+   journal entries are never touched. */
+(function(){
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const ce = (t, c) => { const e = document.createElement(t); if (c) e.className = c; return e; };
+  const esc = window.esc || (s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+  const KIND = { supports: 'supports', contradicts: 'contradicts', method: 'method for', other: 'related to' };
+  const KINDCOL = { supports: 'ok', contradicts: 'bad', method: 'accent', other: 'muted' };
+  const SRCK = [['paper', 'Paper'], ['web', 'Web page'], ['book', 'Book'], ['protocol', 'Protocol']];
+  const SRCK_TXT = Object.fromEntries(SRCK);
+
+  let MS = { lib: [], maps: {} };     // lib: sources; maps: { <blockId>: {nodes, edges, view} }
+  let curExp = null, V = { x: 0, y: 0, k: 1 }, selected = null, saveT = 0, link = null;
+
+  // ── experiments from the journal (read only) ──
+  const exps = () => (typeof ALL !== 'undefined' ? ALL : []).flatMap(e => (e.blocks || []).map(b => ({ b, e })))
+    .filter(x => clean(x.b.title) || (x.b.blocks && x.b.blocks.length))
+    .sort((a, b) => (b.b.date || b.e.date || '').localeCompare(a.b.date || a.e.date || ''));
+  const expById = id => exps().find(x => x.b.id === id);
+  const expTitle = id => { const x = expById(id); return x ? (ttl(x.b) || 'Untitled experiment') : '(experiment removed)'; };
+  const expMeta = id => { const x = expById(id); if (!x) return ''; const st = STATUS_TXT[x.b.status] || ''; return (x.b.date || x.e.date || '') + (st ? ' · ' + st : ''); };
+
+  // ── persistence: a setting, plus a copy that rides the save file between computers ──
+  async function load(){ try { const s = await setting('researchMap', null); if (s && typeof s === 'object'){ MS.lib = Array.isArray(s.lib) ? s.lib : []; MS.maps = s.maps && typeof s.maps === 'object' ? s.maps : {}; } } catch (e){} }
+  function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { try { saveSetting('researchMap', MS); } catch (e){} }, 350); }
+  window.__mapState = () => MS;
+  window.__mapImport = async incoming => {
+    if (!incoming || typeof incoming !== 'object') return;
+    const byId = new Map(MS.lib.map(s => [s.id, s]));
+    (incoming.lib || []).forEach(s => { const cur = byId.get(s.id); if (!cur || (s.updatedAt || '') > (cur.updatedAt || '')) byId.set(s.id, s); });
+    MS.lib = [...byId.values()];
+    Object.entries(incoming.maps || {}).forEach(([k, m]) => { if (m && Array.isArray(m.nodes)) MS.maps[k] = m; });
+    try { await saveSetting('researchMap', MS); } catch (e){}
+    if (open) render();
+  };
+
+  const M = () => { if (!curExp) return null; return MS.maps[curExp] || (MS.maps[curExp] = { nodes: [{ id: 'exp', kind: 'exp', x: 0, y: 0 }], edges: [], view: null }); };
+  const srcById = id => MS.lib.find(s => s.id === id);
+  const labelOf = n => n.kind === 'exp' ? expTitle(curExp) : n.kind === 'note' ? (n.text || 'Note') : (srcById(n.ref) ? srcById(n.ref).title : '(removed)');
+
+  // ── the overlay shell ──
+  let open = false, root = null, canvas = null, world = null, edgesSvg = null, railWrap = null, picker = null;
+  function build(){
+    root = ce('div', 'lpmap');
+    root.innerHTML = `
+      <div class="lpmap-bar">
+        <strong class="lpmap-ttl">Research map</strong>
+        <label class="lpmap-pick">Experiment <select id="lpmap-exp"></select></label>
+        <span class="grow"></span>
+        <button class="btn sm" data-m="addnote">+ Note</button>
+        <button class="btn sm pri" data-m="addsrc">+ Source</button>
+        <button class="btn sm" data-m="fit" title="Fit the whole map in view">Fit</button>
+        <button class="btn sm" data-m="close">Close</button>
+      </div>
+      <div class="lpmap-body">
+        <aside class="lpmap-rail"><div class="lpmap-rail-h">Sources <span class="lpmap-cnt" id="lpmap-cnt">0</span></div>
+          <div class="lpmap-railhelp">Drag a source onto the map to link it to this experiment. Drag the dot on any card to another card to connect them.</div>
+          <div id="lpmap-list"></div></aside>
+        <div class="lpmap-canvas" id="lpmap-canvas"><div class="lpmap-world" id="lpmap-world"><svg class="lpmap-edges" id="lpmap-edges"></svg></div>
+          <div class="lpmap-zoom" id="lpmap-zoom">100%</div>
+          <div class="lpmap-empty" id="lpmap-empty" hidden>No experiments yet. Add one in the journal, then it appears here as the centre of its own map.</div></div>
+        <div class="lpmap-drawer" id="lpmap-drawer"></div>
+      </div>`;
+    document.body.appendChild(root);
+    canvas = $('#lpmap-canvas', root); world = $('#lpmap-world', root); edgesSvg = $('#lpmap-edges', root);
+    railWrap = $('#lpmap-list', root); picker = $('#lpmap-exp', root);
+    root.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return;
+      const m = b.dataset.m; if (m === 'close') close(); else if (m === 'fit') fit(); else if (m === 'addnote') addNote(); else if (m === 'addsrc') srcForm(); });
+    picker.addEventListener('change', () => { curExp = picker.value; const had = M() && M().view; if (had) V = { ...M().view }; selected = null; closeDrawer(); render(); if (!had) fitSoon(); });
+    canvas.addEventListener('pointerdown', panStart);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    document.addEventListener('keydown', onKey, true);
+  }
+  function openMap(){
+    if (!root) build();
+    open = true; root.classList.add('on'); document.body.classList.add('lpmap-lock');
+    const xs = exps(); if (!curExp || !expById(curExp)) curExp = xs.length ? xs[0].b.id : null;
+    const had = M() && M().view; if (had) V = { ...M().view }; render(); if (!had) fitSoon();
+  }
+  function close(){ open = false; root && root.classList.remove('on'); document.body.classList.remove('lpmap-lock'); if (location.hash === '#map') history.replaceState(null, '', location.pathname + location.search); }
+  function onKey(e){ if (!open) return; if (e.key === 'Escape'){ if (selected){ closeDrawer(); } else close(); } }
+
+  // ── render ──
+  function render(){
+    if (!open) return;
+    const xs = exps();
+    picker.innerHTML = xs.map(x => `<option value="${x.b.id}"${x.b.id === curExp ? ' selected' : ''}>${esc(ttl(x.b) || 'Untitled')}</option>`).join('');
+    $('#lpmap-empty', root).hidden = !!xs.length;
+    canvas.style.visibility = xs.length ? '' : 'hidden';
+    renderRail(); renderMap(); applyView();
+    persist();
+  }
+  function renderRail(){
+    $('#lpmap-cnt', root).textContent = MS.lib.length;
+    const on = new Set((M() ? M().nodes : []).map(n => n.ref).filter(Boolean));
+    railWrap.innerHTML = MS.lib.length ? MS.lib.map(s => `<div class="lpmap-src${on.has(s.id) ? ' used' : ''}" draggable="true" data-id="${s.id}">
+        <span class="lpmap-k k-${s.kind}">${esc(SRCK_TXT[s.kind] || s.kind)}</span>
+        <div class="lpmap-src-t">${esc(s.title || 'Untitled source')}</div>
+        ${s.authors ? `<div class="lpmap-src-a">${esc(s.authors)}</div>` : ''}
+        ${on.has(s.id) ? '<span class="lpmap-on">on this map</span>' : ''}</div>`).join('')
+      : '<div class="lpmap-railempty">No sources yet. Add the papers, pages and protocols behind your experiments with <b>+ Source</b>.</div>';
+    $$('.lpmap-src', railWrap).forEach(el => {
+      el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed = 'copy'; });
+      el.addEventListener('click', () => { const m = M(); if (!m) return; const nd = m.nodes.find(n => n.ref === el.dataset.id); if (nd){ focusNode(nd.id); openDrawer(nd.id); } else srcDrawer(el.dataset.id); });
+    });
+  }
+  canvasDrop();
+  function canvasDrop(){ /* drop a source from the rail onto the map */
+    document.addEventListener('dragover', e => { if (open && e.target.closest && e.target.closest('.lpmap-canvas')){ e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+    document.addEventListener('drop', e => { if (!open || !(e.target.closest && e.target.closest('.lpmap-canvas'))) return; e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain'); if (!id || !srcById(id)) return; addSourceNode(id, e.clientX, e.clientY); });
+  }
+  const sizeOf = n => n.kind === 'exp' ? [130, 54] : n.kind === 'note' ? [100, 42] : [96, 80];
+  function nodeHTML(n){
+    if (n.kind === 'exp') return `<div class="lpmap-nb"><div class="lpmap-eid">EXPERIMENT</div><div class="lpmap-nt">${esc(expTitle(curExp))}</div><div class="lpmap-ns">${esc(expMeta(curExp))}</div></div><span class="lpmap-h" data-h></span>`;
+    if (n.kind === 'note') return `<div class="lpmap-nb"><div class="lpmap-nt note">${esc(n.text || 'Empty note')}</div></div><span class="lpmap-h" data-h></span>`;
+    const s = srcById(n.ref) || { title: '(removed)', kind: 'paper' };
+    return `${s.fig ? `<img src="${s.fig}" alt="">` : ''}<div class="lpmap-nb"><span class="lpmap-k k-${s.kind}">${esc(SRCK_TXT[s.kind] || s.kind)}</span><div class="lpmap-nt">${esc(s.title || 'Untitled')}</div>${s.authors ? `<div class="lpmap-ns">${esc(s.authors)}</div>` : ''}</div><span class="lpmap-h" data-h></span>`;
+  }
+  function renderMap(){
+    const m = M(); if (!m){ world.querySelectorAll('.lpmap-node,.lpmap-why').forEach(x => x.remove()); edgesSvg.innerHTML = ''; return; }
+    world.querySelectorAll('.lpmap-node').forEach(x => x.remove());
+    m.nodes.forEach(n => { const [w, h] = sizeOf(n); const el = ce('div', 'lpmap-node k-' + n.kind + (n.fresh ? ' pop' : '')); el.dataset.id = n.id;
+      el.style.left = (n.x - w / 2) + 'px'; el.style.top = (n.y - h / 2) + 'px'; el.innerHTML = nodeHTML(n); world.appendChild(el); bindNode(el); delete n.fresh; });
+    drawEdges();
+  }
+  const center = id => { const el = world.querySelector(`.lpmap-node[data-id="${id}"]`); if (!el) return null; return { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }; };
+  function curve(a, b){ const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d, k = Math.min(40, d * .18);
+    return { d: `M${a.x} ${a.y} Q${mx + nx * k} ${my + ny * k} ${b.x} ${b.y}`, mid: { x: mx + nx * k * .5, y: my + ny * k * .5 } }; }
+  function drawEdges(){
+    const m = M(); world.querySelectorAll('.lpmap-why').forEach(x => x.remove());
+    edgesSvg.innerHTML = m.edges.map(e => { const a = center(e.a), b = center(e.b); if (!a || !b) return ''; return `<path class="k-${e.kind}" data-e="${e.id}" d="${curve(a, b).d}"/>`; }).join('');
+    m.edges.forEach(e => { const a = center(e.a), b = center(e.b); if (!a || !b) return; const c = curve(a, b);
+      const w = ce('div', 'lpmap-why k-' + e.kind); w.dataset.e = e.id; w.style.left = c.mid.x + 'px'; w.style.top = c.mid.y + 'px';
+      w.innerHTML = `<b>${KIND[e.kind]}</b>${esc(e.why || '')}`; world.appendChild(w); });
+    edgesSvg.querySelectorAll('path').forEach(p => p.addEventListener('click', ev => { ev.stopPropagation(); edgePop(m.edges.find(x => x.id === p.dataset.e), ev); }));
+    world.querySelectorAll('.lpmap-why').forEach(el => el.addEventListener('click', ev => { ev.stopPropagation(); edgePop(m.edges.find(x => x.id === el.dataset.e), ev); }));
+  }
+
+  // ── view transform ──
+  function applyView(){ world.style.transform = `translate(${V.x}px,${V.y}px) scale(${V.k})`; $('#lpmap-zoom', root).textContent = Math.round(V.k * 100) + '%'; if (M()) M().view = { ...V }; }
+  const toWorld = (cx, cy) => { const r = canvas.getBoundingClientRect(); return { x: (cx - r.left - V.x) / V.k, y: (cy - r.top - V.y) / V.k }; };
+  function fit(){ const m = M(); if (!m || !m.nodes.length){ V = { x: canvas.clientWidth / 2, y: canvas.clientHeight / 2, k: 1 }; return applyView(); }
+    const xs = m.nodes.map(n => n.x), ys = m.nodes.map(n => n.y), pad = 150;
+    const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad, minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
+    const k = Math.min(1.2, Math.max(.35, Math.min(canvas.clientWidth / (maxX - minX), canvas.clientHeight / (maxY - minY))));
+    V = { k, x: canvas.clientWidth / 2 - (minX + maxX) / 2 * k, y: canvas.clientHeight / 2 - (minY + maxY) / 2 * k }; applyView(); }
+  function fitSoon(){ requestAnimationFrame(() => requestAnimationFrame(fit)); }
+  function focusNode(id){ const c = center(id); if (!c) return; V.x = canvas.clientWidth / 2 - c.x * V.k; V.y = canvas.clientHeight / 2 - c.y * V.k; applyView(); }
+  function panStart(ev){ if (ev.target.closest('.lpmap-node') || ev.target.closest('.lpmap-why') || ev.button === 2) return;
+    const s = { x: ev.clientX, y: ev.clientY, vx: V.x, vy: V.y }; canvas.classList.add('panning');
+    const mv = e => { V.x = s.vx + (e.clientX - s.x); V.y = s.vy + (e.clientY - s.y); applyView(); };
+    const up = () => { canvas.classList.remove('panning'); removeEventListener('pointermove', mv); removeEventListener('pointerup', up); persist(); };
+    addEventListener('pointermove', mv); addEventListener('pointerup', up); }
+  function onWheel(ev){ if (ev.target.closest('.lpmap-drawer')) return; ev.preventDefault();
+    const r = canvas.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top, k2 = Math.min(2, Math.max(.3, V.k * Math.exp(-ev.deltaY * .0015)));
+    V.x = px - (px - V.x) * k2 / V.k; V.y = py - (py - V.y) * k2 / V.k; V.k = k2; applyView(); }
+
+  // ── node drag + link handle ──
+  function bindNode(el){
+    el.addEventListener('pointerdown', ev => {
+      if (ev.target.closest('[data-h]')){ startLink(ev, el.dataset.id); return; }
+      ev.stopPropagation(); const id = el.dataset.id, n = M().nodes.find(n => n.id === id), [w, h] = sizeOf(n);
+      const s = { x: ev.clientX, y: ev.clientY, nx: n.x, ny: n.y }; let moved = false; el.setPointerCapture(ev.pointerId);
+      el.onpointermove = e2 => { const dx = (e2.clientX - s.x) / V.k, dy = (e2.clientY - s.y) / V.k; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; n.x = s.nx + dx; n.y = s.ny + dy; el.style.left = (n.x - w / 2) + 'px'; el.style.top = (n.y - h / 2) + 'px'; drawEdges(); };
+      el.onpointerup = () => { el.onpointermove = el.onpointerup = null; el.releasePointerCapture(ev.pointerId); if (!moved) openDrawer(id); else persist(); };
+    });
+  }
+  function startLink(ev, fromId){
+    ev.stopPropagation(); ev.preventDefault();
+    const a = center(fromId); const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'path'); tmp.setAttribute('class', 'temp'); edgesSvg.append(tmp);
+    const move = e => { const b = toWorld(e.clientX, e.clientY); tmp.setAttribute('d', curve(a, b).d); };
+    const up = e => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); tmp.remove();
+      const tgt = document.elementFromPoint(e.clientX, e.clientY)?.closest('.lpmap-node'); if (!tgt) return; const toId = tgt.dataset.id; if (toId === fromId) return;
+      const m = M(); if (m.edges.some(x => (x.a === fromId && x.b === toId) || (x.a === toId && x.b === fromId))) return;
+      linkDialog(fromId, toId); };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  }
+
+  // ── small popovers / dialogs ──
+  let pop = null;
+  function closePop(){ pop && pop.remove(); pop = null; }
+  function popAt(x, y, html){ closePop(); pop = ce('div', 'lpmap-pop'); pop.innerHTML = html; root.appendChild(pop);
+    const w = pop.offsetWidth, h = pop.offsetHeight; pop.style.left = Math.min(x, innerWidth - w - 12) + 'px'; pop.style.top = Math.min(y, innerHeight - h - 12) + 'px';
+    setTimeout(() => document.addEventListener('pointerdown', function off(e){ if (pop && !pop.contains(e.target)){ closePop(); document.removeEventListener('pointerdown', off); } }), 0); return pop; }
+  function linkDialog(aId, bId){
+    const r = canvas.getBoundingClientRect(), c = center(bId);
+    const p = popAt(r.left + (c.x * V.k + V.x), r.top + (c.y * V.k + V.y), `<div class="lpmap-pop-h">How are they related?</div>
+      <div class="lpmap-kinds">${Object.keys(KIND).map(k => `<button class="lpmap-kb k-${k}" data-k="${k}">${KIND[k]}</button>`).join('')}</div>
+      <input class="lpmap-in" id="lpmap-why" placeholder="In a few words, why…" autocomplete="off">
+      <div class="lpmap-pop-f"><button class="btn sm" data-x>Cancel</button><button class="btn sm pri" data-ok disabled>Connect</button></div>`);
+    let kind = null; const why = $('#lpmap-why', p), ok = $('[data-ok]', p);
+    $$('.lpmap-kb', p).forEach(b => b.onclick = () => { kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); ok.disabled = false; why.focus(); });
+    $('[data-x]', p).onclick = closePop;
+    why.onkeydown = e => { if (e.key === 'Enter' && kind) commit(); };
+    ok.onclick = commit;
+    function commit(){ if (!kind) return; M().edges.push({ id: 'e' + uid(), a: aId, b: bId, kind, why: why.value.trim() }); closePop(); renderMap(); persist(); }
+    setTimeout(() => why.focus(), 30);
+  }
+  function edgePop(e, ev){ if (!e) return;
+    const p = popAt(ev.clientX, ev.clientY, `<div class="lpmap-pop-h">${KIND[e.kind]}</div>
+      <input class="lpmap-in" id="lpmap-ew" value="${esc(e.why || '')}" placeholder="Why…">
+      <div class="lpmap-kinds sm">${Object.keys(KIND).map(k => `<button class="lpmap-kb k-${k}${k === e.kind ? ' on' : ''}" data-k="${k}">${KIND[k]}</button>`).join('')}</div>
+      <div class="lpmap-pop-f"><button class="btn sm danger" data-del>Remove</button><span class="grow"></span><button class="btn sm pri" data-ok>Save</button></div>`);
+    $$('.lpmap-kb', p).forEach(b => b.onclick = () => { e.kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); });
+    $('[data-ok]', p).onclick = () => { e.why = $('#lpmap-ew', p).value.trim(); closePop(); renderMap(); persist(); };
+    $('[data-del]', p).onclick = () => { M().edges = M().edges.filter(x => x.id !== e.id); closePop(); renderMap(); persist(); };
+  }
+
+  // ── add note / source node ──
+  function freeSpot(){ const m = M(), c = m.nodes[0] || { x: 0, y: 0 }; for (let i = 0; i < 40; i++){ const a = i * 0.9, r = 150 + i * 14, x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r; if (!m.nodes.some(n => Math.hypot(n.x - x, n.y - y) < 120)) return { x, y }; } return { x: c.x + 200, y: c.y }; }
+  function addNote(){ const m = M(); if (!m) return; const id = 't' + uid(), p = freeSpot(); m.nodes.push({ id, kind: 'note', text: '', x: p.x, y: p.y, fresh: 1 }); renderMap(); focusNode(id); openDrawer(id); setTimeout(() => $('#lpmap-dr-text', root)?.focus(), 80); }
+  function addSourceNode(srcId, cx, cy){ const m = M(); const have = m.nodes.find(n => n.ref === srcId);
+    if (have){ const el = world.querySelector(`.lpmap-node[data-id="${have.id}"]`); el && (el.classList.remove('pop'), void el.offsetWidth, el.classList.add('pop')); return; }
+    const w = cx != null ? toWorld(cx, cy) : freeSpot(); m.nodes.push({ id: 'n' + uid(), kind: 'source', ref: srcId, x: w.x, y: w.y, fresh: 1 }); renderMap(); renderRail(); persist(); }
+
+  // ── add / edit a source (the library) ──
+  async function imgFromFile(file){ try { const url = await readDataUrl(file), im = await loadEl(url); const k = Math.min(1, 640 / im.naturalWidth, 640 / im.naturalHeight), c = ce('canvas');
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.82); } catch (e){ return ''; } }
+  function srcForm(existing){
+    const s = existing || { id: '', kind: 'paper', title: '', authors: '', year: '', url: '', cite: '', fig: '' };
+    const p = popAt(innerWidth / 2 - 190, 90, `<div class="lpmap-pop-h">${existing ? 'Edit source' : 'Add a source'}</div>
+      <div class="lpmap-form">
+        <div class="lpmap-kinds wrap">${SRCK.map(([k, l]) => `<button class="lpmap-kb k-${k}${k === s.kind ? ' on' : ''}" data-k="${k}">${l}</button>`).join('')}</div>
+        <input class="lpmap-in" id="sf-t" placeholder="Title" value="${esc(s.title)}">
+        <input class="lpmap-in" id="sf-a" placeholder="Authors (e.g. Gibson et al.)" value="${esc(s.authors || '')}">
+        <div class="lpmap-row2"><input class="lpmap-in" id="sf-y" placeholder="Year" value="${esc(s.year || '')}"><input class="lpmap-in" id="sf-u" placeholder="URL or DOI" value="${esc(s.url || '')}"></div>
+        <textarea class="lpmap-in" id="sf-c" rows="2" placeholder="Citation or a note (optional)">${esc(s.cite || '')}</textarea>
+        <label class="lpmap-fig"><span>${s.fig ? 'Change figure' : 'Add a figure / main page image (optional)'}</span><input type="file" accept="image/*" id="sf-f" hidden></label>
+        <div class="lpmap-figprev" id="sf-prev">${s.fig ? `<img src="${s.fig}">` : ''}</div>
+      </div>
+      <div class="lpmap-pop-f">${existing ? '<button class="btn sm danger" data-del>Delete</button>' : ''}<span class="grow"></span><button class="btn sm" data-x>Cancel</button><button class="btn sm pri" data-ok>${existing ? 'Save' : 'Add'}</button></div>`);
+    let kind = s.kind, fig = s.fig || '';
+    $$('.lpmap-kb', p).forEach(b => b.onclick = () => { kind = b.dataset.k; $$('.lpmap-kb', p).forEach(x => x.classList.toggle('on', x === b)); });
+    $('#sf-f', p).onchange = async e => { const f = e.target.files[0]; if (!f) return; fig = await imgFromFile(f); $('#sf-prev', p).innerHTML = fig ? `<img src="${fig}">` : ''; };
+    $('[data-x]', p).onclick = closePop;
+    const del = $('[data-del]', p); if (del) del.onclick = () => { MS.lib = MS.lib.filter(x => x.id !== s.id); Object.values(MS.maps).forEach(m => { const gone = m.nodes.filter(n => n.ref === s.id).map(n => n.id); m.nodes = m.nodes.filter(n => !gone.includes(n.id)); m.edges = m.edges.filter(e => !gone.includes(e.a) && !gone.includes(e.b)); }); closePop(); render(); };
+    $('[data-ok]', p).onclick = () => {
+      const t = $('#sf-t', p).value.trim(); if (!t){ $('#sf-t', p).focus(); return; }
+      const rec = { id: s.id || 's' + uid(), kind, title: t, authors: $('#sf-a', p).value.trim(), year: $('#sf-y', p).value.trim(), url: $('#sf-u', p).value.trim(), cite: $('#sf-c', p).value.trim(), fig, updatedAt: new Date().toISOString() };
+      if (s.id){ const i = MS.lib.findIndex(x => x.id === s.id); MS.lib[i] = rec; } else MS.lib.unshift(rec);
+      closePop(); render(); };
+    setTimeout(() => $('#sf-t', p).focus(), 30);
+  }
+  function srcDrawer(id){ const s = srcById(id); if (s) srcForm(s); }
+
+  // ── the details drawer ──
+  function openDrawer(id){
+    const m = M(), n = m.nodes.find(x => x.id === id); if (!n) return; selected = id;
+    world.querySelectorAll('.lpmap-node').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
+    const d = $('#lpmap-drawer', root); let body = '';
+    if (n.kind === 'exp'){ const x = expById(curExp); body += `<h4>Experiment</h4><div class="lpmap-dr-exp">${esc(expTitle(curExp))}</div><div class="lpmap-dr-meta">${esc(expMeta(curExp))}</div>
+        <button class="btn sm" data-goexp>Open in the journal →</button>`; }
+    else if (n.kind === 'note'){ body += `<h4>Note</h4><textarea class="lpmap-in" id="lpmap-dr-text" rows="5" placeholder="Write the reason for a connection, a thought, anything…">${esc(n.text || '')}</textarea>
+        <button class="btn sm danger" data-delnode>Remove this note</button>`; }
+    else { const s = srcById(n.ref) || {}; body += `<h4>${esc(SRCK_TXT[s.kind] || 'Source')}</h4><div class="lpmap-dr-exp">${esc(s.title || '')}</div>
+        ${s.authors ? `<div class="lpmap-dr-meta">${esc(s.authors)}${s.year ? ', ' + esc(s.year) : ''}</div>` : ''}
+        ${s.cite ? `<div class="lpmap-dr-cite">${esc(s.cite)}</div>` : ''}
+        ${s.fig ? `<img class="lpmap-dr-fig" src="${s.fig}">` : ''}
+        <div class="lpmap-dr-btns">${s.url ? `<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}<button class="btn sm" data-editsrc>Edit source</button><button class="btn sm" data-delnode>Take off map</button></div>`; }
+    const conns = m.edges.filter(e => e.a === id || e.b === id);
+    body += `<h5>Connections</h5><div class="lpmap-dr-conn">${conns.length ? conns.map(e => { const o = m.nodes.find(x => x.id === (e.a === id ? e.b : e.a)); return `<div class="lpmap-conn"><span class="dot k-${e.kind}"></span><div><a data-go="${o.id}">${esc(labelOf(o).slice(0, 72))}</a><span class="lpmap-conn-k">${KIND[e.kind]}${e.why ? ': ' + esc(e.why) : ''}</span></div></div>`; }).join('') : '<div class="lpmap-dr-none">None yet. Drag the dot on this card to another card to connect them.</div>'}</div>`;
+    d.innerHTML = `<button class="lpmap-dr-x" data-closedr>✕</button>${body}`; d.classList.add('open');
+    const ta = $('#lpmap-dr-text', d); if (ta) ta.oninput = () => { n.text = ta.value; const el = world.querySelector(`.lpmap-node[data-id="${id}"] .lpmap-nt`); if (el) el.textContent = ta.value || 'Empty note'; drawEdges(); persist(); };
+    d.querySelector('[data-closedr]').onclick = closeDrawer;
+    const ge = d.querySelector('[data-goexp]'); if (ge) ge.onclick = () => { close(); go('#exp/' + curExp); };
+    const es = d.querySelector('[data-editsrc]'); if (es) es.onclick = () => srcForm(srcById(n.ref));
+    const dn = d.querySelector('[data-delnode]'); if (dn) dn.onclick = () => { m.nodes = m.nodes.filter(x => x.id !== id); m.edges = m.edges.filter(e => e.a !== id && e.b !== id); closeDrawer(); renderMap(); renderRail(); persist(); };
+    d.querySelectorAll('[data-go]').forEach(a => a.onclick = () => { const t = a.dataset.go; focusNode(t); openDrawer(t); });
+  }
+  function closeDrawer(){ selected = null; const d = $('#lpmap-drawer', root); d && d.classList.remove('open'); world.querySelectorAll('.lpmap-node').forEach(el => el.classList.remove('sel')); }
+
+  // ── wiring in: a nav button + the hash route ──
+  function mount(){
+    const nav = document.querySelector('.top .ib-nav');
+    if (nav && !document.getElementById('lpmap-nav')){
+      const b = ce('button', 'btn nav'); b.id = 'lpmap-nav'; b.dataset.act = 'mapView'; b.dataset.nav = 'map';
+      b.title = 'Research map: your experiments with the papers and notes behind them'; b.textContent = 'Map';
+      nav.after(b); b.addEventListener('click', () => go('#map'));
+    }
+    window.addEventListener('hashchange', hashCheck); hashCheck();
+  }
+  // a source sent from the Doc Reader extension (or any Lab Potato page) lands in the library
+  function addExternalSource(rec){ if (!rec || !rec.title) return;
+    if (MS.lib.some(s => s.url && rec.url && s.url === rec.url)){ toast('That source is already in your research map.'); return; }
+    const s = { id: 's' + uid(), kind: rec.kind || 'paper', title: String(rec.title).slice(0, 300), authors: (rec.authors || '').slice(0, 200), year: (rec.year || '').toString().slice(0, 8), url: (rec.url || '').slice(0, 600), cite: (rec.cite || '').slice(0, 2000), fig: /^data:image\//.test(rec.fig || '') ? rec.fig : '', updatedAt: new Date().toISOString() };
+    MS.lib.unshift(s); try { saveSetting('researchMap', MS); } catch (e){} if (open) render(); toast('Added to your research map: ' + s.title); }
+  try { const bc = new BroadcastChannel('lp-sources'); bc.onmessage = e => { if (e.data && e.data.type === 'source') addExternalSource(e.data.source); }; } catch (e){}
+  function drainLS(){ try { const raw = localStorage.getItem('lp-incoming-sources'); if (!raw) return; localStorage.removeItem('lp-incoming-sources'); (JSON.parse(raw) || []).forEach(addExternalSource); } catch (e){} }
+  window.addEventListener('storage', e => { if (e.key === 'lp-incoming-sources') drainLS(); });
+  function drainURL(){ try { const u = new URL(location.href), raw = u.searchParams.get('lpsource'); if (!raw) return;
+      u.searchParams.delete('lpsource'); history.replaceState(null, '', u.pathname + (u.search ? u.search : '') + u.hash);
+      const rec = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/-/g, '+').replace(/_/g, '/'))))); addExternalSource(rec); } catch (e){} }
+  function hashCheck(){ if (location.hash === '#map'){ if (!open) openMap(); } else if (open) close(); }
+  async function waitDB(){ for (let i = 0; i < 80; i++){ if (typeof DB !== 'undefined' && DB.ok) return true; await new Promise(r => setTimeout(r, 100)); } return false; }
+  (async () => { await waitDB(); await load(); if (document.querySelector('.top')) mount(); else document.addEventListener('DOMContentLoaded', mount); if (open) render(); drainLS(); drainURL(); })();
 })();
 
 </script>

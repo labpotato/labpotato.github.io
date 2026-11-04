@@ -47,7 +47,7 @@ const TOOLS = [
     folder: "tools/lab-entry",
     features: [
       "Timeline by day, by project or as a dateless flow",
-      "Compact tiles: title, figure or table, and your highlights",
+      "A research map: each experiment ringed by the papers and notes behind it",
       "Autofill of your strains and plasmids everywhere you write"
     ],
     versions: [
@@ -62,10 +62,11 @@ const TOOLS = [
       { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
       { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
       { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
-      { v: "v13", file: "lab-entry-v13.html", date: "2026-11-03",
+      { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04",
         new: [
-          "Results visibly fly into the experiment you file them in",
-          "One look shared with every Lab Potato tool"
+          "Research map: each experiment as the hub, with the papers and notes behind it",
+          "A Sources library, and arrows that carry the reason for every link",
+          "Save file keeps itself in step, and a lighter save"
         ] }
     ]
   },
@@ -89,11 +90,10 @@ const TOOLS = [
       { v: "v1", file: "colony-counter-v1.html" },
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28" },
-      { v: "v4", file: "colony-counter-v4.html", date: "2026-11-03",
+      { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04",
         new: [
-          "Colonies light up as they are found, the count ticking up",
-          "One Export button for every format",
-          "One look shared with every Lab Potato tool"
+          "A potato-and-petri-dish welcome, clearer buttons, a table that fits",
+          "Colonies light up as they are found, the count ticking up"
         ] }
     ]
   },
@@ -121,11 +121,10 @@ const TOOLS = [
       { v: "v5", file: "gel-labeler-v5.html", date: "2026-09-22" },
       { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },
       { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21" },
-      { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-03",
+      { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04",
         new: [
-          "Five clear steps instead of twelve",
-          "Ladder reference stays docked, its bands run into place",
-          "The gel opens fitted to the window"
+          "More label colours, and white by default on a dark-background gel",
+          "Five clear steps, a docked ladder whose bands run into place"
         ] }
     ]
   },
@@ -156,11 +155,11 @@ const TOOLS = [
       { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" },
       { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01" },
       { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21" },
-      { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-03",
+      { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04",
         new: [
-          "One card per PCR: primers, size, problems and how to fix them",
-          "Expected gel whose bands run from the wells",
-          "The assembly animation lands exactly on the map"
+          "Step 3 leads with the live map, and the animation lands exactly on it",
+          "One card per PCR: primers, product and template size, problems and fixes",
+          "Clearer primer alerts on the map, calmer Apple-like spacing"
         ] }
     ]
   },
@@ -185,10 +184,9 @@ const TOOLS = [
       { v: "v2", file: "microscopy-image-labeler-v2.html", date: "2026-09-22" },
       { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" },
       { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21" },
-      { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-03",
+      { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04",
         new: [
-          "Panels slide into the grid, the scale bar extends to length",
-          "One look shared with every Lab Potato tool"
+          "The footer captions no longer collide, panels slide into the grid"
         ] }
     ]
   },
@@ -215,7 +213,7 @@ const TOOLS = [
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" },
       { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21" },
-      { v: "v7", file: "protein-quant-v7.html", date: "2026-11-03",
+      { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04",
         new: [
           "The standard curve draws itself through your points",
           "A compact intro, one look shared with every tool"
@@ -245,10 +243,10 @@ const TOOLS = [
       { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20" },
       { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21" },
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27" },
-      { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-03",
+      { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04",
         new: [
-          "Doors swing open and settle, cold mist pours out",
-          "The header fits on one line"
+          "Doors overshoot and settle, cold mist pours out, racks slide home",
+          "The box you search for gives a friendly double-bob"
         ] }
     ]
   },
@@ -277,10 +275,10 @@ const TOOLS = [
       { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30" },
       { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30" },
-      { v: "v9", file: "doc-reader-v9.html", date: "2026-11-03",
+      { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04",
         new: [
-          "The start page folds into short summaries",
-          "One look shared with every Lab Potato tool"
+          "Extension: save any paper's citation as RIS, EndNote or BibTeX",
+          "Send a page straight to your Lab Entry research map"
         ] }
     ]
   },

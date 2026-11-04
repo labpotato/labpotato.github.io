@@ -304,11 +304,12 @@ const TOOLS = [
       { v: "v3", file: "sequence-studio-v3.html", date: "2026-11-04" },
       { v: "v4", file: "sequence-studio-v4.html", date: "2026-11-04" },
       { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04" },
-      { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04",
+      { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04" },
+      { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04",
         new: [
-          "Ribosome binding strength from the Salis thermodynamic model, every term shown, with its validation rather than a claim",
-          "Colours picked by simulating colour blindness and measuring, resizable panels, and an icon rail with keys",
-          "A left click that works: an action bar on the selection, draggable feature ends, enzyme cards, and offline match search with BLAST paste-back"
+          "Autosearch: translate every reading frame, match it locally, and send the rest to BLASTp one at a time",
+          "Readable rows, stronger text, the rail at the top and the action bar off the bases",
+          "Circuit parts drawn as solid artwork, and the strength tools on every RBS, promoter and CDS you select"
         ] }
     ]
   }

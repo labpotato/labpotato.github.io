@@ -7,8 +7,9 @@
 > shared insert, shared parts, with the strength of each link coming from how
 > much sequence two plasmids actually have in common.
 >
-> Deferred from v6 at the owner's request, with "remind me when I run the next
-> version". **This note is that reminder — raise it before starting v7.**
+> Deferred from v6, then again from v7. The owner asked to be reminded when
+> they next ran a version; that reminder was given at the top of the v7 reply.
+> **Still outstanding — raise it again before starting v8.**
 >
 > Most of the groundwork is already in: `identitySearch` in the search section
 > compares any sequence against every other open one at DNA and protein level
@@ -62,5 +63,17 @@ The published implementation gets every folding energy from NUPACK. There is no 
 **BLAST, honestly.** NCBI does not send CORS headers on its URL API, so no page can read its results and nothing here pretends to. The search opens with the query filled in, and the results come back by paste: both the hit table (Download -> Hit Table) and the description table copied off the results page are parsed, each hit gets the same verdict wording as the local search, and hits carrying query coordinates become features.
 
 **Fixed.** Swapping a part used to lose its annotation: replacing a feature's own bases deletes its whole span, which drops the feature, and both swap paths carried on editing an object that was no longer in the document. Present in v5 as shipped.
+
+**v7.** **Readability.** Rows in the sequence view alternate white and light grey, carry a heavier rule and highlight as a whole on hover, so the eye holds one line across sixty bases. The faint greys were measured and raised: the bottom strand sat at 3.1:1 against the page, under the 4.5:1 floor for body text, and now reads 5.5:1; the small print went from 5.9:1 to 8.1:1.
+
+**The action bar moved off the bases.** It used to appear over the selection that had just been made, covering it. It is docked to the right of the view as a column now, and the sequence reflows to leave room rather than running underneath it. (The reflow needed a fix in `measureChar`, which took `clientWidth` without subtracting padding, so reserving space had no effect on the column count.)
+
+**Shift and click extends the selection anywhere**, including over a feature, a primer or an enzyme site. It had worked on bare sequence only: the feature, primer, ORF and enzyme handlers took the click first, and the drag handler added in v6 took it even earlier, in the capture phase.
+
+**The circuit is drawn properly.** Parts are solid artwork rather than thin line symbols: filled bodies with a darker rim, a soft top highlight, rounded joins, on a heavier backbone. The shapes remain SBOL Visual, an open standard. The drawing idiom is the one figure tools use; none of their artwork is copied, because that artwork is proprietary.
+
+**Autosearch over every reading frame.** Find matches will take every open reading frame above a chosen length, translate it, search it against everything in the file at DNA and protein level, and report. Frames matching a known part at 95% or better are offered for annotation in one pass; the rest carry a BLASTp button each, because only NCBI can place those and only the user should decide what the answer means. Nothing is annotated from a guess. BLASTp is also available for any selection, translated automatically, with a warning when the frame carries an internal stop.
+
+**The strength tools are where the parts are.** Selecting a ribosome binding site offers its strength in the inspector; a promoter offers the check; a coding sequence asks how well it is translated. Every transcription unit in the circuit view carries the same buttons. Previously this was a single line in a menu.
 
 Everything runs in the page; nothing is uploaded except what you send to a folding service on purpose.

@@ -305,7 +305,14 @@ const TOOLS = [
       { v: "v4", file: "sequence-studio-v4.html", date: "2026-11-04" },
       { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04" },
       { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04" },
-      { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04",
+      { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04" },
+      { v: "v8", file: "sequence-studio-v8.html", date: "2026-11-04",
+        new: [
+          "Translated open reading frames: every start codon in a stretch plotted by predicted rate, with the strongest traced to its terminator",
+          "A strength chart to pick parts from, with constitutive, inducible and phage promoters divided",
+          "Readable rows again: no grey stripes, heavy dividers, and both strands in the same ink"
+        ] },
+      { v: "v7x", file: "sequence-studio-v7.html", date: "2026-11-04",
         new: [
           "SEVA modules: find the swappable marker, origin and cargo spans by their flanking sites and exchange one",
           "Autosearch: translate every reading frame, match it locally, and send the rest to BLASTp one at a time",

@@ -1,6 +1,6 @@
 # Sequence Studio
 
-> ## Asked for, not yet built — start v7 here
+> ## Asked for, not yet built — start v8 here
 >
 > **The plasmid mindmap.** A view that links a plasmid to the other plasmids it
 > is related to and lays them out as a map rather than a list: shared backbone,
@@ -85,5 +85,13 @@ The module sequences are deliberately absent: seva-plasmids.com publishes only t
 *Fixed during this work:* the first version of the module swap replaced the span between the two cut positions. PacI cuts five bases into its own recognition site and SpeI one base into its, so that silently destroyed part of both flanking sites and the module could never be swapped again. The span is now the bases strictly between the two recognition sites, verified by swapping a cargo module and confirming the plasmid still scans as SEVA afterwards.
 
 **The strength tools are where the parts are.** Selecting a ribosome binding site offers its strength in the inspector; a promoter offers the check; a coding sequence asks how well it is translated. Every transcription unit in the circuit view carries the same buttons. Previously this was a single line in a menu.
+
+**v8.** **The grey stripes are gone.** Alternating a light grey behind every other row made the bases sitting on it look faded, which was worse than the problem it set out to fix. Rows keep the page colour and a 3 px rule divides them, with a faint tint only on hover. The bottom strand is drawn in the same black as the top: it is the same DNA, and making it secondary was the wrong call.
+
+**Translated open reading frames.** Drag a stretch and every start codon in it is drawn where it sits, at the height of its predicted translation initiation rate on a log scale. A transcript carries many overlapping frames and the ribosome favours the tallest, so a tall bracket nobody designed is where an unexplained band comes from. The strongest frame is picked out and a dotted line runs from its Shine-Dalgarno to whatever terminates it, either an annotated terminator or a rho-independent hairpin predicted from the sequence and labelled as a prediction. The rate comes from the same model as the rest of the expression panel, with the same caveat: the model is published, the folding under it is ours, and the numbers rank better than they measure.
+
+**A strength chart to choose from.** The parts library opens on a bar chart of the whole family, strongest first; clicking a bar jumps to that part. Promoters are divided into constitutive, inducible and phage instead of one undivided list. The families are grouped into bacterial gene regulation (promoters, ribosome binding sites, terminators) and vector backbone (origins, resistance markers), each carrying its count.
+
+*Fixed:* the start-codon scan accepted CTG, because the published energy table lists it, but the published implementation does not scan for it - its start codon list is ATG, GTG and TTG only. CTG initiation is rare enough in E. coli that admitting it filled the frame scan with frames nobody translates; on the example plasmid it put a CUG frame at the top. The narrower set drops that scan from 77 frames to 47 and promotes a real GUG start. The hairpin terminator search was also tightened (stem of 5 bp or more, GC of 0.65 or more) after it reported a false terminator inside a coding sequence.
 
 Everything runs in the page; nothing is uploaded except what you send to a folding service on purpose.

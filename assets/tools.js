@@ -47,7 +47,7 @@ const TOOLS = [
     folder: "tools/lab-entry",
     features: [
       "Timeline by day, by project or as a dateless flow",
-      "Compact tiles: title, figure or table, and your highlights",
+      "A research map: each experiment ringed by the papers and notes behind it",
       "Autofill of your strains and plasmids everywhere you write"
     ],
     versions: [
@@ -61,11 +61,12 @@ const TOOLS = [
       { v: "v9", file: "lab-entry-v9.html", date: "2026-10-20" },
       { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
       { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
-      { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27",
+      { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
+      { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04",
         new: [
-          "Shows where your journal is loaded from and when it was last saved to a file; asks to save on close",
-          "Reminds you about daily reports you have not exported",
-          "Figures fill the panel and export as one picture per panel; long names wrap"
+          "Research map: each experiment as the hub, with the papers and notes behind it",
+          "A Sources library, and arrows that carry the reason for every link",
+          "Save file keeps itself in step, and a lighter save"
         ] }
     ]
   },
@@ -88,11 +89,11 @@ const TOOLS = [
     versions: [
       { v: "v1", file: "colony-counter-v1.html" },
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
-      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28",
+      { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28" },
+      { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04",
         new: [
-          "Export to Excel (.xlsx), with the same columns as the table",
-          "Simpler settings, starting on Crowded plate without splitting; see-through rings with a centre dot",
-          "Clear what the counter found and mark by hand, with or without a plate area; Auto enhance for the image"
+          "A potato-and-petri-dish welcome, clearer buttons, a table that fits",
+          "Colonies light up as they are found, the count ticking up"
         ] }
     ]
   },
@@ -119,11 +120,11 @@ const TOOLS = [
       { v: "v4", file: "gel-labeler-v4.html" },
       { v: "v5", file: "gel-labeler-v5.html", date: "2026-09-22" },
       { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },
-      { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21",
+      { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21" },
+      { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04",
         new: [
-          "GeneRuler 1 kb and one ladder list for every tool, your favourite first",
-          "Add the manufacturer’s photo of your ladder",
-          "Expected lane: check a digest or PCR against the gel"
+          "More label colours, and white by default on a dark-background gel",
+          "Five clear steps, a docked ladder whose bands run into place"
         ] }
     ]
   },
@@ -139,9 +140,9 @@ const TOOLS = [
     accent: "blue",
     folder: "tools/gibson-assembly",
     features: [
-      "Every primer held near the target Tm",
-      "Whole primer scanned against your source plasmid",
-      "Editable primer table, with alternatives when one fails"
+      "One card per PCR product: both primers, its size and any fix",
+      "Every primer held near the target Tm and scanned against its plasmid",
+      "Expected gel and a live plasmid map"
     ],
     versions: [
       { v: "v1", file: "gibson-assembly-v1.html" },
@@ -153,11 +154,12 @@ const TOOLS = [
       { v: "v7", file: "gibson-assembly-v7.html", date: "2026-09-25" },
       { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" },
       { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01" },
-      { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21",
+      { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21" },
+      { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04",
         new: [
-          "Watch the fragments assemble, then the live map",
-          "A virtual gel of your PCRs at the bench step",
-          "No-tail primers, and Send to Lab Entry"
+          "Step 3 leads with the live map, and the animation lands exactly on it",
+          "One card per PCR: primers, product and template size, problems and fixes",
+          "Clearer primer alerts on the map, calmer Apple-like spacing"
         ] }
     ]
   },
@@ -181,11 +183,10 @@ const TOOLS = [
       { v: "v1", file: "microscopy-image-labeler-v1.html" },
       { v: "v2", file: "microscopy-image-labeler-v2.html", date: "2026-09-22" },
       { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" },
-      { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21",
+      { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21" },
+      { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04",
         new: [
-          "Line profile: draw a line, get the intensity plot",
-          "Send the figure to Lab Entry",
-          "An example figure to try it on"
+          "The footer captions no longer collide, panels slide into the grid"
         ] }
     ]
   },
@@ -211,11 +212,11 @@ const TOOLS = [
       { v: "v3", file: "protein-quant-v3.html" },
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" },
-      { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21",
+      { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21" },
+      { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04",
         new: [
-          "Several proteins at once, in cards or a spreadsheet table",
-          "A protein grinder: the amount flies around as particles (try naming one GFP)",
-          "µM by default, error bars both ways"
+          "The standard curve draws itself through your points",
+          "A compact intro, one look shared with every tool"
         ] }
     ]
   },
@@ -241,10 +242,11 @@ const TOOLS = [
       { v: "v3", file: "cryobox-labeler-v3.html", date: "2026-10-14" },
       { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20" },
       { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21" },
-      { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27",
+      { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27" },
+      { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04",
         new: [
-          "Shows where your inventory is loaded from and when it was last saved to a file",
-          "Asks before closing if there are changes not saved to a file"
+          "Doors overshoot and settle, cold mist pours out, racks slide home",
+          "The box you search for gives a friendly double-bob"
         ] }
     ]
   },
@@ -272,11 +274,11 @@ const TOOLS = [
       { v: "v5", file: "doc-reader-v5.html", date: "2026-10-29" },
       { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30" },
       { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
-      { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30",
+      { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30" },
+      { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04",
         new: [
-          "Revision marks on your text (Alt+X cross out, Alt+W better wording, Alt+C note to the AI), and a Web layout: the document as a web page, full width, with every tool",
-          "Every AI request opens on the AI stage: your text left, the AI's version right in equal halves, the rest of the document greyed around it, the two scrolling together; Send back replaces the passage once every change is decided, never over your own hand edits",
-          "Take the AI's version in parts: a rewrite goes sentence by sentence (Tab / Esc), or select any words in it to accept and edit them at once, roll them back, or have the AI redo just that part"
+          "Extension: save any paper's citation as RIS, EndNote or BibTeX",
+          "Send a page straight to your Lab Entry research map"
         ] }
     ]
   },

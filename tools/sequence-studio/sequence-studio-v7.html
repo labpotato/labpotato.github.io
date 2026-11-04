@@ -431,7 +431,7 @@
   /* ---- circuit view ---- */
   .cqwrap{overflow-x:auto;padding:4px 0 14px;border-bottom:1px solid var(--line)}
   svg.cq{display:block;min-width:100%;user-select:none}
-  svg.cq .cq-bb{stroke:var(--ink-2);stroke-width:2.6;stroke-linecap:round}
+  svg.cq .cq-bb{stroke:var(--ink);stroke-width:3;stroke-linecap:butt}
   svg.cq .cq-row{font:600 10.5px var(--sans);fill:var(--ink-3)}
   svg.cq .cq-warn{font:600 10px var(--sans);fill:var(--amber-d)}
   svg.cq .cq-nm{font:700 12px var(--sans);fill:var(--ink)}
@@ -440,7 +440,7 @@
   svg.cq .cq-moved{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 2;opacity:.6}
   svg.cq .cq-part{cursor:pointer}
   svg.cq .cq-part:hover path{stroke-width:2}
-  svg.cq .cq-part.sel path{stroke:var(--selb);stroke-width:2}
+  svg.cq .cq-part.sel path{stroke:var(--selb)}
   svg.cq .cq-part.sel{filter:drop-shadow(0 0 3px color-mix(in srgb,var(--selb) 60%,transparent))}
   svg.cq .cq-link{stroke:var(--ink-3);stroke-width:1.4;stroke-linejoin:round}
   svg.cq .cq-link.rep{stroke:var(--red)}
@@ -540,6 +540,28 @@
   .mband.some{background:#DDCC77;color:#3b3210}
   .tbl.mtbl tr[data-fid],.tbl.mtbl tr[data-part]{cursor:pointer}
   .tbl.mtbl tr[data-fid]:hover,.tbl.mtbl tr[data-part]:hover{background:var(--blue-l)}
+  /* ---- SEVA ---- */
+  .sevagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:10px 0}
+  .sevagrid h5{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:5px}
+  .sevagrid ul{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.65}
+  .sevagrid li b{font-family:var(--mono);font-size:11px;background:var(--calc);border-radius:4px;padding:1px 5px;margin-right:5px}
+  /* ---- the card that opens on a part in the circuit ---- */
+  .partcard{position:fixed;z-index:80;width:268px;background:var(--card);border:1px solid var(--line-2);
+    border-radius:12px;box-shadow:0 12px 32px rgba(20,24,32,.22);padding:11px 13px;font-size:12.5px;display:grid;gap:4px}
+  .partcard .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+  .partcard .hd b{font-size:14px}
+  .partcard .hd span{font-size:11px;color:var(--ink-3)}
+  .partcard .hd button{margin-left:auto;border:0;background:none;color:var(--ink-3);font-size:16px;line-height:1}
+  .partcard .inl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-top:3px}
+  .partcard input[type=text],.partcard select{height:28px;border:1px solid var(--line-2);border-radius:7px;padding:0 8px;
+    font-size:12.5px;background:var(--paper);width:100%;text-overflow:ellipsis}
+  .partcard .inswatch{display:flex;gap:4px;flex-wrap:wrap}
+  .partcard .inswatch button{width:19px;height:19px;border-radius:5px;border:1px solid rgba(0,0,0,.18);padding:0}
+  .partcard .inswatch button.on{outline:2px solid var(--selb);outline-offset:1px}
+  .partcard .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .partcard .acts button{border:1px solid var(--line-2);background:var(--paper);border-radius:7px;padding:4px 9px;font-size:11.5px}
+  .partcard .acts button:hover{border-color:var(--selb);color:var(--selb)}
+  .partcard .acts button.danger:hover{border-color:var(--red);color:var(--red)}
   /* ---- expression panel ---- */
   .exbox{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:11px;background:var(--card)}
   .exbox.bad{border-left:3px solid var(--amber)}
@@ -705,6 +727,7 @@
       <hr>
       <div class="sec">Build</div>
       <button data-act="parts">Parts library: promoters, RBS, terminators, origins, markers…<small>Sorted by measured strength, with the placement rules</small></button>
+      <button data-act="seva">SEVA modules: marker, origin, cargo…<small>Find the swappable spans by their flanking sites, and exchange one</small></button>
       <button data-act="circuit">Circuit view<small>Each transcription unit as SBOL symbols, and what it is missing</small></button>
       <button data-act="match">Find matches for this…<small>Against the open sequences and the part libraries, DNA and protein, offline</small></button>
       <button data-act="express">How strong is my RBS? Is my promoter sane?…<small>Predicted translation initiation rate, and a &minus;35/&minus;10 check. Also on any RBS, promoter or CDS you select.</small></button>
@@ -1071,6 +1094,26 @@
     </div>
   </div>
   <div class="df"><button class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<dialog id="dlg-seva" class="wide xwide">
+  <div class="dh">SEVA modules <button class="x" data-close>&times;</button></div>
+  <div class="db"><div id="seva-res"></div></div>
+  <div class="df"><button class="btn primary" data-close>Close</button></div>
+</dialog>
+
+<dialog id="dlg-sevaswap">
+  <div class="dh"><span id="sv-title">Swap a module</span> <button class="x" data-close>&times;</button></div>
+  <div class="db">
+    <p class="note" id="sv-cur"></p>
+    <div class="frm" style="grid-template-columns:110px 1fr;margin-top:10px">
+      <label>Take from</label><select id="sv-donor"></select>
+      <label>or paste</label><textarea id="sv-paste" class="seqin" style="min-height:80px" placeholder="Paste the module sequence, without its flanking sites"></textarea>
+    </div>
+    <p class="note" id="sv-note"></p>
+    <p class="note">The flanking sites stay where they are; only what sits between them is replaced, which is what keeps the next swap possible.</p>
+  </div>
+  <div class="df"><button class="btn" data-close>Cancel</button><button class="btn primary" id="sv-go">Swap it in</button></div>
 </dialog>
 
 <dialog id="dlg-match" class="wide xwide">
@@ -2635,6 +2678,122 @@ function parseBlastTable(text){
       evalue:parseFloat(m[5]),ident:+m[6],acc:m[7]||'',src:'description'});}
   return rows;}
 
+/* =====================================================================
+   SEVA: THE STANDARD EUROPEAN VECTOR ARCHITECTURE
+
+   SEVA plasmids are built from three interchangeable modules, each flanked by
+   a fixed pair of unique restriction sites. That is the whole point of the
+   standard: you cut at the flanks and drop in a different module, and the
+   three-digit name tells you which three you have.
+
+       antibiotic marker   between SwaI and PshAI      first digit
+       origin of replication (oriV)  between FseI and AscI   second digit
+       cargo               between PacI and SpeI       third digit
+
+   The fixed frame around them carries the T0 terminator of phage lambda
+   (103 bp), the T1 terminator of the E. coli rrnB operon (105 bp) and the
+   oriT of RP4 (246 bp).
+
+   The module sequences themselves are not reproduced here. The SEVA site
+   shows only the first 25 bases of each and releases the rest through its own
+   copy button, so there is nothing here to copy from honestly. What this does
+   instead is the part that can be computed: find the six flanking sites in a
+   sequence, work out which spans are therefore swappable, read off the SEVA
+   number where the modules can be recognised, and swap a module for the same
+   span taken from another plasmid you have open, or for sequence you paste.
+   That is the interchange the standard is for.
+
+   Reference: https://seva-plasmids.com/backbone-modules-nomenclature/
+   ===================================================================== */
+const SEVA_FLANKS={
+  marker:{left:'SwaI', right:'PshAI', label:'antibiotic marker', digit:1},
+  oriV:  {left:'FseI', right:'AscI',  label:'origin of replication', digit:2},
+  cargo: {left:'PacI', right:'SpeI',  label:'cargo', digit:3}};
+
+/* The published module lists, by the digit each one takes in the name. */
+const SEVA_MARKERS=[
+  {code:'1',name:'Ap',full:'ampicillin'},{code:'2',name:'Km',full:'kanamycin'},
+  {code:'3',name:'Cm',full:'chloramphenicol'},{code:'4',name:'Sm/Sp',full:'streptomycin / spectinomycin'},
+  {code:'5',name:'Tet',full:'tetracycline'},{code:'6',name:'Gm',full:'gentamicin'},
+  {code:'7',name:'Tmp',full:'trimethoprim'},{code:'8',name:'Am',full:'apramycin'},
+  {code:'2a',name:'Km_G+',full:'kanamycin, Gram-positive'},{code:'3a',name:'Cm_G+',full:'chloramphenicol, Gram-positive'}];
+const SEVA_ORIS=[
+  {code:'1',name:'R6K',note:'conditional, needs a pir+ host'},
+  {code:'2',name:'RK2',note:'broad host range, low copy'},
+  {code:'2a',name:'RK2-int-phiC31'},{code:'2b',name:'RK2-SCP2*'},
+  {code:'2c',name:'pIJ101-RK2'},{code:'2d',name:'pSM19035-RK2'},
+  {code:'3',name:'pBBR1',note:'broad host range, medium copy'},
+  {code:'3a',name:'pBBR1-int-phiC31'},{code:'3b',name:'pBBR1-SCP2*'},{code:'3g',name:'pBBR1-MoClo'},
+  {code:'4',name:'pRO1600/ColE1',note:'Pseudomonas and E. coli'},
+  {code:'5',name:'RSF1010',note:'very broad host range'},
+  {code:'6',name:'p15A',note:'about 10 to 12 copies'},
+  {code:'7',name:'pSC101',note:'about 5 copies'},
+  {code:'8',name:'pUC',note:'high copy, E. coli only'},
+  {code:'8a',name:'pUC-int-phiC31'},{code:'8b',name:'pUC-SCP2*'},{code:'8c',name:'pIJ101-pUC'},
+  {code:'9',name:'pBR322-ROP',note:'low copy, ROP-controlled'}];
+const SEVA_CARGO=[
+  {code:'1',name:'MCS'},{code:'2',name:'LacZα-pUC19'},{code:'2S',name:'LacZα-pUC19-I-SceI'},
+  {code:'3',name:'LacZα-pUC18'},{code:'3X',name:'LacZα-pUC18, type IIs up'},{code:'3Y',name:'LacZα-pUC18, type IIs down'},
+  {code:'4',name:'LacIq-Ptrc'},{code:'4C',name:'LacIq-Ptrc standard'},{code:'4E',name:'LacIq-PT7/LacO'},
+  {code:'4F',name:'LacIq-PT5/LacO'},{code:'4G',name:'LacIq-Ptrc → GFP'},{code:'4R',name:'LacIq-Ptac'},
+  {code:'5',name:'LacZ'},{code:'5T',name:'LacZ'},{code:'6',name:'Lux'},
+  {code:'7',name:'GFP'},{code:'7B',name:'mECFP'},{code:'7C',name:'CFP'},{code:'7D',name:'DsRed2'},
+  {code:'7F',name:'EcFbFP'},{code:'7M',name:'msfGFP'},{code:'7R',name:'mCherry'},
+  {code:'7V',name:'GFP-LVA'},{code:'7Y',name:'YFP'},
+  {code:'8',name:'XylS-Pm'},{code:'8M',name:'XylS-Pm → msfGFP'},{code:'8S',name:'XylS-Pm → I-SceI'},
+  {code:'9',name:'AlkS-Palk'},{code:'9M',name:'AlkS-PalkB → msfGFP'},
+  {code:'10',name:'AraC-PBAD'},{code:'11',name:'ChnR-PchnB'},{code:'11M',name:'ChnR-PchnB → msfGFP'},
+  {code:'12',name:'CprK1-PDB3'},{code:'13',name:'PEM7'},{code:'13G',name:'PEM7 → GFP'},
+  {code:'13P',name:'PEM7 → PHP'},{code:'13R',name:'PEM7 → mCherry'},{code:'13S',name:'PEM7 → I-SceI'},
+  {code:'13T',name:'PEM7 → mTurquoise2'},{code:'14',name:'cI857-PL'},
+  {code:'15',name:'cos-T7-ccdB-T3'},{code:'16',name:'CRISPR array'},
+  {code:'17',name:'PLiar_53'},{code:'17A',name:'PLiar_15'},{code:'17B',name:'PLiar_17'},
+  {code:'17C',name:'PLiar_51'},{code:'17D',name:'PLiar_53'},{code:'17E',name:'PLiar_1'},
+  {code:'18',name:'RhaRS-Prham'},{code:'19',name:'Golden Standard'},{code:'20',name:'PD_E20(T5)'},
+  {code:'21',name:'PLacIq'},{code:'22',name:'PR'},{code:'23',name:'PRM'},
+  {code:'24',name:'PA1/O4/O3'},{code:'25',name:'T7'},{code:'25M',name:'T7 → msfGFP'}];
+const SEVA_FIXED=[
+  {name:'T0',note:'rho-independent terminator of phage lambda, 103 bp'},
+  {name:'T1',note:'rho-independent terminator of the E. coli rrnB operon, 105 bp'},
+  {name:'oriT',note:'origin of transfer of RP4, 246 bp'}];
+
+/* Does this molecule look like a SEVA vector, and which spans can be swapped? */
+function sevaScan(doc){
+  if(!doc||doc.isProtein)return {ok:false,why:'This needs a DNA sequence.'};
+  const sites=enzymeSites(doc);
+  const out={ok:true,modules:[],missing:[],L:doc.seq.length};
+  for(const key of ['marker','oriV','cargo']){
+    const f=SEVA_FLANKS[key];
+    const l=sites.get(f.left)||[], rgt=sites.get(f.right)||[];
+    if(l.length!==1||rgt.length!==1){
+      out.missing.push({key,...f,leftN:l.length,rightN:rgt.length});continue;}
+    /* The module is the bases strictly between the two recognition sites, not
+       between the two cut positions. PacI cuts five bases into its site and
+       SpeI one base into its own, so a cut-to-cut replacement would chew away
+       part of both and the module could never be swapped again. Keeping the
+       sites whole is the entire point of the standard. */
+    const s=l[0].pos+l[0].enz.len;
+    const e=rgt[0].pos;
+    const wraps=e<s;
+    const len=wraps?(doc.seq.length-s+e):(e-s);
+    out.modules.push({key,...f,s,e,len,wraps,
+      leftSite:{pos:l[0].pos,len:l[0].enz.len},rightSite:{pos:rgt[0].pos,len:rgt[0].enz.len},
+      seq:wraps?doc.seq.slice(s)+doc.seq.slice(0,e):doc.seq.slice(s,e),
+      covers:doc.features.filter(x=>!x.hidden&&featStart(x)>s&&featEnd(x)<=e).map(x=>x.name)});}
+  out.isSeva=out.modules.length===3;
+  return out;}
+
+/* Replace one module with sequence of the same kind. The flanking sites are
+   kept, because they are what makes the next swap possible. */
+function sevaSwap(doc,mod,newSeq){
+  newSeq=cleanDNA(newSeq);
+  if(!newSeq)return {ok:false,why:'Nothing to put in.'};
+  if(mod.wraps)return {ok:false,why:'That module runs across the origin of the sequence. Rotate the plasmid so it does not, then swap.'};
+  pushHist(doc);
+  const before=doc.seq.length;
+  editReplace(doc,{s:mod.s,e:mod.e},newSeq);
+  return {ok:true,delta:doc.seq.length-before,at:mod.s};}
+
 /* =====================================================================  state  */
 const S={docs:[],cur:null,view:'map',side:true,wingR:true,opts:{bottom:true,aa:true,orf:false,enz:true,prim:true},map:{type:'circular',labels:true,enz:true,prim:true,aa:true,orf:false,zoom:1},circuit:{scale:'schematic',links:true,names:true},wl:280,wr:300,font:13,cys:'ox',code:'1',orfMin:100,msel:new Set(),pending:''};
 const D=()=>S.cur;
@@ -3061,60 +3220,60 @@ function circGlyphKey(f){const r=tuRole(f);return CIRC_GLYPH[r]||f.type;}
 /* =====================================================================
    CIRCUIT ARTWORK
 
-   The glyphs in the map are SBOL line symbols, which are right for a 12 pixel
-   band and thin and spindly at the size the circuit view draws them. These are
-   the same standard shapes redrawn as solid, weighted artwork: filled bodies,
-   rounded joins, a darker rim and a soft top highlight so a part reads as an
-   object the way it does in a figure drawn by hand.
+   Drawn to the convention in the SBOL Visual symbol table: the structural
+   parts are heavy black line art and the coding sequence is the one thing that
+   carries colour, because the gene is what changes from construct to construct
+   and the promoter, the ribosome binding site and the terminator are the same
+   shape every time. Flat, no gradients, thick strokes, square ends.
 
-   The shapes themselves are SBOL Visual, which is an open standard. BioRender's
-   own icons are proprietary artwork and are not copied here; what is borrowed
-   is the drawing idiom, not the drawings.
+   This loses colour as a channel for the regulatory parts and that is the
+   point: the shape already distinguishes them, and a shape survives every kind
+   of colour blindness and a photocopier. The feature's own colour still shows
+   on coding sequences, RNA and anything unclassified, where it is doing work.
 
    Each is drawn in a box 24 wide and 20 tall whose baseline, the DNA backbone,
    is y = 0.  ===================================================================== */
 function circArt(key,col,id){
-  const dark=darken(col,0.55), light=lighten(col,0.30);
-  const grad=`<linearGradient id="cg${id}" x1="0" y1="-20" x2="0" y2="6" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="${light}"/><stop offset="70%" stop-color="${col}"/></linearGradient>`;
-  const F=`url(#cg${id})`;
-  const body=d=>`<path d="${d}" fill="${F}" stroke="${dark}" stroke-width="1.1" stroke-linejoin="round"/>`;
-  const line=(d,w)=>`<path d="${d}" fill="none" stroke="${dark}" stroke-width="${w||2.6}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const INK='var(--ink)';
+  const role=CIRC_GLYPH[key]||key;
+  /* a solid black shape for the parts whose identity is their outline */
+  const solid=d=>`<path d="${d}" fill="${INK}" stroke="none"/>`;
+  const stroke=(d,w)=>`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w||3.4}" stroke-linecap="butt" stroke-linejoin="miter"/>`;
+  /* a coloured body with a black rim, for the parts that carry information */
+  const tinted=d=>`<path d="${d}" fill="${col}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="miter"/>`;
   switch(key){
     case 'promoter':
-      /* a bent arrow with a solid head: the thing transcription starts at */
-      return grad+line('M3 0 V-13 H15',3)+
-        `<path d="M13 -18.5 L22 -13 L13 -7.5 Z" fill="${F}" stroke="${dark}" stroke-width="1.1" stroke-linejoin="round"/>`;
+      /* the bent arrow: a thick elbow with a solid head */
+      return stroke('M3.2 0 V-12.5 H15.5',3.4)
+        +solid('M14 -18 L22.5 -12.5 L14 -7 Z');
     case 'RBS':
-      /* a dome on the backbone, with the shoulder the ribosome sits in */
-      return grad+body('M1 0 A11 11 0 0 1 23 0 Z')+
-        `<path d="M7 -3.5 A5 5 0 0 1 17 -3.5" fill="none" stroke="${dark}" stroke-width="1" opacity=".5"/>`;
+      /* the dome, filled, sitting on the backbone */
+      return solid('M2 0 A10 10 0 0 1 22 0 Z');
     case 'CDS':
-      /* a thick arrow straddling the line, pointing the way it is read */
-      return grad+body('M1 -8 H13 L23 0 L13 8 H1 Z');
+      /* the pointed box: the only part that carries its colour */
+      return tinted('M2 -7.5 H14 L22.5 0 L14 7.5 H2 Z');
     case 'terminator':
-      /* the T, with weight in both strokes */
-      return grad+line('M12 0 V-14',3.2)+line('M3 -14 H21',3.2);
+      /* the T: a thick stem under a thick bar */
+      return stroke('M12 0 V-13',3.4)+stroke('M3 -13 H21',3.4);
     case 'rep_origin':
-      return grad+body('M12 -8 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0')+
-        `<path d="M7 -8 a5 5 0 0 1 10 0" fill="none" stroke="${dark}" stroke-width="1" opacity=".5"/>`;
-    case 'protein_bind': case 'misc_binding':
-      return grad+body('M2 -9 H22 A2 2 0 0 1 22 1 H2 A2 2 0 0 1 2 -9 Z');
-    case 'ncRNA': case 'misc_RNA': case 'tRNA': case 'rRNA':
-      return grad+line('M2 -4 q4 -8 7.5 0 t7.5 0 t5 0',3);
-    case 'stem_loop':
-      return grad+line('M6 0 V-8 A6 6 0 0 1 18 -8 V0',3)+line('M9.5 -5 H14.5',2);
-    case 'polyA_signal':
-      return grad+line('M2 0 H22',3)+line('M6 0 V-9',2.6)+line('M12 0 V-9',2.6)+line('M18 0 V-9',2.6);
-    case 'sig_peptide':
-      return grad+body('M1 -7 H12 L19 0 L12 7 H1 Z')+line('M4 0 H9',1.8);
-    case "5'UTR": case "3'UTR":
-      return grad+body('M2 -6 H22 V2 H2 Z');
+      return tinted('M12 -8 m-8.5 0 a8.5 8.5 0 1 0 17 0 a8.5 8.5 0 1 0 -17 0');
     case 'oriT':
-      return grad+body('M12 -8 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0')+line('M12 -17 V1',2.2);
+      return tinted('M12 -8 m-8.5 0 a8.5 8.5 0 1 0 17 0 a8.5 8.5 0 1 0 -17 0')+stroke('M12 -17 V1',2);
+    case 'protein_bind': case 'misc_binding':
+      /* the operator: a plain filled box on the line */
+      return solid('M3 -8 H21 V2 H3 Z');
+    case 'ncRNA': case 'misc_RNA': case 'tRNA': case 'rRNA':
+      return `<path d="M2 -3 q4 -9 7.5 0 t7.5 0 t5 0" fill="none" stroke="${col}" stroke-width="3.4" stroke-linecap="round"/>`;
+    case 'stem_loop':
+      return stroke('M6.5 0 V-7 A5.5 5.5 0 0 1 17.5 -7 V0',3)+stroke('M10 -4.5 H14',2);
+    case 'polyA_signal':
+      return stroke('M2 0 H22',3)+stroke('M6 0 V-9',2.8)+stroke('M12 0 V-9',2.8)+stroke('M18 0 V-9',2.8);
+    case 'sig_peptide':
+      return tinted('M2 -6.5 H12 L19 0 L12 6.5 H2 Z');
+    case "5'UTR": case "3'UTR":
+      return tinted('M2 -5.5 H22 V2 H2 Z');
     default:
-      /* anything unclassified gets a plain tile that does not pretend to mean something */
-      return grad+body('M3 -7 H21 V5 H3 Z');
+      return tinted('M3.5 -6.5 H20.5 V5 H3.5 Z');
   }}
 
 function circuitSVG(doc,o){
@@ -3156,7 +3315,7 @@ function circuitSVG(doc,o){
       prevLabel[lrow]=cx+half;if(lrow)two=true;
       items.push({f,cx,trueCx:trueX+GW/2,lrow,moved:Math.abs(x-trueX)>1.5});});
     return {row,items,two};});
-  const ROWH=104+(laid.some(l=>l.two&&names)?22:0);
+  const ROWH=112+(laid.some(l=>l.two&&names)?26:0);
   const H=chan+rows.length*ROWH+34;
 
   // where each feature was drawn, so the links can find it
@@ -3191,7 +3350,7 @@ function circuitSVG(doc,o){
         +(live?`<title>${esc(f.name)} · ${esc(sb.title)} · ${fmtNum(featStart(f))}–${fmtNum(featEnd(f))} (${fmtNum(featLen(f,doc.seq.length))} bp)${it.moved?' · nudged clear of its neighbour; the grey line marks the real position':''}</title>`:'')
         +`</g>`;
       if(names){
-        const dy=it.lrow?44:18;
+        const dy=it.lrow?52:26;   /* clear of the coding-sequence box, which straddles the line */
         g+=`<text x="${cx}" y="${y+dy}" text-anchor="middle" class="cq-nm">${esc(trimTo(f.name,22))}</text>`;
         g+=`<text x="${cx}" y="${y+dy+12}" text-anchor="middle" class="cq-ty">${esc(sb.title)}</text>`;}
     }
@@ -3732,6 +3891,7 @@ function act(a,arg){const doc=D();
     case 'fold':case 'af3':{const p=selectedProtein();if(p)foldDialog(p.aa,p.name);else toast('Select a coding region, click a CDS feature, or open a protein sequence');break;}
     case 'blast':blastDialog();break;
     case 'parts':partsDialog();break;
+    case 'seva':sevaDialog();break;
     case 'express':expressDialog();break;
     case 'match':matchDialog();break;
     case 'send':sendDialog();break;
@@ -3802,7 +3962,10 @@ $$('input[name=cqscale]').forEach(r=>r.addEventListener('change',()=>{S.circuit.
 /* Left click anywhere in the circuit selects the part, so the diagram works like the map. */
 $('#pane-circuit').addEventListener('click',e=>{const t=e.target.closest('[data-fid]');if(!t)return;const doc=D();if(!doc)return;
   const f=doc.features.find(x=>x.id===t.dataset.fid);if(!f)return;
-  setSel(Object.assign(selFromFeature(f,doc.seq.length),{fid:f.id}));renderCircuit();});
+  setSel(Object.assign(selFromFeature(f,doc.seq.length),{fid:f.id}));renderCircuit();
+  /* a part in the diagram opens its own card, so it can be changed where it is */
+  const el=document.querySelector(`#circuitbox [data-fid="${f.id}"]`)||t;
+  circPartCard(f,el);});
 $('#pane-circuit').addEventListener('dblclick',e=>{const t=e.target.closest('[data-fid]');if(!t)return;const doc=D();if(!doc)return;
   const f=doc.features.find(x=>x.id===t.dataset.fid);if(f)featureDialog(f);});
 ['m-labels','m-enz','m-prim','m-aa','m-orf'].forEach(id=>$('#'+id).addEventListener('change',()=>{S.map[id.slice(2)]=$('#'+id).checked;renderMap();saveSoon();}));
@@ -4857,6 +5020,147 @@ $('#pane-circuit').addEventListener('click',e=>{
   const doc=D();const f=doc&&doc.features.find(y=>y.id===x.dataset.express);
   if(f)expressFor(f);},true);
 
+/* =====================================================================
+   THE SEVA PANEL, AND SWAPPING A PART FROM THE CIRCUIT
+   ===================================================================== */
+function sevaDialog(){
+  const doc=D();if(!doc){toast('Open a sequence first.');return;}
+  renderSeva();openDlg('#dlg-seva');}
+
+function renderSeva(){
+  const doc=D();if(!doc)return;
+  const r=sevaScan(doc);
+  let h='';
+  if(!r.ok){$('#seva-res').innerHTML=`<div class="note">${esc(r.why)}</div>`;return;}
+  h+=`<div class="exbox"><h4>Is this a SEVA vector?</h4>`;
+  if(r.isSeva)h+=`<p class="note"><b>All three module boundaries are present and unique.</b> Each span below can be cut out and replaced with the same kind of module from another SEVA plasmid.</p>`;
+  else h+=`<p class="note">This does not have the full SEVA frame. ${r.modules.length} of 3 module boundaries are present and unique; a module is only swappable when both of its flanking sites cut exactly once.</p>`;
+  h+=`<table class="tbl mtbl"><thead><tr><th>module</th><th>flanked by</th><th>found</th><th class="num">span</th><th>what is in it</th><th></th></tr></thead><tbody>`;
+  for(const m of r.modules)
+    h+=`<tr><td><b>${esc(m.label)}</b><br><span class="muted">digit ${m.digit}</span></td>
+      <td class="mono">${esc(m.left)} … ${esc(m.right)}</td>
+      <td><span class="mband perfect">both unique</span></td>
+      <td class="num">${fmtNum(m.len)} bp</td>
+      <td>${m.covers.length?m.covers.map(esc).join(', '):'<span class="muted">nothing annotated inside</span>'}</td>
+      <td><button class="btn sm" data-seva-sel="${m.key}">Select</button>
+          <button class="btn sm primary" data-seva-swap="${m.key}">Swap…</button></td></tr>`;
+  for(const m of r.missing)
+    h+=`<tr><td><b>${esc(m.label)}</b><br><span class="muted">digit ${m.digit}</span></td>
+      <td class="mono">${esc(m.left)} … ${esc(m.right)}</td>
+      <td><span class="mband some">${m.leftN===0||m.rightN===0?'site missing':'cuts more than once'}</span></td>
+      <td class="num">–</td>
+      <td class="muted">${esc(m.left)} cuts ${m.leftN}×, ${esc(m.right)} cuts ${m.rightN}×</td><td></td></tr>`;
+  h+=`</tbody></table></div>`;
+
+  h+=`<div class="exbox"><h4>The naming, for reading a SEVA number</h4>
+    <p class="note">A SEVA number is three digits: the antibiotic marker, the origin, then the cargo. SEVA 231 is kanamycin, RK2, a multiple cloning site.</p>
+    <div class="sevagrid">
+      <div><h5>First digit · marker</h5><ul>${SEVA_MARKERS.map(x=>`<li><b>${esc(x.code)}</b> ${esc(x.name)} <span class="muted">${esc(x.full||'')}</span></li>`).join('')}</ul></div>
+      <div><h5>Second digit · origin</h5><ul>${SEVA_ORIS.map(x=>`<li><b>${esc(x.code)}</b> ${esc(x.name)}${x.note?' <span class="muted">'+esc(x.note)+'</span>':''}</li>`).join('')}</ul></div>
+      <div><h5>Third digit · cargo</h5><ul>${SEVA_CARGO.map(x=>`<li><b>${esc(x.code)}</b> ${esc(x.name)}</li>`).join('')}</ul></div>
+    </div>
+    <p class="note">The fixed frame around the modules carries ${SEVA_FIXED.map(x=>'<b>'+esc(x.name)+'</b> ('+esc(x.note)+')').join(', ')}.</p>
+    <p class="note"><b>The module sequences are not held here.</b> The SEVA site publishes only the first 25 bases of each and hands over the rest through its own copy button, so there is nothing to reproduce honestly. Copy the module you want from <a href="https://seva-plasmids.com/backbone-modules-nomenclature/" target="_blank" rel="noopener">seva-plasmids.com</a> and paste it into the swap, or take it from another SEVA plasmid you have open, which is what the swap offers first.</p>
+  </div>`;
+  $('#seva-res').innerHTML=h;}
+
+function sevaSwapDialog(key){
+  const doc=D();const r=sevaScan(doc);
+  const mod=r.modules.find(m=>m.key===key);if(!mod)return;
+  SEVA_PENDING=mod;
+  /* the same module taken from any other open plasmid that has the frame */
+  const donors=[];
+  for(const d of S.docs){
+    if(d===doc||d.isProtein)continue;
+    const dr=sevaScan(d);const dm=dr.ok&&dr.modules.find(m=>m.key===key);
+    if(dm)donors.push({doc:d,mod:dm});}
+  $('#sv-title').textContent=`Swap the ${mod.label}`;
+  $('#sv-cur').innerHTML=`Currently ${fmtNum(mod.len)} bp between <b>${esc(mod.left)}</b> and <b>${esc(mod.right)}</b>${mod.covers.length?', holding '+mod.covers.map(esc).join(', '):''}.`;
+  $('#sv-donor').innerHTML=`<option value="">Paste the sequence below instead</option>`+
+    donors.map((x,i)=>`<option value="${i}">${esc(x.doc.name)} — its ${esc(mod.label)}, ${fmtNum(x.mod.len)} bp</option>`).join('');
+  SEVA_DONORS=donors;
+  $('#sv-paste').value='';
+  $('#sv-note').textContent=donors.length?'':'No other open sequence has this module with both flanking sites unique, so paste one.';
+  openDlg('#dlg-sevaswap');}
+let SEVA_PENDING=null, SEVA_DONORS=[];
+
+function sevaDoSwap(){
+  const doc=D();if(!doc||!SEVA_PENDING)return;
+  const d=$('#sv-donor').value;
+  const src=d!==''?SEVA_DONORS[+d].mod.seq:cleanDNA($('#sv-paste').value);
+  if(!src){toast('Nothing to put in.');return;}
+  const mod=sevaScan(doc).modules.find(m=>m.key===SEVA_PENDING.key);
+  if(!mod){toast('The module boundaries moved; reopen the panel.');return;}
+  if(!confirm(`Replace the ${mod.label} of ${doc.name}?\n\n${fmtNum(mod.len)} bp out, ${fmtNum(src.length)} bp in, between ${mod.left} and ${mod.right}. Everything downstream shifts by ${src.length-mod.len} bp. Ctrl+Z undoes it.`))return;
+  const res=sevaSwap(doc,mod,src);
+  if(!res.ok){toast(res.why);return;}
+  commit(doc,`${mod.label} swapped, ${res.delta>=0?'+':''}${fmtNum(res.delta)} bp`);
+  closeDlg('#dlg-sevaswap');renderSeva();}
+
+$('#seva-res').addEventListener('click',e=>{
+  const s=e.target.closest('[data-seva-sel]');
+  if(s){const m=sevaScan(D()).modules.find(x=>x.key===s.dataset.sevaSel);
+    if(m){setSel({s:m.s,e:m.e});closeDlg('#dlg-seva');setView('split');scrollSeqTo(m.s);}return;}
+  const w=e.target.closest('[data-seva-swap]');
+  if(w)sevaSwapDialog(w.dataset.sevaSwap);});
+$('#sv-go').addEventListener('click',sevaDoSwap);
+
+/* ---------------------------------------------------------------
+   Changing a part straight from the circuit: click one and a card
+   opens on it with rename, recolour, and swap for a library part.
+   --------------------------------------------------------------- */
+function circPartCard(f,atEl){
+  const doc=D();if(!doc||!f)return;
+  document.querySelectorAll('.partcard').forEach(x=>x.remove());
+  const lib=PART_LIB.filter(p=>p.type===f.type&&p.seq);
+  const card=document.createElement('div');
+  card.className='partcard';
+  card.innerHTML=`<div class="hd"><b>${esc(f.name)}</b><span>${esc(f.type)}</span><button data-x>&times;</button></div>
+    <label class="inl">Name</label><input type="text" id="pc-name" value="${esc(f.name)}" spellcheck="false">
+    <label class="inl">Colour</label>
+    <div class="inswatch" id="pc-sw">${SWATCHES.slice(0,8).map(c=>`<button data-c="${c}" style="background:${c}" class="${c.toLowerCase()===String(f.color).toLowerCase()?'on':''}"></button>`).join('')}</div>
+    ${lib.length?`<label class="inl">Swap for</label>
+      <select id="pc-swap"><option value="">keep what is there</option>
+      ${lib.map(p=>`<option value="${p.id}">${esc(p.name)}${p.rel!=null?' — '+esc(plibStrengthWord(p)):''} (${p.seq.length} bp)</option>`).join('')}</select>`
+     :`<p class="note" style="margin-top:6px">No library part of this kind carries a sequence to swap in.</p>`}
+    <div class="acts">
+      <button data-pc="select">Select it</button>
+      ${tuRole(f)==='RBS'||tuRole(f)==='CDS'?'<button data-pc="express">Strength…</button>':''}
+      ${tuRole(f)==='promoter'?'<button data-pc="express">Check it…</button>':''}
+      <button data-pc="del" class="danger">Delete</button>
+    </div>`;
+  document.body.appendChild(card);
+  const r=atEl.getBoundingClientRect();
+  card.style.left=Math.max(8,Math.min(window.innerWidth-280,r.left-70))+'px';
+  card.style.top=Math.min(window.innerHeight-330,r.bottom+8)+'px';
+  const close=()=>{card.remove();document.removeEventListener('mousedown',away,true);};
+  const away=ev=>{if(!card.contains(ev.target))close();};
+  setTimeout(()=>document.addEventListener('mousedown',away,true),0);
+  $('#pc-name',card).addEventListener('change',ev=>{
+    const v=ev.target.value.trim();if(!v||v===f.name)return;
+    pushHist(doc);f.name=v;commit(doc,'Renamed to '+v);});
+  $('#pc-sw',card).addEventListener('click',ev=>{
+    const b=ev.target.closest('button[data-c]');if(!b)return;
+    pushHist(doc);f.color=b.dataset.c;commit(doc,'Colour changed');});
+  const sel=$('#pc-swap',card);
+  if(sel)sel.addEventListener('change',()=>{
+    const p=PART_LIB.find(x=>x.id===sel.value);if(!p)return;
+    const was=featLen(f,doc.seq.length);
+    if(!confirm(`Replace the ${was} bases of ${f.name} with ${p.name} (${p.seq.length} bp)?\n\nEverything downstream shifts by ${p.seq.length-was} bp. Ctrl+Z undoes it.`)){sel.value='';return;}
+    const f2=swapFeatureSeq(doc,f,p);
+    commit(doc,`${p.name} swapped in`);
+    if(f2)setSel(Object.assign(selFromFeature(f2,doc.seq.length),{fid:f2.id}));
+    close();});
+  card.addEventListener('click',ev=>{
+    const b=ev.target.closest('button');if(!b)return;
+    if(b.hasAttribute('data-x'))return close();
+    const k=b.dataset.pc;if(!k)return;
+    if(k==='select'){setSel(Object.assign(selFromFeature(f,doc.seq.length),{fid:f.id}));}
+    else if(k==='express'){expressFor(f);}
+    else if(k==='del'){if(confirm(`Delete the annotation ${f.name}? The bases stay.`)){
+      pushHist(doc);doc.features=doc.features.filter(x=>x!==f);doc.sel=null;commit(doc,'Feature deleted');}}
+    close();});}
+
 /* ---- help ---- */
 const HELP_HTML=`
 <h4>Opening and saving</h4>
@@ -4873,6 +5177,11 @@ const HELP_HTML=`
 <li><b>The circuit is drawn properly.</b> The parts are solid artwork now instead of thin line symbols: filled bodies, a darker rim, a soft highlight, rounded joins, on a heavier backbone. The shapes are still SBOL Visual, which is an open standard; the drawing idiom is the one figure tools use, but none of their artwork is copied.</li>
 <li><b>Autosearch over every reading frame.</b> Find matches will take every open reading frame above a length you set, translate it, search it against everything in this file, and show what it found. Anything that matched a known part at 95% or better is offered for annotation in one go; everything else gets a BLASTp button, because only NCBI can place those and only you should decide what the answer means. Nothing is annotated from a guess.</li>
 <li><b>BLASTp on anything selected</b>, translated for you, with a warning first if the frame carries an internal stop.</li>
+<li><b>The circuit is drawn to the symbol table.</b> Heavy black line art for the promoter, the ribosome binding site and the terminator, and colour only on the coding sequence, because the gene is what changes between constructs while the regulatory shapes are the same every time. Losing colour on the structural parts is the point: the shape already tells them apart, and a shape survives both colour blindness and a photocopier.</li>
+<li><b>A part can be changed from the diagram.</b> Click one in the circuit and a card opens on it: rename it, recolour it, swap it for another part of the same kind from the library, check its strength, or delete the annotation. The bases are rewritten in place.</li>
+<li><b>SEVA modules.</b> A SEVA vector is three interchangeable modules, each held between a fixed pair of unique cutters: the antibiotic marker between SwaI and PshAI, the origin between FseI and AscI, the cargo between PacI and SpeI. Tools &rarr; SEVA modules finds those six sites in whatever is open, says which of the three spans are therefore swappable and which are not and why, and swaps one for the same module taken from another plasmid you have open or for sequence you paste. The full naming is there too, so a SEVA number can be read off.
+<br>The module sequences themselves are <b>not</b> included. The SEVA site publishes only the first 25 bases of each and hands the rest over through its own copy button, so there is nothing here to reproduce honestly; the swap takes them from you or from another open plasmid instead.</li>
+<li><b>A bug worth naming.</b> The first version of the module swap replaced the span between the two <i>cut positions</i>. PacI cuts five bases into its own recognition site and SpeI one base into its, so that quietly chewed away part of both flanking sites and the module could never be swapped a second time. The span is now the bases strictly between the two sites, and a swapped plasmid still reads as SEVA afterwards, which is the property the whole standard rests on.</li>
 <li><b>The strength tools are where the parts are.</b> Select a ribosome binding site and the inspector offers its strength; select a promoter and it offers the check; select a coding sequence and it asks how well it is translated. Every transcription unit in the circuit view carries the same buttons. It was one line in a menu before, which is not where anyone looks.</li>
 </ul>
 <h4>What is new in v6</h4>
@@ -4955,6 +5264,7 @@ const HELP_HTML=`
 <li>Salis HM, Mirsky EA, Voigt CA. Automated design of synthetic ribosome binding sites to control protein expression. <i>Nat Biotechnol</i> 2009;27:946&ndash;50. <a href="https://doi.org/10.1038/nbt.1568" target="_blank" rel="noopener">doi:10.1038/nbt.1568</a>. Reimplemented here from the model as published and as released by the authors; the RNA folding underneath is ours.</li>
 <li>LaFleur TL, Hossain A, Salis HM. Automated model-predictive design of synthetic promoters to control transcriptional profiles in bacteria. <i>Nat Commun</i> 2022;13:5159. <a href="https://doi.org/10.1038/s41467-022-32829-5" target="_blank" rel="noopener">doi:10.1038/s41467-022-32829-5</a>. Not reimplemented, which is why no promoter strength is reported.</li>
 <li>Paul Tol's muted qualitative colour scheme, checked here by dichromat simulation rather than taken on trust.</li>
+<li>SEVA backbone modules and nomenclature. <a href="https://seva-plasmids.com/backbone-modules-nomenclature/" target="_blank" rel="noopener">seva-plasmids.com</a>. The module names, their flanking restriction sites and the three-digit naming are taken from that page; the module sequences are not, because only their first 25 bases are published there.</li>
 <li>Standard part sequences and their measured relative strengths come from the iGEM Registry of Standard Biological Parts, part by part (CC BY 4.0). The Anderson constitutive promoter collection was measured as relative fluorescence in <i>E. coli</i> TG1 with J23100 = 1, so a strength compares inside a family and never across families. <a href="https://parts.igem.org/" target="_blank" rel="noopener">parts.igem.org</a></li>
 <li>Ribosome binding site spacing: the Shine-Dalgarno core sits about 5 to 9 bases from the A of the start codon, around 7 being the usual optimum, and the first codons of the gene change the rate, which is why a model beats a lookup. Salis HM, Mirsky EA, Voigt CA. Automated design of synthetic ribosome binding sites to control protein expression. <i>Nat Biotechnol</i> 2009;27:946-50. <a href="https://doi.org/10.1038/nbt.1568" target="_blank" rel="noopener">doi:10.1038/nbt.1568</a>. The calculator itself: <a href="https://salislab.net/software/predict_rbs_calculator" target="_blank" rel="noopener">salislab.net</a></li>
 <li>SBOL Visual 3 glyph shapes, from the published specification. <a href="https://sbolstandard.org/visual-glyphs/" target="_blank" rel="noopener">sbolstandard.org/visual-glyphs</a></li>
@@ -5130,7 +5440,7 @@ initPanelResize();
 initClicks();
 initClicks6();
 render();
-if(/[?&]debug\b/.test(location.search))window.SS={S,D,identitySearch,bestLocalHit,parseBlastTable,matchDialog,showSelBar,rbsCalc,rbsScan,promoterStrength,foldRNA,transcriptionUnits,regulatoryLinks,checkUnit,circuitSVG,renderCircuit,partsDialog,plibApply,sendDialog,PART_LIB,PART_RULES,copyMenu,copyOptions,setTranslate,blastSeq,sbolFor,weightOf,renderInspector,applyWings,linkPrimers,unlinkPrimer,pairOf,ampliconOf,bulk,annotRows,parseFile,writeSnapGene,writeGenBank,parseSnapGene,parseGenBank,enzymeSites,digest,digestDetailed,findORFs,designPrimers,findPrimerSites,proteinStats,detectFeatures,tmNN,translate,editInsert,editDelete,addDocs,render,setSel,ENZYMES,FEATURE_LIB,newFeature,featSeq,rc,requestEdit,previewEdit,alignPair,codonOptimise,figureSVG,circularSVG,linearSVG,figureTheme,endsCompatible,ligate,fragmentDoc,act,setView,DIG,FIG,runCmd,selectFeature};
+if(/[?&]debug\b/.test(location.search))window.SS={S,D,sevaScan,sevaSwap,sevaDialog,circPartCard,SEVA_MARKERS,SEVA_ORIS,SEVA_CARGO,identitySearch,bestLocalHit,parseBlastTable,matchDialog,showSelBar,rbsCalc,rbsScan,promoterStrength,foldRNA,transcriptionUnits,regulatoryLinks,checkUnit,circuitSVG,renderCircuit,partsDialog,plibApply,sendDialog,PART_LIB,PART_RULES,copyMenu,copyOptions,setTranslate,blastSeq,sbolFor,weightOf,renderInspector,applyWings,linkPrimers,unlinkPrimer,pairOf,ampliconOf,bulk,annotRows,parseFile,writeSnapGene,writeGenBank,parseSnapGene,parseGenBank,enzymeSites,digest,digestDetailed,findORFs,designPrimers,findPrimerSites,proteinStats,detectFeatures,tmNN,translate,editInsert,editDelete,addDocs,render,setSel,ENZYMES,FEATURE_LIB,newFeature,featSeq,rc,requestEdit,previewEdit,alignPair,codonOptimise,figureSVG,circularSVG,linearSVG,figureTheme,endsCompatible,ligate,fragmentDoc,act,setView,DIG,FIG,runCmd,selectFeature};
 </script>
 <script src="../../assets/support.js" defer></script>
 <script data-goatcounter="https://labpotato.goatcounter.com/count"

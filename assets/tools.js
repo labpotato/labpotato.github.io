@@ -307,9 +307,10 @@ const TOOLS = [
       { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04" },
       { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04",
         new: [
+          "SEVA modules: find the swappable marker, origin and cargo spans by their flanking sites and exchange one",
           "Autosearch: translate every reading frame, match it locally, and send the rest to BLASTp one at a time",
           "Readable rows, stronger text, the rail at the top and the action bar off the bases",
-          "Circuit parts drawn as solid artwork, and the strength tools on every RBS, promoter and CDS you select"
+          "Circuit drawn to the SBOL symbol table, and any part changed by clicking it in the diagram"
         ] }
     ]
   }

@@ -74,6 +74,16 @@ The published implementation gets every folding energy from NUPACK. There is no 
 
 **Autosearch over every reading frame.** Find matches will take every open reading frame above a chosen length, translate it, search it against everything in the file at DNA and protein level, and report. Frames matching a known part at 95% or better are offered for annotation in one pass; the rest carry a BLASTp button each, because only NCBI can place those and only the user should decide what the answer means. Nothing is annotated from a guess. BLASTp is also available for any selection, translated automatically, with a warning when the frame carries an internal stop.
 
+**The circuit is drawn to the symbol table.** Heavy black line art for the promoter, ribosome binding site and terminator, colour only on the coding sequence: the gene is what changes between constructs while the regulatory shapes are constant, and a shape survives colour blindness and a photocopier where a hue does not.
+
+**Parts change from the diagram.** Clicking a part in the circuit opens a card on it: rename, recolour, swap for another of the same kind from the library, check its strength, delete the annotation. Bases are rewritten in place.
+
+**SEVA modules.** A SEVA vector is three interchangeable modules, each held between a fixed pair of unique cutters: antibiotic marker between SwaI and PshAI, origin between FseI and AscI, cargo between PacI and SpeI. Tools -> SEVA modules finds those six sites in whatever is open, reports which spans are swappable and which are not and why, and swaps one for the same module taken from another open plasmid or from pasted sequence. The full three-digit naming (10 markers, 19 origins, 57 cargo modules) is included for reading a SEVA number off a vector.
+
+The module sequences are deliberately absent: seva-plasmids.com publishes only the first 25 bases of each and releases the rest through its own copy button, so there is nothing to reproduce honestly here.
+
+*Fixed during this work:* the first version of the module swap replaced the span between the two cut positions. PacI cuts five bases into its own recognition site and SpeI one base into its, so that silently destroyed part of both flanking sites and the module could never be swapped again. The span is now the bases strictly between the two recognition sites, verified by swapping a cargo module and confirming the plasmid still scans as SEVA afterwards.
+
 **The strength tools are where the parts are.** Selecting a ribosome binding site offers its strength in the inspector; a promoter offers the check; a coding sequence asks how well it is translated. Every transcription unit in the circuit view carries the same buttons. Previously this was a single line in a menu.
 
 Everything runs in the page; nothing is uploaded except what you send to a folding service on purpose.

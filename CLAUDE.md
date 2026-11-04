@@ -34,3 +34,10 @@ are generated from `assets/tools.js` by `assets/app.js`. Full manual:
 7. Check `node --check assets/tools.js assets/app.js`, render the homepage in
    a headless browser, and confirm every card and launch link works.
 8. Commit only the files for this release. Do not commit unrelated leftovers.
+
+## How the owner wants replies
+
+- End every complex or lengthy chat reply with a short **summary paragraph** of
+  what was done, what changed, and what is still open.
+- For layout or animation work, show screenshots and describe the planned changes
+  before committing; do not publish until the owner has seen them.

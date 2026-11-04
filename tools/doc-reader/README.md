@@ -4,7 +4,7 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v8.html`: the tool (v1 to v7 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v9.html`: the tool (v1 to v8 stay as legacy releases). Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds

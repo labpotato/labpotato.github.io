@@ -1,6 +1,6 @@
 # Sequence Studio
 
-> ## Asked for, not yet built — start v7 here
+> ## Asked for, not yet built — start v8 here
 >
 > **The plasmid mindmap.** A view that links a plasmid to the other plasmids it
 > is related to and lays them out as a map rather than a list: shared backbone,

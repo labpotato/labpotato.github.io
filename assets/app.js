@@ -573,6 +573,11 @@ const APP_GLYPH = {
   protein: `<path d="M10 37.5h28" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><rect class="g-bar" x="12.5" y="26" width="6" height="9" rx="2" fill="#fff" fill-opacity=".7"/>
     <rect class="g-bar" x="21" y="19" width="6" height="16" rx="2" fill="#fff" fill-opacity=".85"/><rect class="g-bar" x="29.5" y="11" width="6" height="24" rx="2" fill="#fff"/>
     <rect x="31" y="14" width="3" height="5" rx="1.2" ${C} opacity=".55"/>`,
+  dna: `<circle cx="24" cy="24" r="14" fill="none" stroke="#fff" stroke-width="2.2" opacity=".45"/>
+    <circle class="g-pop" cx="24" cy="24" r="14" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="19 69" transform="rotate(-70 24 24)"/>
+    <circle class="g-pop" cx="24" cy="24" r="14" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="12 76" transform="rotate(40 24 24)" opacity=".8"/>
+    <circle class="g-pop" cx="24" cy="24" r="14" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="22 66" transform="rotate(125 24 24)" opacity=".6"/>
+    <circle cx="24" cy="24" r="6.5" fill="#fff"/><path class="g-pop" d="M20.5 24h7M25 21.5l2.5 2.5-2.5 2.5" fill="none" ${CS} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
   reader: `<rect x="11" y="7" width="26" height="34" rx="4" fill="#fff"/>
     <rect x="16" y="14" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="20" width="16" height="2.6" rx="1.3" ${C} opacity=".3"/><rect x="16" y="26" width="10" height="2.6" rx="1.3" ${C} opacity=".3"/>
     <rect class="g-hl" x="15" y="19" width="12" height="4.6" rx="1.6" fill="#ffd84d" opacity=".85"/>

@@ -490,6 +490,35 @@
   .inedit .inswatch button[data-c].on{outline:2px solid var(--selb);outline-offset:1px}
   .inedit .inswatch input[type=color]{width:26px;height:21px;border:1px solid var(--line-2);border-radius:5px;background:none;padding:0}
   .inedit select{height:28px;border:1px solid var(--line-2);border-radius:7px;padding:0 8px;font-size:12.5px;background:var(--paper);width:100%;text-overflow:ellipsis}
+  /* ---- the selection action bar ---- */
+  .selbar{position:fixed;z-index:70;display:none;align-items:center;gap:4px;padding:5px 6px;
+    background:var(--card);border:1px solid var(--line-2);border-radius:11px;box-shadow:0 8px 24px rgba(20,24,32,.18)}
+  .selbar.on{display:flex}
+  .selbar .sbn{font-size:11.5px;color:var(--ink-3);padding:0 7px 0 4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .selbar button{border:0;background:transparent;border-radius:7px;padding:5px 9px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  .selbar button:hover{background:var(--calc);color:var(--ink)}
+  .selbar button.x{color:var(--ink-3);padding:5px 7px;font-size:15px;line-height:1}
+  body.fdragging{cursor:ew-resize;user-select:none}
+  /* ---- the enzyme card ---- */
+  .enzcard{position:fixed;z-index:70;width:280px;background:var(--card);border:1px solid var(--line-2);
+    border-radius:11px;box-shadow:0 10px 28px rgba(20,24,32,.2);padding:10px 12px;font-size:12.5px}
+  .enzcard .hd{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+  .enzcard .hd b{font-size:14px}
+  .enzcard .hd span{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .enzcard .hd button{margin-left:auto;border:0;background:none;color:var(--ink-3);font-size:16px;line-height:1}
+  .enzcard dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0 0 9px}
+  .enzcard dt{color:var(--ink-3);font-size:11.5px}
+  .enzcard dd{margin:0;font-size:12px}
+  .enzcard .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .enzcard .acts button{border:1px solid var(--line-2);background:var(--paper);border-radius:7px;padding:4px 8px;font-size:11.5px}
+  .enzcard .acts button:hover{border-color:var(--selb);color:var(--selb)}
+  /* ---- match verdict chips ---- */
+  .mband{font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .mband.perfect{background:#117733;color:#fff}
+  .mband.near{background:#44AA99;color:#06281f}
+  .mband.some{background:#DDCC77;color:#3b3210}
+  .tbl.mtbl tr[data-fid],.tbl.mtbl tr[data-part]{cursor:pointer}
+  .tbl.mtbl tr[data-fid]:hover,.tbl.mtbl tr[data-part]:hover{background:var(--blue-l)}
   /* ---- expression panel ---- */
   .exbox{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:11px;background:var(--card)}
   .exbox.bad{border-left:3px solid var(--amber)}
@@ -656,6 +685,7 @@
       <div class="sec">Build</div>
       <button data-act="parts">Parts library: promoters, RBS, terminators, origins, markers…<small>Sorted by measured strength, with the placement rules</small></button>
       <button data-act="circuit">Circuit view<small>Each transcription unit as SBOL symbols, and what it is missing</small></button>
+      <button data-act="match">Find matches for this…<small>Against the open sequences and the part libraries, DNA and protein, offline</small></button>
       <button data-act="express">Ribosome binding strength, promoter check…<small>Translation initiation rate from the Salis model; &minus;35/&minus;10 diagnostic</small></button>
       <hr>
       <div class="sec">Analyse</div>
@@ -1022,6 +1052,17 @@
   <div class="df"><button class="btn primary" data-close>Done</button></div>
 </dialog>
 
+<dialog id="dlg-match" class="wide xwide">
+  <div class="dh">Find matches <button class="x" data-close>&times;</button></div>
+  <div class="db">
+    <div class="frm" style="grid-template-columns:140px 1fr"><label>Look for</label><select id="mt-what"></select></div>
+    <p class="note" style="margin:8px 0">Searched against the other open sequences, the features of this one, and both part libraries, on both strands and then again as protein. Nothing leaves the page. For anything not already in this file, send it to NCBI.</p>
+    <div id="mt-res" style="margin-top:10px"></div>
+  </div>
+  <div class="df"><button class="btn" data-close>Close</button><button class="btn" id="mt-run">Search</button>
+    <button class="btn primary" id="mt-annot" title="Make a feature from every hit at 95% or better over most of the part">Annotate the confident hits</button></div>
+</dialog>
+
 <dialog id="dlg-express" class="wide xwide">
   <div class="dh">Expression: ribosome binding and promoter <button class="x" data-close>&times;</button></div>
   <div class="db">
@@ -1104,7 +1145,13 @@
     </div>
     <p class="note" style="margin-top:8px">This opens NCBI BLAST in a new tab with the sequence already in the query box, then you press the BLAST button there. Opening it sends the sequence to NCBI, because their page has to receive it to show it. The search itself only runs when you press the BLAST button there.</p>
   </div>
-  <div class="df"><button class="btn" data-close>Cancel</button><button class="btn" id="bl-copy">Copy as FASTA</button><button class="btn primary" id="bl-go">Open BLAST with this sequence</button></div>
+      <hr style="margin:14px 0;border:0;border-top:1px solid var(--line)">
+    <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:6px">Bring the results back</h3>
+    <p class="note">NCBI does not let a page read its results, so nothing can fetch them for you. Run the search there, then on the results page use <b>Download &rarr; Hit Table (text)</b>, or just copy the description table, and paste it here.</p>
+    <textarea id="bl-paste" class="seqin" style="min-height:90px;margin-top:8px" placeholder="Paste the BLAST hit table or description table here"></textarea>
+    <div class="flex" style="gap:8px;margin-top:8px"><button class="btn sm" id="bl-pasteread">Read it</button><button class="btn sm" id="bl-pasteannot" disabled>Annotate the hits</button></div>
+    <div id="bl-pasteres" style="margin-top:9px"></div>
+<div class="df"><button class="btn" data-close>Cancel</button><button class="btn" id="bl-copy">Copy as FASTA</button><button class="btn primary" id="bl-go">Open BLAST with this sequence</button></div>
 </dialog>
 
 <div class="drop" id="drop">Drop sequence files to open them</div>
@@ -2392,6 +2439,170 @@ function promoterStrength(dna){
     i35:b.i35,i10:b.i10,tss:b.tss,
     band:b.score>=0.45?'very strong':b.score>=0.22?'strong':b.score>=0.08?'medium':b.score>=0.02?'weak':'very weak'};}
 
+/* =====================================================================
+   LOCAL IDENTITY SEARCH
+
+   "Send the whole sequence and label it if it is a perfect match or very
+   similar" does not actually need NCBI for most of what it is asked to do.
+   NCBI is for finding something you have never seen; the question people ask
+   far more often is whether this stretch is the part they think it is, whether
+   two of their own plasmids share a region, and whether a clone came back
+   identical. All of that is answerable here, offline, against the sequences
+   already open and the part libraries already in the file.
+
+   The method is the seed-and-extend that BLAST itself is built on, minus the
+   statistics: index the subject by k-mers, find diagonals carrying more than
+   one seed, extend ungapped while the running identity holds up, and keep the
+   best stretch. It reports percent identity over the aligned region and the
+   length of that region, so a 100% hit over 20 bases is never mistaken for a
+   100% hit over 2,000.  ===================================================== */
+
+function kmerIndex(seq,k){
+  const ix=new Map();
+  for(let i=0;i+k<=seq.length;i++){
+    const w=seq.substr(i,k);
+    let a=ix.get(w);if(!a){a=[];ix.set(w,a);}
+    if(a.length<400)a.push(i);}
+  return ix;}
+
+/* Extend a seed in both directions while the match stays dense enough. */
+function extendUngapped(q,s,qi,si,minIdent){
+  let a=qi,b=si,left=0,mism=0,run=0;
+  while(a>0&&b>0){
+    a--;b--;
+    if(q[a]!==s[b]){mism++;run++;if(run>6||mism/(qi-a+1)>1-minIdent){a++;b++;mism--;break;}}
+    else run=0;
+    left++;}
+  const qs=a,ss=b;let mLeft=mism;
+  a=qi;b=si;mism=0;run=0;
+  while(a<q.length-1&&b<s.length-1){
+    a++;b++;
+    if(q[a]!==s[b]){mism++;run++;if(run>6||mism/(a-qi+1)>1-minIdent){a--;b--;mism--;break;}}
+    else run=0;}
+  const qe=a,se=b;
+  const len=qe-qs+1;
+  let match=0;for(let i=0;i<len;i++)if(q[qs+i]===s[ss+i])match++;
+  return {qs,qe,ss,se,len,ident:len?match/len:0};}
+
+function bestLocalHit(query,subject,o){
+  o=o||{};const k=o.k||11, minIdent=o.minIdent||0.80, minLen=o.minLen||o.k||12;
+  if(!query||!subject||subject.length<k||query.length<k)return null;
+  /* a perfect containment is the common case and worth finding outright */
+  if(subject.length<=query.length){const at=query.indexOf(subject);
+    if(at>=0)return {qs:at,qe:at+subject.length-1,ss:0,se:subject.length-1,len:subject.length,ident:1,whole:true};}
+  if(query.length<subject.length){const at=subject.indexOf(query);
+    if(at>=0)return {qs:0,qe:query.length-1,ss:at,se:at+query.length-1,len:query.length,ident:1,whole:true};}
+  const ix=kmerIndex(subject,k);
+  const diag=new Map();
+  const step=query.length>20000?3:1;
+  for(let i=0;i+k<=query.length;i+=step){
+    const hits=ix.get(query.substr(i,k));if(!hits)continue;
+    for(const j of hits){const d=i-j;const c=diag.get(d);
+      if(!c)diag.set(d,{n:1,i,j});else{c.n++;}}}
+  let best=null;
+  const cands=[...diag.entries()].sort((a,b)=>b[1].n-a[1].n).slice(0,24);
+  for(const [,c] of cands){
+    const h=extendUngapped(query,subject,c.i,c.j,minIdent);
+    if(h.len<minLen||h.ident<minIdent)continue;
+    if(!best||h.len*h.ident>best.len*best.ident)best=h;}
+  return best;}
+
+/* Everything this file can compare a query against. */
+function searchSubjects(doc,o){
+  o=o||{};const subs=[];
+  if(o.docs!==false)for(const d of S.docs){
+    if(d===doc||d.isProtein)continue;
+    subs.push({name:d.name,kind:'open sequence',seq:cleanDNA(d.seq),docId:d.id,circular:d.circular});}
+  if(o.features!==false&&doc)for(const f of doc.features){
+    if(f.hidden||!f.segs.length)continue;
+    subs.push({name:f.name,kind:'feature here',seq:cleanDNA(featSeq(doc,f)),fid:f.id,ftype:f.type});}
+  if(o.lib!==false)for(const f of (typeof FEATURE_LIB!=='undefined'?FEATURE_LIB:[])){
+    if(!f.s)continue;subs.push({name:f.n,kind:'known part',seq:cleanDNA(f.s),ftype:f.t,note:f.d});}
+  if(o.parts!==false)for(const p of (typeof PART_LIB!=='undefined'?PART_LIB:[])){
+    if(!p.seq)continue;subs.push({name:p.name,kind:'parts library',seq:cleanDNA(p.seq),ftype:p.type,note:p.desc,partId:p.id});}
+  return subs;}
+
+/* The verdict has to answer both halves of the question: how well the aligned
+   stretch matches, and how much of the subject it covers. A 60 base exact hit
+   inside a 589 base origin is not "essentially identical" to that origin, it is
+   a fragment of it, and saying otherwise is how people convince themselves a
+   clone is right. Coverage therefore gates the verdict, and when identity is
+   high but coverage is not the label says so in bases. */
+function identityBand(ident,len,subLen){
+  const cov=subLen?len/subLen:1;
+  if(ident>=0.999&&cov>=0.999)return {label:'perfect match',cls:'perfect'};
+  if(ident>=0.99&&cov>=0.90)return {label:'essentially identical',cls:'near'};
+  if(ident>=0.95&&cov>=0.80)return {label:'very similar',cls:'near'};
+  if(ident>=0.99)return {label:`exact over ${len} bp, ${Math.round(cov*100)}% of it`,cls:'some'};
+  if(ident>=0.90&&cov>=0.60)return {label:'similar',cls:'some'};
+  return {label:`partial, ${Math.round(cov*100)}% of it`,cls:'some'};}
+
+/* The whole search, DNA on both strands and, where it makes sense, protein. */
+function identitySearch(doc,query,o){
+  o=o||{};
+  const q=cleanDNA(query);
+  if(q.length<12)return {ok:false,why:'Select at least 12 bases.'};
+  const qrc=rc(q);
+  const subs=searchSubjects(doc,o);
+  const out=[];
+  for(const s of subs){
+    if(!s.seq||s.seq.length<12)continue;
+    const f=bestLocalHit(q,s.seq,{k:11,minIdent:0.80});
+    const r=bestLocalHit(qrc,s.seq,{k:11,minIdent:0.80});
+    let hit=null,strand=1;
+    if(f&&(!r||f.len*f.ident>=r.len*r.ident)){hit=f;strand=1;}
+    else if(r){hit=r;strand=-1;}
+    if(!hit)continue;
+    const band=identityBand(hit.ident,hit.len,s.seq.length);
+    out.push({name:s.name,kind:s.kind,ftype:s.ftype,note:s.note,partId:s.partId,fid:s.fid,docId:s.docId,
+      strand,ident:hit.ident,len:hit.len,subLen:s.seq.length,
+      qs:strand===1?hit.qs:q.length-1-hit.qe, qe:strand===1?hit.qe:q.length-1-hit.qs,
+      ss:hit.ss,se:hit.se,coverage:hit.len/s.seq.length,band});}
+  out.sort((a,b)=>(b.ident*b.len)-(a.ident*a.len));
+  /* protein level: translate the query in three forward frames and compare with
+     the translated coding subjects, which catches a synonymous-codon rewrite
+     that the DNA search will miss entirely */
+  const prot=[];
+  if(o.protein!==false&&q.length>=60){
+    const qf=[0,1,2].map(fr=>translate(q.slice(fr)).replace(/\*/g,'X'));
+    for(const s of subs){
+      if(s.ftype&&s.ftype!=='CDS')continue;
+      if(!s.seq||s.seq.length<60)continue;
+      const sp=translate(s.seq).replace(/\*/g,'X');
+      if(sp.length<20)continue;
+      let best=null;
+      for(let fr=0;fr<3;fr++){
+        const h=bestLocalHit(qf[fr],sp,{k:4,minIdent:0.70,minLen:20});
+        if(h&&(!best||h.len*h.ident>best.len*best.ident))best=Object.assign({frame:fr+1},h);}
+      if(best&&best.ident>=0.70&&best.len>=20)
+        prot.push({name:s.name,kind:s.kind,ident:best.ident,len:best.len,frame:best.frame,
+          aaLen:Math.round(s.seq.length/3),band:identityBand(best.ident,best.len,Math.round(s.seq.length/3))});}
+    prot.sort((a,b)=>(b.ident*b.len)-(a.ident*a.len));}
+  return {ok:true,dna:out.slice(0,o.max||40),protein:prot.slice(0,12),qlen:q.length};}
+
+/* =====================================================================
+   PARSING A BLAST HIT TABLE PASTED BACK
+   NCBI will not let a page read its results, so the honest round trip is to
+   let the search run there and paste the table back. This takes the tabular
+   format (outfmt 6 / "Hit table (text)"), which is what the Download button
+   gives, and the description-table copy people usually make instead.
+   ===================================================================== */
+function parseBlastTable(text){
+  const rows=[];
+  for(const raw of String(text||'').split(/\r?\n/)){
+    const line=raw.trim();
+    if(!line||line.startsWith('#'))continue;
+    const c=line.split(/\t/);
+    if(c.length>=12&&/^[\d.]+$/.test(c[2])){
+      rows.push({subject:c[1],ident:parseFloat(c[2]),len:+c[3],mismatch:+c[4],gaps:+c[5],
+        qs:+c[6],qe:+c[7],ss:+c[8],se:+c[9],evalue:parseFloat(c[10]),bits:parseFloat(c[11]),src:'tabular'});
+      continue;}
+    /* the description table, whose columns are separated by runs of spaces */
+    const m=/^(.{10,}?)\s{2,}([\d.]+)\s+([\d.]+)\s+(\d+)%\s+([\deE.\-]+)\s+(\d+)%\s*(\S+)?\s*$/.exec(line);
+    if(m)rows.push({subject:m[1].trim(),bits:parseFloat(m[2]),cover:+m[4],
+      evalue:parseFloat(m[5]),ident:+m[6],acc:m[7]||'',src:'description'});}
+  return rows;}
+
 /* =====================================================================  state  */
 const S={docs:[],cur:null,view:'map',side:true,wingR:true,opts:{bottom:true,aa:true,orf:false,enz:true,prim:true},map:{type:'circular',labels:true,enz:true,prim:true,aa:true,orf:false,zoom:1},circuit:{scale:'schematic',links:true,names:true},wl:280,wr:300,font:13,cys:'ox',code:'1',orfMin:100,msel:new Set(),pending:''};
 const D=()=>S.cur;
@@ -3041,7 +3252,7 @@ function renderStatus(){const doc=D();const a=$('#sb-sel'),b=$('#sb-tm');if(!doc
     else{const tm=n>=8&&n<=60?tmNN(s):NaN;b.textContent=`GC ${Math.round(gcFrac(s)*100)}%${isNaN(tm)?'':' · Tm '+r1(tm)+' °C'}${n%3===0&&n<=3000?' · '+translate(s).slice(0,20)+(n>60?'…':''):''}${n<=1e5?' · '+r1(dnaMW(s,true)/1000)+' kDa ds':''}`;}}
   else{a.innerHTML=`Caret at <b>${fmtNum(doc.caret)}</b>${doc.caret?'|'+fmtNum(doc.caret+1):''} · ${fmtNum(doc.seq.length)} ${doc.isProtein?'aa':'bp'}, ${doc.circular?'circular':'linear'}${S.pending?' · typing <b>'+esc(S.pending)+'</b> (pause to confirm, Esc to drop)':''}`;b.textContent='';}}
 function updateUndo(){const doc=D();$('#undoBtn').disabled=!doc||!doc.hist.length;$('#redoBtn').disabled=!doc||!doc.fut.length;}
-function setSel(sel,o){const doc=D();if(!doc)return;o=o||{};doc.sel=sel&&selLen(doc,sel)?sel:null;if(sel&&!doc.sel)doc.caret=sel.s;if(sel&&o.caret!=null)doc.caret=o.caret;
+function setSel(sel,o){const doc=D();if(!doc)return;o=o||{};doc.sel=sel&&selLen(doc,sel)?sel:null;setTimeout(()=>{try{showSelBar();}catch(e){}},0);if(sel&&!doc.sel)doc.caret=sel.s;if(sel&&o.caret!=null)doc.caret=o.caret;
   updateSeqSel();updateMapSel();renderStatus();renderInspector();$$('#anlist .an').forEach(li=>li.classList.toggle('sel',S.msel.has(li.dataset.aid)||!!(doc.sel&&((doc.sel.fid&&li.dataset.aid==='f:'+doc.sel.fid)||(doc.sel.pid&&li.dataset.aid==='p:'+doc.sel.pid)))));
   if(o.scroll&&$('#pane-seq').classList.contains('on'))scrollSeqTo(sel?sel.s:doc.caret);}
 function selectFeature(f,scroll){const doc=D();const L=doc.seq.length;const s=featStart(f)-1,e=featEnd(f)%L;const sel={s,e:(e===0&&featEnd(f)===L)?L:e,fid:f.id};if(featLen(f,L)===L){sel.s=0;sel.e=L;}S.msel=new Set(['f:'+f.id]);setSel(sel,{scroll});renderBulk();}
@@ -3422,6 +3633,7 @@ function act(a,arg){const doc=D();
     case 'blast':blastDialog();break;
     case 'parts':partsDialog();break;
     case 'express':expressDialog();break;
+    case 'match':matchDialog();break;
     case 'send':sendDialog();break;
     case 'circuit':setView('circuit');break;
     case 'settings':settingsDialog();break;
@@ -4105,6 +4317,304 @@ function v6Key(ev){
   if(V6_KEYS[k]&&!ev.shiftKey){railToggle(V6_KEYS[k]);return true;}
   return false;}
 
+/* =====================================================================
+   WHAT A LEFT CLICK DOES
+
+   The complaint was that left click did almost nothing, and it was fair: it
+   set a caret, and everything else was a menu or a dialog away. Three things
+   change that.
+
+   One, a selection raises an action bar where the selection is, the way
+   Benchling does, so the half dozen things you actually do with a stretch of
+   DNA are one click away instead of a menu away.
+
+   Two, a feature can be dragged: grab its body to move it, grab either end to
+   change where it starts or stops, with the position shown live and the edit
+   only committed on release so a mis-drag costs nothing.
+
+   Three, an enzyme name opens a small card with the cut, the overhang and what
+   else cuts compatibly, rather than silently selecting the site.
+   ===================================================================== */
+
+/* ---------- the selection action bar ---------- */
+let SELBAR={el:null,hideT:null};
+function selBarEl(){
+  if(SELBAR.el)return SELBAR.el;
+  const d=document.createElement('div');
+  d.className='selbar';d.id='selbar';
+  document.body.appendChild(d);
+  d.addEventListener('mousedown',e=>e.stopPropagation());
+  d.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-sb]');if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    selBarAct(b.dataset.sb);});
+  SELBAR.el=d;return d;}
+
+function hideSelBar(){const d=SELBAR.el;if(d)d.classList.remove('on');}
+
+function showSelBar(){
+  const doc=D();
+  if(!doc||!doc.sel||!selLen(doc,doc.sel)){hideSelBar();return;}
+  if(S.view!=='seq'&&S.view!=='split'){hideSelBar();return;}
+  const n=selLen(doc,doc.sel);
+  const d=selBarEl();
+  const isProt=doc.isProtein;
+  const codons=n%3===0;
+  d.innerHTML=`<span class="sbn">${fmtNum(doc.sel.s+1)}&ndash;${fmtNum(doc.sel.e)} &middot; ${fmtNum(n)} ${isProt?'aa':'bp'}${codons&&!isProt?' &middot; '+fmtNum(n/3)+' codons':''}</span>
+    <button data-sb="feature" title="Make a feature from this (F)">＋ Feature</button>
+    ${isProt?'':`<button data-sb="primer" title="Make a primer from this (P)">＋ Primer</button>`}
+    <button data-sb="copy" title="Copy (Ctrl+C offers the other forms)">Copy</button>
+    ${isProt?'':`<button data-sb="translate" title="Open it in the Protein tab (T)">Translate</button>`}
+    ${isProt?'':`<button data-sb="match" title="Find this among the open sequences and the part libraries">Find matches</button>`}
+    <button data-sb="blast" title="Send it to BLAST at NCBI">BLAST</button>
+    <button data-sb="x" class="x" title="Hide this bar (Esc)">&times;</button>`;
+  /* place it over the first row of the selection, clamped to the viewport */
+  const w=$('#seqwrap');
+  const first=w&&w.querySelector('.ln.top .selhl, .seqrow .selbox');
+  let x=0,y=0;
+  const anchorEl=first||w;
+  if(anchorEl){const r=anchorEl.getBoundingClientRect();x=r.left;y=r.top-8;}
+  d.classList.add('on');
+  const bw=d.getBoundingClientRect().width||420;
+  x=Math.max(10,Math.min(window.innerWidth-bw-10,x));
+  y=Math.max(60,y-d.getBoundingClientRect().height);
+  d.style.left=Math.round(x)+'px';d.style.top=Math.round(y)+'px';}
+
+function selBarAct(k){
+  const doc=D();if(!doc)return;
+  switch(k){
+    case 'feature':act('addfeat');break;
+    case 'primer':act('addprimer');break;
+    case 'copy':copyText(selSeq(doc,doc.sel));toast(`${fmtNum(selLen(doc,doc.sel))} ${doc.isProtein?'residues':'bases'} copied`);break;
+    case 'translate':act('translate');break;
+    case 'match':matchDialog();break;
+    case 'blast':act('blast');break;
+    case 'x':hideSelBar();break;}}
+
+/* ---------- dragging a feature to move or resize it ---------- */
+let FDRAG=null;
+function featureDragStart(e,f,mode){
+  const doc=D();if(!doc)return;
+  FDRAG={f,mode,startIdx:seqIndexFromEvent(e),s0:featStart(f),e0:featEnd(f),moved:false};
+  document.body.classList.add('fdragging');
+  e.preventDefault();e.stopPropagation();}
+function featureDragMove(e){
+  if(!FDRAG)return;
+  const doc=D();if(!doc)return;
+  const idx=seqIndexFromEvent(e);if(idx==null)return;
+  const d=idx-FDRAG.startIdx;
+  if(d===0&&!FDRAG.moved)return;
+  FDRAG.moved=true;
+  const L=doc.seq.length;
+  let s=FDRAG.s0,en=FDRAG.e0;
+  if(FDRAG.mode==='move'){s=FDRAG.s0+d;en=FDRAG.e0+d;}
+  else if(FDRAG.mode==='start')s=Math.min(FDRAG.e0-1,FDRAG.s0+d);
+  else en=Math.max(FDRAG.s0+1,FDRAG.e0+d);
+  s=Math.max(1,Math.min(L,s));en=Math.max(1,Math.min(L,en));
+  FDRAG.preview={s,e:en};
+  const f=FDRAG.f;
+  f.segs=[{s,e:en}];
+  renderSeq();renderMap();
+  toast(`${f.name}: ${fmtNum(s)}–${fmtNum(en)} (${fmtNum(en-s+1)} bp)`,900);}
+function featureDragEnd(){
+  if(!FDRAG)return;
+  const doc=D();const {f,moved,s0,e0,preview}=FDRAG;
+  FDRAG=null;document.body.classList.remove('fdragging');
+  if(!moved||!preview){return;}
+  /* put it back, then redo it through history so one Ctrl+Z undoes the drag */
+  f.segs=[{s:s0,e:e0}];
+  pushHist(doc);
+  f.segs=[{s:preview.s,e:preview.e}];
+  commit(doc,`${f.name} moved to ${fmtNum(preview.s)}–${fmtNum(preview.e)}`);}
+
+/* ---------- the enzyme card ---------- */
+function enzCard(name,pos,len,atEl){
+  const doc=D();if(!doc)return;
+  const all=enzymeSites(doc);const sites=all.get(name)||[];
+  const e=ENZ_BY_NAME[name];if(!e)return;
+  const here=sites.find(s=>s.pos===pos)||sites[0];
+  const card=document.createElement('div');
+  card.className='enzcard';
+  const over=e.over==='blunt'?'blunt':`${e.over} overhang of ${e.overLen}`;
+  card.innerHTML=`<div class="hd"><b>${esc(name)}</b><span>${esc(e.site)}</span><button data-x>&times;</button></div>
+    <dl><dt>Cuts</dt><dd>${sites.length===1?'once':fmtNum(sites.length)+' times'} in this molecule</dd>
+    <dt>Here</dt><dd>after ${fmtNum(here.cut)} on the top strand, ${fmtNum(here.cutB)} on the bottom</dd>
+    <dt>Ends</dt><dd>${esc(over)}</dd></dl>
+    <div class="acts">
+      <button data-ez="select">Select the site</button>
+      <button data-ez="digest">Digest with it</button>
+      <button data-ez="only">Show only this enzyme</button>
+    </div>`;
+  document.body.appendChild(card);
+  const r=atEl.getBoundingClientRect();
+  card.style.left=Math.max(8,Math.min(window.innerWidth-300,r.left))+'px';
+  card.style.top=(r.bottom+6)+'px';
+  const close=()=>{card.remove();document.removeEventListener('mousedown',away,true);};
+  const away=ev=>{if(!card.contains(ev.target))close();};
+  setTimeout(()=>document.addEventListener('mousedown',away,true),0);
+  card.addEventListener('click',ev=>{
+    const b=ev.target.closest('button');if(!b)return;
+    if(b.hasAttribute('data-x'))return close();
+    const k=b.dataset.ez;
+    if(k==='select'){setSel({s:pos,e:(pos+len)%doc.seq.length||doc.seq.length});scrollSeqTo(pos);}
+    else if(k==='digest'){DIG.set=new Set([name]);setView('digest');}
+    else if(k==='only'){ENZSET.mode='custom';ENZSET.custom=new Set([name]);renderView();renderEnzTable&&renderEnzTable();}
+    close();});}
+
+/* ---------- wiring ---------- */
+function initClicks6(){
+  const w=$('#seqwrap');
+  /* a feature bar: edges resize, body moves, plain click still selects */
+  w.addEventListener('mousedown',e=>{
+    if(e.button!==0||!e.altKey===false&&e.altKey)return;
+    const bar=e.target.closest('.bar[data-fid]');if(!bar)return;
+    const doc=D();if(!doc)return;
+    const f=doc.features.find(x=>x.id===bar.dataset.fid);if(!f)return;
+    if(f.segs.length!==1)return;              /* a split feature is not safe to drag */
+    const r=bar.getBoundingClientRect();
+    const dx=e.clientX-r.left, edge=Math.min(10,r.width/3);
+    if(dx<=edge)featureDragStart(e,f,'start');
+    else if(dx>=r.width-edge)featureDragStart(e,f,'end');
+    else if(e.metaKey||e.ctrlKey)featureDragStart(e,f,'move');
+  },true);
+  window.addEventListener('mousemove',e=>{if(FDRAG)featureDragMove(e);});
+  window.addEventListener('mouseup',()=>{if(FDRAG)featureDragEnd();});
+  /* hovering an edge shows what the drag will do */
+  w.addEventListener('mousemove',e=>{
+    const bar=e.target.closest('.bar[data-fid]');
+    if(!bar){w.classList.remove('edge-l','edge-r');return;}
+    const r=bar.getBoundingClientRect();const dx=e.clientX-r.left,edge=Math.min(10,r.width/3);
+    bar.style.cursor=(dx<=edge||dx>=r.width-edge)?'ew-resize':'';});
+  /* the enzyme card */
+  w.addEventListener('click',e=>{
+    const ez=e.target.closest('.ln.enz span');if(!ez)return;
+    e.preventDefault();e.stopPropagation();
+    enzCard(ez.dataset.enz,+ez.dataset.pos,+ez.dataset.len,ez);},true);
+  /* the bar follows the selection */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')hideSelBar();});
+  w.addEventListener('scroll',()=>{if(SELBAR.el&&SELBAR.el.classList.contains('on'))showSelBar();});}
+
+/* =====================================================================
+   FIND MATCHES
+   The local half of "is this a perfect match or very similar": search the
+   selection against the other open sequences, the features of this one, and
+   both part libraries, at DNA and at protein level, and label each hit.
+   Nothing leaves the page.  ===================================================== */
+function matchDialog(){
+  const doc=D();if(!doc){toast('Open a sequence first.');return;}
+  const sel=doc.sel&&selLen(doc,doc.sel);
+  const opts=[];
+  if(sel)opts.push({v:'sel',t:`Selection, ${fmtNum(sel)} bp`});
+  for(const f of doc.features){if(f.hidden)continue;
+    opts.push({v:'f:'+f.id,t:`${f.name} (${f.type}, ${fmtNum(featLen(f,doc.seq.length))} bp)`});}
+  opts.push({v:'all',t:`The whole sequence, ${fmtNum(doc.seq.length)} bp`});
+  $('#mt-what').innerHTML=opts.map(o=>`<option value="${o.v}">${esc(o.t)}</option>`).join('');
+  $('#mt-res').innerHTML='<div class="note">Choose what to look for, then Search.</div>';
+  openDlg('#dlg-match');
+  runMatch();}
+
+function matchQuery(){
+  const doc=D();const v=$('#mt-what').value;
+  if(v==='all')return {seq:doc.seq,name:doc.name};
+  if(v==='sel'&&doc.sel)return {seq:selSeq(doc,doc.sel),name:'selection'};
+  const f=doc.features.find(x=>x.id===v.slice(2));
+  return f?{seq:featSeq(doc,f),name:f.name}:{seq:'',name:''};}
+
+function runMatch(){
+  const doc=D();if(!doc)return;
+  const q=matchQuery();
+  if(!q.seq||q.seq.length<12){$('#mt-res').innerHTML='<div class="note">Pick at least 12 bases.</div>';return;}
+  $('#mt-res').innerHTML='<div class="note">Searching…</div>';
+  setTimeout(()=>{
+    const r=identitySearch(doc,q.seq,{});
+    if(!r.ok){$('#mt-res').innerHTML=`<div class="note">${esc(r.why)}</div>`;return;}
+    const row=h=>`<tr data-kind="${esc(h.kind)}" ${h.fid?`data-fid="${h.fid}"`:''} ${h.partId?`data-part="${h.partId}"`:''}>
+      <td><b>${esc(h.name)}</b>${h.ftype?` <span class="muted">${esc(h.ftype)}</span>`:''}</td>
+      <td><span class="mband ${h.band.cls}">${h.band.label}</span></td>
+      <td class="num">${(h.ident*100).toFixed(1)}%</td>
+      <td class="num">${fmtNum(h.len)}</td>
+      <td class="num">${Math.round(h.coverage*100)}%</td>
+      <td>${h.strand===1?'→':'← reverse'}</td>
+      <td class="muted">${esc(h.kind)}</td></tr>`;
+    let h=`<div class="exbox"><h4>Looking for ${esc(q.name)}, ${fmtNum(r.qlen)} bp</h4>`;
+    if(!r.dna.length)h+='<p class="note">Nothing in the open sequences or the libraries matches at 80% or better. That does not mean it is novel, only that it is not something this file already knows. Send it to NCBI for that.</p>';
+    else h+=`<table class="tbl mtbl"><thead><tr><th>match</th><th>verdict</th><th class="num">identity</th><th class="num">aligned</th><th class="num">of subject</th><th>strand</th><th>where from</th></tr></thead><tbody>${r.dna.map(row).join('')}</tbody></table>`;
+    h+='</div>';
+    if(r.protein.length){
+      h+=`<div class="exbox"><h4>At protein level</h4>
+      <p class="note">Translated and compared as amino acids, which finds a coding sequence that was recoded into different codons and so looks unrelated to the DNA search.</p>
+      <table class="tbl mtbl"><thead><tr><th>match</th><th>verdict</th><th class="num">identity</th><th class="num">residues</th><th>frame</th></tr></thead><tbody>
+      ${r.protein.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td><span class="mband ${p.band.cls}">${p.band.label}</span></td>
+        <td class="num">${(p.ident*100).toFixed(1)}%</td><td class="num">${fmtNum(p.len)}</td><td>${p.frame}</td></tr>`).join('')}
+      </tbody></table></div>`;}
+    $('#mt-res').innerHTML=h;
+  },10);}
+
+/* Turn every hit that is a known part into an annotation, in one go. */
+function matchAnnotate(){
+  const doc=D();if(!doc)return;
+  const q=matchQuery();
+  const r=identitySearch(doc,q.seq,{docs:false,features:false});
+  if(!r.ok)return;
+  const base=$('#mt-what').value==='all'?0:(doc.sel?doc.sel.s:0);
+  let n=0;pushHist(doc);
+  for(const h of r.dna){
+    if(h.ident<0.95||h.coverage<0.9)continue;
+    const s=base+h.qs+1,e=base+h.qe+1;
+    if(doc.features.some(f=>featStart(f)===s&&featEnd(f)===e))continue;
+    doc.features.push(newFeature({name:h.name,type:h.ftype||'misc_feature',dir:h.strand===-1?-1:1,
+      segs:[{s,e}],color:colorFor(h.ftype||'misc_feature'),
+      note:`${h.band.label} to ${h.name} (${(h.ident*100).toFixed(1)}% over ${h.len} bp), found by the built-in search`}));
+    n++;}
+  if(!n){doc.hist.pop();toast('Nothing matched closely enough to annotate.');return;}
+  commit(doc,`${n} feature${n===1?'':'s'} annotated from the matches`);
+  closeDlg('#dlg-match');}
+
+$('#mt-what').addEventListener('change',runMatch);
+$('#mt-run').addEventListener('click',runMatch);
+$('#mt-annot').addEventListener('click',matchAnnotate);
+$('#mt-res').addEventListener('click',e=>{
+  const tr=e.target.closest('tr[data-fid]');
+  if(tr){const doc=D();const f=doc.features.find(x=>x.id===tr.dataset.fid);
+    if(f){closeDlg('#dlg-match');selectFeature(f,true);}return;}
+  const tp=e.target.closest('tr[data-part]');
+  if(tp){closeDlg('#dlg-match');partsDialog();setTimeout(()=>{
+    const el=document.querySelector(`.pit[data-pid="${tp.dataset.part}"]`);
+    if(el){el.scrollIntoView({block:'center'});el.classList.add('on');}},150);}});
+
+/* ---- BLAST results pasted back ---- */
+function blastPasteApply(){
+  const doc=D();if(!doc)return;
+  const rows=parseBlastTable($('#bl-paste').value);
+  if(!rows.length){$('#bl-pasteres').innerHTML='<div class="note">No BLAST rows recognised. Paste either the hit table (the Download &rarr; Hit Table option) or the description table copied from the results page.</div>';return;}
+  const tab=rows.slice(0,25).map(r=>`<tr><td>${esc(r.subject)}</td><td class="num">${r.ident!=null?r.ident.toFixed(1)+'%':'–'}</td>
+    <td class="num">${r.len?fmtNum(r.len):(r.cover!=null?r.cover+'% cover':'–')}</td>
+    <td class="num">${r.evalue!=null?(r.evalue<1e-3?r.evalue.toExponential(0):r.evalue.toFixed(2)):'–'}</td>
+    <td>${r.ident>=99.5?'<span class="mband perfect">essentially identical</span>':r.ident>=95?'<span class="mband near">very similar</span>':r.ident>=80?'<span class="mband some">similar</span>':''}</td></tr>`).join('');
+  $('#bl-pasteres').innerHTML=`<p class="note">${rows.length} hit${rows.length===1?'':'s'} read from the ${esc(rows[0].src)} format.</p>
+    <table class="tbl mtbl"><thead><tr><th>subject</th><th class="num">identity</th><th class="num">aligned</th><th class="num">E value</th><th>verdict</th></tr></thead><tbody>${tab}</tbody></table>
+    ${rows[0].src==='tabular'?'<p class="note">Rows with query coordinates can be turned into features.</p>':''}`;
+  $('#bl-pasteannot').disabled=rows[0].src!=='tabular';
+  BLPASTE=rows;}
+let BLPASTE=[];
+function blastPasteAnnotate(){
+  const doc=D();if(!doc||!BLPASTE.length)return;
+  const base=0;let n=0;pushHist(doc);
+  for(const r of BLPASTE){
+    if(r.qs==null||r.qe==null||r.ident<90)continue;
+    const s=Math.min(r.qs,r.qe)+base,e=Math.max(r.qs,r.qe)+base;
+    if(e-s<20)continue;
+    if(doc.features.some(f=>featStart(f)===s&&featEnd(f)===e))continue;
+    doc.features.push(newFeature({name:String(r.subject).slice(0,40),type:'misc_feature',
+      dir:r.ss<=r.se?1:-1,segs:[{s,e}],color:colorFor('misc_feature'),
+      note:`BLAST hit, ${r.ident}% identity over ${r.len} bp, E = ${r.evalue}`}));
+    n++;}
+  if(!n){doc.hist.pop();toast('No hit had query coordinates to place.');return;}
+  commit(doc,`${n} BLAST hit${n===1?'':'s'} annotated`);}
+
+$('#bl-pasteread').addEventListener('click',blastPasteApply);
+$('#bl-pasteannot').addEventListener('click',blastPasteAnnotate);
+
 /* ---- help ---- */
 const HELP_HTML=`
 <h4>Opening and saving</h4>
@@ -4119,7 +4629,9 @@ const HELP_HTML=`
 <li><b>The panels resize.</b> Drag either inner edge, double-click to reset. This is what the clipped names in the annotation list needed.</li>
 <li><b>A rail instead of a row of checkboxes.</b> Enzymes, primers, both strands, translations and open reading frames moved to an icon rail beside the view, with <kbd>E</kbd> <kbd>R</kbd> <kbd>B</kbd> <kbd>A</kbd> <kbd>O</kbd> to match, and the parts library, the expression panel and the figure export sit under them. The toolbar is just the view tabs again.</li>
 <li><b>Parts change where they are.</b> The inspector renames, recolours, and swaps a promoter, ribosome binding site, terminator or origin for another from the library, rewriting the bases in place. No dialog.</li>
-<li><b>More of the left click.</b> A residue in a translation selects its codon and says which one. <kbd>Alt</kbd> and a click hides a feature wherever it is drawn.</li>
+<li><b>A left click does the work now.</b> Selecting anything raises an action bar over the selection with the six things you actually do with a stretch of DNA &mdash; make a feature, make a primer, copy, translate, find matches, BLAST &mdash; instead of leaving them a menu away. A feature can be dragged: take either end to change where it starts or stops, <kbd>Ctrl</kbd> and drag the body to move the whole thing, with the position shown live and nothing committed until you let go, so one <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the whole drag. An enzyme name opens a card with the cut, the overhang and what to do about it. A residue in a translation selects its codon. <kbd>Alt</kbd> and a click hides a feature wherever it is drawn.</li>
+<li><b>Find matches, without leaving the page.</b> Most of the time the question is not "what is this" but "is this the part I think it is, and did the clone come back identical". That is answerable here: the selection is searched against the other open sequences, the features of this one, and both part libraries, on both strands and then again translated, by the same seed-and-extend that BLAST is built on. Every hit is labelled by identity <i>and</i> by how much of the subject it covers, because an exact 60-base hit inside a 589-base origin is a fragment of it and not a match to it, and saying otherwise is how people talk themselves into a wrong clone. The confident hits can be annotated in one go.</li>
+<li><b>BLAST comes back.</b> NCBI will not let a page read its results, so nothing can fetch them for you and anything claiming otherwise is lying. What works instead: the search opens with the query filled, and the results page's <b>Download &rarr; Hit Table</b>, or just the description table copied off the screen, pastes straight back in. Both formats are read, each hit gets the same verdict wording, and the ones with query coordinates become features.</li>
 <li><b>A fix worth naming.</b> Swapping a part used to lose its annotation. Replacing a feature's own bases deletes its whole span, which drops the feature, and both swap paths then went on editing an object that was no longer in the document. The swap now puts the feature back where the new part landed. This was in v5 as shipped.</li>
 </ul>
 <h4>What is new in v5</h4>
@@ -4362,8 +4874,9 @@ load();
 wireSelHelp();
 initPanelResize();
 initClicks();
+initClicks6();
 render();
-if(/[?&]debug\b/.test(location.search))window.SS={S,D,transcriptionUnits,regulatoryLinks,checkUnit,circuitSVG,renderCircuit,partsDialog,plibApply,sendDialog,PART_LIB,PART_RULES,copyMenu,copyOptions,setTranslate,blastSeq,sbolFor,weightOf,renderInspector,applyWings,linkPrimers,unlinkPrimer,pairOf,ampliconOf,bulk,annotRows,parseFile,writeSnapGene,writeGenBank,parseSnapGene,parseGenBank,enzymeSites,digest,digestDetailed,findORFs,designPrimers,findPrimerSites,proteinStats,detectFeatures,tmNN,translate,editInsert,editDelete,addDocs,render,setSel,ENZYMES,FEATURE_LIB,newFeature,featSeq,rc,requestEdit,previewEdit,alignPair,codonOptimise,figureSVG,circularSVG,linearSVG,figureTheme,endsCompatible,ligate,fragmentDoc,act,setView,DIG,FIG,runCmd,selectFeature};
+if(/[?&]debug\b/.test(location.search))window.SS={S,D,identitySearch,bestLocalHit,parseBlastTable,matchDialog,showSelBar,rbsCalc,rbsScan,promoterStrength,foldRNA,transcriptionUnits,regulatoryLinks,checkUnit,circuitSVG,renderCircuit,partsDialog,plibApply,sendDialog,PART_LIB,PART_RULES,copyMenu,copyOptions,setTranslate,blastSeq,sbolFor,weightOf,renderInspector,applyWings,linkPrimers,unlinkPrimer,pairOf,ampliconOf,bulk,annotRows,parseFile,writeSnapGene,writeGenBank,parseSnapGene,parseGenBank,enzymeSites,digest,digestDetailed,findORFs,designPrimers,findPrimerSites,proteinStats,detectFeatures,tmNN,translate,editInsert,editDelete,addDocs,render,setSel,ENZYMES,FEATURE_LIB,newFeature,featSeq,rc,requestEdit,previewEdit,alignPair,codonOptimise,figureSVG,circularSVG,linearSVG,figureTheme,endsCompatible,ligate,fragmentDoc,act,setView,DIG,FIG,runCmd,selectFeature};
 </script>
 <script src="../../assets/support.js" defer></script>
 <script data-goatcounter="https://labpotato.goatcounter.com/count"

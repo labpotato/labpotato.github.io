@@ -308,7 +308,7 @@ const TOOLS = [
         new: [
           "Ribosome binding strength from the Salis thermodynamic model, every term shown, with its validation rather than a claim",
           "Colours picked by simulating colour blindness and measuring, resizable panels, and an icon rail with keys",
-          "Rename, recolour or swap a promoter or RBS in place, straight from the inspector"
+          "A left click that works: an action bar on the selection, draggable feature ends, enzyme cards, and offline match search with BLAST paste-back"
         ] }
     ]
   }

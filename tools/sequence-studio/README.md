@@ -1,5 +1,22 @@
 # Sequence Studio
 
+> ## Asked for, not yet built — start v7 here
+>
+> **The plasmid mindmap.** A view that links a plasmid to the other plasmids it
+> is related to and lays them out as a map rather than a list: shared backbone,
+> shared insert, shared parts, with the strength of each link coming from how
+> much sequence two plasmids actually have in common.
+>
+> Deferred from v6 at the owner's request, with "remind me when I run the next
+> version". **This note is that reminder — raise it before starting v7.**
+>
+> Most of the groundwork is already in: `identitySearch` in the search section
+> compares any sequence against every other open one at DNA and protein level
+> and returns percent identity with coverage, which is exactly the edge weight
+> such a graph needs. What is missing is the all-against-all pass over the open
+> documents and the layout.
+
+
 A single-file, offline plasmid editor for the browser, built to stand in for SnapGene on a machine that cannot spare the disk space.
 
 **Files.** Opens SnapGene `.dna` and `.prot`, GenBank (`.gb .gbk .genbank .ape`), EMBL, FASTA (DNA or protein), plain text, Serial Cloner / DNA Strider `.xdna`, and its own `.json`. Saves SnapGene `.dna` (when the sequence came from a `.dna` file every packet of the original is kept and only the sequence, features, primers and notes are replaced, so annotations made here land in the same file SnapGene opens), GenBank with `/label` and colours, FASTA, and the map as SVG or PNG.
@@ -37,6 +54,12 @@ The published implementation gets every folding energy from NUPACK. There is no 
 **Colours by measurement.** Hue carries the functional group and nothing else; lightness separates the types inside a group. The eight group hues were chosen by simulating deuteranopia, protanopia and tritanopia and measuring the CIE76 distance between every pair: the closest two stay 17.2 apart under red-green deficiency and 16.7 including tritanopia, against 0.9 for Okabe-Ito under tritanopia and 2.7 for a hand-picked saturated set. No ninth hue survives that test, so unclassified features take a recessive near-white instead of pretending to be a ninth category. Ink is chosen by contrast rather than a fixed luminance threshold, so every band clears 5.7:1.
 
 **Interaction.** Both side panels drag to resize and double-click to reset, which is what the clipped names in the annotation list needed. The lane toggles moved out of the toolbar onto an icon rail beside the view with E, R, B, A and O to match, and the parts library, expression panel and figure export sit under them. The inspector renames, recolours and swaps a promoter, ribosome binding site, terminator or origin for another from the library, rewriting the bases in place. Clicking a residue in a translation selects its codon; Alt and a click hides a feature wherever it is drawn.
+
+**A left click that does the work.** Selecting anything raises an action bar over the selection carrying the six things you actually do with a stretch of DNA: make a feature, make a primer, copy, translate, find matches, BLAST. A feature can be dragged by either end to change where it starts or stops, or Ctrl-dragged by the body to move it whole, with the position shown live and nothing committed until release, so one undo reverses the drag. Clicking an enzyme name opens a card with the cut position on both strands, the overhang, and buttons to select the site, digest with it, or show only that enzyme.
+
+**Find matches, offline.** The selection, a feature or the whole sequence is searched against the other open sequences, the features of this one, and both part libraries, on both strands and then again as translated protein, by the seed-and-extend that BLAST itself is built on. Each hit is labelled by identity and by how much of the subject it covers, because an exact 60-base hit inside a 589-base origin is a fragment of that origin and not a match to it. The confident hits (95% or better over most of the part) can be annotated in one pass.
+
+**BLAST, honestly.** NCBI does not send CORS headers on its URL API, so no page can read its results and nothing here pretends to. The search opens with the query filled in, and the results come back by paste: both the hit table (Download -> Hit Table) and the description table copied off the results page are parsed, each hit gets the same verdict wording as the local search, and hits carrying query coordinates become features.
 
 **Fixed.** Swapping a part used to lose its annotation: replacing a feature's own bases deletes its whole span, which drops the feature, and both swap paths carried on editing an object that was no longer in the document. Present in v5 as shipped.
 

@@ -277,10 +277,11 @@ const TOOLS = [
       { v: "v6", file: "doc-reader-v6.html", date: "2026-10-30" },
       { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30" },
-      { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04",
+      { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04" },
+      { v: "v10", file: "doc-reader-v10.html", date: "2026-11-05",
         new: [
-          "Extension: save any paper's citation as RIS, EndNote or BibTeX",
-          "Send a page straight to your Lab Entry research map"
+          "Extension v9: a Cite button on the page toolbar saves the paper's citation (RIS, EndNote, BibTeX)",
+          "Save citation is in the extension's ⋯ menu too, as well as on right-click"
         ] }
     ]
   },

@@ -243,10 +243,12 @@ const TOOLS = [
       { v: "v4", file: "cryobox-labeler-v4.html", date: "2026-10-20" },
       { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21" },
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27" },
-      { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04",
+      { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04" },
+      { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05",
         new: [
-          "Doors overshoot and settle, cold mist pours out, racks slide home",
-          "The box you search for gives a friendly double-bob"
+          "A lab cart beside the freezers: a tube rack, a sample box and a flask of broth",
+          "Rack and box are real public-domain models from NIH 3D",
+          "Freezer names under the freezers no longer overlap"
         ] }
     ]
   },

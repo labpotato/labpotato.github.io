@@ -247,7 +247,8 @@ const TOOLS = [
       { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05",
         new: [
           "A lab cart beside the freezers: a tube rack, a sample box and a flask of broth",
-          "Rack and box are real public-domain models from NIH 3D"
+          "Rack and box are real public-domain models from NIH 3D",
+          "Freezer names under the freezers no longer overlap"
         ] }
     ]
   },

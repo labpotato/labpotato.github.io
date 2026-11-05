@@ -28,26 +28,61 @@
   };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  /* the potato: asleep (eyes shut, a few z's drifting up) until you point at the button, then it wakes and smiles */
-  const SPUD = (cls) => `<svg class="${cls}" viewBox="0 0 240 200" aria-hidden="true">
-    <g class="zz"><text x="186" y="44">z</text><text x="204" y="26">z</text></g>
-    <g class="body"><ellipse cx="122" cy="190" rx="70" ry="7" fill="rgba(60,40,20,.12)"/>
-      <path d="M28 118C26 88 52 64 88 56C124 48 168 52 196 70C220 86 226 112 216 136C204 164 168 182 128 184C88 186 50 172 36 148C30 138 28 128 28 118Z" fill="#cd9050"/>
-      <ellipse cx="74" cy="134" rx="12" ry="7" fill="#f2a08a" opacity=".55"/><ellipse cx="176" cy="130" rx="12" ry="7" fill="#f2a08a" opacity=".55"/>
-      <g class="shut"><path d="M84 114q12 9 24 0" /><path d="M140 111q12 9 24 0" /><path d="M116 146q10 4 20 0" /></g>
-      <g class="open"><ellipse class="eye" cx="96" cy="112" rx="11" ry="13"/><ellipse class="eye" cx="152" cy="109" rx="11" ry="13"/><circle cx="99" cy="107" r="3.5" fill="#fff"/><circle cx="155" cy="104" r="3.5" fill="#fff"/><path class="smile" d="M108 140Q126 158 144 138"/></g>
+
+  /* An arm is one piece: a lab-coat sleeve from the shoulder, a cuff, and the hand coming out of it.
+     The whole piece turns about the shoulder, so the sleeve always follows the hand.
+     p = [shoulder x,y, control 1 x,y, control 2 x,y, cuff x,y]; inner = what the hand holds. */
+  const ARM = (cls, p, inner = "") => {
+    const [sx, sy, ax, ay, bx, by, ex, ey] = p, L = Math.hypot(ex - bx, ey - by) || 1, ux = (ex - bx) / L, uy = (ey - by) / L;
+    const hx = ex + ux * 9, hy = ey + uy * 9, ang = Math.atan2(uy, ux) * 180 / Math.PI, d = `M${sx} ${sy}C${ax} ${ay} ${bx} ${by} ${ex} ${ey}`;
+    const cx = ex - ux * 2.5, cy = ey - uy * 2.5;
+    return `<g class="${cls}" style="transform-origin:${sx}px ${sy}px">
+      <ellipse cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" rx="8.2" ry="7" transform="rotate(${ang.toFixed(0)} ${hx.toFixed(1)} ${hy.toFixed(1)})" fill="#c58a4e" stroke="#9e6832" stroke-width="1.4"/>${inner}
+      <path d="${d}" fill="none" stroke="#b4bfcf" stroke-width="18" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#fbfcfe" stroke-width="14.6" stroke-linecap="round"/>
+      <path d="M${(cx - uy * 7.3).toFixed(1)} ${(cy + ux * 7.3).toFixed(1)}L${(cx + uy * 7.3).toFixed(1)} ${(cy - ux * 7.3).toFixed(1)}" stroke="#d3dae5" stroke-width="3" stroke-linecap="round"/></g>`;
+  };
+  /* the mascot's coat, the same in the desk scene and in the card */
+  const COAT = `<path class="coat" d="M94 158C76 162 58 166 51 177C43 191 41 203 42 216C80 223 176 223 214 216C215 203 213 191 205 177C198 166 180 162 162 157L126 190Z" fill="#fbfcfe" stroke="#ccd4e0" stroke-width="1.8"/>
+        <path d="M94 158L126 190M162 157L126 190" stroke="#ccd4e0" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="64" y="184" width="28" height="20" rx="3" fill="none" stroke="#ccd4e0" stroke-width="1.8"/>
+        <path d="M74 179v10" stroke="#1f66cc" stroke-width="3.6" stroke-linecap="round"/>
+        <circle cx="126" cy="199" r="2.6" fill="#ccd4e0"/><circle cx="126" cy="210" r="2.6" fill="#ccd4e0"/>`;
+  const BODY_D = "M46 128C44 104 64 84 92 78C120 72 150 75 172 89C190 101 195 121 187 141C178 162 149 176 117 178C85 180 59 169 50 151C47 143 46 136 46 128Z";
+  const GOGGLES = `<g class="goggles"><path d="M70 127L44 132M174 123L200 118" stroke="#39444e" stroke-width="11" stroke-linecap="round" fill="none"/>
+          <rect x="72" y="102" width="100" height="45" rx="22" fill="none" stroke="#39444e" stroke-width="5"/>
+          <rect x="79" y="108" width="86" height="33" rx="16" fill="#cfe6f2" fill-opacity=".3"/>
+          <ellipse cx="76" cy="124" rx="3" ry="5.6" fill="#2b343d"/><ellipse cx="168" cy="124" rx="3" ry="5.6" fill="#2b343d"/></g>`;
+
+  /* the card's potato is the mascot too: asleep at its desk with its arms down (eyes shut under the goggles,
+     a few z's drifting up) until the card appears, then it wakes, smiles and waves; the sleeve swings with the hand */
+  const SPUD = (cls) => `<svg class="${cls}" viewBox="24 64 216 164" aria-hidden="true">
+    <defs><linearGradient id="lpc-skin" x1="0.2" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#d09760"/><stop offset="100%" stop-color="#bc8148"/></linearGradient></defs>
+    <g class="zz"><text x="192" y="98">z</text><text x="210" y="82">z</text></g>
+    <g class="body"><ellipse cx="128" cy="223" rx="80" ry="5" fill="rgba(60,40,20,.12)"/>
+      <g class="up">${ARM("wave", [188, 180, 202, 168, 210, 150, 212, 134])}</g>
+      <path d="${BODY_D}" fill="url(#lpc-skin)"/>
+      <ellipse cx="80" cy="146" rx="8" ry="4.6" fill="#f2937f" opacity=".55"/><ellipse cx="164" cy="144" rx="8" ry="4.6" fill="#f2937f" opacity=".55"/>
+      <g class="shut"><path d="M93 126q7 6 14 0M137 124q7 6 14 0"/><path d="M116 153h14"/></g>
+      <g class="open"><ellipse class="eye" cx="100" cy="125" rx="6.6" ry="8.2"/><ellipse class="eye" cx="144" cy="123" rx="6.6" ry="8.2"/><circle cx="102.4" cy="121.4" r="2.2" fill="#fff"/><circle cx="146.4" cy="119.4" r="2.2" fill="#fff"/><path class="smile" d="M110 149Q123 163 137 148"/></g>
+      ${GOGGLES}
+      ${COAT}
+      ${ARM("rest-l", [64, 176, 56, 186, 53, 196, 54, 205])}
+      <g class="down">${ARM("rest-r", [192, 176, 200, 186, 203, 196, 202, 205])}</g>
     </g></svg>`;
   const SPUD_CSS = `
 .zz text{font:800 30px/1 system-ui,sans-serif;fill:#b5753a;opacity:0;animation:lps-z 3s ease-in infinite}.zz text:nth-child(2){font-size:22px;animation-delay:1.4s}
 @keyframes lps-z{0%{opacity:0;transform:translate(0,8px)}30%{opacity:.8}100%{opacity:0;transform:translate(10px,-18px)}}
 .body{transform-origin:50% 95%;animation:lps-breathe 3.2s ease-in-out infinite}
 @keyframes lps-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,.975)}}
-.shut path{fill:none;stroke:#2a2018;stroke-width:6;stroke-linecap:round}
-.open{display:none}.open .eye{fill:#2a2018;transform-box:fill-box;transform-origin:center;animation:lps-blink 4s infinite}.open .smile{fill:none;stroke:#2a2018;stroke-width:8;stroke-linecap:round}
+.shut path{fill:none;stroke:#2a2018;stroke-width:3.6;stroke-linecap:round}
+.up{display:none}.awake .up{display:inline}.awake .down{display:none}
+.awake .wave{animation:lps-wave 1.1s ease-in-out .35s infinite}
+@keyframes lps-wave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(9deg)}}
+.open{display:none}.open .eye{fill:#2a2018;transform-box:fill-box;transform-origin:center;animation:lps-blink 4s infinite}.open .smile{fill:none;stroke:#2a2018;stroke-width:4.4;stroke-linecap:round}
 @keyframes lps-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 .awake .shut,.awake .zz{display:none}.awake .open{display:inline}.awake .body{animation:lps-hop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes lps-hop{0%{transform:translateY(0)}40%{transform:translateY(-12px)}100%{transform:translateY(0)}}
-@media (prefers-reduced-motion:reduce){.zz text,.body,.open .eye{animation:none!important}.zz text{opacity:.7}}`;
+@media (prefers-reduced-motion:reduce){.zz text,.body,.open .eye,.wave{animation:none!important}.zz text{opacity:.7}}`;
 
   /* a line from the bench: a different one now and then */
   const LINES = [
@@ -73,7 +108,7 @@
       <g class="papers"><rect x="10" y="166" width="60" height="31" rx="3" transform="rotate(-3 40 181)" fill="#fffdf8" stroke="#e3d4c2"/><path class="ink" d="M19 175h36M19 182h42M19 189h30" stroke="#c9b49a" stroke-width="2" stroke-linecap="round"/></g>
       <g class="pot">
         <!-- body -->
-        <path class="body" d="M46 128C44 104 64 84 92 78C120 72 150 75 172 89C190 101 195 121 187 141C178 162 149 176 117 178C85 180 59 169 50 151C47 143 46 136 46 128Z" fill="url(#lps-skin)"/>
+        <path class="body" d="${BODY_D}" fill="url(#lps-skin)"/>
         <g clip-path="url(#lps-clip)"><ellipse cx="58" cy="136" rx="6" ry="3.4" transform="rotate(-18 58 136)" fill="#8d5c24" opacity=".28"/><ellipse cx="180" cy="134" rx="5.6" ry="3.1" transform="rotate(18 180 134)" fill="#8d5c24" opacity=".28"/></g>
         <!-- face -->
         <g class="tired">
@@ -88,25 +123,19 @@
           <path d="M110 148q12 15 26 0z" fill="#5a2418"/><path d="M116 155q8 6 14 0q-7-2.5-14 0z" fill="#ff9a9a"/>
         </g>
         <!-- regulation eye protection, as on the homepage -->
-        <g class="goggles"><path d="M70 127L44 132M174 123L200 118" stroke="#39444e" stroke-width="11" stroke-linecap="round" fill="none"/>
-          <rect x="72" y="102" width="100" height="45" rx="22" fill="none" stroke="#39444e" stroke-width="5"/>
-          <rect x="79" y="108" width="86" height="33" rx="16" fill="#cfe6f2" fill-opacity=".3"/>
-          <ellipse cx="76" cy="124" rx="3" ry="5.6" fill="#2b343d"/><ellipse cx="168" cy="124" rx="3" ry="5.6" fill="#2b343d"/></g>
+        ${GOGGLES}
+        <!-- raised arms sit under the coat, so each sleeve comes out of the shoulder -->
+        <g class="arms-up">${ARM("wave-l", [72, 180, 58, 168, 46, 150, 42, 134], '<path class="hold-heart" d="M38 104c-3-4-9-2-9 3 0 4 9 9 9 9s9-5 9-9c0-5-6-7-9-3z" fill="#ff6b8a"/>')}${ARM("wave-r", [188, 180, 202, 168, 210, 150, 212, 134])}</g>
         <!-- lab coat -->
-        <path class="coat" d="M94 158C76 162 58 166 51 177C43 191 41 203 42 216C80 223 176 223 214 216C215 203 213 191 205 177C198 166 180 162 162 157L126 190Z" fill="#fbfcfe" stroke="#ccd4e0" stroke-width="1.8"/>
-        <path d="M94 158L126 190M162 157L126 190" stroke="#ccd4e0" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <rect x="64" y="184" width="28" height="20" rx="3" fill="none" stroke="#ccd4e0" stroke-width="1.8"/>
-        <path d="M74 179v10" stroke="#1f66cc" stroke-width="3.6" stroke-linecap="round"/>
-        <circle cx="126" cy="199" r="2.6" fill="#ccd4e0"/><circle cx="126" cy="210" r="2.6" fill="#ccd4e0"/>
+        ${COAT}
+        <!-- at work: the left hand writes on the papers, the right rests on the desk; both sleeves cross the coat -->
+        <g class="arms-down">${ARM("pen-arm", [66, 174, 58, 184, 57, 188, 50, 188], '<line class="pen" x1="31" y1="195" x2="49" y2="177" stroke="#3a6ea5" stroke-width="3.6" stroke-linecap="round"/>')}${ARM("rest-arm", [192, 174, 210, 180, 205, 189, 192, 189])}</g>
       </g>
-      <g class="arms-down"><g class="pen-arm"><ellipse cx="80" cy="180" rx="11" ry="6" transform="rotate(24 80 180)" fill="#c08243"/><line class="pen" x1="64" y1="189" x2="82" y2="173" stroke="#3a6ea5" stroke-width="3.6" stroke-linecap="round"/></g></g>
-      <g class="arms-up"><ellipse cx="46" cy="120" rx="8" ry="14" transform="rotate(-30 46 120)" fill="#c08243"/><ellipse cx="206" cy="114" rx="8" ry="14" transform="rotate(30 206 114)" fill="#c08243"/></g>
       <rect class="desk" x="0" y="197" width="260" height="23" rx="6" fill="#e2c39d"/><rect x="0" y="197" width="260" height="5" rx="3" fill="#d2ad82"/>
-      <g class="mug"><path d="M200 163h26v22a8 8 0 0 1-8 8h-10a8 8 0 0 1-8-8z" fill="#fff" stroke="#d9c7b2" stroke-width="2"/><path d="M226 169h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#d9c7b2" stroke-width="3"/>
+      <g class="mug" transform="translate(12 0)"><path d="M200 163h26v22a8 8 0 0 1-8 8h-10a8 8 0 0 1-8-8z" fill="#fff" stroke="#d9c7b2" stroke-width="2"/><path d="M226 169h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#d9c7b2" stroke-width="3"/>
         <rect class="coffee" x="202" y="167" width="22" height="6" rx="2" fill="#7a4a22"/>
         <g class="steam"><path d="M207 156c-4-5 4-8 0-13M215 156c-4-5 4-8 0-13M223 156c-4-5 4-8 0-13" stroke="#c9b6a2" stroke-width="2.5" fill="none" stroke-linecap="round"/></g></g>
       <g class="spark"><path d="M30 60l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M228 52l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M60 26l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/></g>
-      <g class="hold-heart"><path d="M44 104c-3-4-9-2-9 3 0 4 9 9 9 9s9-5 9-9c0-5-6-7-9-3z" fill="#ff6b8a"/></g>
     </svg>`;
     const st = document.createElement("style");
     st.textContent = `
@@ -129,22 +158,23 @@
 .scene .tired{animation:lps-nod 6s ease-in-out infinite;transform-origin:130px 140px}
 .scene:not(.up) .body{filter:saturate(.85) brightness(.97)}
 .scene .sweat{animation:lps-sweat 3.2s ease-in infinite}
-.scene .pen-arm{transform-origin:150px 172px;animation:lps-write 1.5s ease-in-out infinite}
+.scene .pen-arm{animation:lps-write 1.5s ease-in-out infinite}
 .scene .papers .ink{stroke-dasharray:46;stroke-dashoffset:46;animation:lps-ink 6s ease-in-out infinite}
 .scene .happy,.scene .arms-up,.scene .steam,.scene .spark,.scene .hold-heart{opacity:0;transition:opacity .25s}
 .scene .coffee{transform-origin:212px 161px;transform:scaleY(0);transition:transform .45s ease}
 @keyframes lps-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
 @keyframes lps-nod{0%,64%,100%{transform:translateY(0) rotate(0)}74%{transform:translateY(4px) rotate(-2deg)}84%{transform:translateY(0) rotate(0)}}
 @keyframes lps-sweat{0%{transform:translateY(-4px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(13px);opacity:0}}
-@keyframes lps-write{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,1px) rotate(-3deg)}50%{transform:translate(3px,-1px) rotate(2deg)}75%{transform:translate(-1px,1px) rotate(-2deg)}}
+@keyframes lps-write{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}50%{transform:rotate(3deg)}75%{transform:rotate(-2deg)}}
 @keyframes lps-ink{0%,70%{stroke-dashoffset:46}90%,100%{stroke-dashoffset:0}}
 /* both buttons wake the potato: happy face, arms up, pen set down */
 .scene.up .tired,.scene.up .arms-down{opacity:0}
 .scene.up .happy,.scene.up .arms-up{opacity:1}
 .scene.up .pot{animation:lps-bounce .9s ease-in-out infinite}
-.scene.up .arms-up{animation:lps-wave .9s ease-in-out infinite;transform-origin:130px 150px}
+.scene.up .wave-l{animation:lps-wave-l .9s ease-in-out infinite}.scene.up .wave-r{animation:lps-wave-r .9s ease-in-out infinite}
 @keyframes lps-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes lps-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
+@keyframes lps-wave-l{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+@keyframes lps-wave-r{0%,100%{transform:rotate(0)}50%{transform:rotate(10deg)}}
 /* coffee button: a fresh mug, steam and sparkles */
 .scene.motivated .steam,.scene.motivated .spark{opacity:1}
 .scene.motivated .coffee{transform:scaleY(1)}
@@ -154,7 +184,9 @@
 @keyframes lps-twinkle{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1.15);opacity:1}}
 /* paypal button: the potato lifts a little heart and rocks happily */
 .scene.loved .hold-heart{opacity:1;transform-box:fill-box;transform-origin:center;animation:lps-beat 1s ease-in-out infinite}
-.scene.loved .arms-up{animation:lps-rock 1.2s ease-in-out infinite;transform-origin:130px 150px}
+.scene.loved .wave-l{animation:lps-hug-l 1.2s ease-in-out infinite}.scene.loved .wave-r{animation:lps-hug-r 1.2s ease-in-out infinite}
+@keyframes lps-hug-l{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(5deg)}}
+@keyframes lps-hug-r{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-5deg)}}
 @keyframes lps-beat{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 @keyframes lps-rock{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 /* pressed: coffee → a jump; paypal → a happy wiggle */

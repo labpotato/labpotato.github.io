@@ -246,6 +246,7 @@
       ${ne ? `<button data-a="revert" title="Put the page's own text back where it was edited with an earlier version">↺ Revert edits ${ne}</button><span class="sep"></span>` : ""}
       <button data-a="prev" title="Previous mark (Alt+Up)">↑</button><button data-a="next" title="Next mark (Alt+Down)">↓</button>
       <button data-a="notes" class="${panelOpen ? "on" : ""}" title="Notes, the page's outline and a note for the whole page">☰ Notes ${n ? n : ""}</button>
+      <button data-a="cite" title="Save this paper's citation (RIS for EndNote, Zotero or Mendeley; EndNote .enw; BibTeX) or send it to your Lab Entry research map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h4v4c0 3-1.5 5-4 6"/><path d="M15 7h4v4c0 3-1.5 5-4 6"/></svg>Cite</button>
       <button data-a="more" title="Export, Doc Reader, library, settings">⋯</button>`;
     placeBar(); drawRail();
   }
@@ -269,6 +270,7 @@
     else if (a === "revert") revertEdits();
     else if (a === "notes") { panelOpen = !panelOpen; drawPanel(); drawBar(); }
     else if (a === "prev" || a === "next") stepMark(a === "next" ? 1 : -1);
+    else if (a === "cite") chrome.runtime.sendMessage({ t: "cite" });
     else if (a === "more") moreMenu(b);
   });
   /* drag by the potato; a plain click folds the bar back */
@@ -289,6 +291,7 @@
       ["rail", SET.rail ? "Hide marks beside the scroll bar" : "Show marks beside the scroll bar", "A tick for every highlight and comment; click one to go there"],
       ["progress", SET.progress ? "Hide the reading progress line" : "Show the reading progress line", "A thin line at the top: how far down the page you are"],
       ["html", "Save this page with your marks (.html)", "The page as it is now, with your highlights"],
+      ["cite", "Save citation", "RIS (EndNote, Zotero, Mendeley), EndNote .enw or BibTeX, or send it to Lab Entry"],
       ["reader", "Open in Doc Reader", "Edit a copy there: Word-style editing, AI editor, PDF export"],
       ...(DATA.edits.length ? [["revert", `Revert edited text (${DATA.edits.length})`, "Paragraphs edited with an earlier version get the page's own words back"]] : []),
       ["lib", "All my pages", "Every page you marked, to reopen or export"],
@@ -310,6 +313,7 @@
     else if (a === "rail") { SET.rail = !SET.rail; saveSet(); drawRail(); }
     else if (a === "progress") { SET.progress = !SET.progress; saveSet(); drawProgress(); }
     else if (a === "reader") chrome.runtime.sendMessage({ t: "reader" });
+    else if (a === "cite") chrome.runtime.sendMessage({ t: "cite" });
     else if (a === "lib") chrome.runtime.sendMessage({ t: "library" });
     else if (a === "button") { SET.button = !SET.button; saveSet(); drawBar(); toast(SET.button ? "The potato shows on every page." : "Hidden. Open the tools with the extension icon or Alt+Shift+R."); }
     else if (a === "revert") revertEdits();

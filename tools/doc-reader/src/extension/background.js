@@ -122,6 +122,7 @@ const cite = tab => chrome.tabs.create({ url: chrome.runtime.getURL("cite.html?t
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.t === "reader" && sender.tab) openPage(sender.tab, false);
   else if (msg.t === "library") library();
+  else if (msg.t === "cite" && sender.tab) cite(sender.tab);   // the Cite button on the page's toolbar
 });
 
 /* ---------- sync across computers (Chrome Sync) ----------

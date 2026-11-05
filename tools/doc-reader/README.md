@@ -4,13 +4,15 @@ Read, mark up and edit PDFs, Markdown files, web pages and images, in one offlin
 Nothing leaves the browser: documents autosave in the browser's own storage (IndexedDB), and
 you can save a `.lpdoc` project file to keep or move your work.
 
-- `doc-reader-v9.html`: the tool (v1 to v8 stay as legacy releases). Open it from the homepage or directly.
+- `doc-reader-v10.html`: the tool (v1 to v9 stay as legacy releases); v10 is v9 linking extension v9. Open it from the homepage or directly.
   v3 took in Paper Writer (the AI editor and Word-style editing below); v4 keeps web pages from
   breaking Doc Reader (below); v5 links extension v4, shows AI edits in red and green with a slim
   accept/reject strip beside the page, and can save each written document as a Google Doc; v6 adds
   the safety nets below (Recently removed, Earlier versions) and links extension v5.
-- `doc-reader-extension-v8.zip`: the Chrome extension (unzip, then `chrome://extensions` →
-  Developer mode → Load unpacked; v1 to v6 stay as legacy zips; v6 is v5 repackaged). v7: one set
+- `doc-reader-extension-v9.zip`: the Chrome extension (unzip, then `chrome://extensions` →
+  Developer mode → Load unpacked; v1 to v8 stay as legacy zips; v6 is v5 repackaged). v9: a **Cite** button on the
+  on-page toolbar (and **Save citation** in its ⋯ menu) opens the citation saver for the paper you are reading; before
+  v9 it was only on the right-click menu (right-click an empty part of the page, not a selection or a link). v7: one set
   of notes per paper. A page is filed under its DOI when it names one (`citation_doi`, `dc.identifier`,
   `prism.doi` meta tags, or a `/doi/10.…` address), and under its address with any library proxy undone
   (`deproxy()` in `content.js`: EZproxy and OpenAthens hostname form, `www-cell-com.libproxy1.nus.edu.sg`

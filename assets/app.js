@@ -9,13 +9,13 @@ const REPO = "https://github.com/labpotato/labpotato.github.io";
 // SUPPORT_URL / SUPPORT_LABEL are defined at the top of tools.js
 
 const ACCENTS = {
-  emerald: "#0f8a94",
-  violet: "#4a63d8",
-  blue: "#1b5fc9",
-  cyan: "#0d7fb5",
-  amber: "#2f86d8",
-  rose: "#274b9f",
-  indigo: "#3147b3",
+  emerald: "#139171",
+  violet: "#6a55d6",
+  blue: "#2f67d6",
+  cyan: "#108a9e",
+  amber: "#b8781c",
+  rose: "#c94b6d",
+  indigo: "#4f4dc6",
 };
 
 // Encode each path SEGMENT separately — encoding the whole string would

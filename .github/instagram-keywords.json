@@ -1,6 +1,8 @@
 {
   "_how_this_works": [
-    "keywords: a comment containing one of these words gets that word's message, on any post without its own.",
+    "keywords: a comment containing one of these words gets that word's message, on a post that asks for it:",
+    "          the caption, or one of your own comments on the post (a pinned comment works), must say \"Comment GEL\".",
+    "          A post that doesn't ask (\"Tell me in the comments\") is left alone, so nobody gets a DM they didn't ask for.",
     "posts: a post with its own message. Paste the post's link as the name; everyone who comments on it gets it.",
     "       Add \"keyword\" to a post and only comments containing that word get it.",
     "       Example:  \"https://www.instagram.com/p/DfXyz123/\": { \"url\": \"...\", \"how\": \"...\", \"question\": \"...\" }",
@@ -17,6 +19,7 @@
     "Instagram blocked the DM on my end. It's the link in my bio."
   ],
   "sign_off": "(Sent automatically. Replies come straight to me.)",
+  "keywords_only_where_asked": true,
   "posts_to_watch": 20,
   "max_messages_per_run": 200,
   "posts": {},

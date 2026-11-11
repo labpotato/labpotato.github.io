@@ -5,7 +5,9 @@
 // out is decided in two ways, both set in .github/instagram-keywords.json:
 //   - per post: a post listed under "posts" has its own message, sent to everyone who comments on
 //     it, or only to comments containing that post's keyword if it has one;
-//   - per keyword: on any post, a comment containing a word under "keywords" (for example GEL).
+//   - per keyword: a comment containing a word under "keywords" (for example GEL), on a post that
+//     asks for it: its caption, or one of the account's own comments on it, says "Comment GEL".
+//     (Set "keywords_only_where_asked" to false to let keywords work on every post.)
 // Each person gets one message per post, however many times they comment. The message follows the
 // keyword-delivery shape: the link first with no gate, how to use it, and one easy question.
 //
@@ -84,6 +86,9 @@ async function list(path, query, max) {
 }
 
 // GEL as a whole word, in any letter case: it matches "gel!" but not "gelato".
+// "Comment GEL", "comment gel", "Comment the word GEL", 'Comment "GEL"': the post asks for that keyword.
+const askPattern = (word) =>
+  new RegExp(`(?<![\\p{L}\\p{N}])comment(?:\\s+the\\s+word)?[\\s:]*["'“‘«]?${word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu");
 const wordPattern = (word) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu");
 
@@ -116,7 +121,7 @@ function loadConfig() {
 
   const keywords = Object.entries(cfg.keywords || {})
     .filter(([word, k]) => word.trim() && usable(k))
-    .map(([word, k]) => ({ pattern: wordPattern(word), message: message(k) }));
+    .map(([word, k]) => ({ word: word.trim(), pattern: wordPattern(word), ask: askPattern(word), message: message(k) }));
 
   const posts = new Map();
   for (const [link, k] of Object.entries(cfg.posts || {})) {
@@ -134,6 +139,7 @@ function loadConfig() {
     // Several wordings for the public answer, so the thread is not one sentence pasted over and over.
     publicReplies: list(cfg.public_replies, cfg.public_reply, "Sent. Check your messages."),
     fallbackReplies: list(cfg.fallback_replies, cfg.fallback_reply, "Thanks! If the message did not arrive, the link is in the bio."),
+    onlyWhereAsked: cfg.keywords_only_where_asked !== false,
     postsToWatch: Math.max(1, Number(cfg.posts_to_watch) || 20),
     maxPerRun: Math.max(1, Number(cfg.max_messages_per_run) || 200),
   };
@@ -163,8 +169,8 @@ async function answerComments() {
   const who = (c) => String(c.username || (c.from && (c.from.username || c.from.id)) || "").toLowerCase();
   const answered = (c) => ((c.replies && c.replies.data) || []).some(mine);
 
-  const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, repeat: 0, tooOld: 0, waiting: 0 };
-  const posts = await list("/me/media", { fields: "id,comments_count,shortcode,permalink", limit: 25 }, cfg.postsToWatch);
+  const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, repeat: 0, tooOld: 0, waiting: 0, notAsked: 0 };
+  const posts = await list("/me/media", { fields: "id,comments_count,shortcode,permalink,caption", limit: 25 }, cfg.postsToWatch);
   let stop = false;
 
   for (const post of posts) {
@@ -174,9 +180,12 @@ async function answerComments() {
     const comments = await list(`/${post.id}/comments`,
       { fields: "id,text,timestamp,username,from,replies{username,from}", limit: 50 }, 2000);
 
-    // This post's own message, if it has one, else the keyword list.
+    // This post's own message, if it has one, else the keywords this post asks for: the caption or
+    // one of the account's own comments (a pinned comment, say) has to say "Comment GEL".
     const own = cfg.posts.get(post.shortcode || postCode(post.permalink));
-    const pick = (text) => (own && (!own.pattern || own.pattern.test(text)) ? own : cfg.keywords.find((k) => k.pattern.test(text)));
+    const asks = [post.caption || "", ...comments.filter(mine).map((c) => c.text || "")].join("\n");
+    const active = cfg.onlyWhereAsked ? cfg.keywords.filter((k) => k.ask.test(asks)) : cfg.keywords;
+    const pick = (text) => (own && (!own.pattern || own.pattern.test(text)) ? own : active.find((k) => k.pattern.test(text)));
     // People already answered on this post: they are not messaged again for a second comment.
     const served = new Set(comments.filter((c) => !mine(c) && answered(c)).map(who).filter(Boolean));
 
@@ -184,7 +193,7 @@ async function answerComments() {
       stats.comments++;
       if (mine(c)) continue;
       const kw = pick(c.text || "");
-      if (!kw) continue;
+      if (!kw) { if (cfg.keywords.some((k) => k.pattern.test(c.text || ""))) stats.notAsked++; continue; }
       stats.matched++;
       if (answered(c)) { stats.already++; continue; }
       if (who(c) && served.has(who(c))) { stats.repeat++; continue; }
@@ -221,6 +230,7 @@ async function answerComments() {
     `Posts looked at: ${stats.posts}. Comments read: ${stats.comments}. To be answered: ${stats.matched}.`,
     `Messages sent: ${stats.sent}. Answered in public only: ${stats.fallback}. Already answered: ${stats.already}. Same person again: ${stats.repeat}.`,
     `Older than the 7-day limit: ${stats.tooOld}. ${DRY_RUN ? "Would be answered" : "Left for the next run"}: ${stats.waiting}.`,
+    `Keyword on a post that does not ask for it (left alone): ${stats.notAsked}.`,
   ];
   console.log(lines.join("\n"));
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n\n") + "\n");

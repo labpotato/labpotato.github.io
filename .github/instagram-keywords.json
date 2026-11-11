@@ -1,0 +1,49 @@
+{
+  "public_reply": "Sent. Check your messages (it may be under Requests).",
+  "fallback_reply": "Thanks! If the message did not arrive, the link is in the bio.",
+  "sign_off": "Sent automatically by the Lab Potato bot.",
+  "posts_to_watch": 20,
+  "max_messages_per_run": 200,
+  "keywords": {
+    "POTATO": {
+      "url": "https://labpotato.github.io/",
+      "text": "Here is Lab Potato: free lab tools that open in your browser."
+    },
+    "GEL": {
+      "url": "https://labpotato.github.io/tools/gel-labeler/",
+      "text": "Here is the Gel Labeler: lane labels, ladder sizes and band arrows on your gel."
+    },
+    "COLONY": {
+      "url": "https://labpotato.github.io/tools/colony-counter/",
+      "text": "Here is the Colony Counter: drop in a plate photo and get the count."
+    },
+    "GIBSON": {
+      "url": "https://labpotato.github.io/tools/gibson-assembly/",
+      "text": "Here is the Gibson Assembly primer designer."
+    },
+    "MICROSCOPY": {
+      "url": "https://labpotato.github.io/tools/microscopy-image-labeler/",
+      "text": "Here is the Microscopy Image Labeler: channel images into a labelled figure."
+    },
+    "PROTEIN": {
+      "url": "https://labpotato.github.io/tools/protein-quant/",
+      "text": "Here is Protein Quant: concentration and yield from A280 or a standard curve."
+    },
+    "FREEZER": {
+      "url": "https://labpotato.github.io/tools/cryobox-labeler/",
+      "text": "Here is the Cryobox Labeler: every tube in your freezers, in one search."
+    },
+    "NOTEBOOK": {
+      "url": "https://labpotato.github.io/tools/lab-entry/",
+      "text": "Here is Lab Entry: a lab notebook laid out on a timeline."
+    },
+    "READER": {
+      "url": "https://labpotato.github.io/tools/doc-reader/",
+      "text": "Here is the Doc Reader: open a paper, mark it up, keep your notes."
+    },
+    "SEQUENCE": {
+      "url": "https://labpotato.github.io/tools/sequence-studio/",
+      "text": "Here is Sequence Studio: open SnapGene, GenBank or FASTA files in your browser."
+    }
+  }
+}

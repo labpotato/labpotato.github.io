@@ -1,0 +1,78 @@
+# Every 15 minutes: when someone comments a keyword (for example GEL) on one of the Instagram
+# account's posts, send them the matching link by direct message and answer the comment in public.
+# Keywords, links and wording are in .github/instagram-keywords.json. The script is
+# .github/scripts/instagram-replies.mjs. It costs nothing: no server, no paid service.
+#
+# It does nothing until it is switched on. To set it up, once:
+#   1. The Instagram account must be a public Professional account (Creator or Business).
+#   2. At developers.facebook.com create an app, add the Instagram product and choose
+#      "API setup with Instagram login". Add the Instagram account to the app there, then generate an
+#      access token for it with these permissions: instagram_business_basic,
+#      instagram_business_manage_comments, instagram_business_manage_messages.
+#      The app only serves your own account, so it needs no App Review.
+#   3. In this repository: Settings > Secrets and variables > Actions.
+#        Secret    IG_ACCESS_TOKEN      the token from step 2
+#        Variable  INSTAGRAM_REPLIES    on
+#   4. Actions tab > "Instagram comment replies" > Run workflow, with "dry run" ticked. The run's
+#      summary says how many comments it would answer. Run it again unticked to send for real.
+#
+# The token lasts 60 days. When it expires the run fails and says so: make a new token and save it
+# as the secret again. To have it renewed for you instead, also add the secret SECRETS_WRITE_TOKEN:
+# a fine-grained GitHub token for this repository with "Secrets: read and write".
+#
+# Things to know: GitHub starts scheduled runs late when it is busy, so a reply can take 15 to 30
+# minutes. Instagram allows one message per comment, within 7 days of the comment.
+name: Instagram comment replies
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"   # every 15 minutes: answer new keyword comments
+    - cron: "41 3 * * 1"           # Mondays: renew the access token
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: read the comments but send nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: instagram-replies
+  cancel-in-progress: false   # a second run waits for the first, so nobody is answered twice
+
+jobs:
+  reply:
+    if: (github.event_name == 'workflow_dispatch' || vars.INSTAGRAM_REPLIES == 'on') && github.event.schedule != '41 3 * * 1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Answer keyword comments
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: node .github/scripts/instagram-replies.mjs
+
+  renew-token:
+    if: vars.INSTAGRAM_REPLIES == 'on' && github.event.schedule == '41 3 * * 1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Renew the access token
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.SECRETS_WRITE_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "SECRETS_WRITE_TOKEN is not set, so the token is not renewed automatically. It lasts 60 days from the day it was made."
+            exit 0
+          fi
+          export TOKEN_OUT="$RUNNER_TEMP/ig-token"
+          node .github/scripts/instagram-replies.mjs refresh
+          # the new token goes straight from the file into the secret; it is never printed
+          gh secret set IG_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" < "$TOKEN_OUT"
+          rm -f "$TOKEN_OUT"
+          echo "Saved the renewed token as the IG_ACCESS_TOKEN secret."

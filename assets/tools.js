@@ -62,11 +62,12 @@ const TOOLS = [
       { v: "v10", file: "lab-entry-v10.html", date: "2026-10-20" },
       { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
       { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
-      { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04",
+      { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04" },
+      { v: "v14", file: "lab-entry-v14.html", date: "2026-11-11",
         new: [
-          "Research map: every experiment and how they link, with the papers and notes behind them",
-          "A Sources library, and arrows that carry the reason for every link",
-          "Save file keeps itself in step, and a lighter save"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -90,10 +91,12 @@ const TOOLS = [
       { v: "v1", file: "colony-counter-v1.html" },
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28" },
-      { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04",
+      { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04" },
+      { v: "v5", file: "colony-counter-v5.html", date: "2026-11-11",
         new: [
-          "A potato-and-petri-dish welcome, clearer buttons, a table that fits",
-          "Colonies light up as they are found, the count ticking up"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -121,10 +124,12 @@ const TOOLS = [
       { v: "v5", file: "gel-labeler-v5.html", date: "2026-09-22" },
       { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },
       { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21" },
-      { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04",
+      { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04" },
+      { v: "v9", file: "gel-labeler-v9.html", date: "2026-11-11",
         new: [
-          "More label colours, and white by default on a dark-background gel",
-          "Five clear steps, a docked ladder whose bands run into place"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -155,11 +160,12 @@ const TOOLS = [
       { v: "v8", file: "gibson-assembly-v8.html", date: "2026-09-29" },
       { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01" },
       { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21" },
-      { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04",
+      { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04" },
+      { v: "v12", file: "gibson-assembly-v12.html", date: "2026-11-11",
         new: [
-          "Step 3 leads with the live map, and the animation lands exactly on it",
-          "One card per PCR: primers, product and template size, problems and fixes",
-          "Clearer primer alerts on the map, calmer Apple-like spacing"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -184,9 +190,12 @@ const TOOLS = [
       { v: "v2", file: "microscopy-image-labeler-v2.html", date: "2026-09-22" },
       { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" },
       { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21" },
-      { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04",
+      { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04" },
+      { v: "v6", file: "microscopy-image-labeler-v6.html", date: "2026-11-11",
         new: [
-          "The footer captions no longer collide, panels slide into the grid"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -213,10 +222,12 @@ const TOOLS = [
       { v: "v4", file: "protein-quant-v4.html", date: "2026-09-22" },
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" },
       { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21" },
-      { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04",
+      { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04" },
+      { v: "v8", file: "protein-quant-v8.html", date: "2026-11-11",
         new: [
-          "The standard curve draws itself through your points",
-          "A compact intro, one look shared with every tool"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -244,11 +255,12 @@ const TOOLS = [
       { v: "v5", file: "cryobox-labeler-v5.html", date: "2026-10-21" },
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27" },
       { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04" },
-      { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05",
+      { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05" },
+      { v: "v9", file: "cryobox-labeler-v9.html", date: "2026-11-11",
         new: [
-          "A lab cart beside the freezers: a tube rack, a sample box and a flask of broth",
-          "Rack and box are real public-domain models from NIH 3D",
-          "Freezer names under the freezers no longer overlap"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -278,10 +290,12 @@ const TOOLS = [
       { v: "v7", file: "doc-reader-v7.html", date: "2026-10-30" },
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30" },
       { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04" },
-      { v: "v10", file: "doc-reader-v10.html", date: "2026-11-05",
+      { v: "v10", file: "doc-reader-v10.html", date: "2026-11-05" },
+      { v: "v11", file: "doc-reader-v11.html", date: "2026-11-11",
         new: [
-          "Extension v9: a Cite button on the page toolbar saves the paper's citation (RIS, EndNote, BibTeX)",
-          "Save citation is in the extension's ⋯ menu too, as well as on right-click"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "Find a feature: press / and type a name to reach any button, field or menu item",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   },
@@ -309,18 +323,11 @@ const TOOLS = [
       { v: "v5", file: "sequence-studio-v5.html", date: "2026-11-04" },
       { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04" },
       { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04" },
-      { v: "v8", file: "sequence-studio-v8.html", date: "2026-11-04",
+      { v: "v8", file: "sequence-studio-v8.html", date: "2026-11-04" },
+      { v: "v9", file: "sequence-studio-v9.html", date: "2026-11-11",
         new: [
-          "Translated open reading frames: every start codon in a stretch plotted by predicted rate, with the strongest traced to its terminator",
-          "A strength chart to pick parts from, with constitutive, inducible and phage promoters divided",
-          "Readable rows again: no grey stripes, heavy dividers, and both strands in the same ink"
-        ] },
-      { v: "v7x", file: "sequence-studio-v7.html", date: "2026-11-04",
-        new: [
-          "SEVA modules: find the swappable marker, origin and cargo spans by their flanking sites and exchange one",
-          "Autosearch: translate every reading frame, match it locally, and send the rest to BLASTp one at a time",
-          "Readable rows, stronger text, the rail at the top and the action bar off the bases",
-          "Circuit drawn to the SBOL symbol table, and any part changed by clicking it in the diagram"
+          "One top bar in every tool: the same buttons, in the same order, with the same names",
+          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
         ] }
     ]
   }

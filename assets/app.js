@@ -9,13 +9,13 @@ const REPO = "https://github.com/labpotato/labpotato.github.io";
 // SUPPORT_URL / SUPPORT_LABEL are defined at the top of tools.js
 
 const ACCENTS = {
-  emerald: "#139171",
-  violet: "#6a55d6",
-  blue: "#2f67d6",
-  cyan: "#108a9e",
-  amber: "#b8781c",
-  rose: "#c94b6d",
-  indigo: "#4f4dc6",
+  emerald: "#186f3b",
+  violet: "#6b46a0",
+  blue: "#215da5",
+  cyan: "#007374",
+  amber: "#af5a21",
+  rose: "#a13567",
+  indigo: "#454a9e",
 };
 
 // Encode each path SEGMENT separately — encoding the whole string would
@@ -117,7 +117,7 @@ function renderTools() {
           </div>
           <p class="tool-desc">${tool.description}</p>
           <div class="tc-foot">
-            <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Launch module ${arrowSvg}</a>
+            <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Open the tool ${arrowSvg}</a>
             <div class="tool-meta">
               <span class="version-pill">${latest.v} · latest</span>
               ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}

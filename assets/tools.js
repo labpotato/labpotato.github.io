@@ -131,11 +131,12 @@ const TOOLS = [
       { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04" },
       { v: "v9", file: "gel-labeler-v9.html", date: "2026-11-11" },
       { v: "v10", file: "gel-labeler-v10.html", date: "2026-11-11" },
-      { v: "v11", file: "gel-labeler-v11.html", date: "2026-11-11",
+      { v: "v11", file: "gel-labeler-v11.html", date: "2026-11-11" },
+      { v: "v12", file: "gel-labeler-v12.html", date: "2026-11-11",
         new: [
-          "Fills the window: no empty margins at the sides",
-          "Neutral page with this tool's own colour (violet) on buttons and selection",
-          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
+          "Ladder library: every ladder as a colour picture with its name, grouped by maker",
+          "Nine new ladders: 1st BASE (Axil) ExactMark and ExactPro, Bio Basic, NEB 1 kb Extend",
+          "BLUeye and TruePro show their red 75 kDa and green 25 kDa bands"
         ] }
     ]
   },
@@ -270,11 +271,11 @@ const TOOLS = [
       { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05" },
       { v: "v9", file: "cryobox-labeler-v9.html", date: "2026-11-11" },
       { v: "v10", file: "cryobox-labeler-v10.html", date: "2026-11-11" },
-      { v: "v11", file: "cryobox-labeler-v11.html", date: "2026-11-11",
+      { v: "v11", file: "cryobox-labeler-v11.html", date: "2026-11-11" },
+      { v: "v12", file: "cryobox-labeler-v12.html", date: "2026-11-11",
         new: [
-          "Fills the window: no empty margins at the sides",
-          "Neutral page with this tool's own colour (indigo) on buttons and selection",
-          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
+          "Places can be counted 1 to 100: a switch in each box header (A1 or numbers)",
+          "Use this in every box: applies the labelling to all boxes and to new ones"
         ] }
     ]
   },

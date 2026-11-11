@@ -6,7 +6,8 @@
 //   - per post: a post listed under "posts" has its own message, sent to everyone who comments on
 //     it, or only to comments containing that post's keyword if it has one;
 //   - per keyword: on any post, a comment containing a word under "keywords" (for example GEL).
-// Each person gets one message per post, however many times they comment.
+// Each person gets one message per post, however many times they comment. The message follows the
+// keyword-delivery shape: the link first with no gate, how to use it, and one easy question.
 //
 // The public answer is also how the script remembers a comment is done: nothing is stored anywhere,
 // and nothing about a commenter is written to this repository or to the logs.
@@ -99,7 +100,19 @@ function loadConfig() {
   const file = process.env.IG_KEYWORDS_FILE || new URL("../instagram-keywords.json", import.meta.url);
   const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
   const usable = (k) => k && typeof k === "object" && k.url;
-  const message = (k) => [k.text, k.url, cfg.sign_off].filter(Boolean).join("\n\n");
+  // The keyword delivery: the link first, no gate, one line on how to use it, one easy question.
+  //   {name}, here it is: {url}
+  //   {how}
+  //   {question}
+  //   {sign_off}
+  // "text" is still accepted in place of "how", for settings written before this layout.
+  const message = (k) => (name) => [
+    name ? `${name}, here it is: ${k.url}` : `Here it is: ${k.url}`,
+    k.how || k.text,
+    k.question,
+    cfg.sign_off,
+  ].filter(Boolean).join("\n\n");
+  const list = (many, one, fallback) => (Array.isArray(many) && many.filter(Boolean).length ? many.filter(Boolean) : [one || fallback]);
 
   const keywords = Object.entries(cfg.keywords || {})
     .filter(([word, k]) => word.trim() && usable(k))
@@ -118,11 +131,23 @@ function loadConfig() {
   return {
     keywords,
     posts,
-    publicReply: cfg.public_reply || "Sent. Check your messages.",
-    fallbackReply: cfg.fallback_reply || "Thanks! If the message did not arrive, the link is in the bio.",
+    // Several wordings for the public answer, so the thread is not one sentence pasted over and over.
+    publicReplies: list(cfg.public_replies, cfg.public_reply, "Sent. Check your messages."),
+    fallbackReplies: list(cfg.fallback_replies, cfg.fallback_reply, "Thanks! If the message did not arrive, the link is in the bio."),
     postsToWatch: Math.max(1, Number(cfg.posts_to_watch) || 20),
     maxPerRun: Math.max(1, Number(cfg.max_messages_per_run) || 200),
   };
+}
+
+// The name to greet someone by: their username, which is all a comment gives. It goes only into
+// the message to that person, never into a log.
+const firstName = (c) => String(c.username || (c.from && c.from.username) || "").trim();
+
+// The same comment always gets the same wording, so a re-run cannot change what was said.
+function pickFor(id, options) {
+  let h = 0;
+  for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return options[h % options.length];
 }
 
 async function answerComments() {
@@ -170,7 +195,7 @@ async function answerComments() {
       let delivered = true;
       try {
         await call("POST", `/${me.user_id || "me"}/messages`,
-          { body: { recipient: { comment_id: c.id }, message: { text: kw.message } } });
+          { body: { recipient: { comment_id: c.id }, message: { text: kw.message(firstName(c)) } } });
       } catch (err) {
         if (!(err instanceof ApiError) || err.badToken) throw err;
         if (err.rateLimited) { stats.waiting++; stop = true; break; }
@@ -180,7 +205,7 @@ async function answerComments() {
         console.log(`  A message could not be delivered (Instagram code ${err.code ?? err.status}).`);
       }
       try {
-        await call("POST", `/${c.id}/replies`, { body: { message: delivered ? cfg.publicReply : cfg.fallbackReply } });
+        await call("POST", `/${c.id}/replies`, { body: { message: pickFor(c.id, delivered ? cfg.publicReplies : cfg.fallbackReplies) } });
       } catch (err) {
         if (!(err instanceof ApiError) || err.badToken) throw err;
         if (err.rateLimited) { stop = true; }

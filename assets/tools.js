@@ -63,11 +63,12 @@ const TOOLS = [
       { v: "v11", file: "lab-entry-v11.html", date: "2026-10-21" },
       { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
       { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04" },
-      { v: "v14", file: "lab-entry-v14.html", date: "2026-11-11",
+      { v: "v14", file: "lab-entry-v14.html", date: "2026-11-11" },
+      { v: "v15", file: "lab-entry-v15.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v14: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v14: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -92,11 +93,12 @@ const TOOLS = [
       { v: "v2", file: "colony-counter-v2.html", date: "2026-09-23" },
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28" },
       { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04" },
-      { v: "v5", file: "colony-counter-v5.html", date: "2026-11-11",
+      { v: "v5", file: "colony-counter-v5.html", date: "2026-11-11" },
+      { v: "v6", file: "colony-counter-v6.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v5: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v5: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -125,11 +127,12 @@ const TOOLS = [
       { v: "v6", file: "gel-labeler-v6.html", date: "2026-09-26" },
       { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21" },
       { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04" },
-      { v: "v9", file: "gel-labeler-v9.html", date: "2026-11-11",
+      { v: "v9", file: "gel-labeler-v9.html", date: "2026-11-11" },
+      { v: "v10", file: "gel-labeler-v10.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v9: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v9: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -161,11 +164,12 @@ const TOOLS = [
       { v: "v9", file: "gibson-assembly-v9.html", date: "2026-10-01" },
       { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21" },
       { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04" },
-      { v: "v12", file: "gibson-assembly-v12.html", date: "2026-11-11",
+      { v: "v12", file: "gibson-assembly-v12.html", date: "2026-11-11" },
+      { v: "v13", file: "gibson-assembly-v13.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v12: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v12: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -191,11 +195,12 @@ const TOOLS = [
       { v: "v3", file: "microscopy-image-labeler-v3.html", date: "2026-09-26" },
       { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21" },
       { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04" },
-      { v: "v6", file: "microscopy-image-labeler-v6.html", date: "2026-11-11",
+      { v: "v6", file: "microscopy-image-labeler-v6.html", date: "2026-11-11" },
+      { v: "v7", file: "microscopy-image-labeler-v7.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v6: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v6: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -223,11 +228,12 @@ const TOOLS = [
       { v: "v5", file: "protein-quant-v5.html", date: "2026-09-26" },
       { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21" },
       { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04" },
-      { v: "v8", file: "protein-quant-v8.html", date: "2026-11-11",
+      { v: "v8", file: "protein-quant-v8.html", date: "2026-11-11" },
+      { v: "v9", file: "protein-quant-v9.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v8: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v8: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -256,11 +262,12 @@ const TOOLS = [
       { v: "v6", file: "cryobox-labeler-v6.html", date: "2026-10-27" },
       { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04" },
       { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05" },
-      { v: "v9", file: "cryobox-labeler-v9.html", date: "2026-11-11",
+      { v: "v9", file: "cryobox-labeler-v9.html", date: "2026-11-11" },
+      { v: "v10", file: "cryobox-labeler-v10.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press Ctrl+K, or /, and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v9: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v9: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -291,11 +298,12 @@ const TOOLS = [
       { v: "v8", file: "doc-reader-v8.html", date: "2026-10-30" },
       { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04" },
       { v: "v10", file: "doc-reader-v10.html", date: "2026-11-05" },
-      { v: "v11", file: "doc-reader-v11.html", date: "2026-11-11",
+      { v: "v11", file: "doc-reader-v11.html", date: "2026-11-11" },
+      { v: "v12", file: "doc-reader-v12.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "Find a feature: press / and type a name to reach any button, field or menu item",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v11: one top bar in every tool, the same buttons in the same order with the same names",
+          "From v11: Find a feature (press /) reaches any button, field or menu item by name"
         ] }
     ]
   },
@@ -324,10 +332,11 @@ const TOOLS = [
       { v: "v6", file: "sequence-studio-v6.html", date: "2026-11-04" },
       { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04" },
       { v: "v8", file: "sequence-studio-v8.html", date: "2026-11-04" },
-      { v: "v9", file: "sequence-studio-v9.html", date: "2026-11-11",
+      { v: "v9", file: "sequence-studio-v9.html", date: "2026-11-11" },
+      { v: "v10", file: "sequence-studio-v10.html", date: "2026-11-11",
         new: [
-          "One top bar in every tool: the same buttons, in the same order, with the same names",
-          "One look across the site: warm paper, ink buttons, embedded IBM Plex type, one scale for size and spacing"
+          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
+          "From v9: one top bar in every tool, the same buttons in the same order with the same names"
         ] }
     ]
   }

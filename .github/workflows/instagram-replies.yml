@@ -1,6 +1,7 @@
-# Every 15 minutes: when someone comments a keyword (for example GEL) on one of the Instagram
-# account's posts, send them the matching link by direct message and answer the comment in public.
-# Keywords, links and wording are in .github/instagram-keywords.json. The script is
+# Every 15 minutes: when someone comments on one of the Instagram account's posts, send them a link
+# by direct message and answer the comment in public. A post can have its own message (sent to
+# everyone who comments on it), and a keyword such as GEL works on any post. Which is which, the
+# links and the wording are all in .github/instagram-keywords.json. The script is
 # .github/scripts/instagram-replies.mjs. It costs nothing: no server, no paid service.
 #
 # It does nothing until it is switched on. To set it up, once:
@@ -16,9 +17,13 @@
 #   4. Actions tab > "Instagram comment replies" > Run workflow, with "dry run" ticked. The run's
 #      summary says how many comments it would answer. Run it again unticked to send for real.
 #
-# The token lasts 60 days. When it expires the run fails and says so: make a new token and save it
-# as the secret again. To have it renewed for you instead, also add the secret SECRETS_WRITE_TOKEN:
-# a fine-grained GitHub token for this repository with "Secrets: read and write".
+# Instagram makes its tokens expire after 60 days; one can be renewed for another 60, but renewing
+# gives a new token, and a workflow may not overwrite its own secret. So either:
+#   - do nothing, and when the token expires the run fails and says so: make a new token and save
+#     it as the secret again; or
+#   - add one more secret, SECRETS_WRITE_TOKEN (a fine-grained GitHub token for this repository
+#     with "Secrets: read and write"). The Monday job then renews the Instagram token and saves it,
+#     and it never runs out.
 #
 # Things to know: GitHub starts scheduled runs late when it is busy, so a reply can take 15 to 30
 # minutes. Instagram allows one message per comment, within 7 days of the comment.

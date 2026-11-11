@@ -1,9 +1,15 @@
 // Instagram comment replies.
 //
-// When someone comments a keyword (for example GEL) on one of the account's posts, this sends them
-// the matching link by direct message, using Instagram's own "private reply", and then answers the
-// comment in public. That public answer is also how the script remembers a comment is done: nothing
-// is stored anywhere, and nothing about a commenter is written to this repository or to the logs.
+// When someone comments on one of the account's posts, this sends them a link by direct message,
+// using Instagram's own "private reply", and then answers the comment in public. Which message goes
+// out is decided in two ways, both set in .github/instagram-keywords.json:
+//   - per post: a post listed under "posts" has its own message, sent to everyone who comments on
+//     it, or only to comments containing that post's keyword if it has one;
+//   - per keyword: on any post, a comment containing a word under "keywords" (for example GEL).
+// Each person gets one message per post, however many times they comment.
+//
+// The public answer is also how the script remembers a comment is done: nothing is stored anywhere,
+// and nothing about a commenter is written to this repository or to the logs.
 //
 // It is run on a schedule by .github/workflows/instagram-replies.yml. Keywords and wording live in
 // .github/instagram-keywords.json. No server and no paid service are involved.
@@ -11,7 +17,8 @@
 //   node .github/scripts/instagram-replies.mjs            answer new keyword comments
 //   node .github/scripts/instagram-replies.mjs refresh    renew the access token (see the workflow)
 //
-// Environment: IG_ACCESS_TOKEN (required), DRY_RUN=true (look, send nothing), IG_API_BASE (tests).
+// Environment: IG_ACCESS_TOKEN (required), DRY_RUN=true (look, send nothing).
+// For tests only: IG_API_BASE, IG_KEYWORDS_FILE.
 
 import fs from "node:fs";
 
@@ -75,20 +82,42 @@ async function list(path, query, max) {
   return out.slice(0, max);
 }
 
+// GEL as a whole word, in any letter case: it matches "gel!" but not "gelato".
+const wordPattern = (word) =>
+  new RegExp(`(?<![\\p{L}\\p{N}])${word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu");
+
+// A post is named in the settings by its link (or just the code in the link). Both
+// https://www.instagram.com/p/DfXyz123/ and https://www.instagram.com/reel/DfXyz123/ give "DfXyz123".
+function postCode(linkOrCode) {
+  const text = String(linkOrCode || "").trim();
+  const m = text.match(/instagram\.com\/(?:[^/?#]+\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]+$/.test(text) ? text : "";
+}
+
 function loadConfig() {
-  const file = new URL("../instagram-keywords.json", import.meta.url);
+  const file = process.env.IG_KEYWORDS_FILE || new URL("../instagram-keywords.json", import.meta.url);
   const cfg = JSON.parse(fs.readFileSync(file, "utf8"));
+  const usable = (k) => k && typeof k === "object" && k.url;
+  const message = (k) => [k.text, k.url, cfg.sign_off].filter(Boolean).join("\n\n");
+
   const keywords = Object.entries(cfg.keywords || {})
-    .filter(([word, k]) => word.trim() && k && k.url)
-    .map(([word, k]) => ({
-      word: word.trim(),
-      // The keyword as a whole word, in any letter case: GEL matches "gel!" but not "gelato".
-      pattern: new RegExp(`(?<![\\p{L}\\p{N}])${word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu"),
-      message: [k.text, k.url, cfg.sign_off].filter(Boolean).join("\n\n"),
-    }));
-  if (!keywords.length) throw new Error("No keywords with a url in .github/instagram-keywords.json");
+    .filter(([word, k]) => word.trim() && usable(k))
+    .map(([word, k]) => ({ pattern: wordPattern(word), message: message(k) }));
+
+  const posts = new Map();
+  for (const [link, k] of Object.entries(cfg.posts || {})) {
+    const code = postCode(link);
+    if (!code || !usable(k)) continue;
+    posts.set(code, {
+      pattern: k.keyword && String(k.keyword).trim() ? wordPattern(String(k.keyword)) : null,   // none: every comment
+      message: message(k),
+    });
+  }
+  if (!keywords.length && !posts.size) throw new Error("Nothing to send: .github/instagram-keywords.json has no keyword or post with a url");
   return {
     keywords,
+    posts,
     publicReply: cfg.public_reply || "Sent. Check your messages.",
     fallbackReply: cfg.fallback_reply || "Thanks! If the message did not arrive, the link is in the bio.",
     postsToWatch: Math.max(1, Number(cfg.posts_to_watch) || 20),
@@ -106,8 +135,11 @@ async function answerComments() {
     return (name !== "" && name === myName) || Boolean(c.from && me.user_id && String(c.from.id) === String(me.user_id));
   };
 
-  const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, tooOld: 0, waiting: 0 };
-  const posts = await list("/me/media", { fields: "id,comments_count", limit: 25 }, cfg.postsToWatch);
+  const who = (c) => String(c.username || (c.from && (c.from.username || c.from.id)) || "").toLowerCase();
+  const answered = (c) => ((c.replies && c.replies.data) || []).some(mine);
+
+  const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, repeat: 0, tooOld: 0, waiting: 0 };
+  const posts = await list("/me/media", { fields: "id,comments_count,shortcode,permalink", limit: 25 }, cfg.postsToWatch);
   let stop = false;
 
   for (const post of posts) {
@@ -117,15 +149,23 @@ async function answerComments() {
     const comments = await list(`/${post.id}/comments`,
       { fields: "id,text,timestamp,username,from,replies{username,from}", limit: 50 }, 2000);
 
+    // This post's own message, if it has one, else the keyword list.
+    const own = cfg.posts.get(post.shortcode || postCode(post.permalink));
+    const pick = (text) => (own && (!own.pattern || own.pattern.test(text)) ? own : cfg.keywords.find((k) => k.pattern.test(text)));
+    // People already answered on this post: they are not messaged again for a second comment.
+    const served = new Set(comments.filter((c) => !mine(c) && answered(c)).map(who).filter(Boolean));
+
     for (const c of comments) {
       stats.comments++;
       if (mine(c)) continue;
-      const kw = cfg.keywords.find((k) => k.pattern.test(c.text || ""));
+      const kw = pick(c.text || "");
       if (!kw) continue;
       stats.matched++;
-      if (((c.replies && c.replies.data) || []).some(mine)) { stats.already++; continue; }
+      if (answered(c)) { stats.already++; continue; }
+      if (who(c) && served.has(who(c))) { stats.repeat++; continue; }
       if (Date.now() - Date.parse(c.timestamp) > REPLY_WINDOW_MS) { stats.tooOld++; continue; }
-      if (DRY_RUN || stats.sent + stats.fallback >= cfg.maxPerRun) { stats.waiting++; continue; }
+      if (DRY_RUN || stats.sent + stats.fallback >= cfg.maxPerRun) { stats.waiting++; if (who(c)) served.add(who(c)); continue; }
+      if (who(c)) served.add(who(c));
 
       let delivered = true;
       try {
@@ -153,8 +193,8 @@ async function answerComments() {
 
   const lines = [
     `${DRY_RUN ? "Dry run: nothing was sent." : "Done."}`,
-    `Posts looked at: ${stats.posts}. Comments read: ${stats.comments}. With a keyword: ${stats.matched}.`,
-    `Messages sent: ${stats.sent}. Answered in public only: ${stats.fallback}. Already answered: ${stats.already}.`,
+    `Posts looked at: ${stats.posts}. Comments read: ${stats.comments}. To be answered: ${stats.matched}.`,
+    `Messages sent: ${stats.sent}. Answered in public only: ${stats.fallback}. Already answered: ${stats.already}. Same person again: ${stats.repeat}.`,
     `Older than the 7-day limit: ${stats.tooOld}. ${DRY_RUN ? "Would be answered" : "Left for the next run"}: ${stats.waiting}.`,
   ];
   console.log(lines.join("\n"));

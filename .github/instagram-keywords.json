@@ -1,9 +1,17 @@
 {
+  "_how_this_works": [
+    "posts: a post with its own message. Paste the post's link as the name. Everyone who comments on that post gets its message.",
+    "       Add \"keyword\" to a post and only comments containing that word get it.",
+    "       Example:  \"https://www.instagram.com/p/DfXyz123/\": { \"url\": \"https://labpotato.github.io/tools/gel-labeler/\", \"text\": \"Here is the Gel Labeler.\" }",
+    "keywords: on any post without its own message, a comment containing one of these words gets that word's link.",
+    "Each person gets one message per post. A comment is only answered within 7 days."
+  ],
   "public_reply": "Sent. Check your messages (it may be under Requests).",
   "fallback_reply": "Thanks! If the message did not arrive, the link is in the bio.",
   "sign_off": "Sent automatically by the Lab Potato bot.",
   "posts_to_watch": 20,
   "max_messages_per_run": 200,
+  "posts": {},
   "keywords": {
     "POTATO": {
       "url": "https://labpotato.github.io/",

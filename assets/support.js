@@ -168,8 +168,8 @@
 .lps-card h3{margin:0 0 8px;font-size:21px;line-height:1.25;letter-spacing:-.015em}
 .lps-card p{margin:0 0 16px;font-size:14.5px;line-height:1.6;color:var(--text-muted,#5a6272)}
 .lps-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
-.lps-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14.5px;line-height:1;font-family:inherit;text-decoration:none!important;color:#fff!important;background:#1f5fc4;border:1px solid #1f5fc4;transition:background-color .15s,border-color .15s,transform .15s}
-.lps-btn:hover,.lps-btn:focus-visible{background:#174ea6;border-color:#174ea6;transform:translateY(-1px)}
+.lps-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14.5px;line-height:1;font-family:inherit;text-decoration:none!important;color:#3a2500!important;background:#ffd257;border:1px solid #efb72c;transition:background-color .15s,border-color .15s,transform .15s}
+.lps-btn:hover,.lps-btn:focus-visible{background:#ffc839;border-color:#e0a516;transform:translateY(-1px)}
 .lps-btn:focus-visible{outline:2px solid #1b2230;outline-offset:2px}
 .lps-btn:active{transform:translateY(0)}
 .lps-btn.alt{color:#174ea6!important;background:#fff;border-color:#b9cdea}
@@ -326,7 +326,7 @@
 .spud{flex:none;width:86px;height:auto;overflow:visible}
 b{display:block;font-size:15px;margin-bottom:2px}p{margin:0 0 10px;color:#4a5568}
 .r{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:13.5px;text-decoration:none;color:#fff;background:#1f5fc4;border:1px solid #1f5fc4}
+a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:13.5px;text-decoration:none;color:#3a2500;background:#ffd257;border:1px solid #efb72c}
 a.alt{color:#174ea6;background:#fff;border-color:#b9cdea}a:hover{filter:brightness(.97);transform:translateY(-1px)}
 .ic{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .later{all:unset;cursor:pointer;font-size:12.5px;color:#6b778a;padding:6px 4px}.later:hover{color:#1b2230}

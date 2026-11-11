@@ -2047,7 +2047,7 @@ body { font-size: 16px; }
 .app .app-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
 
 /* ============================================================
-   Blue tones and a friendlier first screen. Same outline as before:
+   Blue page, colour where it means something, and a friendlier first screen. Same outline as before:
    mascot hero, quick launch, tool cards, Lab Entry links, reviews,
    feedback, support, footer. Only colour, fit and findability change.
    ============================================================ */
@@ -2056,7 +2056,7 @@ body { font-size: 16px; }
   --text: #0f1b30; --text-muted: #3d4c63; --text-faint: #5b6b83;
   --brand-ink: #0f1b30; --accent: #1b5fc9; --accent-hover: #134ca6; --accent-soft: #e2edfc;
   --ink: #0b1730; --ink-2: #12244a; --ink-soft: #a9bad6;
-  --sky: #2f95e3; --deep: #0c3f93;
+  --sky: #2f95e3; --deep: #0c3f93; --teal: #0e9aa6;
   --shadow-sm: 0 1px 2px rgba(15, 35, 75, .06), 0 2px 8px rgba(15, 35, 75, .04);
   --shadow-md: 0 10px 30px -12px rgba(15, 45, 100, .26);
   --shadow-lg: 0 26px 60px -24px rgba(15, 45, 100, .36);
@@ -2066,29 +2066,27 @@ body { font-size: 16px; }
     --bg: #0a1120; --bg-tint: #0f1a2e; --surface: #131e33; --border: #25344d; --border-soft: #1d2a41;
     --text: #eef3fb; --text-muted: #c3cee0; --text-faint: #93a3bb;
     --brand-ink: #eef3fb; --accent: #72adff; --accent-hover: #98c4ff; --accent-soft: rgba(114, 173, 255, .16);
-    --ink: #060c18; --ink-2: #0d1830; --ink-soft: #9fb0cc; --sky: #6fd0f5; --deep: #9cc4ff;
+    --ink: #060c18; --ink-2: #0d1830; --ink-soft: #9fb0cc; --sky: #6fd0f5; --deep: #9cc4ff; --teal: #5fd9c9;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0a1120; --bg-tint: #0f1a2e; --surface: #131e33; --border: #25344d; --border-soft: #1d2a41;
   --text: #eef3fb; --text-muted: #c3cee0; --text-faint: #93a3bb;
   --brand-ink: #eef3fb; --accent: #72adff; --accent-hover: #98c4ff; --accent-soft: rgba(114, 173, 255, .16);
-  --ink: #060c18; --ink-2: #0d1830; --ink-soft: #9fb0cc; --sky: #6fd0f5; --deep: #9cc4ff;
+  --ink: #060c18; --ink-2: #0d1830; --ink-soft: #9fb0cc; --sky: #6fd0f5; --deep: #9cc4ff; --teal: #5fd9c9;
 }
 
 /* ---- hero: one family of blues behind the mascot ---- */
 .hero-mesh {
   background:
-    radial-gradient(36% 44% at 16% 30%, rgba(52, 120, 246, .30), transparent 70%),
-    radial-gradient(32% 40% at 84% 24%, rgba(56, 176, 240, .26), transparent 70%),
-    radial-gradient(38% 38% at 64% 70%, rgba(96, 150, 255, .18), transparent 70%),
-    radial-gradient(30% 36% at 30% 76%, rgba(40, 190, 222, .14), transparent 70%);
+    radial-gradient(36% 44% at 16% 30%, rgba(52, 120, 246, .26), transparent 70%),
+    radial-gradient(32% 40% at 84% 24%, rgba(56, 176, 240, .24), transparent 70%),
+    radial-gradient(38% 38% at 66% 72%, rgba(74, 190, 160, .17), transparent 70%),
+    radial-gradient(26% 32% at 32% 74%, rgba(240, 168, 96, .17), transparent 70%);
 }
-.hf, .hf-flask, .hf-petri, .hf-pipette, .hf-tube { color: var(--accent); }
-.hf-petri, .hf-tube { color: var(--sky); }
-.eyebrow { color: var(--accent-hover); border-color: color-mix(in srgb, var(--accent) 32%, var(--border)); box-shadow: 0 4px 14px -8px color-mix(in srgb, var(--accent) 60%, transparent); }
-.eyebrow::before { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
-.h1-accent { background-image: linear-gradient(100deg, var(--deep) 0%, var(--accent) 38%, var(--sky) 100%); }
+/* the floating glyphs keep one colour each (flask amber, petri green, pipette violet, tube rose, helix blue) */
+.eyebrow { color: var(--accent-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 4px 14px -8px color-mix(in srgb, var(--accent) 55%, transparent); }
+.h1-accent { background-image: linear-gradient(100deg, var(--deep) 0%, var(--accent) 45%, var(--teal) 100%); }
 
 /* the first screen: the mascot, the promise, both buttons and the row of tools */
 .hero { padding: 12px 0 26px; }
@@ -2102,9 +2100,10 @@ body { font-size: 16px; }
 .quick { padding-bottom: 30px; }
 .quick-label { margin-bottom: 12px; }
 
-/* buttons: white on a blue that is dark enough to read (5.6:1) */
-.btn-primary, .tool-open { color: #fff !important; background: linear-gradient(180deg, #2468d0 0%, #174fae 100%) !important; }
-.btn-primary:hover, .tool-open:hover { filter: brightness(1.07); }
+/* buttons: the main one is blue; each tool's launch button is that tool's colour, darkened until white reads on it */
+.btn-primary { color: #fff !important; background: linear-gradient(180deg, #2468d0 0%, #174fae 100%) !important; }
+.tool-open { color: #fff !important; background: linear-gradient(180deg, color-mix(in srgb, var(--card) 84%, #000) 0%, color-mix(in srgb, var(--card) 70%, #000) 100%) !important; }
+.btn-primary:hover, .tool-open:hover { filter: brightness(1.08); }
 .btn:focus-visible, .tool-open:focus-visible, .main-nav a:focus-visible, .nav-tools-btn:focus-visible, .le-row:focus-visible, .feedback-card:focus-visible, .tool-find input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---- quick launch: all nine on one row ---- */
@@ -2115,11 +2114,9 @@ body { font-size: 16px; }
 
 /* ---- tool cards: nothing cut off; one blue for the action ---- */
 .tool-tagline, .tool-features li > span, .tool-features li > p { display: block; -webkit-line-clamp: unset; overflow: visible; }
-.tool-card.updated { border-color: color-mix(in srgb, var(--accent) 34%, var(--border)) !important; animation: none; filter: none; }
+.tool-card.updated { border-color: color-mix(in srgb, var(--card) 38%, var(--border)) !important; animation: none; filter: none; }
 .tool-card[hidden] { display: none !important; }
 .section-tag { color: var(--accent-hover); }
-#integrations .sec-art, #reviews .sec-art, #usage .sec-art, .sec-art { color: var(--accent); }
-.quote-card::before { color: color-mix(in srgb, var(--accent) 13%, transparent); }
 
 /* ---- find a tool ---- */
 .tool-find { display: flex; align-items: center; gap: 10px; max-width: 620px; margin: 22px auto 0; padding: 0 14px; height: 46px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); text-align: left; }
@@ -2129,17 +2126,14 @@ body { font-size: 16px; }
 .tool-find input::placeholder { color: var(--text-faint); }
 .tool-find-n { flex: none; font-size: 12.5px; color: var(--text-faint); white-space: nowrap; }
 .tool-find-tips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 12px auto 0; padding: 0; list-style: none; }
-.tool-find-tips button { font: inherit; font-size: 12.5px; font-weight: 560; color: var(--accent-hover); background: var(--accent-soft); border: 1px solid transparent; border-radius: 999px; padding: 5px 11px; cursor: pointer; }
-.tool-find-tips button:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tool-find-tips button { --c: var(--accent); font: inherit; font-size: 12.5px; font-weight: 560; color: color-mix(in srgb, var(--c) 78%, #000); background: color-mix(in srgb, var(--c) 11%, var(--surface)); border: 1px solid color-mix(in srgb, var(--c) 22%, transparent); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+.tool-find-tips button:hover { border-color: color-mix(in srgb, var(--c) 60%, transparent); }
 .tool-find-tips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-:root[data-theme="dark"] .tool-find-tips button { color: var(--accent-hover); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tool-find-tips button { color: var(--accent-hover); } }
+:root[data-theme="dark"] .tool-find-tips button { color: color-mix(in srgb, var(--c) 45%, #fff); background: color-mix(in srgb, var(--c) 20%, var(--surface)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tool-find-tips button { color: color-mix(in srgb, var(--c) 45%, #fff); background: color-mix(in srgb, var(--c) 20%, var(--surface)); } }
 .tool-none { grid-column: 1 / -1; margin: 6px auto 0; padding: 18px 22px; max-width: 560px; text-align: center; font-size: 15px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 16px; background: var(--surface); }
 .tool-none a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---- footer: navy, pale blue in place of tan ---- */
-.footer-role { color: #9cc4ff; }
-.footer-mail { background: #cfe1ff; color: #0b1730; }
-.site-footer::before { background: linear-gradient(90deg, transparent, rgba(47, 149, 227, .7), rgba(27, 95, 201, .7), transparent); }
+/* ---- footer: navy; the potato colour stays on the role line and the mail button ---- */
 .site-footer .footer-cite summary, .site-footer details > summary { color: #9cc4ff; }
 @media (max-width: 640px) { .main-nav a[href="#integrations"], .main-nav a[href="#reviews"] { display: none; } }

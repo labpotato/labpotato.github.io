@@ -5603,7 +5603,7 @@ window.__LP_BENCH={};
       lab = lab || el.closest('label');
       t = (lab && lab.textContent) || el.placeholder || el.title || el.name || '';
     }
-    if (!t) { var c = el.cloneNode(true); Array.prototype.forEach.call(c.querySelectorAll('small,.mk,kbd,svg,.cnt'), function (x) { x.remove(); }); t = c.textContent || el.title || ''; }
+    if (!t) { var c = el.cloneNode(true); Array.prototype.forEach.call(c.querySelectorAll('small,.mk,kbd,svg,.cnt'), function (x) { x.remove(); }); var w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT), parts = []; while (w.nextNode()) { var v = w.currentNode.nodeValue.trim(); if (v) parts.push(v); } t = parts.join(' ') || el.title || ''; }
     return t.replace(/[↶↷⬇↗←→▾▼⌂]/g, '').replace(/\s+/g, ' ').trim().slice(0, 90);
   }
   function whereOf(el) {

@@ -283,9 +283,9 @@ const TOOLS = [
     accent: "cyan",
     folder: "tools/doc-reader",
     features: [
-      "Highlights, comment bubbles, text boxes, drawings and page edits on PDFs; a Chrome extension that keeps one set of notes per paper, through library proxies too",
-      "Write like in Word: fonts, footnotes, offline spell check, any page width, Word's shortcuts",
-      "Ask AI on a selection with your own Claude key and review its changes one by one, as tracked changes"
+      "Highlight, comment, draw and edit PDF pages; Chrome extension included",
+      "Write like in Word: fonts, footnotes, offline spell check",
+      "Ask AI on a selection and review its edits as tracked changes"
     ],
     versions: [
       { v: "v1", file: "doc-reader-v1.html", date: "2026-10-25" },
@@ -314,14 +314,14 @@ const TOOLS = [
     name: "Sequence Studio",
     tagline: "SnapGene, minus the download",
     description:
-      "Open your SnapGene, GenBank or FASTA files, see the map, the sequence and the circuit, annotate, cut, design primers, translate and fold, all in one tab.",
+      "Open SnapGene, GenBank or FASTA files to see the map, annotate, cut, design primers and fold, in one tab.",
     icon: "dna",
     accent: "violet",
     folder: "tools/sequence-studio",
     features: [
-      "Reads and writes SnapGene .dna, keeping the original file's data; GenBank, FASTA, EMBL and Xdna too",
-      "A circuit view that draws each transcription unit as SBOL symbols and says what it is missing, and predicts ribosome binding strength from the Salis thermodynamic model",
-      "Digests with overhangs and a ligation check, primer design, codon optimisation, protein properties, figures for papers, and folding by ESMFold or AlphaFold"
+      "Reads and writes SnapGene .dna, GenBank, FASTA, EMBL and Xdna",
+      "Circuit view in SBOL symbols, with predicted ribosome binding strength",
+      "Digests, ligation check, primers, codon optimisation and protein folding"
     ],
     versions: [
       { v: "v1", file: "sequence-studio-v1.html", date: "2026-11-04" },

@@ -9,13 +9,13 @@ const REPO = "https://github.com/labpotato/labpotato.github.io";
 // SUPPORT_URL / SUPPORT_LABEL are defined at the top of tools.js
 
 const ACCENTS = {
-  emerald: "#139171",
-  violet: "#6a55d6",
-  blue: "#2f67d6",
-  cyan: "#108a9e",
-  amber: "#b8781c",
-  rose: "#c94b6d",
-  indigo: "#4f4dc6",
+  emerald: "#0f8a94",
+  violet: "#4a63d8",
+  blue: "#1b5fc9",
+  cyan: "#0d7fb5",
+  amber: "#2f86d8",
+  rose: "#274b9f",
+  indigo: "#3147b3",
 };
 
 // Encode each path SEGMENT separately — encoding the whole string would
@@ -728,4 +728,32 @@ initSecretPotato();
   const show = () => { const cur = root.dataset.theme || "auto", b = order.find((x) => x.dataset.themeSet === cur) || order[0]; cyc.innerHTML = b.innerHTML; cyc.title = NAMES[cur] + " (click to change)"; cyc.setAttribute("aria-label", cyc.title); };
   cyc.addEventListener("click", () => { const cur = root.dataset.theme || "auto", i = order.findIndex((x) => x.dataset.themeSet === cur); order[(i + 1) % order.length].click(); show(); });
   group.classList.add("collapsed"); group.append(cyc); show();
+})();
+
+/* Find a tool: type what you need to do; cards that do not match step aside. Nothing is sent anywhere. */
+(function () {
+  var box = document.getElementById("tool-find"), grid = document.getElementById("tools-grid"), count = document.getElementById("tool-find-n");
+  if (!box || !grid || typeof TOOLS === "undefined") return;
+  var WORDS = { "colony-counter": "count colonies cfu plate petri agar transformation efficiency", "gel-labeler": "gel western blot ladder lanes bands agarose sds-page figure",
+    "gibson-assembly": "gibson primers cloning pcr assembly overlap plasmid construct", "microscopy-image-labeler": "microscopy microscope images panels scale bar channels figure fluorescence",
+    "protein-quant": "protein concentration a280 nanodrop bradford bca standard curve yield", "cryobox-labeler": "freezer box inventory glycerol stock -80 cryovial rack samples",
+    "lab-entry": "notebook journal diary planner to-do experiments report", "doc-reader": "pdf paper read annotate highlight comment write cite markdown",
+    "sequence-studio": "snapgene genbank fasta plasmid map sequence annotate restriction digest primers dna" };
+  var text = {};
+  TOOLS.forEach(function (t) { text[t.id] = [t.name, t.tagline, t.short, t.description, (t.features || []).join(" "), WORDS[t.id] || ""].join(" ").toLowerCase(); });
+  var none = null;
+  function apply() {
+    var q = box.value.trim().toLowerCase().split(/\s+/).filter(Boolean), shown = 0, cards = grid.querySelectorAll(".tool-card");
+    cards.forEach(function (c) {
+      var hay = text[c.getAttribute("data-tool")] || c.textContent.toLowerCase();
+      var ok = q.every(function (w) { return hay.indexOf(w) >= 0 || (w.length > 3 && hay.indexOf(w.replace(/(ies|es|s|ing)$/, "")) >= 0); });
+      c.hidden = !ok; if (ok) { shown++; c.classList.add("in"); }
+    });
+    if (count) count.textContent = q.length ? shown + " of " + cards.length : "";
+    if (!shown && !none) { none = document.createElement("p"); none.className = "tool-none"; none.innerHTML = 'No tool does that yet. <a href="#feedback">Tell me what is missing</a> and it may become the next one.'; grid.appendChild(none); }
+    if (none) none.hidden = shown > 0;
+  }
+  box.addEventListener("input", apply);
+  box.addEventListener("keydown", function (e) { if (e.key === "Escape") { box.value = ""; apply(); } });
+  document.querySelectorAll(".tool-find-tips button").forEach(function (b) { b.addEventListener("click", function () { box.value = b.getAttribute("data-q"); apply(); box.focus(); }); });
 })();

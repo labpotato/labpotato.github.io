@@ -117,7 +117,7 @@ function renderTools() {
           </div>
           <p class="tool-desc">${tool.description}</p>
           <div class="tc-foot">
-            <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Launch module ${arrowSvg}</a>
+            <a class="tool-open" href="${toolPath(tool, latest)}" target="_blank" rel="noopener">Open the tool ${arrowSvg}</a>
             <div class="tool-meta">
               <span class="version-pill">${latest.v} · latest</span>
               ${latest.date ? `<span class="release-date${isFresh(latest.date) ? " fresh" : ""}">${isFresh(latest.date) ? '<span class="new-dot" aria-hidden="true"></span>New · ' : ""}${fmtDate(latest.date)}</span>` : ""}

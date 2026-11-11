@@ -64,11 +64,12 @@ const TOOLS = [
       { v: "v12", file: "lab-entry-v12.html", date: "2026-10-27" },
       { v: "v13", file: "lab-entry-v13.html", date: "2026-11-04" },
       { v: "v14", file: "lab-entry-v14.html", date: "2026-11-11" },
-      { v: "v15", file: "lab-entry-v15.html", date: "2026-11-11",
+      { v: "v15", file: "lab-entry-v15.html", date: "2026-11-11" },
+      { v: "v16", file: "lab-entry-v16.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v14: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v14: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: the page width now defaults to Full screen",
+          "Neutral page with this tool's own colour (rose) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -94,11 +95,12 @@ const TOOLS = [
       { v: "v3", file: "colony-counter-v3.html", date: "2026-10-28" },
       { v: "v4", file: "colony-counter-v4.html", date: "2026-11-04" },
       { v: "v5", file: "colony-counter-v5.html", date: "2026-11-11" },
-      { v: "v6", file: "colony-counter-v6.html", date: "2026-11-11",
+      { v: "v6", file: "colony-counter-v6.html", date: "2026-11-11" },
+      { v: "v7", file: "colony-counter-v7.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v5: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v5: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (green) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -128,11 +130,12 @@ const TOOLS = [
       { v: "v7", file: "gel-labeler-v7.html", date: "2026-10-21" },
       { v: "v8", file: "gel-labeler-v8.html", date: "2026-11-04" },
       { v: "v9", file: "gel-labeler-v9.html", date: "2026-11-11" },
-      { v: "v10", file: "gel-labeler-v10.html", date: "2026-11-11",
+      { v: "v10", file: "gel-labeler-v10.html", date: "2026-11-11" },
+      { v: "v11", file: "gel-labeler-v11.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v9: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v9: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (violet) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -165,11 +168,12 @@ const TOOLS = [
       { v: "v10", file: "gibson-assembly-v10.html", date: "2026-10-21" },
       { v: "v11", file: "gibson-assembly-v11.html", date: "2026-11-04" },
       { v: "v12", file: "gibson-assembly-v12.html", date: "2026-11-11" },
-      { v: "v13", file: "gibson-assembly-v13.html", date: "2026-11-11",
+      { v: "v13", file: "gibson-assembly-v13.html", date: "2026-11-11" },
+      { v: "v14", file: "gibson-assembly-v14.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v12: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v12: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (blue) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -196,11 +200,12 @@ const TOOLS = [
       { v: "v4", file: "microscopy-image-labeler-v4.html", date: "2026-10-21" },
       { v: "v5", file: "microscopy-image-labeler-v5.html", date: "2026-11-04" },
       { v: "v6", file: "microscopy-image-labeler-v6.html", date: "2026-11-11" },
-      { v: "v7", file: "microscopy-image-labeler-v7.html", date: "2026-11-11",
+      { v: "v7", file: "microscopy-image-labeler-v7.html", date: "2026-11-11" },
+      { v: "v8", file: "microscopy-image-labeler-v8.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v6: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v6: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (teal) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -229,11 +234,12 @@ const TOOLS = [
       { v: "v6", file: "protein-quant-v6.html", date: "2026-10-21" },
       { v: "v7", file: "protein-quant-v7.html", date: "2026-11-04" },
       { v: "v8", file: "protein-quant-v8.html", date: "2026-11-11" },
-      { v: "v9", file: "protein-quant-v9.html", date: "2026-11-11",
+      { v: "v9", file: "protein-quant-v9.html", date: "2026-11-11" },
+      { v: "v10", file: "protein-quant-v10.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v8: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v8: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (amber) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -263,11 +269,12 @@ const TOOLS = [
       { v: "v7", file: "cryobox-labeler-v7.html", date: "2026-11-04" },
       { v: "v8", file: "cryobox-labeler-v8.html", date: "2026-11-05" },
       { v: "v9", file: "cryobox-labeler-v9.html", date: "2026-11-11" },
-      { v: "v10", file: "cryobox-labeler-v10.html", date: "2026-11-11",
+      { v: "v10", file: "cryobox-labeler-v10.html", date: "2026-11-11" },
+      { v: "v11", file: "cryobox-labeler-v11.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v9: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v9: Find a feature (Ctrl+K or /) reaches any button, field or menu item by name"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (indigo) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -299,11 +306,11 @@ const TOOLS = [
       { v: "v9", file: "doc-reader-v9.html", date: "2026-11-04" },
       { v: "v10", file: "doc-reader-v10.html", date: "2026-11-05" },
       { v: "v11", file: "doc-reader-v11.html", date: "2026-11-11" },
-      { v: "v12", file: "doc-reader-v12.html", date: "2026-11-11",
+      { v: "v12", file: "doc-reader-v12.html", date: "2026-11-11" },
+      { v: "v13", file: "doc-reader-v13.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v11: one top bar in every tool, the same buttons in the same order with the same names",
-          "From v11: Find a feature (press /) reaches any button, field or menu item by name"
+          "Neutral page with this tool's own colour (cyan) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   },
@@ -333,10 +340,12 @@ const TOOLS = [
       { v: "v7", file: "sequence-studio-v7.html", date: "2026-11-04" },
       { v: "v8", file: "sequence-studio-v8.html", date: "2026-11-04" },
       { v: "v9", file: "sequence-studio-v9.html", date: "2026-11-11" },
-      { v: "v10", file: "sequence-studio-v10.html", date: "2026-11-11",
+      { v: "v10", file: "sequence-studio-v10.html", date: "2026-11-11" },
+      { v: "v11", file: "sequence-studio-v11.html", date: "2026-11-11",
         new: [
-          "Blue look in place of the brown: cool paper, navy text, one blue for actions and selection",
-          "From v9: one top bar in every tool, the same buttons in the same order with the same names"
+          "Fills the window: no empty margins at the sides",
+          "Neutral page with this tool's own colour (magenta) on buttons and selection",
+          "Short motion: blocks rise in on opening, menus fade, buttons answer a press"
         ] }
     ]
   }

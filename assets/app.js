@@ -688,6 +688,33 @@ const GUIDE_LINES = [
   "No sign-up. I checked. Twice.",
 ];
 
+/* What the potato says about the rest of the page. First match wins; lines take turns.
+   mood "beg" makes it bounce with big eyes (the money part). */
+const PAGE_REMARKS = [
+  { sel: "#support-box .lps-btn, .lps-go, .footer-support", mood: "beg", lines: ["Yes. Yes. YES.", "Please. He's on a stipend.", "Coffee is a reagent. Fund the reagent.", "I'd get on my knees, but I'm a potato.", "Do it. I'll act surprised."] },
+  { sel: "#support-box", mood: "beg", lines: ["This part keeps him caffeinated. No pressure. Some pressure.", "The tools stay free either way. The coffee doesn't."] },
+  { sel: ".hero .btn-primary", lines: ["Go on. They're all free.", "Good choice. That's where the tools live."] },
+  { sel: ".hero .btn-ghost", lines: ["How the tools hand files to each other. Less boring than it sounds."] },
+  { sel: ".hero-foot", lines: ["No account. No trial. He means it."] },
+  { sel: "#tool-find", lines: ["Type the lab redundancy. I'll point at the tool.", "Try \"count colonies\". Everyone does."] },
+  { sel: ".tool-find-tips button", lines: ["A shortcut. Efficient. I like you."] },
+  { sel: ".quote-card", lines: ["Peer reviewed. The peers were very tired.", "Five stars. From people with no time to write reviews."] },
+  { sel: ".feedback-card", lines: ["Tell him what's broken. He fixes it between experiments.", "Feature requests go here. The good ones get built."] },
+  { sel: "#usage", lines: ["These are the real numbers. He checks them more than his data."] },
+  { sel: "#integrations", lines: ["One tool's export is the next one's input. Like a lab, but it works.", "He's proudest of this part. Nod politely."] },
+  { sel: ".footer-cite", lines: ["Cite him. It's the only currency academia has."] },
+  { sel: "#footer-potato", lines: ["That's my cousin. We don't talk."] },
+  { sel: ".theme-switch", lines: ["Dark mode. For 2 a.m. So, always."] },
+  { sel: ".icon-link", lines: ["The source code. It's all public. Judge quietly."] },
+  { sel: ".brand", lines: ["That's me. The logo adds ten pounds."] },
+  { sel: ".nav-tools-btn", lines: ["Every tool in one menu. I counted."] },
+  { sel: 'a[href="privacy.html"]', lines: ["The privacy page. Short, because there's almost nothing to say."] },
+  { sel: "#trust-logos", lines: ["They have never heard of us."] },
+  { sel: ".site-footer", lines: ["The bottom. Just me and the fine print down here."] },
+];
+const CHOMP_LINES = ["Nom.", "Mine now.", "Tastes like deadlines.", "Crunchy. Was that a stylus?"];
+const SPIT_LINES = ["Fine. Take it.", "It was bland anyway.", "Ptoo."];
+
 function initGuide(hero) {
   if (!window.matchMedia || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
   const heroSvg = hero && hero.el.querySelector("svg");
@@ -695,18 +722,28 @@ function initGuide(hero) {
   let off = false;
   try { off = sessionStorage.getItem("lp-guide") === "off"; } catch (e) {}
   if (off) return;
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // a small copy of the mascot for the corner (it borrows the hero's skin gradient)
+  // an open mouth for talking and chewing, added to the big mascot and copied into the small one
+  const mouth = heroSvg.querySelector(".m-mouth");
+  if (mouth && !heroSvg.querySelector(".m-open")) {
+    const open = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+    open.setAttribute("class", "m-open"); open.setAttribute("cx", "125"); open.setAttribute("cy", "152"); open.setAttribute("rx", "9"); open.setAttribute("ry", "8");
+    mouth.after(open);
+  }
+
+  // a small copy of the mascot (it borrows the hero's skin gradient)
   const svg = heroSvg.cloneNode(true);
   svg.querySelectorAll("defs").forEach((d) => d.remove());
   svg.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
   svg.querySelector(".m-goggles").classList.remove("thrown", "snap");
 
+  const SIZE = 84;
   const guide = document.createElement("aside");
   guide.className = "guide";
   guide.setAttribute("aria-label", "Tool guide");
   guide.innerHTML = `<div class="guide-say" role="status" aria-live="polite"></div>
-    <button class="guide-x" type="button" aria-label="Hide the guide" title="Hide the guide">\u00d7</button>
+    <button class="guide-x" type="button" aria-label="Hide the guide" title="Hide the guide">×</button>
     <button class="guide-pot mascot" type="button" aria-label="Ask the guide"><span class="zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></span></button>`;
   const pot = guide.querySelector(".guide-pot");
   const bubble = guide.querySelector(".guide-say");
@@ -714,17 +751,151 @@ function initGuide(hero) {
   addPit(pot);
   document.body.appendChild(guide);
 
-  const SLEEP_AFTER_MS = 90000;
-  let asleep = false, sleepTimer, hideTimer, hoverTimer, lastTool = "";
-  let heroInView = true;
+  /* ---- facts: which tool was updated last, which is opened most (from the daily usage file) ---- */
+  const facts = { newest: "", opens: {}, most: "", week: "" };
+  const dated = TOOLS.map((t) => ({ t, d: (latestOf(t) || {}).date || "" })).filter((x) => x.d).sort((x, y) => (x.d < y.d ? 1 : -1));
+  if (dated.length && (dated.length === 1 || dated[0].d !== dated[1].d)) facts.newest = dated[0].t.id;
+  setTimeout(() => {
+    fetch("assets/usage.json").then((r) => (r.ok ? r.json() : null)).then((f) => {
+      if (!f || !f.paths) return;
+      let best = 0, bestWeek = 0;
+      TOOLS.forEach((t) => {
+        const arr = f.paths["/" + String(t.folder || "").replace(/^\/+|\/+$/g, "")];
+        if (!arr) return;
+        const total = arr.reduce((x, y) => x + y, 0), week = arr.slice(-7).reduce((x, y) => x + y, 0);
+        facts.opens[t.id] = total;
+        if (total > best) { best = total; facts.most = t.id; }
+        if (week > bestWeek) { bestWeek = week; facts.week = t.id; }
+      });
+    }).catch(() => {});
+  }, 1200);
+  function statLine(tool) {
+    const l = latestOf(tool), n = facts.opens[tool.id], bits = [];
+    if (tool.id === facts.most) bits.push(`Most opened tool on the site: ${n} opens.`);
+    else if (tool.id === facts.week) bits.push("Most opened this week.");
+    else if (n) bits.push(`Opened ${n} times so far.`);
+    if (l && l.date) bits.push(tool.id === facts.newest ? `Freshest one here: updated ${fmtDate(l.date)}.` : `Last updated ${fmtDate(l.date)}.`);
+    return bits.join(" ");
+  }
+  const turns = new Map();
+  function nextOf(key, lines) { const i = turns.get(key) || 0; turns.set(key, i + 1); return lines[i % lines.length]; }
+  function toolRemark(id) {
+    const tool = TOOLS.find((t) => t.id === id);
+    if (!tool) return "";
+    const base = TOOL_REMARKS[id] || [`${tool.name}. ${tool.description}`];
+    const stat = statLine(tool), special = id === facts.most || id === facts.newest || id === facts.week;
+    const lines = special && stat ? [base[0], stat, ...base.slice(1)] : stat ? [...base, stat] : base;   // the notable ones brag early
+    return nextOf("tool:" + id, lines);
+  }
+
+  /* ---- where it is, and where it wants to be ---- */
+  const topBar = document.querySelector(".site-header");
+  const speechSlot = document.querySelector(".speech-slot");
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const home = () => ({ x: window.innerWidth - SIZE - 18, y: window.innerHeight - SIZE - 16 });
+  let gx = home().x, gy = home().y, tx = gx, ty = gy, lastT = 0, raf = 0;
+  let px = -1, py = -1, seen = false, lastMove = 0;
+  let on = false, asleep = false, eaten = false, chomps = 0, lastChomp = -1e9;
+  let pointEl = null, heroInView = true, hovering = false, holdUntil = 0;
+  let sleepTimer, hideTimer, hoverTimer, moodTimer, lastKey = null;
+  const STALK_MS = 3500, CHOMP_MS = 6500, SLEEP_AFTER_MS = 90000;
+  const put = () => { guide.style.translate = `${gx.toFixed(1)}px ${gy.toFixed(1)}px`; };
+  put();
+  guide.classList.add("flip");   // at home in the right-hand corner, its speech opens to the left
+
+  function spot(el) {   // where to stand for what you are pointing at, without covering it
+    const r = el.getBoundingClientRect(), W = window.innerWidth, bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
+    if (r.height < 90 || r.width < 200) return null;                    // small things: keep the usual distance from the pointer
+    if (r.top - SIZE * 0.86 >= bar + 6) return { x: clamp(px + 40, r.left + 10, r.right - SIZE - 10), y: r.top - SIZE * 0.86, flip: px + 40 + 250 > W };   // perch on its top edge
+    if (r.right + 12 + SIZE <= W - 8) return { x: r.right + 12, y: py - SIZE / 2, flip: false };
+    if (r.left - 12 - SIZE >= 8) return { x: r.left - 12 - SIZE, y: py - SIZE / 2, flip: true };
+    return null;
+  }
+  function aim(now) {
+    const W = window.innerWidth, H = window.innerHeight, idle = now - lastMove;
+    let t, mode = "follow", flip = false;
+    const talking = bubble.classList.contains("show");
+    const at = seen && px >= 0 && pointEl && talking && document.contains(pointEl) ? spot(pointEl) : null;
+    if (!seen || px < 0) { t = home(); mode = "home"; flip = true; }
+    else if (!eaten && idle < STALK_MS && (hovering || now < holdUntil)) { t = { x: gx, y: gy }; mode = "hold"; flip = guide.classList.contains("flip"); }   // it waits when you come for it
+    else if (at) { t = at; mode = "point"; flip = at.flip; }
+    else {
+      const side = px > W - 260 ? -1 : 1, vert = py > H - 190 ? -1 : 1;
+      const canChomp = !calm && chomps < 3 && now - lastChomp > 40000 && !bubble.classList.contains("show") && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "");
+      if (eaten || (idle > CHOMP_MS && canChomp)) { t = { x: px - SIZE / 2, y: py - SIZE * 0.58 }; mode = "chomp"; }
+      else if (idle > STALK_MS && !calm && !talking) { t = { x: px + (side > 0 ? 34 : -34 - SIZE), y: py + (vert > 0 ? 18 : -18 - SIZE) }; mode = "stalk"; }
+      else t = { x: px + (side > 0 ? 92 : -92 - SIZE), y: py + (vert > 0 ? 58 : -58 - SIZE) };
+      flip = side < 0;
+    }
+    const bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
+    tx = clamp(t.x, 8, W - SIZE - 8); ty = clamp(t.y, bar + 8, H - SIZE - 8);
+    guide.classList.toggle("flip", mode === "point" || mode === "home" || mode === "hold" ? flip : tx + 250 > W);
+    guide.classList.toggle("under", ty < bar + 110);
+    return mode;
+  }
+  function frame(now) {
+    raf = 0;
+    if (!on || asleep || document.hidden) return;
+    const dt = Math.min(64, now - (lastT || now)); lastT = now;
+    const mode = aim(now);
+    const k = 1 - Math.exp(-dt / (mode === "chomp" ? 130 : mode === "stalk" ? 900 : mode === "point" ? 260 : 380));   // it trails behind, it does not stick
+    const dx = (tx - gx) * k, dy = (ty - gy) * k;
+    gx += dx; gy += dy;
+    put();
+    const speed = Math.hypot(dx, dy) / Math.max(dt, 1);
+    pot.classList.toggle("moving", speed > 0.12);
+    pot.classList.toggle("stalk", mode === "stalk" && speed < 0.12);
+    pot.style.rotate = `${clamp((dx / Math.max(dt, 1)) * 60, -13, 13).toFixed(1)}deg`;
+    // eyes follow the pointer
+    if (seen) { const ex = px - (gx + SIZE / 2), ey = py - (gy + SIZE * 0.42), d = Math.hypot(ex, ey) || 1; pot.style.setProperty("--ex", `${((ex / d) * 3.4).toFixed(1)}px`); pot.style.setProperty("--ey", `${((ey / d) * 2.6).toFixed(1)}px`); }
+    if (mode === "chomp" && !eaten && Math.hypot(tx - gx, ty - gy) < 7) {
+      eaten = true; chomps++; lastChomp = now;
+      pot.classList.add("chomp");
+      document.documentElement.classList.add("lp-eaten");
+      guideSay(nextOf("chomp", CHOMP_LINES), 2400);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  const run = () => { if (!raf && on && !asleep && !calm) { lastT = 0; raf = requestAnimationFrame(frame); } };
+  function spit() {
+    if (!eaten) return;
+    eaten = false;
+    pot.classList.remove("chomp");
+    document.documentElement.classList.remove("lp-eaten");
+    hop();
+    guideSay(nextOf("spit", SPIT_LINES), 2000);
+  }
+
+  function setMood(el, mood, ms) {
+    clearTimeout(moodTimer);
+    el.classList.remove("beg");
+    void el.offsetWidth;
+    el.classList.add("talk");
+    if (mood) el.classList.add(mood);
+    moodTimer = setTimeout(() => el.classList.remove("talk", "beg"), mood ? ms : 1300);
+  }
+  function guideSay(text, ms, mood) {
+    bubble.textContent = text;
+    bubble.classList.add("show");
+    setMood(pot, mood, ms);
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { bubble.classList.remove("show"); pointEl = null; }, ms);
+  }
+  function hop() { pot.classList.remove("hop"); void pot.offsetWidth; pot.classList.add("hop"); }
+  pot.addEventListener("animationend", (e) => { if (e.target === pot) pot.classList.remove("hop"); });
+
   function scheduleSleep() {
     clearTimeout(sleepTimer);
-    sleepTimer = setTimeout(() => { asleep = true; guide.classList.add("asleep"); pot.classList.add("asleep"); pot.setAttribute("aria-label", "Wake the guide"); }, SLEEP_AFTER_MS);
+    sleepTimer = setTimeout(() => {
+      asleep = true; spitQuiet();
+      guide.classList.add("asleep"); pot.classList.add("asleep"); pot.classList.remove("moving", "stalk"); pot.style.rotate = "0deg";
+      pot.setAttribute("aria-label", "Wake the guide");
+    }, SLEEP_AFTER_MS);
   }
+  function spitQuiet() { eaten = false; pot.classList.remove("chomp"); document.documentElement.classList.remove("lp-eaten"); }
+
   // The big mascot does the talking while its speech bubble is fully on screen (clear of the
-  // top bar); otherwise the corner guide comes out and takes over.
-  const speechSlot = document.querySelector(".speech-slot");
-  const topBar = document.querySelector(".site-header");
+  // top bar); otherwise the small one comes out.
   function heroOnScreen() {
     const r = (speechSlot || hero.el).getBoundingClientRect(), m = hero.el.getBoundingClientRect();
     const bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
@@ -733,79 +904,102 @@ function initGuide(hero) {
   let ticking = false;
   function place() {
     ticking = false;
-    const now = heroOnScreen();
-    if (now === heroInView && guide.classList.contains("on") === !now) return;
-    heroInView = now;
-    guide.classList.toggle("on", !heroInView);
-    if (heroInView) { bubble.classList.remove("show"); clearTimeout(sleepTimer); }
-    else if (!asleep) scheduleSleep();   // the nap clock only runs while the guide is on duty
+    heroInView = heroOnScreen();
+    const want = !heroInView;
+    if (want === on) return;
+    on = want;
+    guide.classList.toggle("on", on);
+    if (on) {
+      if (!asleep) { const h = home(); if (!seen) { gx = h.x; gy = h.y; put(); } scheduleSleep(); run(); }
+    } else { bubble.classList.remove("show"); clearTimeout(sleepTimer); spitQuiet(); }
   }
-  function onMove() { if (!ticking) { ticking = true; requestAnimationFrame(place); } }
+  const onMove = () => { if (!ticking) { ticking = true; requestAnimationFrame(place); } };
   window.addEventListener("scroll", onMove, { passive: true });
   window.addEventListener("resize", onMove);
   place();
 
-  function guideSay(text, ms) {
-    bubble.textContent = text;
-    bubble.classList.add("show");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => bubble.classList.remove("show"), ms);
+  function onPointer(e) {
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    const nx = e.clientX, ny = e.clientY, now = performance.now();
+    if (seen && px >= 0) {   // heading straight for the potato? then it holds still so you can reach it
+      const mx = nx - px, my = ny - py, cx = gx + SIZE / 2 - nx, cy = gy + SIZE / 2 - ny, dist = Math.hypot(cx, cy), step = Math.hypot(mx, my);
+      if (step > 1.5 && dist < 240 && (mx * cx + my * cy) / (step * dist) > 0.72) holdUntil = now + 900;
+    }
+    px = nx; py = ny; seen = true; lastMove = now;
+    if (eaten) spit();
+    if (on && !asleep) { scheduleSleep(); run(); }
+    // the big mascot watches too
+    const m = hero.el.getBoundingClientRect(), ex = px - (m.left + m.width / 2), ey = py - (m.top + m.height * 0.42), d = Math.hypot(ex, ey) || 1;
+    hero.el.style.setProperty("--ex", `${((ex / d) * 3.4).toFixed(1)}px`); hero.el.style.setProperty("--ey", `${((ey / d) * 2.6).toFixed(1)}px`);
   }
-  function hop() { pot.classList.remove("hop"); void pot.offsetWidth; pot.classList.add("hop"); }
-  pot.addEventListener("animationend", (e) => { if (e.target === pot) pot.classList.remove("hop"); });
+  document.addEventListener("pointermove", onPointer, { passive: true });
+  const onLeave = () => { seen = false; spitQuiet(); run(); };
+  guide.addEventListener("mouseenter", () => { hovering = true; });
+  guide.addEventListener("mouseleave", () => { hovering = false; });
+  document.documentElement.addEventListener("mouseleave", onLeave);
 
-  const pickers = {};
-  const pickGuide = makeNoRepeatPicker(GUIDE_LINES);
-  function remark(id) {
-    const tool = TOOLS.find((t) => t.id === id);
-    const lines = TOOL_REMARKS[id] || (tool ? [`${tool.name}. ${tool.description}`] : null);
-    if (!lines) return "";
-    pickers[id] = pickers[id] || { i: 0 };
-    return lines[pickers[id].i++ % lines.length];   // what it is, then how it helps, then the opinion
+  /* ---- what it says when you point at things ---- */
+  function remarkFor(target) {
+    const tool = target.closest("[data-tool]");
+    if (tool) { const text = toolRemark(tool.getAttribute("data-tool")); return text ? { el: tool, text, key: tool } : null; }
+    for (const r of PAGE_REMARKS) {
+      const el = target.closest(r.sel);
+      if (el) return { el, text: nextOf(r.sel, r.lines), mood: r.mood, key: el };
+    }
+    return null;
   }
-
-  function onTool(id) {
-    const text = remark(id);
-    if (!text) return;
-    if (heroInView) { if (!hero.isAsleep()) hero.say(text, 5200); return; }
+  function speak(hit) {
+    if (heroInView) { if (!hero.isAsleep()) { hero.say(hit.text, 5200); setMood(hero.el, hit.mood, 5200); } return; }
     if (asleep) { guideSay("Zzz. (Click me.)", 2600); return; }
     scheduleSleep();
-    guideSay(text, 5200);
+    pointEl = hit.el;
+    guideSay(hit.text, 5200, hit.mood);
+    run();
   }
-  function overTool(e) {
-    const el = e.target.closest && e.target.closest("[data-tool]");
-    const id = el ? el.getAttribute("data-tool") : "";
-    if (id === lastTool) return;
-    lastTool = id;
+  function overThing(e) {
+    if (!e.target.closest || e.target.closest(".guide")) return;
+    // peek without taking a turn: the same element keeps its bubble
+    const tool = e.target.closest("[data-tool]");
+    let key = tool;
+    if (!key) for (const r of PAGE_REMARKS) { key = e.target.closest(r.sel); if (key) break; }
+    if (key === lastKey) return;
+    lastKey = key;
     clearTimeout(hoverTimer);
-    if (id) hoverTimer = setTimeout(() => onTool(id), 280);   // only when the pointer settles on it
+    if (key) hoverTimer = setTimeout(() => { const hit = remarkFor(e.target); if (hit) speak(hit); }, 280);   // only when the pointer settles
   }
-  document.addEventListener("mouseover", overTool);
-  document.addEventListener("focusin", overTool);
+  document.addEventListener("mouseover", overThing);
+  document.addEventListener("focusin", overThing);
 
+  const pickGuide = makeNoRepeatPicker(GUIDE_LINES);
   pot.addEventListener("click", () => {
-    if (!asleep) hop();
-    scheduleSleep();
+    lastMove = performance.now();
     if (asleep) {
       if (pot.classList.contains("waking")) return;
       asleep = false;
       guide.classList.remove("asleep");
-      popOut(pot);
+      popOut(pot, () => { guideSay("I'm up. I'm up.", 2600); scheduleSleep(); run(); });
       pot.setAttribute("aria-label", "Ask the guide");
-      guideSay("I'm up. I'm up.", 2600);
       return;
     }
+    if (eaten) { spit(); return; }
+    hop();
+    scheduleSleep();
     guideSay(pickGuide(), 4200);
   });
   guide.querySelector(".guide-x").addEventListener("click", () => {
+    spitQuiet();
     guide.remove();
-    document.removeEventListener("mouseover", overTool);
-    document.removeEventListener("focusin", overTool);
+    document.removeEventListener("mouseover", overThing);
+    document.removeEventListener("focusin", overThing);
+    document.removeEventListener("pointermove", onPointer);
+    document.documentElement.removeEventListener("mouseleave", onLeave);
     window.removeEventListener("scroll", onMove);
     window.removeEventListener("resize", onMove);
     clearTimeout(sleepTimer);
+    on = false;
     try { sessionStorage.setItem("lp-guide", "off"); } catch (e) {}
   });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) run(); });
 }
 
 /* Quick launch: app icons like a phone home screen. Each tool has its own solid, two-tone glyph:

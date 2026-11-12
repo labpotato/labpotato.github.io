@@ -2176,17 +2176,42 @@ body { font-size: 16px; }
 .guide-pot .soil i { width: 5px; height: 5px; }
 .asleep .zzz { z-index: 2; }
 
-/* ---- the tool guide: a small mascot in the corner once the big one has scrolled away ---- */
-.guide { position: fixed; right: 18px; bottom: 16px; z-index: 70; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; transform: translateY(140%); opacity: 0; pointer-events: none; transition: transform .45s var(--ease), opacity .3s var(--ease); }
-.guide.on { transform: none; opacity: 1; pointer-events: auto; }
-.guide-pot.mascot { width: 78px; height: auto; }
-.guide-pot.mascot svg { width: 78px; height: auto; filter: drop-shadow(0 10px 14px rgba(120, 80, 30, .22)); }
+/* ---- the companion: a small mascot that follows the pointer once the big one has scrolled away ---- */
+.guide { position: fixed; left: 0; top: 0; z-index: 70; width: 84px; opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); will-change: translate; }
+.guide.on { opacity: 1; pointer-events: auto; }
+.guide-pot.mascot { display: block; width: 84px; height: auto; transition: rotate .2s ease-out; }
+.guide-pot.mascot svg { width: 84px; height: auto; filter: drop-shadow(0 10px 14px rgba(120, 80, 30, .25)); }
 .guide-pot .m-body { fill: var(--potato); }
 .guide-pot .zzz { right: 2%; top: -6%; }
 .guide-pot .zzz i { font-size: 13px; }
-.guide-say { position: relative; max-width: 250px; padding: 9px 13px; border-radius: 14px 14px 4px 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); color: var(--text); font-size: 13px; font-weight: 500; line-height: 1.4; opacity: 0; transform: translateY(6px); transition: opacity .25s var(--ease), transform .25s var(--ease); pointer-events: none; }
+/* its speech: dark on light pages, light on dark ones, so it never blends into a tool card */
+.guide-say { position: absolute; left: 0; bottom: calc(100% + 11px); width: max-content; max-width: 236px; padding: 9px 13px; border-radius: 14px; background: var(--text); color: var(--bg); box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .45); font-size: 13px; font-weight: 550; line-height: 1.4; opacity: 0; transform: translateY(6px) scale(.96); transform-origin: 20% 100%; transition: opacity .2s var(--ease), transform .25s var(--ease); pointer-events: none; }
+.guide-say::after { content: ""; position: absolute; top: 100%; left: 30px; border: 7px solid transparent; border-top-color: var(--text); }
 .guide-say.show { opacity: 1; transform: none; }
-.guide-x { position: absolute; z-index: 2; right: -8px; bottom: 70px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font: 600 13px/1 inherit; cursor: pointer; opacity: 0; transition: opacity .2s var(--ease); }
+.guide.flip .guide-say { left: auto; right: 0; transform-origin: 80% 100%; }
+.guide.flip .guide-say::after { left: auto; right: 30px; }
+.guide.under .guide-say { bottom: auto; top: calc(100% + 11px); }
+.guide.under .guide-say::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--text); }
+.guide-x { position: absolute; z-index: 2; right: -9px; top: -7px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font: 600 13px/1 inherit; cursor: pointer; opacity: 0; transition: opacity .2s var(--ease); }
 .guide:hover .guide-x, .guide-x:focus-visible { opacity: 1; }
+
+/* more life: eyes that follow the pointer, a mouth that moves, scurrying, stalking, chewing, begging */
+.mascot .m-eye { translate: var(--ex, 0px) var(--ey, 0px); transition: translate .14s linear; }
+.asleep .m-eye, .half:not(.eyes) .m-eye { translate: 0 0; }
+.m-open { fill: #2a2018; opacity: 0; transform-box: fill-box; transform-origin: center; }
+@keyframes yap { 0%, 100% { opacity: 0; transform: scale(.6, .2); } 50% { opacity: 1; transform: scale(1, 1); } }
+.talk .m-open { animation: yap .26s ease-in-out 5; }
+@keyframes scurry { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-7px) rotate(4deg); } }
+.guide-pot.moving .m-float { animation: scurry .3s ease-in-out infinite; }
+@keyframes wiggle { 0%, 100% { transform: translateX(-3px) scale(1.03, .95); } 50% { transform: translateX(3px) scale(1.03, .95); } }
+.guide-pot.stalk .m-float { animation: wiggle .26s ease-in-out infinite; }
+@keyframes chew { 0%, 100% { transform: scale(1.7, 1.5); } 50% { transform: scale(1.7, .35); } }
+.chomp .m-open { opacity: 1; animation: chew .3s ease-in-out infinite; }
+.chomp .m-mouth { opacity: 0; }
+.chomp .m-float { animation: wiggle .2s ease-in-out infinite; }
+@keyframes beg { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-13px) scale(.96, 1.06); } }
+.beg .m-float { animation: beg .36s ease-in-out infinite; }
+.beg .m-eye { animation: none; transform: scale(1.32); }
+html.lp-eaten, html.lp-eaten * { cursor: none !important; }
 @media (max-width: 900px), print { .guide { display: none; } }
 @media (prefers-reduced-motion: reduce) { .pit > svg, .soil { transition: none; } .half .soil i, .waking.asleep .pit, .gog .m-goggles, .eyes .m-eye { animation: none; } .asleep .zzz i { animation: none; opacity: .8; } .asleep .zzz i:nth-child(2) { transform: translate(9px, -14px); } .asleep .zzz i:nth-child(3) { transform: translate(18px, -28px); } }

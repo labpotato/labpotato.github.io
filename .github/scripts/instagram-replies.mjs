@@ -43,6 +43,17 @@ const REPLY_WINDOW_MS = 6.5 * 24 * 60 * 60 * 1000;
 // Meta's error codes: these mean "slow down" and "the token is no good".
 const RATE_LIMIT_CODES = new Set([4, 17, 32, 613, 80002, 80006]);
 const AUTH_CODES = new Set([102, 190]);
+const BLOCKED_CODES = new Set([3, 200, 230, 299]);   // the app or the token may not send messages at all
+const NEEDED_PERMISSIONS = ["pages_show_list", "pages_read_engagement", "instagram_basic", "instagram_manage_comments", "instagram_manage_messages"];
+class SetupError extends Error {
+  constructor(err) {
+    super(`Instagram refused to send a message (code ${err.code}): ${err.message}. Nothing was sent and no comment was marked as answered. Check, in this order: `
+      + "1) the token has instagram_manage_messages (make it again in the Graph API Explorer with that box ticked); "
+      + "2) in the Instagram app, Settings > Messages and story replies > Message controls > Allow access to messages is on; "
+      + "3) the app is Live, not in Development (App dashboard > Publish); "
+      + "4) the Instagram account is a professional account linked to the Facebook Page.");
+  }
+}
 
 class ApiError extends Error {
   constructor(status, body) {
@@ -174,20 +185,25 @@ async function whoAmI() {
   const shared = await soft(() => list("/me/assigned_instagram_accounts", { fields: "id,username" }, 25));
   if (shared && shared.length) {
     const a = shared.find((x) => String(x.username || "").toLowerCase() === want) || shared[0];
-    return { user_id: a.id, username: a.username };
+    return { user_id: a.id, username: a.username, login: "Unified login" };
   }
   // Facebook login, user token: the Pages this person manages, and the Instagram account linked to each
   const pages = await soft(() => list("/me/accounts", { fields: "id,access_token,instagram_business_account{id,username}" }, 50));
   const linked = (pages || []).filter((p) => p.instagram_business_account && p.access_token);
   if (linked.length) {
     const p = linked.find((x) => String(x.instagram_business_account.username || "").toLowerCase() === want) || linked[0];
-    TOKEN = p.access_token;   // from here on, speak as the Page
-    return { user_id: p.instagram_business_account.id, username: p.instagram_business_account.username, messages: `/${p.id}/messages` };
+    const grantedPermissions = async () => {   // read with the person's token, before switching to the Page's
+      const rows = await soft(() => list("/me/permissions", {}, 100));
+      return rows ? rows.filter((x) => x.status === "granted").map((x) => x.permission) : null;
+    };
+    return { user_id: p.instagram_business_account.id, username: p.instagram_business_account.username, login: "Facebook login (a user token; the Page's own token is used from here on)",
+      messages: [`/${p.instagram_business_account.id}/messages`, `/${p.id}/messages`], granted: await grantedPermissions(), pageToken: p.access_token };
   }
   // Facebook login, the Page's own token
   const page = await soft(() => call("GET", "/me", { query: { fields: "id,instagram_business_account{id,username}" } }));
   if (page && page.instagram_business_account) {
-    return { user_id: page.instagram_business_account.id, username: page.instagram_business_account.username, messages: "/me/messages" };
+    return { user_id: page.instagram_business_account.id, username: page.instagram_business_account.username, login: "Facebook login (the Page's own token)",
+      messages: [`/${page.instagram_business_account.id}/messages`, "/me/messages"] };
   }
   throw new Error("The token works, but no Instagram account is reachable with it. "
     + "With Facebook login: link the Instagram account to your Facebook Page, then make the token again and tick that Page and that Instagram account.");
@@ -196,6 +212,13 @@ async function whoAmI() {
 async function answerComments() {
   const cfg = loadConfig();
   const me = await whoAmI();
+  if (me.pageToken) TOKEN = me.pageToken;   // from here on, speak as the Page
+  const sendPaths = me.messages || [`/${me.user_id || "me"}/messages`];
+  const report = [`Setup check: the token works (${me.login || "Instagram login"}). Instagram account found: @${me.username || "?"}.`];
+  if (me.granted) {
+    const missing = NEEDED_PERMISSIONS.filter((x) => !me.granted.includes(x));
+    report.push(missing.length ? `MISSING PERMISSIONS: ${missing.join(", ")}. Make the token again in the Graph API Explorer with these ticked.` : "All the permissions the script needs are granted.");
+  }
   const myName = String(me.username || "").toLowerCase();
   const mine = (c) => {
     if (!c) return false;
@@ -209,6 +232,9 @@ async function answerComments() {
   const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, repeat: 0, tooOld: 0, waiting: 0, notAsked: 0 };
   const posts = await list(UNIFIED ? `/${me.user_id}/media` : "/me/media", { fields: "id,comments_count,shortcode,permalink,caption", limit: 25 }, cfg.postsToWatch);
   let stop = false;
+  report.push(`Posts readable: ${posts.length}. ${DRY_RUN ? "Reading and matching comments works if the numbers below make sense. Sending is only proven by the first real message." : ""}`);
+  console.log(report.join("\n"));
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report.join("\n\n") + "\n\n");
 
   for (const post of posts) {
     if (stop) break;
@@ -240,11 +266,19 @@ async function answerComments() {
 
       let delivered = true;
       try {
-        await call("POST", me.messages || `/${me.user_id || "me"}/messages`,
-          { body: { recipient: { comment_id: c.id }, message: { text: kw.message(firstName(c)) } } });
+        const body = { recipient: { comment_id: c.id }, message: { text: kw.message(firstName(c)) } };
+        for (;;) {
+          try { await call("POST", sendPaths[0], { body }); break; } catch (err) {
+            // the other address for the same call, once, if this one is not accepted at all
+            if (err instanceof ApiError && !stats.sent && sendPaths.length > 1 && (err.code === 100 || err.code === 3) && err.subcode !== 2534022) { sendPaths.shift(); continue; }
+            throw err;
+          }
+        }
       } catch (err) {
         if (!(err instanceof ApiError) || err.badToken) throw err;
         if (err.rateLimited) { stats.waiting++; stop = true; break; }
+        // The app itself is not allowed to send messages: nobody is answered, nothing is marked as done.
+        if (!stats.sent && (BLOCKED_CODES.has(err.code) || (err.code === 10 && err.subcode !== 2534022 && /permission/i.test(err.message)))) throw new SetupError(err);
         // Instagram would not deliver it (the person does not accept messages, or one was already
         // sent for this comment). Answer in public instead, so the comment is not tried again.
         delivered = false;

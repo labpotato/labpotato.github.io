@@ -1,57 +1,78 @@
 {
   "_how_this_works": [
-    "posts: a post with its own message. Paste the post's link as the name. Everyone who comments on that post gets its message.",
+    "keywords: a comment containing one of these words gets that word's message, on a post that asks for it:",
+    "          the caption, or one of your own comments on the post (a pinned comment works), must say \"Comment GEL\".",
+    "          A post that doesn't ask (\"Tell me in the comments\") is left alone, so nobody gets a DM they didn't ask for.",
+    "posts: a post with its own message. Paste the post's link as the name; everyone who comments on it gets it.",
     "       Add \"keyword\" to a post and only comments containing that word get it.",
-    "       Example:  \"https://www.instagram.com/p/DfXyz123/\": { \"url\": \"https://labpotato.github.io/tools/gel-labeler/\", \"text\": \"Here is the Gel Labeler.\" }",
-    "keywords: on any post without its own message, a comment containing one of these words gets that word's link.",
+    "       Example:  \"https://www.instagram.com/p/DfXyz123/\": { \"url\": \"...\", \"how\": \"...\", \"question\": \"...\" }",
+    "Each message reads:  <their username>, here it is: <url>  /  <how>  /  <question>  /  <sign_off>",
     "Each person gets one message per post. A comment is only answered within 7 days."
   ],
-  "public_reply": "Sent. Check your messages (it may be under Requests).",
-  "fallback_reply": "Thanks! If the message did not arrive, the link is in the bio.",
-  "sign_off": "Sent automatically by the Lab Potato bot.",
+  "public_replies": [
+    "Sent! Check your DMs (sometimes it lands in Requests).",
+    "In your DMs now. Check Requests if you can't see it.",
+    "Done, check your messages. Tell me how it goes."
+  ],
+  "fallback_replies": [
+    "Couldn't DM you, so here's the way in: link in bio.",
+    "Instagram blocked the DM on my end. It's the link in my bio."
+  ],
+  "sign_off": "(Sent automatically. Replies come straight to me.)",
+  "keywords_only_where_asked": true,
   "posts_to_watch": 20,
   "max_messages_per_run": 200,
   "posts": {},
   "keywords": {
     "POTATO": {
       "url": "https://labpotato.github.io/",
-      "text": "Here is Lab Potato: free lab tools that open in your browser."
+      "how": "That's all 9 free lab tools, and they open in your browser. Start with the chore that hurts most.",
+      "question": "Which chore costs you most?"
     },
     "GEL": {
       "url": "https://labpotato.github.io/tools/gel-labeler/",
-      "text": "Here is the Gel Labeler: lane labels, ladder sizes and band arrows on your gel."
+      "how": "It's Gel Labeler. Drop in your gel, drag across the wells, and the labels sit over the lanes. You'll get a PNG or an editable PowerPoint slide, minus the 30 minutes of nudging.",
+      "question": "Agarose gels or westerns?"
     },
     "COLONY": {
       "url": "https://labpotato.github.io/tools/colony-counter/",
-      "text": "Here is the Colony Counter: drop in a plate photo and get the count."
+      "how": "It's Colony Counter. Drop in a plate photo and it finds the dish, counts the colonies and gives you CFU/mL. Nobody can make you lose count at 47 again.",
+      "question": "How many plates a week?"
     },
     "GIBSON": {
       "url": "https://labpotato.github.io/tools/gibson-assembly/",
-      "text": "Here is the Gibson Assembly primer designer."
+      "how": "It's Gibson Assembly. Paste your fragments in order and it'll design the primers with matched Tm, plus a map of what you're building.",
+      "question": "How many fragments, usually?"
     },
     "MICROSCOPY": {
       "url": "https://labpotato.github.io/tools/microscopy-image-labeler/",
-      "text": "Here is the Microscopy Image Labeler: channel images into a labelled figure."
+      "how": "It's the Microscopy Image Labeler. Drop in your channel images and they'll come out as one labelled figure, panels lined up.",
+      "question": "Confocal or widefield?"
     },
     "PROTEIN": {
       "url": "https://labpotato.github.io/tools/protein-quant/",
-      "text": "Here is Protein Quant: concentration and yield from A280 or a standard curve."
+      "how": "It's Protein Quant. Paste your A280, Bradford or BCA readings and you'll get concentration and yield without a spreadsheet.",
+      "question": "How many proteins at once?"
     },
     "FREEZER": {
       "url": "https://labpotato.github.io/tools/cryobox-labeler/",
-      "text": "Here is the Cryobox Labeler: every tube in your freezers, in one search."
+      "how": "It's Cryobox Labeler. Map every -80 and -20 from rack to box to tube, then search all of them at once. Your fingers stay attached.",
+      "question": "How many freezers, shared?"
     },
     "NOTEBOOK": {
       "url": "https://labpotato.github.io/tools/lab-entry/",
-      "text": "Here is Lab Entry: a lab notebook laid out on a timeline."
+      "how": "It's Lab Entry, a lab notebook laid out on a timeline. Each experiment's linked to its to-dos, so nothing's lost in a margin.",
+      "question": "Paper notebook or digital?"
     },
     "READER": {
       "url": "https://labpotato.github.io/tools/doc-reader/",
-      "text": "Here is the Doc Reader: open a paper, mark it up, keep your notes."
+      "how": "It's Doc Reader. Open a PDF or a web page, mark it up, and your notes stay with it.",
+      "question": "What field do you read?"
     },
     "SEQUENCE": {
       "url": "https://labpotato.github.io/tools/sequence-studio/",
-      "text": "Here is Sequence Studio: open SnapGene, GenBank or FASTA files in your browser."
+      "how": "It's Sequence Studio. Open SnapGene, GenBank or FASTA files in the browser and you'll see the map, the sequence, primers and digests.",
+      "question": "What do you use now?"
     }
   }
 }

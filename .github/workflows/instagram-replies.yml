@@ -1,16 +1,21 @@
 # Every 15 minutes: when someone comments on one of the Instagram account's posts, send them a link
 # by direct message and answer the comment in public. A post can have its own message (sent to
-# everyone who comments on it), and a keyword such as GEL works on any post. Which is which, the
-# links and the wording are all in .github/instagram-keywords.json. The script is
+# everyone who comments on it), and a keyword such as GEL works on any post whose caption (or your
+# own pinned comment) says "Comment GEL". Which is which, the links and the wording are all in
+# .github/instagram-keywords.json. The script is
 # .github/scripts/instagram-replies.mjs. It costs nothing: no server, no paid service.
 #
 # It does nothing until it is switched on. To set it up, once:
-#   1. The Instagram account must be a public Professional account (Creator or Business).
+#   1. The Instagram account must be a public Professional account (Creator or Business). In the
+#      Instagram app: Settings > Messages and story replies > Connected tools > Allow access to
+#      messages, on.
 #   2. At developers.facebook.com create an app, add the Instagram product and choose
 #      "API setup with Instagram login". Add the Instagram account to the app there, then generate an
 #      access token for it with these permissions: instagram_business_basic,
 #      instagram_business_manage_comments, instagram_business_manage_messages.
-#      The app only serves your own account, so it needs no App Review.
+#      The app only serves your own account, so it should not need App Review. If the dry run works
+#      but real messages never arrive, switch the app from Development to Live in the app dashboard
+#      (it asks for a privacy policy link first).
 #   3. In this repository: Settings > Secrets and variables > Actions.
 #        Secret    IG_ACCESS_TOKEN      the token from step 2
 #        Variable  INSTAGRAM_REPLIES    on

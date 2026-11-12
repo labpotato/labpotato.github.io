@@ -21,12 +21,18 @@
 //   node .github/scripts/instagram-replies.mjs refresh    renew the access token (see the workflow)
 //
 // Environment: IG_ACCESS_TOKEN (required), DRY_RUN=true (look, send nothing).
-// For tests only: IG_API_BASE, IG_KEYWORDS_FILE.
+// For tests only: IG_API_BASE, IG_KEYWORDS_FILE, IG_LOGIN.
+//
+// Two kinds of token work. A token from Meta's "API setup with Instagram login" (it starts with
+// IG) talks to graph.instagram.com. A token from "API setup with Unified login" (a business
+// integration token, it starts with EAA) talks to graph.facebook.com, and the account is found
+// through /me/assigned_instagram_accounts. The script tells them apart by the token itself.
 
 import fs from "node:fs";
 
-const API = (process.env.IG_API_BASE || "https://graph.instagram.com/v27.0").replace(/\/$/, "");
 const TOKEN = (process.env.IG_ACCESS_TOKEN || "").trim();
+const UNIFIED = process.env.IG_LOGIN ? process.env.IG_LOGIN === "unified" : /^EAA/.test(TOKEN);
+const API = (process.env.IG_API_BASE || (UNIFIED ? "https://graph.facebook.com/v27.0" : "https://graph.instagram.com/v27.0")).replace(/\/$/, "");
 const DRY_RUN = /^(1|true|yes|on)$/i.test(process.env.DRY_RUN || "");
 
 // Instagram lets a private reply be sent for 7 days after the comment. Stop a little short of that.
@@ -156,9 +162,19 @@ function pickFor(id, options) {
   return options[h % options.length];
 }
 
+// The Instagram account the token speaks for: its ID (used to send messages) and its username.
+async function whoAmI() {
+  if (!UNIFIED) return call("GET", "/me", { query: { fields: "user_id,username" } });
+  const accounts = await list("/me/assigned_instagram_accounts", { fields: "id,username" }, 25);
+  if (!accounts.length) throw new Error("The token works, but no Instagram account was shared with the app. Generate the token again and pick the Instagram account.");
+  const want = String(process.env.IG_USERNAME || "").toLowerCase();
+  const a = accounts.find((x) => String(x.username || "").toLowerCase() === want) || accounts[0];
+  return { user_id: a.id, username: a.username };
+}
+
 async function answerComments() {
   const cfg = loadConfig();
-  const me = await call("GET", "/me", { query: { fields: "user_id,username" } });
+  const me = await whoAmI();
   const myName = String(me.username || "").toLowerCase();
   const mine = (c) => {
     if (!c) return false;
@@ -170,7 +186,7 @@ async function answerComments() {
   const answered = (c) => ((c.replies && c.replies.data) || []).some(mine);
 
   const stats = { posts: 0, comments: 0, matched: 0, sent: 0, fallback: 0, already: 0, repeat: 0, tooOld: 0, waiting: 0, notAsked: 0 };
-  const posts = await list("/me/media", { fields: "id,comments_count,shortcode,permalink,caption", limit: 25 }, cfg.postsToWatch);
+  const posts = await list(UNIFIED ? `/${me.user_id}/media` : "/me/media", { fields: "id,comments_count,shortcode,permalink,caption", limit: 25 }, cfg.postsToWatch);
   let stop = false;
 
   for (const post of posts) {
@@ -240,6 +256,11 @@ async function answerComments() {
 // Long-lived tokens last 60 days. Renewing gives one that lasts 60 days from now. The new token is
 // written to the file named by TOKEN_OUT (never printed), for the workflow to save as the secret.
 async function refreshToken() {
+  if (UNIFIED) {
+    console.log("This token comes from Unified login, which Meta does not renew this way. "
+      + "Its expiry is shown in the app dashboard (API setup with Unified login > the configuration). Nothing to do here.");
+    return;
+  }
   const root = API.replace(/\/v\d+\.\d+$/, "");
   const r = await call("GET", "/refresh_access_token", { base: root, query: { grant_type: "ig_refresh_token", access_token: TOKEN } });
   if (!r.access_token) throw new Error("Instagram did not return a token.");

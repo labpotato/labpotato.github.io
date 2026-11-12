@@ -41,3 +41,11 @@ are generated from `assets/tools.js` by `assets/app.js`. Full manual:
   what was done, what changed, and what is still open.
 - For layout or animation work, show screenshots and describe the planned changes
   before committing; do not publish until the owner has seen them.
+
+## Instagram content (@lab__potato)
+
+- When a card or Reel could use a famous movie GIF or scene, say so and name it, so the
+  owner can decide and send the file (GIF sites are not reachable from cloud sessions).
+- Call the chores "lab redundancies". Humour is dry and dark, never corny; no jokes at
+  the expense of interns or other lab members.
+- Every post keeps the message that all tools are free and stay free.

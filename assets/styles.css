@@ -2212,6 +2212,24 @@ body { font-size: 16px; }
 @keyframes beg { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-13px) scale(.96, 1.06); } }
 .beg .m-float { animation: beg .36s ease-in-out infinite; }
 .beg .m-eye { animation: none; transform: scale(1.32); }
+/* a different small gesture with every new speech bubble, and the bubble pops in */
+@keyframes g-nod { 0%, 100% { transform: none; } 25%, 65% { transform: translateY(5px) rotate(5deg); } 45%, 85% { transform: translateY(0) rotate(-2deg); } }
+@keyframes g-tilt { 0%, 100% { transform: none; } 30%, 70% { transform: rotate(-11deg); } }
+@keyframes g-jump { 0%, 100% { transform: none; } 30% { transform: translateY(-18px) scale(.95, 1.07); } 60% { transform: translateY(0) scale(1.08, .92); } 80% { transform: translateY(-5px); } }
+@keyframes g-shake { 0%, 100% { transform: none; } 15%, 45%, 75% { transform: translateX(-5px) rotate(-3deg); } 30%, 60%, 90% { transform: translateX(5px) rotate(3deg); } }
+@keyframes g-squash { 0%, 100% { transform: none; } 30% { transform: scale(1.12, .84); } 60% { transform: scale(.93, 1.1); } 80% { transform: scale(1.03, .98); } }
+@keyframes g-lean { 0%, 100% { transform: none; } 35%, 70% { transform: translateX(6px) rotate(9deg) scale(1.05); } }
+@keyframes g-twirl { 0% { transform: none; } 50% { transform: translateY(-10px) scaleX(-1); } 100% { transform: translateY(0) scaleX(1); } }
+.mascot:is(.g-nod, .g-tilt, .g-jump, .g-shake, .g-squash, .g-lean, .g-twirl) .m-float { transform-box: fill-box; transform-origin: 50% 88%; }
+.mascot.g-nod .m-float { animation: g-nod .8s ease-in-out; }
+.mascot.g-tilt .m-float { animation: g-tilt .9s ease-in-out; }
+.mascot.g-jump .m-float { animation: g-jump .7s var(--ease); }
+.mascot.g-shake .m-float { animation: g-shake .7s ease-in-out; }
+.mascot.g-squash .m-float { animation: g-squash .7s var(--ease); }
+.mascot.g-lean .m-float { animation: g-lean .9s ease-in-out; }
+.mascot.g-twirl .m-float { animation: g-twirl .7s ease-in-out; }
+@keyframes say-pop { 0% { transform: scale(.6) translateY(8px); opacity: 0; } 60% { transform: scale(1.06); opacity: 1; } 100% { transform: none; } }
+.guide-say.pop { animation: say-pop .32s var(--ease); }
 html.lp-eaten, html.lp-eaten * { cursor: none !important; }
 @media (max-width: 900px), print { .guide { display: none; } }
-@media (prefers-reduced-motion: reduce) { .pit > svg, .soil { transition: none; } .half .soil i, .waking.asleep .pit, .gog .m-goggles, .eyes .m-eye { animation: none; } .asleep .zzz i { animation: none; opacity: .8; } .asleep .zzz i:nth-child(2) { transform: translate(9px, -14px); } .asleep .zzz i:nth-child(3) { transform: translate(18px, -28px); } }
+@media (prefers-reduced-motion: reduce) { .guide-say.pop { animation: none; } .pit > svg, .soil { transition: none; } .half .soil i, .waking.asleep .pit, .gog .m-goggles, .eyes .m-eye { animation: none; } .asleep .zzz i { animation: none; opacity: .8; } .asleep .zzz i:nth-child(2) { transform: translate(9px, -14px); } .asleep .zzz i:nth-child(3) { transform: translate(18px, -28px); } }

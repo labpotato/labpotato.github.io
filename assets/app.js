@@ -806,7 +806,7 @@ function initGuide(hero) {
   // It keeps its distance: about a quarter of the window away from the pointer, and never on top of
   // (or talking over) the thing being pointed at. It only walks when that stops being true.
   const BW = 240, GAP = 11;
-  let overEl = null, goal = null, mh = SIZE;
+  let overEl = null, goal = null, relook = false, mh = SIZE;
   function avoidRect() {
     const el = pointEl && document.contains(pointEl) ? pointEl : overEl && document.contains(overEl) ? overEl : null;
     if (!el) return null;
@@ -845,21 +845,21 @@ function initGuide(hero) {
   }
   function choose(D, A, bar) {
     const W = window.innerWidth, H = window.innerHeight, cands = [];
-    for (const k of [1, 1.3]) for (let i = 0; i < 12; i++) {
-      const th = (i * Math.PI) / 6, x = px + Math.cos(th) * D * k - SIZE / 2, y = py + Math.sin(th) * D * k * 0.8 - mh / 2;
+    for (const k of [1, 1.45, 2]) for (let i = 0; i < 12; i++) {
+      const th = (i * Math.PI) / 6, x = px + Math.cos(th) * D * k - SIZE / 2, y = py + Math.sin(th) * D * k * 0.85 - mh / 2;
       for (const flip of x > px ? [false, true] : [true, false]) for (const under of [false, true]) cands.push({ x, y, flip, under });
     }
-    cands.push({ x: W - SIZE - 18, y: H - mh - 16, flip: true, under: false }, { x: 18, y: H - mh - 16, flip: false, under: false },
-      { x: W - SIZE - 18, y: bar + 16, flip: true, under: true }, { x: 18, y: bar + 16, flip: false, under: true });
     let best = null, bestCost = Infinity;
     for (const c of cands) {
-      if (!fits(c, A, bar, D * 0.62)) continue;
-      const cost = clutter(c) * 60 + Math.hypot(c.x - gx, c.y - gy) * 0.25 + Math.abs(Math.hypot(c.x + SIZE / 2 - px, c.y + mh / 2 - py) - D) * 0.2;   // out of the way first, then the shortest walk
+      if (!fits(c, A, bar, D * 0.7)) continue;
+      const cost = clutter(c) * 25 + Math.hypot(c.x - gx, c.y - gy) * 0.3 + Math.abs(Math.hypot(c.x + SIZE / 2 - px, c.y + mh / 2 - py) - D) * 0.5;   // near the pointer, out of the way, a short walk
       if (cost < bestCost) { bestCost = cost; best = c; }
     }
     if (best) return best;
     // nowhere near is free: the corner furthest from the pointer
-    return cands.slice(-4).sort((p, q) => Math.hypot(q.x - px, q.y - py) - Math.hypot(p.x - px, p.y - py))[0];
+    return [{ x: W - SIZE - 18, y: H - mh - 16, flip: true, under: false }, { x: 18, y: H - mh - 16, flip: false, under: false },
+      { x: W - SIZE - 18, y: bar + 16, flip: true, under: true }, { x: 18, y: bar + 16, flip: false, under: true }]
+      .sort((p, q) => Math.hypot(q.x - px, q.y - py) - Math.hypot(p.x - px, p.y - py))[0];
   }
   function aim(now) {
     const W = window.innerWidth, H = window.innerHeight, idle = now - lastMove;
@@ -876,8 +876,11 @@ function initGuide(hero) {
       if (eaten || (idle > CHOMP_MS && canChomp)) { t = { x: px - SIZE / 2, y: py - SIZE * 0.58 }; mode = "chomp"; flip = px > W - 260; under = false; goal = null; }
       else if (idle > STALK_MS && free) { const side = px > W - 260 ? -1 : 1, vert = py > H - 190 ? -1 : 1; t = { x: px + (side > 0 ? 34 : -34 - SIZE), y: py + (vert > 0 ? 18 : -18 - SIZE) }; mode = "stalk"; flip = side < 0; under = false; goal = null; }
       else {
-        const D = clamp(W * 0.25, 230, 420), A = avoidRect();
-        if (!goal || !fits(goal, A, bar, D * 0.62) || Math.hypot(goal.x + SIZE / 2 - px, goal.y + mh / 2 - py) > D * 1.7) goal = choose(D, A, bar);
+        // It stays where it is while that is not in the way; it never backs off from the pointer, it only catches up.
+        const D = clamp(W * 0.13, 150, 210), A = avoidRect();
+        if (!goal) { goal = { x: gx, y: gy, flip, under }; if (relook && clutter(goal) > 5) goal.x = -1e4; }   // where it already stands is fine, unless the page scrolled something under it
+        relook = false;
+        if (!fits(goal, A, bar, 0) || Math.hypot(goal.x + SIZE / 2 - px, goal.y + mh / 2 - py) > D * 2.3) goal = choose(D, A, bar);
         t = goal; flip = goal.flip; under = goal.under;
       }
     }
@@ -891,7 +894,7 @@ function initGuide(hero) {
     if (!on || asleep || document.hidden) return;
     const dt = Math.min(64, now - (lastT || now)); lastT = now;
     const mode = aim(now);
-    const k = 1 - Math.exp(-dt / (mode === "chomp" ? 130 : mode === "stalk" ? 900 : 520));   // it trails behind, it does not stick
+    const k = 1 - Math.exp(-dt / (mode === "chomp" ? 130 : mode === "stalk" ? 900 : 430));   // it trails behind, it does not stick
     const dx = (tx - gx) * k, dy = (ty - gy) * k;
     gx += dx; gy += dy;
     put();
@@ -919,17 +922,26 @@ function initGuide(hero) {
     guideSay(nextOf("spit", SPIT_LINES), 2000);
   }
 
+  // every new speech bubble comes with a different small gesture
+  const GESTURES = ["g-nod", "g-tilt", "g-jump", "g-shake", "g-squash", "g-lean", "g-twirl"];
+  let lastGesture = "";
   function setMood(el, mood, ms) {
     clearTimeout(moodTimer);
-    el.classList.remove("beg");
+    el.classList.remove("beg", ...GESTURES);
     void el.offsetWidth;
     el.classList.add("talk");
     if (mood) el.classList.add(mood);
-    moodTimer = setTimeout(() => el.classList.remove("talk", "beg"), mood ? ms : 1300);
+    else if (!calm && !el.classList.contains("chomp") && !el.classList.contains("asleep")) {
+      const pool = GESTURES.filter((g) => g !== lastGesture);
+      lastGesture = pool[Math.floor(Math.random() * pool.length)];
+      el.classList.add(lastGesture);
+    }
+    moodTimer = setTimeout(() => el.classList.remove("talk", "beg", ...GESTURES), mood ? ms : 1300);
   }
   function guideSay(text, ms, mood) {
     bubble.textContent = text;
-    bubble.classList.add("show");
+    bubble.classList.remove("pop"); void bubble.offsetWidth;
+    bubble.classList.add("show", "pop");
     setMood(pot, mood, ms);
     clearTimeout(hideTimer);
     hideTimer = setTimeout(() => { bubble.classList.remove("show"); pointEl = null; }, ms);
@@ -966,7 +978,7 @@ function initGuide(hero) {
       if (!asleep) { const h = home(); if (!seen) { gx = h.x; gy = h.y; put(); } scheduleSleep(); run(); }
     } else { bubble.classList.remove("show"); clearTimeout(sleepTimer); spitQuiet(); }
   }
-  const onMove = () => { if (!ticking) { ticking = true; requestAnimationFrame(place); } };
+  const onMove = () => { goal = null; relook = true; if (!ticking) { ticking = true; requestAnimationFrame(place); } };   // the page moved under it: look again
   window.addEventListener("scroll", onMove, { passive: true });
   window.addEventListener("resize", onMove);
   place();

@@ -401,6 +401,35 @@ function makeNoRepeatPicker(arr) {
   };
 }
 
+/* A mound of soil under a mascot button. Asleep, the potato sinks into it; woken, it shakes,
+   pops back out like it grew there, throws a little dirt and the mound sinks away. */
+function addPit(btn) {
+  const svg = btn.querySelector("svg");
+  if (!svg || btn.querySelector(".pit")) return;
+  const pit = document.createElement("span");
+  pit.className = "pit";
+  svg.replaceWith(pit);
+  pit.appendChild(svg);
+  const soil = document.createElement("span");
+  soil.className = "soil";
+  soil.setAttribute("aria-hidden", "true");
+  soil.innerHTML = "<i></i><i></i><i></i><i></i><i></i>";
+  btn.appendChild(soil);
+}
+// The same wake-up as the Instagram card: the ground shakes, the potato pushes halfway up with
+// some dirt, opens its eyes, the goggles drop on, then the lab coat appears as it climbs out.
+function popOut(btn, done) {
+  const g = btn.querySelector(".m-goggles");
+  if (g) g.classList.remove("thrown", "snap");
+  btn.classList.add("waking");
+  const at = (ms, fn) => setTimeout(fn, ms);
+  at(380, () => { btn.classList.remove("asleep"); btn.classList.add("half"); });
+  at(1150, () => btn.classList.add("eyes"));
+  at(1650, () => btn.classList.add("gog"));
+  at(2250, () => btn.classList.remove("half", "eyes", "gog"));
+  at(2800, () => { btn.classList.remove("waking"); if (done) done(); });
+}
+
 function initMascot() {
   const mascot = document.getElementById("mascot");
   const speech = document.getElementById("speech");
@@ -462,6 +491,19 @@ function initMascot() {
   let idleTimer;
   let idleCount = 0;
 
+  // Left alone for long enough, it nods off. A click wakes it.
+  const SLEEP_AFTER_MS = 75000;
+  const DOZE_LINES = ["Long incubation. Wake me when it's done.", "Resting my eyes. For science.", "Just until the gel finishes."];
+  const WAKE_LINES = [
+    "I wasn't asleep. I was incubating.",
+    "What year is it? Is my PCR done?",
+    "Five more minutes. The gel's still running.",
+    "I was thinking with my eyes closed.",
+    "You woke me for this?",
+  ];
+  let sleepTimer;
+  let asleep = false;
+
   // The goggles are worn correctly at all times, except when they aren't.
   const goggles = document.getElementById("goggles");
   let gogglesOn = true;
@@ -490,6 +532,15 @@ function initMascot() {
   const pickLine = makeNoRepeatPicker(lines);
   const pickCoastClear = makeNoRepeatPicker(COAST_CLEAR);
   const pickInspection = makeNoRepeatPicker(INSPECTION);
+  const pickDoze = makeNoRepeatPicker(DOZE_LINES);
+  const pickWake = makeNoRepeatPicker(WAKE_LINES);
+
+  addPit(mascot);
+  const zzz = document.createElement("span");
+  zzz.className = "zzz";
+  zzz.setAttribute("aria-hidden", "true");
+  zzz.innerHTML = "<i>z</i><i>z</i><i>z</i>";
+  mascot.appendChild(zzz);
 
   function say(text, ms) {
     speech.textContent = text;
@@ -513,12 +564,34 @@ function initMascot() {
     mascot.classList.add("hop");
   }
 
+  function scheduleSleep() {
+    clearTimeout(sleepTimer);
+    sleepTimer = setTimeout(() => {
+      asleep = true;
+      clearTimeout(idleTimer);
+      say(pickDoze(), 3200);
+      mascot.classList.add("asleep");
+      mascot.setAttribute("aria-label", "Wake the mascot");
+    }, SLEEP_AFTER_MS);
+  }
+
   mascot.addEventListener("click", () => {
-    hop();
+    if (!asleep) hop();
 
     // Any real interaction resets the "are you still there" clock.
     idleCount = 0;
     scheduleIdleNag();
+    scheduleSleep();
+
+    // asleep -> eyes open, goggles straightened (or back on), and an excuse
+    if (asleep) {
+      if (mascot.classList.contains("waking")) return;   // already climbing out
+      gogglesOn = true;
+      jokesSinceThrow = 0;
+      mascot.setAttribute("aria-label", "Interact with the mascot");
+      popOut(mascot, () => { asleep = false; say(pickWake(), 3400); });
+      return;
+    }
 
     // goggles on -> fling them off, and start counting
     if (goggles && gogglesOn) {
@@ -549,6 +622,190 @@ function initMascot() {
   });
 
   scheduleIdleNag();
+  scheduleSleep();
+
+  // lets the tool guide speak through this mascot while it is on screen
+  return { say, isAsleep: () => asleep, el: mascot };
+}
+
+/* The tool guide. Point at a tool anywhere on the page and the potato says what it is, how it
+   helps, or what it thinks of the person who built it. The hero mascot does the talking while it
+   is on screen; once you scroll past it, a small one sits in the corner and takes over.
+   Pointer devices only: there is no hovering on a phone. */
+const TOOL_REMARKS = {
+  "lab-entry": [
+    "Lab Entry. A lab notebook laid out on a timeline. Write it down, or it didn't happen.",
+    "It links every experiment to its to-dos, so \"I'll remember that\" stops being the plan.",
+    "He says it keeps him organised. I've seen his bench.",
+  ],
+  "colony-counter": [
+    "Colony Counter. Drop in a plate photo, get the count and CFU/mL.",
+    "It finds the dish and counts, even colonies that touch. Click to fix what it missed.",
+    "He built it after losing count one time too many. He's still not over it.",
+  ],
+  "gel-labeler": [
+    "Gel Labeler. Lanes, ladders and band arrows, placed on your gel.",
+    "Exports a PNG or an editable PowerPoint slide. No more arrows drawn at 1am.",
+    "His old gel figures were a crime. This is the apology.",
+  ],
+  "gibson-assembly": [
+    "Gibson Assembly. Paste your fragments in order, get primers with matched Tm.",
+    "You see the expected gel and a live plasmid map before you order anything.",
+    "He trusts this more than his own primer design. So do I.",
+  ],
+  "microscopy-image-labeler": [
+    "Microscopy Image Labeler. Channel images in, one labelled figure out.",
+    "The crop stays synced across a row, so the panels finally line up.",
+    "Reviewer 2 will still find something. He's made his peace with that.",
+  ],
+  "protein-quant": [
+    "Protein Quant. A280 or a standard curve in, concentration and yield out.",
+    "It checks your yield per litre against your expression host. No spreadsheet needed.",
+    "He made this to stop rebuilding the same Excel sheet every prep.",
+  ],
+  "cryobox-labeler": [
+    "Cryobox Labeler. Every tube in your -80 and -20, from rack to box to tube.",
+    "One search across all your freezers. Your fingers stay warm.",
+    "He once remade a construct he already had. Then he made this.",
+  ],
+  "doc-reader": [
+    "Doc Reader. Open a PDF or a web page, then highlight, comment and edit.",
+    "There's an AI editor if you connect one. Its edits show up as tracked changes.",
+    "He built a paper reader to avoid reading papers. Bold strategy.",
+  ],
+  "sequence-studio": [
+    "Sequence Studio. Opens SnapGene, GenBank and FASTA files right in the tab.",
+    "Maps, digests, primers, even folding. No download, no licence.",
+    "He got tired of walking to the one PC with the licence. Now he doesn't.",
+  ],
+};
+const GUIDE_LINES = [
+  "I'm the guide. Point at a tool and I'll tell you what it does.",
+  "Everything here is free. He insists. I just work here.",
+  "He's a PhD student. Be nice, he's tired.",
+  "He builds these between experiments. The experiments are fine. Probably.",
+  "Found a bug? Tell him. He actually fixes them.",
+  "No sign-up. I checked. Twice.",
+];
+
+function initGuide(hero) {
+  if (!window.matchMedia || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  const heroSvg = hero && hero.el.querySelector("svg");
+  if (!heroSvg) return;
+  let off = false;
+  try { off = sessionStorage.getItem("lp-guide") === "off"; } catch (e) {}
+  if (off) return;
+
+  // a small copy of the mascot for the corner (it borrows the hero's skin gradient)
+  const svg = heroSvg.cloneNode(true);
+  svg.querySelectorAll("defs").forEach((d) => d.remove());
+  svg.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+  svg.querySelector(".m-goggles").classList.remove("thrown", "snap");
+
+  const guide = document.createElement("aside");
+  guide.className = "guide";
+  guide.setAttribute("aria-label", "Tool guide");
+  guide.innerHTML = `<div class="guide-say" role="status" aria-live="polite"></div>
+    <button class="guide-x" type="button" aria-label="Hide the guide" title="Hide the guide">\u00d7</button>
+    <button class="guide-pot mascot" type="button" aria-label="Ask the guide"><span class="zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></span></button>`;
+  const pot = guide.querySelector(".guide-pot");
+  const bubble = guide.querySelector(".guide-say");
+  pot.prepend(svg);
+  addPit(pot);
+  document.body.appendChild(guide);
+
+  const SLEEP_AFTER_MS = 90000;
+  let asleep = false, sleepTimer, hideTimer, hoverTimer, lastTool = "";
+  let heroInView = true;
+  function scheduleSleep() {
+    clearTimeout(sleepTimer);
+    sleepTimer = setTimeout(() => { asleep = true; guide.classList.add("asleep"); pot.classList.add("asleep"); pot.setAttribute("aria-label", "Wake the guide"); }, SLEEP_AFTER_MS);
+  }
+  // The big mascot does the talking while its speech bubble is fully on screen (clear of the
+  // top bar); otherwise the corner guide comes out and takes over.
+  const speechSlot = document.querySelector(".speech-slot");
+  const topBar = document.querySelector(".site-header");
+  function heroOnScreen() {
+    const r = (speechSlot || hero.el).getBoundingClientRect(), m = hero.el.getBoundingClientRect();
+    const bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
+    return r.top >= bar + 2 && m.bottom <= window.innerHeight;
+  }
+  let ticking = false;
+  function place() {
+    ticking = false;
+    const now = heroOnScreen();
+    if (now === heroInView && guide.classList.contains("on") === !now) return;
+    heroInView = now;
+    guide.classList.toggle("on", !heroInView);
+    if (heroInView) { bubble.classList.remove("show"); clearTimeout(sleepTimer); }
+    else if (!asleep) scheduleSleep();   // the nap clock only runs while the guide is on duty
+  }
+  function onMove() { if (!ticking) { ticking = true; requestAnimationFrame(place); } }
+  window.addEventListener("scroll", onMove, { passive: true });
+  window.addEventListener("resize", onMove);
+  place();
+
+  function guideSay(text, ms) {
+    bubble.textContent = text;
+    bubble.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => bubble.classList.remove("show"), ms);
+  }
+  function hop() { pot.classList.remove("hop"); void pot.offsetWidth; pot.classList.add("hop"); }
+  pot.addEventListener("animationend", (e) => { if (e.target === pot) pot.classList.remove("hop"); });
+
+  const pickers = {};
+  const pickGuide = makeNoRepeatPicker(GUIDE_LINES);
+  function remark(id) {
+    const tool = TOOLS.find((t) => t.id === id);
+    const lines = TOOL_REMARKS[id] || (tool ? [`${tool.name}. ${tool.description}`] : null);
+    if (!lines) return "";
+    pickers[id] = pickers[id] || { i: 0 };
+    return lines[pickers[id].i++ % lines.length];   // what it is, then how it helps, then the opinion
+  }
+
+  function onTool(id) {
+    const text = remark(id);
+    if (!text) return;
+    if (heroInView) { if (!hero.isAsleep()) hero.say(text, 5200); return; }
+    if (asleep) { guideSay("Zzz. (Click me.)", 2600); return; }
+    scheduleSleep();
+    guideSay(text, 5200);
+  }
+  function overTool(e) {
+    const el = e.target.closest && e.target.closest("[data-tool]");
+    const id = el ? el.getAttribute("data-tool") : "";
+    if (id === lastTool) return;
+    lastTool = id;
+    clearTimeout(hoverTimer);
+    if (id) hoverTimer = setTimeout(() => onTool(id), 280);   // only when the pointer settles on it
+  }
+  document.addEventListener("mouseover", overTool);
+  document.addEventListener("focusin", overTool);
+
+  pot.addEventListener("click", () => {
+    if (!asleep) hop();
+    scheduleSleep();
+    if (asleep) {
+      if (pot.classList.contains("waking")) return;
+      asleep = false;
+      guide.classList.remove("asleep");
+      popOut(pot);
+      pot.setAttribute("aria-label", "Ask the guide");
+      guideSay("I'm up. I'm up.", 2600);
+      return;
+    }
+    guideSay(pickGuide(), 4200);
+  });
+  guide.querySelector(".guide-x").addEventListener("click", () => {
+    guide.remove();
+    document.removeEventListener("mouseover", overTool);
+    document.removeEventListener("focusin", overTool);
+    window.removeEventListener("scroll", onMove);
+    window.removeEventListener("resize", onMove);
+    clearTimeout(sleepTimer);
+    try { sessionStorage.setItem("lp-guide", "off"); } catch (e) {}
+  });
 }
 
 /* Quick launch: app icons like a phone home screen. Each tool has its own solid, two-tone glyph:
@@ -684,7 +941,8 @@ renderQuotes();
 renderSpecs();
 renderSupport();
 initReveal();
-initMascot();
+const heroMascot = initMascot();
+initGuide(heroMascot);
 initTrustStrip();
 initFooterPotato();
 initSecretPotato();

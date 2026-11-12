@@ -9,10 +9,13 @@
 #   1. The Instagram account must be a public Professional account (Creator or Business). In the
 #      Instagram app: Settings > Messages and story replies > Connected tools > Allow access to
 #      messages, on.
-#   2. At developers.facebook.com create an app, add the Instagram product and choose
-#      "API setup with Instagram login". Add the Instagram account to the app there, then generate an
-#      access token for it with these permissions: instagram_business_basic,
-#      instagram_business_manage_comments, instagram_business_manage_messages.
+#   2. At developers.facebook.com create a Business app with the Instagram use case. Meta now
+#      offers "API setup with Unified login": connect a business portfolio (free) to the app,
+#      create a configuration, add the Instagram account as an Instagram Tester (accept the invite
+#      on instagram.com: Settings > Website permissions > Apps and websites > Tester invites), then
+#      Generate token. The token starts with EAA and the script detects it; an older "Instagram
+#      login" token (starts with IG) also works. Permissions needed: instagram_basic,
+#      instagram_manage_comments, instagram_manage_messages.
 #      The app only serves your own account, so it should not need App Review. If the dry run works
 #      but real messages never arrive, switch the app from Development to Live in the app dashboard
 #      (it asks for a privacy policy link first).

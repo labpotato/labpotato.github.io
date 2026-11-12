@@ -817,7 +817,7 @@ function initGuide(hero) {
     const talking = bubble.classList.contains("show");
     const at = seen && px >= 0 && pointEl && talking && document.contains(pointEl) ? spot(pointEl) : null;
     if (!seen || px < 0) { t = home(); mode = "home"; flip = true; }
-    else if (!eaten && (hovering || now < holdUntil)) { t = { x: gx, y: gy }; mode = "hold"; flip = guide.classList.contains("flip"); }   // it waits when you come for it
+    else if (!eaten && idle < STALK_MS && (hovering || now < holdUntil)) { t = { x: gx, y: gy }; mode = "hold"; flip = guide.classList.contains("flip"); }   // it waits when you come for it
     else if (at) { t = at; mode = "point"; flip = at.flip; }
     else {
       const side = px > W - 260 ? -1 : 1, vert = py > H - 190 ? -1 : 1;

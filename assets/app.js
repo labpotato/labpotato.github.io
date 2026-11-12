@@ -803,34 +803,87 @@ function initGuide(hero) {
   put();
   guide.classList.add("flip");   // at home in the right-hand corner, its speech opens to the left
 
-  function spot(el) {   // where to stand for what you are pointing at, without covering it
-    const r = el.getBoundingClientRect(), W = window.innerWidth, bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
-    if (r.height < 90 || r.width < 200) return null;                    // small things: keep the usual distance from the pointer
-    if (r.top - SIZE * 0.86 >= bar + 6) return { x: clamp(px + 40, r.left + 10, r.right - SIZE - 10), y: r.top - SIZE * 0.86, flip: px + 40 + 250 > W };   // perch on its top edge
-    if (r.right + 12 + SIZE <= W - 8) return { x: r.right + 12, y: py - SIZE / 2, flip: false };
-    if (r.left - 12 - SIZE >= 8) return { x: r.left - 12 - SIZE, y: py - SIZE / 2, flip: true };
-    return null;
+  // It keeps its distance: about a quarter of the window away from the pointer, and never on top of
+  // (or talking over) the thing being pointed at. It only walks when that stops being true.
+  const BW = 240, GAP = 11;
+  let overEl = null, goal = null, mh = SIZE;
+  function avoidRect() {
+    const el = pointEl && document.contains(pointEl) ? pointEl : overEl && document.contains(overEl) ? overEl : null;
+    if (!el) return null;
+    const W = window.innerWidth, H = window.innerHeight, big = (q) => q.width * q.height > W * H * 0.55;
+    const block = el.closest(".lps-card, .site-footer, footer");   // a small thing inside a card: keep off the whole card
+    let r = block ? block.getBoundingClientRect() : null;
+    if (!r || big(r)) r = el.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > H || big(r)) return null;
+    return { l: r.left - 12, t: r.top - 12, r: r.right + 12, b: r.bottom + 12 };
+  }
+  function fits(c, A, bar, minDist) {
+    const W = window.innerWidth, H = window.innerHeight;
+    const bh = bubble.classList.contains("show") ? bubble.offsetHeight : 64;
+    const bt = c.under ? c.y + mh + GAP : c.y - GAP - bh, bl = c.flip ? c.x + SIZE - BW : c.x;
+    const boxes = [[c.x, c.y, c.x + SIZE, c.y + mh], [bl, bt, bl + BW, bt + bh]];
+    for (const [l, t, r, b] of boxes) {
+      if (l < 6 || r > W - 6 || t < bar + 6 || b > H - 6) return false;
+      if (A && l < A.r && r > A.l && t < A.b && b > A.t) return false;
+    }
+    return Math.hypot(c.x + SIZE / 2 - px, c.y + mh / 2 - py) >= minDist;
+  }
+  // How much a spot would be in the way: buttons, links and cards count most, text a little, empty page nothing.
+  function clutter(c) {
+    const bh = bubble.classList.contains("show") ? bubble.offsetHeight : 64;
+    const bt = c.under ? c.y + mh + GAP : c.y - GAP - bh, bl = c.flip ? c.x + SIZE - BW : c.x;
+    const pts = [[c.x + SIZE / 2, c.y + mh / 2, 2], [c.x + 6, c.y + 8, 1], [c.x + SIZE - 6, c.y + 8, 1], [c.x + 6, c.y + mh - 6, 1], [c.x + SIZE - 6, c.y + mh - 6, 1],
+      [bl + 8, bt + 6, 1], [bl + BW / 2, bt + bh / 2, 2], [bl + BW - 8, bt + 6, 1], [bl + 8, bt + bh - 6, 1], [bl + BW - 8, bt + bh - 6, 1]];
+    let n = 0;
+    for (const [x, y, w] of pts) {
+      const el = document.elementsFromPoint(x, y).find((e) => !guide.contains(e));
+      if (!el || el === document.body || el === document.documentElement) continue;
+      if (el.closest("[data-tool], a, button, input, select, textarea, summary, label, .lps-card")) n += 3 * w;
+      else if (el.closest("p, h1, h2, h3, h4, li, img, figure, table, svg") || [...el.childNodes].some((k) => k.nodeType === 3 && k.nodeValue.trim())) n += w;
+    }
+    return n;
+  }
+  function choose(D, A, bar) {
+    const W = window.innerWidth, H = window.innerHeight, cands = [];
+    for (const k of [1, 1.3]) for (let i = 0; i < 12; i++) {
+      const th = (i * Math.PI) / 6, x = px + Math.cos(th) * D * k - SIZE / 2, y = py + Math.sin(th) * D * k * 0.8 - mh / 2;
+      for (const flip of x > px ? [false, true] : [true, false]) for (const under of [false, true]) cands.push({ x, y, flip, under });
+    }
+    cands.push({ x: W - SIZE - 18, y: H - mh - 16, flip: true, under: false }, { x: 18, y: H - mh - 16, flip: false, under: false },
+      { x: W - SIZE - 18, y: bar + 16, flip: true, under: true }, { x: 18, y: bar + 16, flip: false, under: true });
+    let best = null, bestCost = Infinity;
+    for (const c of cands) {
+      if (!fits(c, A, bar, D * 0.62)) continue;
+      const cost = clutter(c) * 60 + Math.hypot(c.x - gx, c.y - gy) * 0.25 + Math.abs(Math.hypot(c.x + SIZE / 2 - px, c.y + mh / 2 - py) - D) * 0.2;   // out of the way first, then the shortest walk
+      if (cost < bestCost) { bestCost = cost; best = c; }
+    }
+    if (best) return best;
+    // nowhere near is free: the corner furthest from the pointer
+    return cands.slice(-4).sort((p, q) => Math.hypot(q.x - px, q.y - py) - Math.hypot(p.x - px, p.y - py))[0];
   }
   function aim(now) {
     const W = window.innerWidth, H = window.innerHeight, idle = now - lastMove;
-    let t, mode = "follow", flip = false;
-    const talking = bubble.classList.contains("show");
-    const at = seen && px >= 0 && pointEl && talking && document.contains(pointEl) ? spot(pointEl) : null;
-    if (!seen || px < 0) { t = home(); mode = "home"; flip = true; }
-    else if (!eaten && idle < STALK_MS && (hovering || now < holdUntil)) { t = { x: gx, y: gy }; mode = "hold"; flip = guide.classList.contains("flip"); }   // it waits when you come for it
-    else if (at) { t = at; mode = "point"; flip = at.flip; }
-    else {
-      const side = px > W - 260 ? -1 : 1, vert = py > H - 190 ? -1 : 1;
-      const canChomp = !calm && chomps < 3 && now - lastChomp > 40000 && !bubble.classList.contains("show") && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "");
-      if (eaten || (idle > CHOMP_MS && canChomp)) { t = { x: px - SIZE / 2, y: py - SIZE * 0.58 }; mode = "chomp"; }
-      else if (idle > STALK_MS && !calm && !talking) { t = { x: px + (side > 0 ? 34 : -34 - SIZE), y: py + (vert > 0 ? 18 : -18 - SIZE) }; mode = "stalk"; }
-      else t = { x: px + (side > 0 ? 92 : -92 - SIZE), y: py + (vert > 0 ? 58 : -58 - SIZE) };
-      flip = side < 0;
-    }
     const bar = topBar ? topBar.getBoundingClientRect().bottom : 0;
-    tx = clamp(t.x, 8, W - SIZE - 8); ty = clamp(t.y, bar + 8, H - SIZE - 8);
-    guide.classList.toggle("flip", mode === "point" || mode === "home" || mode === "hold" ? flip : tx + 250 > W);
-    guide.classList.toggle("under", ty < bar + 110);
+    mh = pot.offsetHeight || SIZE;
+    let t, mode = "follow", flip = guide.classList.contains("flip"), under = guide.classList.contains("under");
+    const talking = bubble.classList.contains("show");
+    if (!seen || px < 0) { t = home(); mode = "home"; flip = true; under = false; goal = null; }
+    else if (!eaten && idle < STALK_MS && (hovering || now < holdUntil)) { t = { x: gx, y: gy }; mode = "hold"; goal = null; }   // it waits when you come for it
+    else {
+      // it only plays with the pointer when the pointer rests on nothing in particular
+      const free = !overEl && !talking && !calm;
+      const canChomp = free && chomps < 3 && now - lastChomp > 40000 && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "");
+      if (eaten || (idle > CHOMP_MS && canChomp)) { t = { x: px - SIZE / 2, y: py - SIZE * 0.58 }; mode = "chomp"; flip = px > W - 260; under = false; goal = null; }
+      else if (idle > STALK_MS && free) { const side = px > W - 260 ? -1 : 1, vert = py > H - 190 ? -1 : 1; t = { x: px + (side > 0 ? 34 : -34 - SIZE), y: py + (vert > 0 ? 18 : -18 - SIZE) }; mode = "stalk"; flip = side < 0; under = false; goal = null; }
+      else {
+        const D = clamp(W * 0.25, 230, 420), A = avoidRect();
+        if (!goal || !fits(goal, A, bar, D * 0.62) || Math.hypot(goal.x + SIZE / 2 - px, goal.y + mh / 2 - py) > D * 1.7) goal = choose(D, A, bar);
+        t = goal; flip = goal.flip; under = goal.under;
+      }
+    }
+    tx = clamp(t.x, 8, W - SIZE - 8); ty = clamp(t.y, bar + 8, H - mh - 8);
+    guide.classList.toggle("flip", flip);
+    guide.classList.toggle("under", under);
     return mode;
   }
   function frame(now) {
@@ -838,7 +891,7 @@ function initGuide(hero) {
     if (!on || asleep || document.hidden) return;
     const dt = Math.min(64, now - (lastT || now)); lastT = now;
     const mode = aim(now);
-    const k = 1 - Math.exp(-dt / (mode === "chomp" ? 130 : mode === "stalk" ? 900 : mode === "point" ? 260 : 380));   // it trails behind, it does not stick
+    const k = 1 - Math.exp(-dt / (mode === "chomp" ? 130 : mode === "stalk" ? 900 : 520));   // it trails behind, it does not stick
     const dx = (tx - gx) * k, dy = (ty - gy) * k;
     gx += dx; gy += dy;
     put();
@@ -923,7 +976,7 @@ function initGuide(hero) {
     const nx = e.clientX, ny = e.clientY, now = performance.now();
     if (seen && px >= 0) {   // heading straight for the potato? then it holds still so you can reach it
       const mx = nx - px, my = ny - py, cx = gx + SIZE / 2 - nx, cy = gy + SIZE / 2 - ny, dist = Math.hypot(cx, cy), step = Math.hypot(mx, my);
-      if (step > 1.5 && dist < 240 && (mx * cx + my * cy) / (step * dist) > 0.72) holdUntil = now + 900;
+      if (step > 1.5 && dist < 460 && (mx * cx + my * cy) / (step * dist) > 0.72) holdUntil = now + 900;
     }
     px = nx; py = ny; seen = true; lastMove = now;
     if (eaten) spit();
@@ -933,7 +986,7 @@ function initGuide(hero) {
     hero.el.style.setProperty("--ex", `${((ex / d) * 3.4).toFixed(1)}px`); hero.el.style.setProperty("--ey", `${((ey / d) * 2.6).toFixed(1)}px`);
   }
   document.addEventListener("pointermove", onPointer, { passive: true });
-  const onLeave = () => { seen = false; spitQuiet(); run(); };
+  const onLeave = () => { seen = false; overEl = null; spitQuiet(); run(); };
   guide.addEventListener("mouseenter", () => { hovering = true; });
   guide.addEventListener("mouseleave", () => { hovering = false; });
   document.documentElement.addEventListener("mouseleave", onLeave);
@@ -957,11 +1010,13 @@ function initGuide(hero) {
     run();
   }
   function overThing(e) {
-    if (!e.target.closest || e.target.closest(".guide")) return;
+    if (!e.target.closest) return;
+    if (e.target.closest(".guide")) { overEl = null; return; }
     // peek without taking a turn: the same element keeps its bubble
     const tool = e.target.closest("[data-tool]");
     let key = tool;
     if (!key) for (const r of PAGE_REMARKS) { key = e.target.closest(r.sel); if (key) break; }
+    overEl = key || e.target.closest("a, button, summary, input, select, textarea, label, article, details");   // what is being read: never stand on it
     if (key === lastKey) return;
     lastKey = key;
     clearTimeout(hoverTimer);

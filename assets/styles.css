@@ -2185,7 +2185,7 @@ body { font-size: 16px; }
 .guide-pot .zzz { right: 2%; top: -6%; }
 .guide-pot .zzz i { font-size: 13px; }
 /* its speech: dark on light pages, light on dark ones, so it never blends into a tool card */
-.guide-say { position: absolute; left: 0; bottom: calc(100% + 11px); width: max-content; max-width: 236px; padding: 9px 13px; border-radius: 14px; background: var(--text); color: var(--bg); box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .45); font-size: 13px; font-weight: 550; line-height: 1.4; opacity: 0; transform: translateY(6px) scale(.96); transform-origin: 20% 100%; transition: opacity .2s var(--ease), transform .25s var(--ease); pointer-events: none; }
+.guide-say { position: absolute; left: 0; bottom: calc(100% + 11px); width: max-content; max-width: 236px; border: 1px solid color-mix(in srgb, var(--bg) 30%, transparent); padding: 9px 13px; border-radius: 14px; background: var(--text); color: var(--bg); box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .45); font-size: 13px; font-weight: 550; line-height: 1.4; opacity: 0; transform: translateY(6px) scale(.96); transform-origin: 20% 100%; transition: opacity .2s var(--ease), transform .25s var(--ease); pointer-events: none; }
 .guide-say::after { content: ""; position: absolute; top: 100%; left: 30px; border: 7px solid transparent; border-top-color: var(--text); }
 .guide-say.show { opacity: 1; transform: none; }
 .guide.flip .guide-say { left: auto; right: 0; transform-origin: 80% 100%; }

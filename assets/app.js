@@ -416,10 +416,18 @@ function addPit(btn) {
   soil.innerHTML = "<i></i><i></i><i></i><i></i><i></i>";
   btn.appendChild(soil);
 }
-function popOut(btn) {
+// The same wake-up as the Instagram card: the ground shakes, the potato pushes halfway up with
+// some dirt, opens its eyes, the goggles drop on, then the lab coat appears as it climbs out.
+function popOut(btn, done) {
+  const g = btn.querySelector(".m-goggles");
+  if (g) g.classList.remove("thrown", "snap");
   btn.classList.add("waking");
-  setTimeout(() => btn.classList.remove("asleep"), 380);   // shake in the ground first, then rise
-  setTimeout(() => btn.classList.remove("waking"), 1500);
+  const at = (ms, fn) => setTimeout(fn, ms);
+  at(380, () => { btn.classList.remove("asleep"); btn.classList.add("half"); });
+  at(1150, () => btn.classList.add("eyes"));
+  at(1650, () => btn.classList.add("gog"));
+  at(2250, () => btn.classList.remove("half", "eyes", "gog"));
+  at(2800, () => { btn.classList.remove("waking"); if (done) done(); });
 }
 
 function initMascot() {
@@ -577,16 +585,11 @@ function initMascot() {
 
     // asleep -> eyes open, goggles straightened (or back on), and an excuse
     if (asleep) {
-      asleep = false;
-      popOut(mascot);
+      if (mascot.classList.contains("waking")) return;   // already climbing out
+      gogglesOn = true;
+      jokesSinceThrow = 0;
       mascot.setAttribute("aria-label", "Interact with the mascot");
-      if (goggles && !gogglesOn) {
-        gogglesOn = true;
-        goggles.classList.remove("thrown");
-        void goggles.getBoundingClientRect();
-        goggles.classList.add("snap");
-      }
-      say(pickWake(), 3400);
+      popOut(mascot, () => { asleep = false; say(pickWake(), 3400); });
       return;
     }
 
@@ -784,6 +787,7 @@ function initGuide(hero) {
     if (!asleep) hop();
     scheduleSleep();
     if (asleep) {
+      if (pot.classList.contains("waking")) return;
       asleep = false;
       guide.classList.remove("asleep");
       popOut(pot);

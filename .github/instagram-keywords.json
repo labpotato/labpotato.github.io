@@ -15,8 +15,8 @@
     "Done, check your messages. Tell me how it goes."
   ],
   "fallback_replies": [
-    "Couldn't DM you, so here's the way in: link in bio.",
-    "Instagram blocked the DM on my end. It's the link in my bio."
+    "Couldn't DM you from my side. Send me a message and I'll reply with the link.",
+    "Instagram blocked the DM on my end. Message me and I'll send it over."
   ],
   "sign_off": "(Sent automatically. Replies come straight to me.)",
   "keywords_only_where_asked": true,
@@ -26,8 +26,8 @@
   "keywords": {
     "POTATO": {
       "url": "https://labpotato.github.io/",
-      "how": "That's all 9 free lab tools, and they open in your browser. Start with the chore that hurts most.",
-      "question": "Which chore costs you most?"
+      "how": "That's every free Lab Potato tool, and they all open in your browser. Start with the lab redundancy that costs you the most time.",
+      "question": "Which lab redundancy is it?"
     },
     "GEL": {
       "url": "https://labpotato.github.io/tools/gel-labeler/",

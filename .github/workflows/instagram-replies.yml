@@ -9,13 +9,16 @@
 #   1. The Instagram account must be a public Professional account (Creator or Business). In the
 #      Instagram app: Settings > Messages and story replies > Connected tools > Allow access to
 #      messages, on.
-#   2. At developers.facebook.com create a Business app with the Instagram use case. Meta now
-#      offers "API setup with Unified login": connect a business portfolio (free) to the app,
-#      create a configuration, add the Instagram account as an Instagram Tester (accept the invite
-#      on instagram.com: Settings > Website permissions > Apps and websites > Tester invites), then
-#      Generate token. The token starts with EAA and the script detects it; an older "Instagram
-#      login" token (starts with IG) also works. Permissions needed: instagram_basic,
-#      instagram_manage_comments, instagram_manage_messages.
+#   2. At developers.facebook.com create a Business app with the Instagram use case, then get a
+#      token one of these ways (the script works out which kind it was given):
+#      a. "API setup with Facebook login": needs a Facebook Page linked to the Instagram account,
+#         and no business portfolio. In the Graph API Explorer pick the app, tick pages_show_list,
+#         pages_read_engagement, pages_manage_metadata, instagram_basic, instagram_manage_comments
+#         and instagram_manage_messages, generate the token, and tick the Page and the Instagram
+#         account in the login window. Extend it in the Access Token Debugger (60 days).
+#      b. "API setup with Unified login": needs a business portfolio connected to the app. Create a
+#         configuration, add the account as an Instagram Tester, Generate token.
+#      c. Apps made before late October 2026 may still have "API setup with Instagram login".
 #      The app only serves your own account, so it should not need App Review. If the dry run works
 #      but real messages never arrive, switch the app from Development to Live in the app dashboard
 #      (it asks for a privacy policy link first).

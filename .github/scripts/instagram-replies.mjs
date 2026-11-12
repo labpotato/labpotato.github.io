@@ -23,14 +23,17 @@
 // Environment: IG_ACCESS_TOKEN (required), DRY_RUN=true (look, send nothing).
 // For tests only: IG_API_BASE, IG_KEYWORDS_FILE, IG_LOGIN.
 //
-// Two kinds of token work. A token from Meta's "API setup with Instagram login" (it starts with
-// IG) talks to graph.instagram.com. A token from "API setup with Unified login" (a business
-// integration token, it starts with EAA) talks to graph.facebook.com, and the account is found
-// through /me/assigned_instagram_accounts. The script tells them apart by the token itself.
+// Three kinds of token work, and the script tells them apart by itself:
+//   - "API setup with Instagram login" (starts with IG): graph.instagram.com.
+//   - "API setup with Unified login" (starts with EAA): graph.facebook.com, the account is found
+//     through /me/assigned_instagram_accounts.
+//   - "API setup with Facebook login" (starts with EAA): a Facebook Page linked to the Instagram
+//     account. Either the Page's own token, or a user token from which the Page's token is read
+//     (/me/accounts). No business portfolio is needed for this one.
 
 import fs from "node:fs";
 
-const TOKEN = (process.env.IG_ACCESS_TOKEN || "").trim();
+let TOKEN = (process.env.IG_ACCESS_TOKEN || "").trim();
 const UNIFIED = process.env.IG_LOGIN ? process.env.IG_LOGIN === "unified" : /^EAA/.test(TOKEN);
 const API = (process.env.IG_API_BASE || (UNIFIED ? "https://graph.facebook.com/v27.0" : "https://graph.instagram.com/v27.0")).replace(/\/$/, "");
 const DRY_RUN = /^(1|true|yes|on)$/i.test(process.env.DRY_RUN || "");
@@ -165,11 +168,29 @@ function pickFor(id, options) {
 // The Instagram account the token speaks for: its ID (used to send messages) and its username.
 async function whoAmI() {
   if (!UNIFIED) return call("GET", "/me", { query: { fields: "user_id,username" } });
-  const accounts = await list("/me/assigned_instagram_accounts", { fields: "id,username" }, 25);
-  if (!accounts.length) throw new Error("The token works, but no Instagram account was shared with the app. Generate the token again and pick the Instagram account.");
+  const soft = async (fn) => { try { return await fn(); } catch (err) { if (!(err instanceof ApiError) || err.badToken || err.rateLimited) throw err; return null; } };
   const want = String(process.env.IG_USERNAME || "").toLowerCase();
-  const a = accounts.find((x) => String(x.username || "").toLowerCase() === want) || accounts[0];
-  return { user_id: a.id, username: a.username };
+  // Unified login: the accounts shared with the app
+  const shared = await soft(() => list("/me/assigned_instagram_accounts", { fields: "id,username" }, 25));
+  if (shared && shared.length) {
+    const a = shared.find((x) => String(x.username || "").toLowerCase() === want) || shared[0];
+    return { user_id: a.id, username: a.username };
+  }
+  // Facebook login, user token: the Pages this person manages, and the Instagram account linked to each
+  const pages = await soft(() => list("/me/accounts", { fields: "id,access_token,instagram_business_account{id,username}" }, 50));
+  const linked = (pages || []).filter((p) => p.instagram_business_account && p.access_token);
+  if (linked.length) {
+    const p = linked.find((x) => String(x.instagram_business_account.username || "").toLowerCase() === want) || linked[0];
+    TOKEN = p.access_token;   // from here on, speak as the Page
+    return { user_id: p.instagram_business_account.id, username: p.instagram_business_account.username, messages: `/${p.id}/messages` };
+  }
+  // Facebook login, the Page's own token
+  const page = await soft(() => call("GET", "/me", { query: { fields: "id,instagram_business_account{id,username}" } }));
+  if (page && page.instagram_business_account) {
+    return { user_id: page.instagram_business_account.id, username: page.instagram_business_account.username, messages: "/me/messages" };
+  }
+  throw new Error("The token works, but no Instagram account is reachable with it. "
+    + "With Facebook login: link the Instagram account to your Facebook Page, then make the token again and tick that Page and that Instagram account.");
 }
 
 async function answerComments() {
@@ -219,7 +240,7 @@ async function answerComments() {
 
       let delivered = true;
       try {
-        await call("POST", `/${me.user_id || "me"}/messages`,
+        await call("POST", me.messages || `/${me.user_id || "me"}/messages`,
           { body: { recipient: { comment_id: c.id }, message: { text: kw.message(firstName(c)) } } });
       } catch (err) {
         if (!(err instanceof ApiError) || err.badToken) throw err;
@@ -257,8 +278,8 @@ async function answerComments() {
 // written to the file named by TOKEN_OUT (never printed), for the workflow to save as the secret.
 async function refreshToken() {
   if (UNIFIED) {
-    console.log("This token comes from Unified login, which Meta does not renew this way. "
-      + "Its expiry is shown in the app dashboard (API setup with Unified login > the configuration). Nothing to do here.");
+    console.log("This kind of token (Unified login or Facebook login) is not renewed this way. A Page token made from a "
+      + "long-lived user token does not expire; otherwise its expiry is shown in the app dashboard. Nothing to do here.");
     return;
   }
   const root = API.replace(/\/v\d+\.\d+$/, "");

@@ -139,8 +139,8 @@
           <path class="body" d="${BODY_D}" fill="url(#lps-skin)"/>
           <g clip-path="url(#lps-clip)"><ellipse cx="58" cy="136" rx="6" ry="3.4" transform="rotate(-18 58 136)" fill="#8d5c24" opacity=".28"/><ellipse cx="180" cy="134" rx="5.6" ry="3.1" transform="rotate(18 180 134)" fill="#8d5c24" opacity=".28"/></g>
           <!-- the face: the same two dark eyes always; only the lids, the mouth and the sweat change -->
-          <ellipse cx="100" cy="126" rx="7.2" ry="9" fill="#2a2018"/><ellipse cx="144" cy="124" rx="7.2" ry="9" fill="#2a2018"/>
-          <circle class="glint" cx="102.6" cy="122" r="2.1" fill="#fff"/><circle class="glint" cx="146.6" cy="120" r="2.1" fill="#fff"/>
+          <g class="look"><ellipse cx="100" cy="126" rx="7.2" ry="9" fill="#2a2018"/><ellipse cx="144" cy="124" rx="7.2" ry="9" fill="#2a2018"/>
+          <circle class="glint" cx="102.6" cy="122" r="2.1" fill="#fff"/><circle class="glint" cx="146.6" cy="120" r="2.1" fill="#fff"/></g>
           <g clip-path="url(#lps-el)"><g class="lid"><rect x="90" y="96" width="20" height="21" fill="#c68d54"/><path d="M90 117h20" stroke="#2a2018" stroke-width="2.4"/></g></g>
           <g clip-path="url(#lps-er)"><g class="lid"><rect x="134" y="94" width="20" height="21" fill="#c68d54"/><path d="M134 115h20" stroke="#2a2018" stroke-width="2.4"/></g></g>
           <path class="bags" d="M92 139q8 5 16 -1M136 137q8 5 16 -1" stroke="#2a2018" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".34"/>
@@ -176,6 +176,18 @@
 .lps-btn.alt:hover,.lps-btn.alt:focus-visible{background:#eef4fc;border-color:#1f5fc4}
 .lps-btn .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .lps-free{display:block;margin-top:12px;font-size:12.5px;color:var(--text-muted,#7a8190)}
+/* the main button catches the light now and then */
+.lps-btn:not(.alt){position:relative;overflow:hidden}
+.lps-btn:not(.alt)::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-18deg);animation:lps-shine 6.5s ease-in-out 2s infinite;pointer-events:none}
+@keyframes lps-shine{0%,82%{left:-60%}100%{left:130%}}
+/* the gauge: nearly empty until someone points at a button */
+.lps-meter{position:absolute;left:10px;top:10px;z-index:1;display:flex;align-items:center;gap:7px;padding:5px 9px 5px 8px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--border,#dfe5ee);box-shadow:0 4px 10px -6px rgba(20,50,110,.35);font-size:10.5px;font-weight:700;line-height:1;letter-spacing:.04em;text-transform:uppercase;color:var(--text,#1b2230)}
+.lps-meter-bar{position:relative;width:46px;height:7px;border-radius:99px;background:rgba(120,135,160,.22);overflow:hidden}
+.lps-meter-bar i{position:absolute;inset:0;border-radius:99px;transform-origin:0 50%;transform:scaleX(.06);background:#e5484d;transition:transform .7s cubic-bezier(.3,1.2,.5,1),background-color .4s;animation:lps-low 1.3s steps(2,jump-none) infinite}
+.lps-meter-n{min-width:30px;text-align:right;font-variant-numeric:tabular-nums;color:#c8343a;transition:color .3s}
+.lps-meter.full .lps-meter-bar i{transform:scaleX(1);background:#2f9e5b;animation:none}.lps-meter.full .lps-meter-n{color:#237a45}
+.lps-meter.love .lps-meter-bar i{background:#ff5d7d}.lps-meter.love .lps-meter-n{color:#d93a5e}
+@keyframes lps-low{0%{opacity:1}100%{opacity:.35}}
 /* ---- the potato ---- */
 .scene{--pop:cubic-bezier(.3,1.4,.5,1)}` + ARM_CSS + `
 .scene .arm.r{${pose(R, W.rRest)}}.scene .arm.l{${pose(L, W.lWrite)}}
@@ -205,6 +217,11 @@
 @keyframes lps-write{0%,100%{transform:rotate(0deg)}22%{transform:rotate(-6deg)}48%{transform:rotate(3deg)}74%{transform:rotate(-4deg)}}
 @keyframes lps-drift{0%,100%{transform:rotate(1.5deg)}50%{transform:rotate(-2.5deg)}}
 @keyframes lps-ink{0%,70%{stroke-dashoffset:46}90%,100%{stroke-dashoffset:0}}
+/* its eyes follow the pointer; at rest it nods off over the notes and jerks awake */
+.scene .look{transform:translate(var(--lx,0px),var(--ly,0px));transition:transform .18s ease-out}
+.scene:not(.up) .sway{transform-origin:130px 204px;animation:lps-nod 6s ease-in-out infinite}
+@keyframes lps-nod{0%,52%,100%{transform:none}66%,80%{transform:translateY(3px) rotate(3.2deg)}86%{transform:translateY(-2.5px) rotate(-1.2deg)}92%{transform:none}}
+.scene.motivated .papers .ink{animation-duration:1.5s}
 /* either button: it wakes up */
 .scene.up .rise{transform:translateY(-3px)}
 .scene.up .lid{transform:translateY(0);animation:lps-blink 4.2s ease-in-out infinite}
@@ -253,12 +270,12 @@
 .lps-heart svg{width:100%;height:100%;fill:#ff6b8a}
 @keyframes lps-float{0%{opacity:0;transform:translate(0,0) scale(.4)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-120px) scale(1.1) rotate(var(--r))}}
 @media (max-width:640px){.lps-card{grid-template-columns:1fr;padding:18px;gap:16px;text-align:center}.lps-stage{max-width:260px;margin:0 auto;width:100%}.lps-row{justify-content:center}}
-@media (prefers-reduced-motion:reduce){.scene *,.lps-heart{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.scene *,.lps-heart,.lps-meter *,.lps-btn::after{animation:none!important;transition:none!important}}
 @media print{.lps-card{display:none!important}}
 :root[data-theme="dark"] .lps-stage{background:linear-gradient(180deg,#1d2a40 0%,#152033 100%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lps-stage{background:linear-gradient(180deg,#1d2a40 0%,#152033 100%)}}`;
     document.head.append(st);
-    home.innerHTML = `<div class="lps-card"><div class="lps-stage">${SCENE}</div><div>
+    home.innerHTML = `<div class="lps-card"><div class="lps-stage"><div class="lps-meter" aria-hidden="true"><span class="lps-meter-l">Caffeine</span><span class="lps-meter-bar"><i></i></span><span class="lps-meter-n">3%</span></div>${SCENE}</div><div>
       <span class="lps-tag">Support Lab Potato</span>
       <h3>Running on caffeine and approaching thesis deadlines</h3>
       <p>${esc(line)} If one of these tools gave you an afternoon back, it would be great if you could buy this potato a coffee. Your generous support helps motivate me to keep updating these tools and building new ones.</p>
@@ -267,7 +284,41 @@
     const scene = home.querySelector(".scene"), stage = home.querySelector(".lps-stage");
     // each button wakes the potato in its own way; pressing one plays its own small celebration
     const mood = b => b.classList.contains("alt") ? "loved" : "motivated";
-    const hover = (b, on) => () => { scene.classList.remove("motivated", "loved"); scene.classList.toggle("up", on); scene.classList.toggle(mood(b), on); };
+    // the gauge: caffeine at 3% until the coffee button, morale for the other one
+    const meter = home.querySelector(".lps-meter"), meterL = meter.querySelector(".lps-meter-l"), meterN = meter.querySelector(".lps-meter-n");
+    let level = 3, meterRaf = 0;
+    const gauge = (kind) => {
+      const to = kind ? 100 : 3, from = level, t0 = performance.now();
+      meter.classList.toggle("full", !!kind); meter.classList.toggle("love", kind === "loved");
+      meterL.textContent = kind === "loved" ? "Morale" : "Caffeine";
+      cancelAnimationFrame(meterRaf);
+      const step = (now) => { const k = Math.min(1, (now - t0) / 600); level = Math.round(from + (to - from) * k); meterN.textContent = level + "%"; if (k < 1) meterRaf = requestAnimationFrame(step); };
+      meterRaf = requestAnimationFrame(step);
+    };
+    let hello = 0;
+    const hover = (b, on) => () => { clearTimeout(hello); scene.classList.remove("motivated", "loved", "cheer"); scene.classList.toggle("up", on); scene.classList.toggle(mood(b), on); gauge(on ? mood(b) : ""); };
+    // the first time the card comes into view, it looks up and raises the mug; then back to the notes
+    let inView = false;
+    if ("IntersectionObserver" in window) {
+      let greeted = false;
+      new IntersectionObserver((es) => {
+        inView = es[0].isIntersecting;
+        if (inView && !greeted && es[0].intersectionRatio > 0.6 && !scene.classList.contains("up")) {
+          greeted = true;
+          scene.classList.add("up", "cheer");
+          hello = setTimeout(() => scene.classList.remove("up", "cheer"), 1300);
+        }
+      }, { threshold: [0, 0.65] }).observe(stage);
+    }
+    let lookRaf = 0;
+    document.addEventListener("pointermove", (e) => {
+      if (!inView || lookRaf) return;
+      lookRaf = requestAnimationFrame(() => {
+        lookRaf = 0;
+        const r = stage.getBoundingClientRect(), dx = e.clientX - (r.left + r.width * 0.47), dy = e.clientY - (r.top + r.height * 0.57), d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 160);
+        scene.style.setProperty("--lx", ((dx / d) * 2.6 * k).toFixed(1) + "px"); scene.style.setProperty("--ly", ((dy / d) * 2 * k).toFixed(1) + "px");
+      });
+    }, { passive: true });
     const burst = (n, emoji) => { for (let k = 0; k < n; k++) {
         const h = document.createElement("span"); h.className = "lps-heart";
         h.style.left = (36 + Math.random() * 28) + "%"; h.style.top = (38 + Math.random() * 20) + "%";
@@ -284,7 +335,7 @@
       b.addEventListener("click", () => {   // the link opens in a new tab; the potato celebrates here
         const love = b.classList.contains("alt"), cls = love ? "cheer-love" : "cheer";
         scene.classList.add("up", mood(b)); scene.classList.remove("cheer", "cheer-love"); void scene.getBoundingClientRect(); scene.classList.add(cls);
-        clearTimeout(cheerT); cheerT = setTimeout(() => scene.classList.remove("cheer", "cheer-love"), 1100);
+        gauge(mood(b)); clearTimeout(hello); clearTimeout(cheerT); cheerT = setTimeout(() => scene.classList.remove("cheer", "cheer-love"), 1100);
         burst(love ? 10 : 8, love ? HEART : COIN);
       });
     });

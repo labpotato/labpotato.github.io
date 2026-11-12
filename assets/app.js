@@ -401,6 +401,27 @@ function makeNoRepeatPicker(arr) {
   };
 }
 
+/* A mound of soil under a mascot button. Asleep, the potato sinks into it; woken, it shakes,
+   pops back out like it grew there, throws a little dirt and the mound sinks away. */
+function addPit(btn) {
+  const svg = btn.querySelector("svg");
+  if (!svg || btn.querySelector(".pit")) return;
+  const pit = document.createElement("span");
+  pit.className = "pit";
+  svg.replaceWith(pit);
+  pit.appendChild(svg);
+  const soil = document.createElement("span");
+  soil.className = "soil";
+  soil.setAttribute("aria-hidden", "true");
+  soil.innerHTML = "<i></i><i></i><i></i><i></i><i></i>";
+  btn.appendChild(soil);
+}
+function popOut(btn) {
+  btn.classList.add("waking");
+  setTimeout(() => btn.classList.remove("asleep"), 380);   // shake in the ground first, then rise
+  setTimeout(() => btn.classList.remove("waking"), 1500);
+}
+
 function initMascot() {
   const mascot = document.getElementById("mascot");
   const speech = document.getElementById("speech");
@@ -506,6 +527,7 @@ function initMascot() {
   const pickDoze = makeNoRepeatPicker(DOZE_LINES);
   const pickWake = makeNoRepeatPicker(WAKE_LINES);
 
+  addPit(mascot);
   const zzz = document.createElement("span");
   zzz.className = "zzz";
   zzz.setAttribute("aria-hidden", "true");
@@ -546,7 +568,7 @@ function initMascot() {
   }
 
   mascot.addEventListener("click", () => {
-    hop();
+    if (!asleep) hop();
 
     // Any real interaction resets the "are you still there" clock.
     idleCount = 0;
@@ -556,7 +578,7 @@ function initMascot() {
     // asleep -> eyes open, goggles straightened (or back on), and an excuse
     if (asleep) {
       asleep = false;
-      mascot.classList.remove("asleep");
+      popOut(mascot);
       mascot.setAttribute("aria-label", "Interact with the mascot");
       if (goggles && !gogglesOn) {
         gogglesOn = true;
@@ -686,6 +708,7 @@ function initGuide(hero) {
   const pot = guide.querySelector(".guide-pot");
   const bubble = guide.querySelector(".guide-say");
   pot.prepend(svg);
+  addPit(pot);
   document.body.appendChild(guide);
 
   const SLEEP_AFTER_MS = 90000;
@@ -693,7 +716,7 @@ function initGuide(hero) {
   let heroInView = true;
   function scheduleSleep() {
     clearTimeout(sleepTimer);
-    sleepTimer = setTimeout(() => { asleep = true; guide.classList.add("asleep"); pot.setAttribute("aria-label", "Wake the guide"); }, SLEEP_AFTER_MS);
+    sleepTimer = setTimeout(() => { asleep = true; guide.classList.add("asleep"); pot.classList.add("asleep"); pot.setAttribute("aria-label", "Wake the guide"); }, SLEEP_AFTER_MS);
   }
   // The big mascot does the talking while its speech bubble is fully on screen (clear of the
   // top bar); otherwise the corner guide comes out and takes over.
@@ -758,11 +781,12 @@ function initGuide(hero) {
   document.addEventListener("focusin", overTool);
 
   pot.addEventListener("click", () => {
-    hop();
+    if (!asleep) hop();
     scheduleSleep();
     if (asleep) {
       asleep = false;
       guide.classList.remove("asleep");
+      popOut(pot);
       pot.setAttribute("aria-label", "Ask the guide");
       guideSay("I'm up. I'm up.", 2600);
       return;

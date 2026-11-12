@@ -2141,9 +2141,30 @@ body { font-size: 16px; }
 .asleep .zzz i:nth-child(2) { animation-delay: .9s; }
 .asleep .zzz i:nth-child(3) { animation-delay: 1.8s; }
 .asleep .m-eye { animation: none; transform: scaleY(.08); }
+
+/* asleep, the potato sinks into a mound of soil; woken, it pops back out */
+.pit { display: block; position: relative; }
+.asleep .pit, .waking .pit { clip-path: inset(-120% -120% 0 -120%); }   /* only the bottom edge clips: that is the ground */
+.pit > svg { transition: transform .9s cubic-bezier(.45, 0, .55, 1); }
+.asleep .pit > svg { transform: translateY(27%); }
+.waking .pit > svg { transition: transform .55s cubic-bezier(.34, 1.7, .5, 1); }
+.asleep .m-shadow, .waking .m-shadow { opacity: 0; }
 .asleep .m-float { animation: snooze 6.5s ease-in-out infinite; }
-.asleep .m-goggles:not(.thrown) { transform: translateY(6px) rotate(-5deg); transition: transform .7s var(--ease); }
-@keyframes snooze { 0%, 100% { transform: translateY(3px) rotate(2deg) scale(1, 1); } 50% { transform: translateY(5px) rotate(3deg) scale(1.02, .975); } }
+@keyframes snooze { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(2px) scale(1.015, .985); } }
+.soil { position: absolute; left: 4%; right: 4%; bottom: 0; height: 22%; pointer-events: none; opacity: 0; transform: scaleY(.2); transform-origin: 50% 100%; transition: opacity .5s var(--ease), transform .6s var(--ease); }
+.soil::before { content: ""; position: absolute; inset: 0; border-radius: 50% 50% 8px 8px / 100% 100% 8px 8px; background: radial-gradient(ellipse at 50% 30%, #7a5233, #5c3b24 70%); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .08); }
+.asleep .soil { opacity: 1; transform: none; }
+.waking .soil { opacity: 1; transform: none; transition: opacity .4s ease .75s, transform .5s ease .7s; }
+.waking:not(.asleep) .soil { opacity: 0; transform: scaleY(.2); }
+.soil i { position: absolute; left: 50%; top: 20%; width: 9px; height: 9px; border-radius: 50%; background: #5c3b24; opacity: 0; }
+@keyframes pit-shake { 0%, 100% { translate: 0 0; } 25% { translate: -4px 0; } 75% { translate: 4px 0; } }
+.waking.asleep .pit { animation: pit-shake .09s linear 4; }
+@keyframes crumb { 0% { transform: translate(0, 0); opacity: 1; } 55% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+.waking:not(.asleep) .soil i { animation: crumb .7s cubic-bezier(.2, .7, .4, 1) both; }
+.soil i:nth-child(1) { --dx: -54px; --dy: -46px; } .soil i:nth-child(2) { --dx: -22px; --dy: -70px; width: 7px; height: 7px; }
+.soil i:nth-child(3) { --dx: 8px; --dy: -80px; } .soil i:nth-child(4) { --dx: 34px; --dy: -62px; width: 6px; height: 6px; } .soil i:nth-child(5) { --dx: 60px; --dy: -40px; }
+.guide-pot .soil i { width: 5px; height: 5px; }
+.asleep .zzz { z-index: 2; }
 
 /* ---- the tool guide: a small mascot in the corner once the big one has scrolled away ---- */
 .guide { position: fixed; right: 18px; bottom: 16px; z-index: 70; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; transform: translateY(140%); opacity: 0; pointer-events: none; transition: transform .45s var(--ease), opacity .3s var(--ease); }
@@ -2158,4 +2179,4 @@ body { font-size: 16px; }
 .guide-x { position: absolute; z-index: 2; right: -8px; bottom: 70px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font: 600 13px/1 inherit; cursor: pointer; opacity: 0; transition: opacity .2s var(--ease); }
 .guide:hover .guide-x, .guide-x:focus-visible { opacity: 1; }
 @media (max-width: 900px), print { .guide { display: none; } }
-@media (prefers-reduced-motion: reduce) { .asleep .zzz i { animation: none; opacity: .8; } .asleep .zzz i:nth-child(2) { transform: translate(9px, -14px); } .asleep .zzz i:nth-child(3) { transform: translate(18px, -28px); } }
+@media (prefers-reduced-motion: reduce) { .pit > svg, .soil { transition: none; } .waking .soil i, .waking.asleep .pit { animation: none; } .asleep .zzz i { animation: none; opacity: .8; } .asleep .zzz i:nth-child(2) { transform: translate(9px, -14px); } .asleep .zzz i:nth-child(3) { transform: translate(18px, -28px); } }
